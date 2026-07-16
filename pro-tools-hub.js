@@ -25,7 +25,7 @@
     ['office', 'Office bridge', 'Import PowerPoint, Excel, ODS, CSV and TSV; export editable or compatibility PowerPoint.', '▦'],
     ['workspace', 'Workspace & recovery', 'Move objects between pages, manage assets, recover work, diagnose and reset the interface.', '↻'],
     ['scienceplus', 'Advanced Science', 'Publication plots, sequence tracks, phylogenetic trees, gels and microscopy layouts.', '∿'],
-    ['cloud', 'Accounts & gallery', 'Email recovery, Apple/Microsoft sign-in, local gallery, encrypted cloud vault and shared projects.', '☁'],
+    ['cloud', 'Accounts & gallery', 'Email sign-in and recovery, local gallery, encrypted cloud vault and shared projects.', '☁'],
     ['collab', 'Live collaboration', 'Invite collaborators, encrypted comments, presence, remote cursors and realtime review sessions.', '◎'],
     ['vector', 'SVG path editor', 'Edit path commands and anchors or break compound SVG artwork into independent objects.', '⌁'],
     ['typeset', 'TeX typesetting', 'Render editable TeX source into publication-quality embedded SVG equations.', '∫'],
