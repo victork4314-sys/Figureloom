@@ -89,6 +89,21 @@
 
   document.querySelector('[data-tab="review"]')?.addEventListener('click', () => drawer.classList.add('open'));
 
+  function correctCollaborationCopy() {
+    const note = document.querySelector('#collaborationDrawer .collab-note');
+    if (note) note.textContent = 'Only the owner can change access. Existing accounts receive access immediately; new email addresses receive it automatically after creating an account.';
+    const inviteButton = document.getElementById('collabInviteButton');
+    if (inviteButton && inviteButton.textContent === 'Send invite') inviteButton.textContent = 'Grant access';
+    return Boolean(note && inviteButton);
+  }
+  if (!correctCollaborationCopy()) {
+    const observer = new MutationObserver(() => {
+      if (correctCollaborationCopy()) observer.disconnect();
+    });
+    observer.observe(document.body, { childList:true, subtree:true });
+    setTimeout(() => observer.disconnect(), 5000);
+  }
+
   const style = document.createElement('style');
   style.textContent = `
     #proToolsButton{border-color:#9bb1d4;background:#eef4ff;color:#244f9c;font-weight:700}
