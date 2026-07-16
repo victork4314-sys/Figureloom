@@ -10,9 +10,11 @@ SciCanvas is connected to the Supabase project configured in [`../cloud-config.j
 - In-app new-password form after a recovery link
 - Local project gallery without an account
 - Encrypted cloud gallery for owned and shared projects
+- Local/scoped profile pictures using initials or scientific symbols
 - Owner, editor, reviewer and viewer permissions
 - Pending invitations reserved by email address
 - Automatic access activation when an invited email creates an account
+- Expiring role-based collaboration links
 - Private authenticated Realtime presence, cursors and encrypted project broadcasts
 - Encrypted persistent review comments
 - Row Level Security on every exposed application table
@@ -36,22 +38,26 @@ A Supabase publishable key is designed for browser use. Access is enforced by da
 
 ## Database
 
-[`../supabase/schema.sql`](../supabase/schema.sql) is the source-of-truth schema. It defines:
+[`../supabase/schema.sql`](../supabase/schema.sql) defines the account, encrypted project, membership, comment and Realtime foundation. [`../supabase/share-links.sql`](../supabase/share-links.sql) defines the deployed secure share-link extension.
+
+Together they provide:
 
 - `profiles`
 - `projects`
 - `project_members`
 - `project_invitations`
+- `project_share_links`
 - `collaboration_comments`
 - project-role and access helpers
 - project-key derivation
-- invitation handling
+- email invitation handling
 - automatic pending-invitation activation
+- expiring hashed share tokens
 - RLS policies
 - private Realtime authorization policies
 - the Realtime publication for collaboration comments
 
-The live project has the schema and policies applied.
+The live project has these migrations and policies applied.
 
 ## Encryption model
 
@@ -62,6 +68,20 @@ An authenticated database function checks project membership and derives a stabl
 This is application-layer encryption, not a zero-knowledge system. A database operator with privileged access can derive keys. Protect database credentials and backups accordingly.
 
 Cloud gallery thumbnails are intentionally not stored. Project titles, ownership, timestamps, roles and revision numbers remain metadata so the gallery and permissions can work.
+
+## Profile pictures
+
+The profile button can use:
+
+- the user's initials
+- DNA
+- flask
+- molecule
+- cell
+- signal/wave
+- scientific marker
+
+The choice is stored locally for immediate display and is also synchronized into authenticated user metadata when signed in. It affects only the SciCanvas interface, never project artwork or exports.
 
 ## Email authentication
 
@@ -83,7 +103,7 @@ In **Supabase Dashboard → Authentication → URL Configuration**, set:
 - Add the same URL to **Redirect URLs**
 - Add local URLs used during development, such as `http://localhost:8080/`
 
-This setting is managed by Supabase Auth rather than PostgreSQL, so it is not part of `schema.sql`.
+This setting is managed by Supabase Auth rather than PostgreSQL, so it is not part of the SQL files.
 
 ### Email delivery
 
@@ -96,15 +116,34 @@ Supabase's built-in mail service is suitable for initial testing but is rate-lim
 5. Recovery-link redirect
 6. New-password replacement
 
-## Invitations
+## Invitations by email
 
-Project owners enter a collaborator's email and choose a role.
+Project owners can enter a collaborator's email and choose a role.
 
 - Existing accounts receive access immediately.
 - Unknown emails are stored as pending invitations.
 - When that exact email creates an account, the membership is activated automatically.
 
-SciCanvas currently reserves access by email but does not send a separate collaboration-invitation email. The owner should share the SciCanvas link with the collaborator. Account confirmation and password-recovery emails are sent by Supabase Auth normally.
+SciCanvas reserves access by email but does not send a separate collaboration-invitation email. The owner should share the SciCanvas app link with the collaborator. Account confirmation and password-recovery emails are sent by Supabase Auth normally.
+
+## Invitations by secure link
+
+Project owners can also create a link for a viewer, reviewer or editor.
+
+- The raw token appears only in the generated URL.
+- Supabase stores only a SHA-256 hash of the token.
+- The recipient must sign in before the link grants access.
+- Links expire after 24 hours, 7 days or 30 days.
+- Owners can revoke every active link for a project.
+- Accepting a link never downgrades an existing stronger role.
+
+The frontend uses:
+
+- `create_project_share_link()`
+- `accept_project_share_link()`
+- `revoke_project_share_links()`
+
+The live permission test verified link creation, reviewer membership, RLS project access, use tracking and revocation. Disposable test data was removed afterward.
 
 ## Roles
 
@@ -134,6 +173,7 @@ Keep public Realtime channel access disabled in the project settings.
 - Configure and test a custom SMTP sender.
 - Keep email confirmations enabled.
 - Test owner, editor, reviewer and viewer accounts separately.
+- Test email invitations and secure links separately.
 - Test one project simultaneously in two browsers.
 - Review Auth and database rate limits.
 - Enable database backups.
