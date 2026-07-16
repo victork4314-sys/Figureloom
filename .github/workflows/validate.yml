@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Check JavaScript syntax
         run: |
@@ -28,9 +28,14 @@ jobs:
           test -f styles.css
           test -f app.js
           test -f science-library.js
+          test -f science-vocabulary.js
           test -f project-tools.js
           test -f advanced-tools.js
+          test -f design-tools.js
           test -f export-tools.js
           test -f storage-vault.js
+          test -f interaction-tools.js
+          test -f asset-vault.js
+          test -f app-bootstrap.js
           test -f manifest.webmanifest
-          test -f sw.js
+          test -f service-worker.js
