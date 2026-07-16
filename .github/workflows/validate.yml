@@ -36,6 +36,7 @@ jobs:
           test -f storage-vault.js
           test -f interaction-tools.js
           test -f asset-vault.js
+          test -f external-packs.js
           test -f app-bootstrap.js
           test -f manifest.webmanifest
           test -f service-worker.js
