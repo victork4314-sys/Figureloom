@@ -1,4 +1,4 @@
-const CACHE_NAME = "scicanvas-shell-v13";
+const CACHE_NAME = "scicanvas-shell-v14";
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -21,6 +21,7 @@ const APP_SHELL = [
   "./editable-svg-import.js",
   "./export-svg-placement.js",
   "./external-packs.js",
+  "./expanded-library.js",
   "./fun-design-tools.js",
   "./project-themes.js",
   "./theme-control-fix.js",
@@ -29,11 +30,13 @@ const APP_SHELL = [
   "./poster-assistant-fixes.js",
   "./theme-font-pairs.js",
   "./assistant-universal.js",
+  "./assistant-10k.js",
   "./canvas-navigation.js",
   "./control-usability.js",
   "./insert-tools.js",
   "./pinch-zoom.js",
   "./workspace-state.js",
+  "./object-quick-menu.js",
   "./pptx-export.js",
   "./app-bootstrap.js",
   "./manifest.webmanifest"
