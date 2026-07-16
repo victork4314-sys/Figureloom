@@ -1,0 +1,1 @@
+Validation marker for the first-run tour, visible chart editing controls, responsive title bar, persistent Export visibility, and offline shell v17.
