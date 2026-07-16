@@ -29,7 +29,7 @@
   }
 
   function currentChoice(user = activeUser) {
-    const value = user?.user_metadata?.avatar_symbol || localStorage.getItem(AVATAR_KEY) || 'initial';
+    const value = localStorage.getItem(AVATAR_KEY) || user?.user_metadata?.avatar_symbol || 'initial';
     return OPTIONS.some(([id]) => id === value) ? value : 'initial';
   }
 
@@ -52,6 +52,11 @@
   async function chooseAvatar(choice) {
     if (!OPTIONS.some(([id]) => id === choice)) return;
     localStorage.setItem(AVATAR_KEY, choice);
+    const liveUser = window.SciCanvasCloud?.getUser?.();
+    if (liveUser) {
+      liveUser.user_metadata = { ...(liveUser.user_metadata || {}), avatar_symbol:choice };
+      activeUser = liveUser;
+    }
     document.querySelectorAll('[data-sc-avatar-option]').forEach(button => {
       button.setAttribute('aria-pressed', button.dataset.scAvatarOption === choice ? 'true' : 'false');
     });
@@ -63,7 +68,7 @@
       const user = window.SciCanvasCloud?.getUser?.();
       if (!client || !user) return;
       const { data, error } = await client.auth.updateUser({
-        data:{ ...user.user_metadata, avatar_symbol:choice }
+        data:{ ...(user.user_metadata || {}), avatar_symbol:choice }
       });
       if (error) throw error;
       activeUser = data.user || user;
