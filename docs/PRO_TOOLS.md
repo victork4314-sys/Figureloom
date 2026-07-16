@@ -1,14 +1,13 @@
 # SciCanvas Pro Tools
 
-SciCanvas keeps advanced features behind one **Pro tools** entry so the normal editor remains calm. The hub opens six focused workspaces rather than adding every control to the ribbon.
+SciCanvas keeps advanced features behind one **Pro tools** entry so the normal editor remains calm. The hub now contains fourteen focused workspaces rather than adding every control to the ribbon.
 
 ## Arrange & group
 
 - Shift-click and marquee selection
 - Multi-object movement and corner resizing
 - Group and ungroup
-- Align left, center, right, top, middle, or bottom
-- Equal horizontal or vertical distribution
+- Align and distribute
 - Smart alignment guides and edge snapping
 - Anchored connectors that follow their source and destination objects
 
@@ -16,70 +15,107 @@ Grouped objects remain separate editable layers. Grouping stores a relationship 
 
 ## Data & charts
 
-Paste CSV or tab-separated spreadsheet data to create:
-
-- Bar charts
-- Line charts
-- Scatter plots
-- Box plots
-- Heatmaps
-- Editable data tables
-
-A chart or table is one movable/resizable data object. Double-click it to reopen and replace the underlying data, visual type, or title. Individual bars and cells are not separate canvas layers.
+Paste CSV or tab-separated spreadsheet data to create bar, line, scatter, box, heatmap and editable table objects. Double-click a chart or table to reopen its source data, visual type and title.
 
 ## Scientific annotation
 
-The annotation workspace includes:
+Panel labels, callouts, scale bars, measurement lines, significance/grouping brackets, numbered markers, legends and practical equation/chemical notation.
 
-- Panel labels
-- Callouts
-- Scale bars
-- Measurement lines
-- Significance brackets
-- Grouping brackets
-- Numbered markers
-- Legends
-- Equations and chemical formulas
-
-Equation input supports a practical browser-safe subset such as `\alpha`, `\Delta`, `_{2}`, and `^{2}`. It is not a complete TeX renderer.
+For full TeX rendering, use the dedicated **TeX typesetting** workspace.
 
 ## Components & objects
 
-- Save any selection as a reusable project component
-- Insert multiple component instances
-- Update all instances from a revised selection
-- Crop uploaded images by percentage
-- Flip images horizontally or vertically
-- Rectangle, rounded, and circular image masks
-- Union, intersection, and subtraction for rectangles and ellipses
-
-Components remain project-local and are preserved in `.scicanvas` backups. Shape combinations become one compound object; imported SVG path-node editing is still separate future work.
+- Reusable project components and instances
+- Crop, flip and mask uploaded images
+- Union, intersection and subtraction for native shapes
 
 ## Review & references
 
-- Comments attached to a selected object or current page
-- Resolve, reopen, navigate to, or delete comments
-- DOI, creator, source URL, licence, and attribution records
-- Automatic collection of source metadata from used assets
-- Downloadable reference list
-- Named version checkpoints
-- Added/changed object highlighting against a checkpoint
-- Overall alt text and long descriptions
-- Automatic description drafts from page layers
-- Contrast and small-text checks
-- Grayscale, protanopia, deuteranopia, and tritanopia previews
-
-Visual previews affect only the editor canvas and are not baked into exports.
+- Object/page comments and resolve states
+- DOI, creator, source, licence and attribution records
+- Automatic reference collection
+- Named version checkpoints and change highlighting
+- Alt-text drafting
+- Contrast, tiny-text, grayscale and color-vision previews
 
 ## Publish & present
 
-- Generic single-column, double-column, full-page, square, 16:9, and 4:3 physical presets
-- Automated checks for unresolved comments, missing alt text, very small print text, off-canvas objects, broken connectors, and missing reference workflow
-- Downloadable publication-readiness report
-- Fullscreen multi-page presentation mode with keyboard navigation
+- Generic publication-size presets
+- Publication-readiness reports
+- Fullscreen multi-page presentation
+- Export diagnostics and compatibility reporting
 
-The publication presets are intentionally generic. Always verify the current requirements of the specific journal, conference, printer, or institution.
+Always verify the current requirements of the specific journal, conference, printer or institution.
+
+## Office bridge
+
+- Import PPTX slides, common text/shapes/images/tables/groups and basic charts
+- Import XLSX, XLS, XLSM, ODS, CSV and TSV
+- Insert editable tables/charts and retain embedded workbook data
+- Export editable-first or visual-compatibility PowerPoint files
+
+## Workspace & recovery
+
+- Move/copy objects between pages
+- Project asset management and broken-asset checks
+- Rotating recovery snapshots
+- Pre-export diagnostics
+- Workspace reset and shortcut reference
+
+## Advanced Science
+
+Publication plot starters, sequence/protein-domain tracks, phylogenetic trees, gel/blot lanes and microscopy channel layouts.
+
+## Accounts & gallery
+
+- Local project gallery without an account
+- Email/password accounts and recovery email flow
+- Sign in with Apple and Microsoft when provider credentials are deployed
+- Owned/shared cloud gallery
+- Explicit encrypted cloud saves
+
+Cloud features remain disabled gracefully until [`CLOUD_SETUP.md`](CLOUD_SETUP.md) is deployed.
+
+## Live collaboration
+
+- Owner/editor/reviewer/viewer roles
+- Private authenticated presence and remote cursors
+- Encrypted project broadcasts for editors
+- Encrypted persistent review comments
+- Email invitations
+- Incoming-update pause while the local user is typing or dragging
+
+## SVG path editor
+
+- Inspect and edit SVG path commands and coordinates
+- Select anchors on the canvas
+- Break compound SVG artwork into independent editable SVG objects
+
+This edits path command data; it is not a full Illustrator-style Bézier-handle suite.
+
+## TeX typesetting
+
+- MathJax TeX rendering to embedded SVG
+- Editable retained TeX source
+- Display/inline mode and color controls
+- Double-click or inspector editing after insertion
+
+MathJax loads on demand. Rendered equations are embedded into the project as vector artwork.
+
+## Pathway exchange
+
+Export the active page as:
+
+- SBGN-ML
+- BioPAX RDF/XML
+- SBML Level 3 XML
+
+Exports map SciCanvas objects/connectors into machine-readable starter structures. Domain-specific validation in specialist pathway tools is still recommended.
+
+## Optional local prompt interpretation
+
+When the browser exposes a supported on-device language-model API, Figure Assistant can locally restructure vague prompts into explicit workflow/comparison/cycle instructions. Nothing is sent to a SciCanvas server, and the ordinary deterministic assistant remains the fallback.
 
 ## Interface philosophy
 
-Advanced workspaces are progressively disclosed. The ordinary ribbon, Science library, Insert panel, Canvas Design, and Export menu remain usable without opening Pro Tools. This avoids turning the application into a wall of permanently visible controls.
+Advanced workspaces are progressively disclosed. The ordinary ribbon, Science library, Insert panel, Canvas Design and Export menu remain usable without opening Pro Tools. This avoids turning the application into a wall of permanently visible controls.
