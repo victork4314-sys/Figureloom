@@ -1,12 +1,14 @@
-const CACHE_NAME = "scicanvas-shell-v1";
+const CACHE_NAME = "scicanvas-shell-v2";
 const APP_SHELL = [
   "./",
   "./index.html",
   "./styles.css",
   "./app.js",
   "./science-library.js",
+  "./science-vocabulary.js",
   "./project-tools.js",
   "./advanced-tools.js",
+  "./design-tools.js",
   "./export-tools.js",
   "./storage-vault.js",
   "./manifest.webmanifest"
