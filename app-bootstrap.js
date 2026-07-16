@@ -105,7 +105,18 @@
     if (counter.startsWith("12 of")) desired = `You are ready, ${name}.`;
     if (desired && title.textContent !== desired) title.textContent = desired;
   }
-  new MutationObserver(syncPersonalTourTitle).observe(document.body, { childList:true, subtree:true, characterData:true });
+  function repairDnaHeights() {
+    document.querySelectorAll("#dnaEasterEgg .dna-pair").forEach(pair => {
+      if (pair.style.height) return;
+      const wave = Number(pair.style.getPropertyValue("--wave"));
+      if (Number.isFinite(wave) && wave > 0) pair.style.height = `${wave}px`;
+    });
+  }
+  const observer = new MutationObserver(() => {
+    syncPersonalTourTitle();
+    repairDnaHeights();
+  });
+  observer.observe(document.body, { childList:true, subtree:true, characterData:true });
   document.addEventListener("submit", event => {
     if (event.target.closest?.("#scWelcome")) setTimeout(syncPersonalTourTitle, 320);
   });
