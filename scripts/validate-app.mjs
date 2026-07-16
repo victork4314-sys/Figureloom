@@ -17,7 +17,7 @@ for (const script of scripts) {
 }
 
 const required = [
-  'assistant-universal.js','control-usability.js','canvas-navigation.js','water-icons.js','theme-font-pairs.js','figure-assistant.js','external-packs.js','expanded-library.js','map-studio.js','layout-stability.js','layout-polish.js','workspace-state.js','insert-tools.js','pro-tools-hub.js','selection-layout-tools.js','data-science-tools.js','scientific-annotation-tools.js','component-object-tools.js','review-accessibility-tools.js','publish-presentation-tools.js','finishing-touches.js','office-bridge.js','office-import-fix.js','pro-office-tools.js','stability-hardening.js','product-experience.js','advanced-science-tools.js','workspace-controls-pages.js','refresh-safety.js','polish-delight.js','cloud-config.js','cloud-account.js','collaboration-tools.js','account-header-polish.js','profile-gallery-polish.js','collaboration-share-links.js','svg-path-editor.js','tex-typesetting.js','pathway-exchange.js','local-prompt-assistant.js'
+  'assistant-universal.js','control-usability.js','canvas-navigation.js','water-icons.js','theme-font-pairs.js','figure-assistant.js','external-packs.js','expanded-library.js','map-studio.js','layout-stability.js','layout-polish.js','workspace-state.js','insert-tools.js','pro-tools-hub.js','selection-layout-tools.js','data-science-tools.js','scientific-annotation-tools.js','component-object-tools.js','review-accessibility-tools.js','publish-presentation-tools.js','finishing-touches.js','office-bridge.js','office-import-fix.js','pro-office-tools.js','stability-hardening.js','product-experience.js','advanced-science-tools.js','workspace-controls-pages.js','refresh-safety.js','polish-delight.js','cloud-config.js','cloud-account.js','collaboration-tools.js','account-header-polish.js','profile-gallery-polish.js','collaboration-share-links.js','svg-path-editor.js','tex-typesetting.js','pathway-exchange.js','local-prompt-assistant.js','site-legal.js'
 ];
 for (const file of required) if (!scripts.includes(file)) fail(`Required module is not loaded: ${file}`);
 
@@ -61,6 +61,7 @@ before('account-header-polish.js','profile-gallery-polish.js');
 before('profile-gallery-polish.js','collaboration-share-links.js');
 before('editable-svg-import.js','svg-path-editor.js');
 before('assistant-universal.js','local-prompt-assistant.js');
+before('site-legal.js','app-bootstrap.js');
 before('pathway-exchange.js','app-bootstrap.js');
 
 const checks = {
@@ -93,14 +94,18 @@ const checks = {
   'svg-path-editor.js':['PARAM_COUNTS','parsePath','path-node-handle','Break artwork apart','ancestorWrappedMarkup'],
   'tex-typesetting.js':['tex2svgPromise','mathSvgMarkup','TeX → embedded SVG','MathJax'],
   'pathway-exchange.js':['SBGN-ML','BioPAX','SBML Level 3','http://sbgn.org/libsbgn','biopax-level3.owl'],
-  'local-prompt-assistant.js':['LanguageModel','window.ai?.languageModel','Interpret and structure this prompt','runPrompt','layout']
+  'local-prompt-assistant.js':['LanguageModel','window.ai?.languageModel','Interpret and structure this prompt','runPrompt','layout'],
+  'site-legal.js':['figureloomLegalFooter','Privacy & legal','Figureloom · open scientific figure workspace']
 };
 for (const [file, markers] of Object.entries(checks)) {
   const source = read(file);
   for (const marker of markers) if (!source.includes(marker)) fail(`${file} is missing marker: ${marker}`);
 }
 
-for (const file of ['supabase/schema.sql','supabase/share-links.sql','docs/CLOUD_SETUP.md']) if (!fs.existsSync(path.join(root,file))) fail(`Cloud backend file is missing: ${file}`);
+for (const file of ['supabase/schema.sql','supabase/share-links.sql','docs/CLOUD_SETUP.md','legal.html','CNAME']) if (!fs.existsSync(path.join(root,file))) fail(`Required project file is missing: ${file}`);
+if (read('CNAME').trim() !== 'figureloom.org') fail('Figureloom custom domain CNAME is incorrect.');
+if (!html.includes('<title>Figureloom</title>') || !html.includes('<strong>Figureloom</strong>')) fail('Figureloom public branding is missing from index.html.');
+if (!manifest.includes('"short_name": "Figureloom"')) fail('Figureloom installed-app name is missing.');
 const schema = read('supabase/schema.sql');
 for (const marker of ['enable row level security','project_members','project_invitations','collaboration_comments','get_project_key','invite_project_member','private.app_secrets','scicanvas_private','supabase_realtime','realtime_project_id','realtime.messages','project editors send edit broadcasts']) if (!schema.includes(marker)) fail(`Cloud schema is missing marker: ${marker}`);
 const shareSchema = read('supabase/share-links.sql');
@@ -127,7 +132,8 @@ if (finishing.includes('scrollIntoView')) fail('Passive tour must not scroll the
 if (finishing.includes('tour-target')) fail('Passive tour must not mutate target element layout');
 const polish = read('polish-delight.js');
 if (polish.includes('scrollIntoView')) fail('Expanded tour must remain passive');
-if (!worker.includes('scicanvas-shell-v37')) fail('Profile and secure-share build requires offline shell v37');
+if (!worker.includes('figureloom-shell-v38')) fail('Figureloom domain build requires offline shell v38');
+if (!worker.includes('"./legal.html"')) fail('Service worker does not cache legal.html');
 if (!fs.existsSync(path.join(root,'favicon.svg'))) fail('favicon.svg is missing');
 if (!html.includes('href="./favicon.svg"')) fail('index.html does not reference favicon.svg');
 if (!worker.includes('"./favicon.svg"')) fail('Service worker does not cache favicon.svg');
@@ -136,4 +142,4 @@ const ids = [...html.matchAll(/\sid=["']([^"']+)["']/g)].map(match => match[1]);
 const duplicateIds = ids.filter((id,index) => ids.indexOf(id) !== index);
 if (duplicateIds.length) fail(`Duplicate static HTML IDs: ${[...new Set(duplicateIds)].join(', ')}`);
 
-console.log(`Static audit passed: ${scripts.length} scripts, polished account gallery, scientific profile avatars, deployed email/password accounts, expiring role share links, private collaboration, complete offline shell, and no duplicate static IDs.`);
+console.log(`Static audit passed: ${scripts.length} scripts, Figureloom branding and custom domain, privacy/legal footer, account gallery, scientific profile avatars, deployed email/password accounts, expiring role share links, private collaboration, complete offline shell, and no duplicate static IDs.`);
