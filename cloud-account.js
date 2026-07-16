@@ -4,13 +4,15 @@
   const CONFIG = window.SCICANVAS_CLOUD_CONFIG || {};
   const LOCAL_GALLERY_KEY = 'project-gallery-v1';
   const CURRENT_CLOUD_KEY = 'scicanvas-current-cloud-project-v1';
+  const LAST_EMAIL_KEY = 'scicanvas-account-email-v1';
   const SUPABASE_MODULE = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
   let clientPromise = null;
   let currentUser = null;
   let localProjects = [];
   let authSubscription = null;
+  let recoveryMode = false;
 
-  const drawer = createDrawer('cloudGalleryDrawer', 'Accounts & project gallery', 'Local projects, encrypted cloud vault, sharing and account recovery');
+  const drawer = createDrawer('cloudGalleryDrawer', 'Accounts & project gallery', 'Email accounts, recovery, local projects, encrypted cloud vault and sharing');
   drawer.classList.add('cloud-gallery-drawer');
   const body = drawer.querySelector('.utility-body');
   body.innerHTML = `
@@ -20,26 +22,28 @@
     </div>
     <div class="cloud-account-panel">
       <div id="cloudSignedOut">
-        <div class="cloud-provider-grid">
-          <button id="cloudAppleSignIn" type="button" class="cloud-provider"> Sign in with Apple</button>
-          <button id="cloudMicrosoftSignIn" type="button" class="cloud-provider">⊞ Sign in with Microsoft</button>
-        </div>
-        <div class="cloud-divider"><span>or use email</span></div>
-        <label>Email <input id="cloudEmail" type="email" autocomplete="email" placeholder="researcher@example.com"></label>
-        <label>Password <input id="cloudPassword" type="password" autocomplete="current-password" minlength="8" placeholder="At least 8 characters"></label>
+        <div class="email-account-heading"><span>@</span><div><strong>Email account</strong><small>One dependable sign-in method, with recovery links sent to your inbox.</small></div></div>
+        <label>Email <input id="cloudEmail" type="email" autocomplete="email" inputmode="email" placeholder="researcher@example.com"></label>
+        <label>Password
+          <span class="password-field"><input id="cloudPassword" type="password" autocomplete="current-password" minlength="8" placeholder="At least 8 characters"><button id="cloudTogglePassword" type="button" aria-label="Show password">Show</button></span>
+        </label>
         <div class="cloud-account-actions">
           <button id="cloudEmailSignIn" type="button" class="primary">Sign in</button>
           <button id="cloudEmailSignUp" type="button">Create account</button>
-          <button id="cloudForgotPassword" type="button">Forgot password</button>
+          <button id="cloudForgotPassword" type="button">Forgot password?</button>
+          <button id="cloudResendConfirmation" type="button" hidden>Resend confirmation email</button>
         </div>
-        <p class="cloud-note">Password reset links are sent by email. Apple and Microsoft sign-in become active after their OAuth credentials are configured in the cloud backend.</p>
+        <p class="cloud-note">Account confirmation and password-reset links are sent by email. SciCanvas does not use Apple, Microsoft, or other third-party sign-in providers.</p>
       </div>
       <div id="cloudSignedIn" hidden>
         <div class="cloud-user-row"><span class="cloud-user-avatar">SC</span><span><strong id="cloudUserName">Signed in</strong><small id="cloudUserEmail"></small></span><button id="cloudSignOut" type="button">Sign out</button></div>
-        <div id="cloudPasswordRecovery" hidden>
-          <label>New password <input id="cloudNewPassword" type="password" minlength="8" autocomplete="new-password"></label>
-          <button id="cloudUpdatePassword" type="button" class="primary">Update password</button>
-        </div>
+      </div>
+      <div id="cloudPasswordRecovery" class="cloud-password-recovery" hidden>
+        <strong>Choose a new password</strong>
+        <p>The recovery link was accepted. Enter the new password twice.</p>
+        <label>New password <input id="cloudNewPassword" type="password" minlength="8" autocomplete="new-password"></label>
+        <label>Confirm new password <input id="cloudConfirmPassword" type="password" minlength="8" autocomplete="new-password"></label>
+        <div class="cloud-account-actions"><button id="cloudUpdatePassword" type="button" class="primary">Update password</button><button id="cloudCancelRecovery" type="button">Cancel</button></div>
       </div>
       <p id="cloudAccountMessage" class="cloud-message" aria-live="polite"></p>
     </div>
@@ -49,7 +53,7 @@
       <button id="saveCloudProjectAs" type="button">Save cloud copy as new</button>
     </div>
     <section class="gallery-section"><div class="gallery-heading"><h3>On this device</h3><small>Works without an account</small></div><div id="localProjectGallery" class="project-gallery"></div></section>
-    <section class="gallery-section"><div class="gallery-heading"><h3>Cloud vault</h3><small>Accessible projects and shared workspaces</small></div><div id="cloudProjectGallery" class="project-gallery"></div></section>
+    <section class="gallery-section"><div class="gallery-heading"><h3>Cloud vault</h3><small>Owned projects and shared workspaces</small></div><div id="cloudProjectGallery" class="project-gallery"></div></section>
   `;
 
   const q = selector => drawer.querySelector(selector);
@@ -95,10 +99,10 @@
   }
 
   async function getClient() {
-    if (!configured()) throw new Error('Cloud accounts are not configured for this deployment yet. Add the Supabase URL and public anon key in cloud-config.js.');
+    if (!configured()) throw new Error('Email accounts are not configured for this deployment yet. Add the Supabase URL and public publishable key in cloud-config.js.');
     if (!clientPromise) {
       clientPromise = import(SUPABASE_MODULE).then(({ createClient }) => createClient(CONFIG.supabaseUrl, CONFIG.supabaseAnonKey, {
-        auth:{ persistSession:true, autoRefreshToken:true, detectSessionInUrl:true },
+        auth:{ persistSession:true, autoRefreshToken:true, detectSessionInUrl:true, flowType:'pkce' },
         realtime:{ params:{ eventsPerSecond:8 } }
       }));
     }
@@ -184,9 +188,11 @@
   function galleryCard(entry, cloud = false) {
     const article = document.createElement('article');
     article.className = 'project-gallery-card';
+    const isOwner = !cloud || entry.owner_id === currentUser?.id;
+    const thumbnail = cloud ? '' : entry.thumbnail;
     article.innerHTML = `
-      <div class="project-thumb">${entry.thumbnail ? `<img alt="" src="${entry.thumbnail}">` : '<span>⌬</span>'}</div>
-      <div class="project-card-copy"><strong title="${escapeHtml(entry.title)}">${escapeHtml(entry.title)}</strong><small>${new Date(entry.updated_at || entry.updatedAt).toLocaleString()}</small>${cloud && entry.owner_id !== currentUser?.id ? '<em>Shared with you</em>' : ''}</div>
+      <div class="project-thumb">${thumbnail ? `<img alt="" src="${thumbnail}">` : '<span>⌬</span>'}</div>
+      <div class="project-card-copy"><strong title="${escapeHtml(entry.title)}">${escapeHtml(entry.title)}</strong><small>${new Date(entry.updated_at || entry.updatedAt).toLocaleString()}</small>${cloud && !isOwner ? '<em>Shared with you</em>' : cloud ? '<em>Owned by you</em>' : ''}</div>
       <div class="project-card-actions"></div>`;
     const actions = article.querySelector('.project-card-actions');
     const open = document.createElement('button');
@@ -195,23 +201,31 @@
     const duplicate = document.createElement('button');
     duplicate.type = 'button'; duplicate.textContent = 'Duplicate';
     duplicate.addEventListener('click', async () => {
-      if (cloud) {
-        await openCloudProject(entry.id, { keepDrawer:true });
-        localStorage.removeItem(CURRENT_CLOUD_KEY);
-        await saveCloudProject({ forceNew:true });
-      } else {
-        const copy = structuredClone(entry); copy.id = crypto.randomUUID(); copy.title = `${entry.title} copy`; copy.updatedAt = new Date().toISOString();
-        localProjects.unshift(copy); await writeLocalGallery(); renderLocalGallery();
-      }
+      try {
+        if (cloud) {
+          await openCloudProject(entry.id, { keepDrawer:true });
+          localStorage.removeItem(CURRENT_CLOUD_KEY);
+          window.SciCanvasCloud.currentProjectId = '';
+          await saveCloudProject({ forceNew:true });
+        } else {
+          const copy = structuredClone(entry); copy.id = crypto.randomUUID(); copy.title = `${entry.title} copy`; copy.updatedAt = new Date().toISOString();
+          localProjects.unshift(copy); await writeLocalGallery(); renderLocalGallery();
+        }
+      } catch (error) { message(error.message, 'error'); }
     });
-    const remove = document.createElement('button');
-    remove.type = 'button'; remove.textContent = 'Delete';
-    remove.addEventListener('click', async () => {
-      if (!confirm(`Delete “${entry.title}” from ${cloud ? 'the cloud vault' : 'this device gallery'}?`)) return;
-      if (cloud) await deleteCloudProject(entry.id);
-      else { localProjects = localProjects.filter(item => item.id !== entry.id); await writeLocalGallery(); renderLocalGallery(); }
-    });
-    actions.append(open, duplicate, remove);
+    actions.append(open, duplicate);
+    if (isOwner) {
+      const remove = document.createElement('button');
+      remove.type = 'button'; remove.textContent = 'Delete';
+      remove.addEventListener('click', async () => {
+        if (!confirm(`Delete “${entry.title}” from ${cloud ? 'the cloud vault' : 'this device gallery'}?`)) return;
+        try {
+          if (cloud) await deleteCloudProject(entry.id);
+          else { localProjects = localProjects.filter(item => item.id !== entry.id); await writeLocalGallery(); renderLocalGallery(); }
+        } catch (error) { message(error.message, 'error'); }
+      });
+      actions.appendChild(remove);
+    }
     return article;
   }
 
@@ -227,17 +241,17 @@
   async function loadCloudProjects() {
     cloudGrid.replaceChildren();
     if (!configured()) {
-      cloudGrid.innerHTML = '<p class="gallery-empty">Cloud is not configured on this deployment. Local projects remain fully available.</p>';
+      cloudGrid.innerHTML = '<p class="gallery-empty">Email accounts are not configured on this deployment. Local projects remain fully available.</p>';
       return [];
     }
     if (!currentUser) {
-      cloudGrid.innerHTML = '<p class="gallery-empty">Sign in to view your encrypted projects and shared laboratory workspaces.</p>';
+      cloudGrid.innerHTML = '<p class="gallery-empty">Sign in with email to view encrypted projects and shared laboratory workspaces.</p>';
       return [];
     }
     cloudGrid.innerHTML = '<p class="gallery-empty">Loading cloud projects…</p>';
     try {
       const client = await getClient();
-      const { data, error } = await client.from('projects').select('id,title,updated_at,revision,owner_id,thumbnail').order('updated_at', { ascending:false });
+      const { data, error } = await client.from('projects').select('id,title,updated_at,revision,owner_id').order('updated_at', { ascending:false });
       if (error) throw error;
       cloudGrid.replaceChildren();
       if (!data?.length) cloudGrid.innerHTML = '<p class="gallery-empty">No cloud projects yet.</p>';
@@ -257,10 +271,11 @@
     let revision = 0;
     if (!projectId) {
       projectId = crypto.randomUUID();
-      const { error } = await client.from('projects').insert({ id:projectId, owner_id:user.id, title:currentTitle(), cipher_text:'', iv:'', revision:0, thumbnail:makeThumbnail() });
+      const { error } = await client.from('projects').insert({ id:projectId, owner_id:user.id, title:currentTitle(), cipher_text:'', iv:'', revision:0, thumbnail:'' });
       if (error) throw error;
     } else {
-      const { data } = await client.from('projects').select('revision').eq('id', projectId).maybeSingle();
+      const { data, error } = await client.from('projects').select('revision').eq('id', projectId).maybeSingle();
+      if (error) throw error;
       revision = Number(data?.revision) || 0;
     }
     const key = await getProjectKey(projectId);
@@ -268,7 +283,7 @@
     const nextRevision = revision + 1;
     const { error } = await client.from('projects').update({
       title:currentTitle(), cipher_text:encrypted.cipherText, iv:encrypted.iv,
-      revision:nextRevision, thumbnail:makeThumbnail(), updated_at:new Date().toISOString()
+      revision:nextRevision, thumbnail:'', updated_at:new Date().toISOString()
     }).eq('id', projectId);
     if (error) throw error;
     localStorage.setItem(CURRENT_CLOUD_KEY, projectId);
@@ -299,22 +314,35 @@
     const client = await getClient();
     const { error } = await client.from('projects').delete().eq('id', projectId);
     if (error) throw error;
-    if (localStorage.getItem(CURRENT_CLOUD_KEY) === projectId) localStorage.removeItem(CURRENT_CLOUD_KEY);
+    if (localStorage.getItem(CURRENT_CLOUD_KEY) === projectId) {
+      localStorage.removeItem(CURRENT_CLOUD_KEY);
+      window.SciCanvasCloud.currentProjectId = '';
+    }
     await loadCloudProjects();
+  }
+
+  function showRecovery(show) {
+    recoveryMode = Boolean(show);
+    q('#cloudPasswordRecovery').hidden = !recoveryMode;
+    q('#cloudSignedOut').hidden = recoveryMode || Boolean(currentUser);
+    q('#cloudSignedIn').hidden = recoveryMode || !currentUser;
+    if (recoveryMode) setTimeout(() => q('#cloudNewPassword').focus({ preventScroll:true }), 50);
   }
 
   function updateAuthUi(user) {
     currentUser = user || null;
-    q('#cloudSignedOut').hidden = Boolean(user);
-    q('#cloudSignedIn').hidden = !user;
+    if (!recoveryMode) {
+      q('#cloudSignedOut').hidden = Boolean(user);
+      q('#cloudSignedIn').hidden = !user;
+    }
     q('#saveCloudProject').disabled = !user;
     q('#saveCloudProjectAs').disabled = !user;
     if (user) {
-      q('#cloudUserEmail').textContent = user.email || 'OAuth account';
-      q('#cloudUserName').textContent = user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0] || 'Scientist';
+      q('#cloudUserEmail').textContent = user.email || 'Email account';
+      q('#cloudUserName').textContent = user.user_metadata?.full_name || user.email?.split('@')[0] || 'Scientist';
       cloudStatus.textContent = 'Encrypted cloud vault connected.';
     } else {
-      cloudStatus.textContent = configured() ? 'Sign in for encrypted sync and shared workspaces.' : 'Local gallery is ready. Cloud backend setup is still required.';
+      cloudStatus.textContent = configured() ? 'Sign in with email for encrypted sync and shared workspaces.' : 'Local gallery is ready. Email account backend setup is still required.';
     }
     const accountButton = document.getElementById('accountButton');
     if (accountButton) accountButton.textContent = user ? 'Gallery' : 'Sign in';
@@ -322,8 +350,13 @@
   }
 
   async function initializeAuth() {
+    q('#cloudEmail').value = localStorage.getItem(LAST_EMAIL_KEY) || '';
     if (!configured()) {
       updateAuthUi(null);
+      q('#cloudEmailSignIn').disabled = true;
+      q('#cloudEmailSignUp').disabled = true;
+      q('#cloudForgotPassword').disabled = true;
+      message('Local gallery works now. Email accounts need the deployment values described in docs/CLOUD_SETUP.md.', '');
       return;
     }
     try {
@@ -331,9 +364,16 @@
       const { data } = await client.auth.getSession();
       updateAuthUi(data.session?.user || null);
       const subscription = client.auth.onAuthStateChange((event, session) => {
+        if (event === 'PASSWORD_RECOVERY') {
+          currentUser = session?.user || currentUser;
+          showRecovery(true);
+          message('Recovery link accepted. Choose a new password.', 'success');
+          return;
+        }
+        if (event === 'USER_UPDATED' && recoveryMode) showRecovery(false);
         updateAuthUi(session?.user || null);
-        q('#cloudPasswordRecovery').hidden = event !== 'PASSWORD_RECOVERY';
-        if (event === 'PASSWORD_RECOVERY') message('Choose a new password below.', 'success');
+        if (event === 'SIGNED_IN') message('Signed in.', 'success');
+        if (event === 'SIGNED_OUT') message('Signed out. Local projects remain on this device.', 'success');
       });
       authSubscription = subscription.data.subscription;
     } catch (error) {
@@ -341,56 +381,93 @@
     }
   }
 
+  function rememberEmail() {
+    const email = q('#cloudEmail').value.trim().toLowerCase();
+    if (email) localStorage.setItem(LAST_EMAIL_KEY, email);
+    return email;
+  }
+
   async function emailAuth(mode) {
     try {
       const client = await getClient();
-      const email = q('#cloudEmail').value.trim();
+      const email = rememberEmail();
       const password = q('#cloudPassword').value;
       if (!email) throw new Error('Enter your email address.');
       if (mode !== 'reset' && password.length < 8) throw new Error('Use a password with at least 8 characters.');
       message(mode === 'signup' ? 'Creating account…' : mode === 'reset' ? 'Sending recovery email…' : 'Signing in…');
       if (mode === 'signup') {
-        const { error } = await client.auth.signUp({ email, password, options:{ emailRedirectTo:CONFIG.redirectUrl } });
+        const localName = localStorage.getItem('scicanvas-user-name-v1') || '';
+        const { data, error } = await client.auth.signUp({
+          email, password,
+          options:{ emailRedirectTo:CONFIG.redirectUrl, data:{ full_name:localName || email.split('@')[0] } }
+        });
         if (error) throw error;
-        message('Account created. Check your email if confirmation is enabled.', 'success');
+        q('#cloudPassword').value = '';
+        if (data.session) message('Account created and signed in.', 'success');
+        else {
+          q('#cloudResendConfirmation').hidden = false;
+          message('Account created. Open the confirmation email, then return here to sign in.', 'success');
+        }
       } else if (mode === 'reset') {
         const { error } = await client.auth.resetPasswordForEmail(email, { redirectTo:CONFIG.redirectUrl });
         if (error) throw error;
-        message('Password recovery email sent.', 'success');
+        message('Password recovery email sent. Open the link in that email to choose a new password.', 'success');
       } else {
         const { error } = await client.auth.signInWithPassword({ email, password });
         if (error) throw error;
+        q('#cloudPassword').value = '';
         message('Signed in.', 'success');
       }
     } catch (error) { message(error.message, 'error'); }
   }
 
-  async function oauth(provider) {
+  async function resendConfirmation() {
     try {
+      const email = rememberEmail();
+      if (!email) throw new Error('Enter your email address first.');
       const client = await getClient();
-      const options = { redirectTo:CONFIG.redirectUrl };
-      if (provider === 'azure') options.scopes = 'email openid profile';
-      const { error } = await client.auth.signInWithOAuth({ provider, options });
+      const { error } = await client.auth.resend({ type:'signup', email, options:{ emailRedirectTo:CONFIG.redirectUrl } });
       if (error) throw error;
+      message('A new confirmation email was sent.', 'success');
     } catch (error) { message(error.message, 'error'); }
   }
 
   q('#cloudEmailSignIn').addEventListener('click', () => emailAuth('signin'));
   q('#cloudEmailSignUp').addEventListener('click', () => emailAuth('signup'));
   q('#cloudForgotPassword').addEventListener('click', () => emailAuth('reset'));
-  q('#cloudAppleSignIn').addEventListener('click', () => oauth('apple'));
-  q('#cloudMicrosoftSignIn').addEventListener('click', () => oauth('azure'));
-  q('#cloudSignOut').addEventListener('click', async () => { try { (await getClient()).auth.signOut(); } catch (error) { message(error.message, 'error'); } });
+  q('#cloudResendConfirmation').addEventListener('click', resendConfirmation);
+  q('#cloudTogglePassword').addEventListener('click', () => {
+    const input = q('#cloudPassword');
+    const reveal = input.type === 'password';
+    input.type = reveal ? 'text' : 'password';
+    q('#cloudTogglePassword').textContent = reveal ? 'Hide' : 'Show';
+    q('#cloudTogglePassword').setAttribute('aria-label', reveal ? 'Hide password' : 'Show password');
+  });
+  q('#cloudPassword').addEventListener('keydown', event => { if (event.key === 'Enter') emailAuth('signin'); });
+  q('#cloudSignOut').addEventListener('click', async () => {
+    try {
+      const { error } = await (await getClient()).auth.signOut();
+      if (error) throw error;
+      showRecovery(false);
+    } catch (error) { message(error.message, 'error'); }
+  });
   q('#cloudUpdatePassword').addEventListener('click', async () => {
     try {
       const password = q('#cloudNewPassword').value;
+      const confirmPassword = q('#cloudConfirmPassword').value;
       if (password.length < 8) throw new Error('Use at least 8 characters.');
+      if (password !== confirmPassword) throw new Error('The two passwords do not match.');
       const { error } = await (await getClient()).auth.updateUser({ password });
       if (error) throw error;
-      q('#cloudPasswordRecovery').hidden = true;
-      message('Password updated.', 'success');
+      q('#cloudNewPassword').value = '';
+      q('#cloudConfirmPassword').value = '';
+      showRecovery(false);
+      updateAuthUi(currentUser);
+      message('Password updated. You are signed in.', 'success');
+      history.replaceState({}, document.title, `${location.pathname}${location.search ? '' : ''}`);
     } catch (error) { message(error.message, 'error'); }
   });
+  q('#cloudCancelRecovery').addEventListener('click', () => { showRecovery(false); updateAuthUi(currentUser); message('Password change cancelled.'); });
   q('#saveLocalGallery').addEventListener('click', () => saveLocalCopy().catch(error => message(error.message, 'error')));
   q('#saveCloudProject').addEventListener('click', () => saveCloudProject().catch(error => message(error.message, 'error')));
   q('#saveCloudProjectAs').addEventListener('click', () => saveCloudProject({ forceNew:true }).catch(error => message(error.message, 'error')));
@@ -400,13 +477,13 @@
   accountButton.id = 'accountButton';
   accountButton.type = 'button';
   accountButton.textContent = 'Sign in';
-  accountButton.title = 'Accounts and project gallery';
+  accountButton.title = 'Email account and project gallery';
   accountButton.addEventListener('click', () => drawer.classList.toggle('open'));
   document.querySelector('.title-actions')?.prepend(accountButton);
 
   const style = document.createElement('style');
   style.textContent = `
-    #accountButton{border-color:#9ab8bb;background:linear-gradient(145deg,#eef8f7,#f4f1fb);color:#315f69;font-weight:750}.cloud-gallery-drawer{width:min(920px,calc(100vw - 18px))!important}.cloud-hero,.cloud-user-row,.gallery-heading{display:flex;align-items:center;justify-content:space-between;gap:10px}.cloud-hero{padding:13px;border:1px solid #c9d8de;border-radius:13px;background:linear-gradient(135deg,#edf7f6,#f6f3fb)}.cloud-hero strong,.cloud-hero small,.cloud-user-row strong,.cloud-user-row small{display:block}.cloud-hero strong{font-size:15px}.cloud-hero small,.cloud-user-row small{margin-top:3px;color:#6d7b8c;font-size:10px}.cloud-account-panel{display:grid;gap:10px;margin-top:11px;padding:13px;border:1px solid #d7e0e8;border-radius:12px;background:rgba(255,255,255,.76)}.cloud-account-panel label{display:grid;gap:5px;color:#617086;font-size:10px}.cloud-account-panel input{min-height:38px;border:1px solid #cbd6e2;border-radius:9px;background:white;padding:8px}.cloud-provider-grid,.cloud-account-actions,.cloud-toolbar{display:flex;flex-wrap:wrap;gap:8px}.cloud-provider{flex:1 1 190px;min-height:42px;background:white!important;font-weight:700}.cloud-divider{display:flex;align-items:center;gap:10px;color:#8995a5;font-size:9px}.cloud-divider::before,.cloud-divider::after{content:'';height:1px;flex:1;background:#dde4eb}.cloud-account-actions button,.cloud-toolbar button{min-height:38px}.cloud-account-actions .primary,.cloud-toolbar .primary{background:#3f69b9;color:white;border-color:#3f69b9}.cloud-note,.cloud-message{margin:0;color:#748196;font-size:9px;line-height:1.45}.cloud-message[data-kind="error"]{color:#b42318}.cloud-message[data-kind="success"]{color:#28745f}.cloud-user-avatar{display:grid;place-items:center;width:38px;height:38px;border-radius:12px;background:linear-gradient(145deg,#4f89a0,#786ca3);color:white;font-weight:800}.cloud-user-row>span:nth-child(2){flex:1}.cloud-toolbar{margin-top:11px}.gallery-section{margin-top:16px}.gallery-heading h3{margin:0;font-size:12px}.gallery-heading small{color:#7a8798;font-size:9px}.project-gallery{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin-top:8px}.project-gallery-card{min-width:0;display:grid;grid-template-columns:100px minmax(0,1fr);gap:10px;padding:9px;border:1px solid #d5dfe8;border-radius:12px;background:rgba(255,255,255,.88)}.project-thumb{grid-row:1/3;width:100px;height:72px;display:grid;place-items:center;overflow:hidden;border-radius:8px;background:#eef2f5;color:#8a9aab;font-size:24px}.project-thumb img{width:100%;height:100%;object-fit:contain}.project-card-copy{min-width:0}.project-card-copy strong,.project-card-copy small,.project-card-copy em{display:block}.project-card-copy strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px}.project-card-copy small{margin-top:4px;color:#7a8797;font-size:8px}.project-card-copy em{margin-top:4px;color:#4d7896;font-size:8px}.project-card-actions{display:flex;gap:5px;align-self:end}.project-card-actions button{padding:5px 7px;font-size:8px}.gallery-empty{grid-column:1/-1;margin:0;padding:16px;border:1px dashed #cfd9e3;border-radius:10px;color:#7c8999;text-align:center;font-size:9px}.cloud-toolbar button:disabled{opacity:.5}@media(max-width:700px){.project-gallery{grid-template-columns:1fr}.project-gallery-card{grid-template-columns:82px minmax(0,1fr)}.project-thumb{width:82px;height:64px}}`;
+    #accountButton{border-color:#9ab8bb;background:linear-gradient(145deg,#eef8f7,#f4f1fb);color:#315f69;font-weight:750}.cloud-gallery-drawer{width:min(920px,calc(100vw - 18px))!important}.cloud-hero,.cloud-user-row,.gallery-heading{display:flex;align-items:center;justify-content:space-between;gap:10px}.cloud-hero{padding:13px;border:1px solid #c9d8de;border-radius:13px;background:linear-gradient(135deg,#edf7f6,#f6f3fb)}.cloud-hero strong,.cloud-hero small,.cloud-user-row strong,.cloud-user-row small,.email-account-heading strong,.email-account-heading small{display:block}.cloud-hero strong{font-size:15px}.cloud-hero small,.cloud-user-row small,.email-account-heading small{margin-top:3px;color:#6d7b8c;font-size:10px}.cloud-account-panel{display:grid;gap:10px;margin-top:11px;padding:13px;border:1px solid #d7e0e8;border-radius:12px;background:rgba(255,255,255,.76)}.email-account-heading{display:flex;align-items:center;gap:10px;padding:10px;border:1px solid #d6e2e5;border-radius:10px;background:linear-gradient(135deg,#f0f8f7,#f6f3fa)}.email-account-heading>span{display:grid;place-items:center;width:34px;height:34px;border-radius:10px;background:linear-gradient(145deg,#4f8992,#746aa0);color:white;font-size:18px;font-weight:800}.cloud-account-panel label{display:grid;gap:5px;color:#617086;font-size:10px}.cloud-account-panel input{min-height:38px;border:1px solid #cbd6e2;border-radius:9px;background:white;padding:8px}.password-field{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px}.password-field button{min-width:58px}.cloud-account-actions,.cloud-toolbar{display:flex;flex-wrap:wrap;gap:8px}.cloud-account-actions button,.cloud-toolbar button{min-height:38px}.cloud-account-actions .primary,.cloud-toolbar .primary{background:#3f69b9;color:white;border-color:#3f69b9}.cloud-note,.cloud-message,.cloud-password-recovery p{margin:0;color:#748196;font-size:9px;line-height:1.45}.cloud-message[data-kind="error"]{color:#b42318}.cloud-message[data-kind="success"]{color:#28745f}.cloud-password-recovery{display:grid;gap:8px;padding:11px;border:1px solid #9fc9bd;border-radius:11px;background:#eef9f5}.cloud-password-recovery[hidden]{display:none}.cloud-password-recovery>strong{font-size:12px}.cloud-user-avatar{display:grid;place-items:center;width:38px;height:38px;border-radius:12px;background:linear-gradient(145deg,#4f89a0,#786ca3);color:white;font-weight:800}.cloud-user-row>span:nth-child(2){flex:1}.cloud-toolbar{margin-top:11px}.gallery-section{margin-top:16px}.gallery-heading h3{margin:0;font-size:12px}.gallery-heading small{color:#7a8798;font-size:9px}.project-gallery{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin-top:8px}.project-gallery-card{min-width:0;display:grid;grid-template-columns:100px minmax(0,1fr);gap:10px;padding:9px;border:1px solid #d5dfe8;border-radius:12px;background:rgba(255,255,255,.88)}.project-thumb{grid-row:1/3;width:100px;height:72px;display:grid;place-items:center;overflow:hidden;border-radius:8px;background:#eef2f5;color:#8a9aab;font-size:24px}.project-thumb img{width:100%;height:100%;object-fit:contain}.project-card-copy{min-width:0}.project-card-copy strong,.project-card-copy small,.project-card-copy em{display:block}.project-card-copy strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px}.project-card-copy small{margin-top:4px;color:#7a8797;font-size:8px}.project-card-copy em{margin-top:4px;color:#4d7896;font-size:8px}.project-card-actions{display:flex;gap:5px;align-self:end;flex-wrap:wrap}.project-card-actions button{padding:5px 7px;font-size:8px}.gallery-empty{grid-column:1/-1;margin:0;padding:16px;border:1px dashed #cfd9e3;border-radius:10px;color:#7c8999;text-align:center;font-size:9px}.cloud-toolbar button:disabled,.cloud-account-actions button:disabled{opacity:.5}@media(max-width:700px){.project-gallery{grid-template-columns:1fr}.project-gallery-card{grid-template-columns:82px minmax(0,1fr)}.project-thumb{width:82px;height:64px}}`;
   document.head.appendChild(style);
 
   window.SciCanvasCloud = {
