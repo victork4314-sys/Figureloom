@@ -24,7 +24,12 @@
     ['publish', 'Publish & present', 'Journal presets, print checks, presentation mode and export readiness.', '▣'],
     ['office', 'Office bridge', 'Import PowerPoint, Excel, ODS, CSV and TSV; export editable or compatibility PowerPoint.', '▦'],
     ['workspace', 'Workspace & recovery', 'Move objects between pages, manage assets, recover work, diagnose and reset the interface.', '↻'],
-    ['scienceplus', 'Advanced Science', 'Publication plots, sequence tracks, phylogenetic trees, gels and microscopy layouts.', '∿']
+    ['scienceplus', 'Advanced Science', 'Publication plots, sequence tracks, phylogenetic trees, gels and microscopy layouts.', '∿'],
+    ['cloud', 'Accounts & gallery', 'Email recovery, Apple/Microsoft sign-in, local gallery, encrypted cloud vault and shared projects.', '☁'],
+    ['collab', 'Live collaboration', 'Invite collaborators, encrypted comments, presence, remote cursors and realtime review sessions.', '◎'],
+    ['vector', 'SVG path editor', 'Edit path commands and anchors or break compound SVG artwork into independent objects.', '⌁'],
+    ['typeset', 'TeX typesetting', 'Render editable TeX source into publication-quality embedded SVG equations.', '∫'],
+    ['exchange', 'Pathway exchange', 'Export the active page as SBGN-ML, BioPAX RDF/XML or SBML Level 3.', '⇄']
   ];
 
   function renderWorkspaces() {
@@ -87,7 +92,7 @@
   const style = document.createElement('style');
   style.textContent = `
     #proToolsButton{border-color:#9bb1d4;background:#eef4ff;color:#244f9c;font-weight:700}
-    #proToolsButton:hover{background:#e2ecff}.pro-tools-drawer{width:min(760px,calc(100vw - 20px))!important}
+    #proToolsButton:hover{background:#e2ecff}.pro-tools-drawer{width:min(900px,calc(100vw - 20px))!important}
     .pro-intro{margin:0 0 12px;color:#657287;font-size:11px;line-height:1.5}
     .pro-workspace-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
     .pro-workspace-card{min-width:0;display:grid;grid-template-columns:38px minmax(0,1fr) 18px;align-items:center;gap:10px;min-height:92px;padding:12px;border:1px solid #d5deea;border-radius:11px;background:#fff;text-align:left;color:#29364b}
@@ -96,7 +101,7 @@
     .pro-workspace-card strong,.pro-workspace-card small{display:block}.pro-workspace-card strong{font-size:12px}.pro-workspace-card small{margin-top:5px;color:#718096;font-size:9px;line-height:1.4}.pro-open-arrow{font-size:24px;color:#8a9ab1}
     .pro-shortcuts{margin-top:13px;border:1px solid #dce3ed;border-radius:9px;background:#f8fafc;padding:9px}.pro-shortcuts summary{cursor:pointer;color:#52627a;font-size:10px;font-weight:700}
     #proShortcutList{display:grid;gap:6px;margin-top:9px}.pro-shortcut-row{display:grid;grid-template-columns:minmax(70px,auto) 1fr;align-items:center;gap:9px;font-size:9px;color:#657287}.pro-shortcut-row kbd{justify-self:start;padding:4px 6px;border:1px solid #cbd5e1;border-bottom-width:2px;border-radius:5px;background:white;color:#334155;font-family:inherit}
-    @media(max-width:620px){.pro-workspace-grid{grid-template-columns:1fr}.pro-workspace-card{min-height:82px}}
+    @media(min-width:1100px){.pro-workspace-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}@media(max-width:620px){.pro-workspace-grid{grid-template-columns:1fr}.pro-workspace-card{min-height:82px}}
   `;
   document.head.appendChild(style);
   renderWorkspaces();
