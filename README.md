@@ -2,7 +2,7 @@
 
 SciCanvas is a local-first scientific illustration and figure editor designed to feel familiar to people who know Microsoft Office or Apple Keynote.
 
-This repository contains a functional MVP rather than a static mock-up. It is a dependency-free web app that can run locally or deploy directly to GitHub Pages.
+This repository contains a functional MVP rather than a static mock-up. It is a dependency-light web app that can run locally or deploy directly to GitHub Pages. PowerPoint generation loads the official PptxGenJS browser bundle only when requested.
 
 ## What works now
 
@@ -19,26 +19,34 @@ This repository contains a functional MVP rather than a static mock-up. It is a 
 - Continuous local autosave using IndexedDB with a localStorage fallback
 - Manual and automatic recovery snapshots
 - Multiple editable pages
+- Per-page solid, gradient, transparent, preset, and randomized backgrounds
 - Layers with visibility, ordering, duplication, renaming, and deletion
 - Optional grid, adjustable spacing and style, magnetic grid/object snapping, and alignment guides
-- Move, resize through the inspector, rotate, recolor, rename, and annotate objects
+- Move, resize with eight on-canvas handles or inspector fields, rotate, recolor, rename, and annotate objects
 - Editable text, rectangles, ellipses, arrows, inhibition lines, attached object-to-object connectors, and tidy-up alignment
 - Scientific metadata fields and general/detailed attribution reports
 - Editable templates for graphical abstracts, workflows, pathways, host-pathogen interactions, and publication panels
-- PNG, SVG, and complete `.scicanvas` project exports
+- PNG, SVG, PowerPoint `.pptx`, and complete `.scicanvas` project exports
+- Multi-page PowerPoint export with one visually preserved SciCanvas page per slide
 - Offline application shell through a registered service worker
 - Simple and Advanced interface modes
 - GitHub Actions workflows for JavaScript syntax validation and GitHub Pages deployment
 
 ## Illustration packs
 
-Open **Science → Packs** inside the app to browse licensed sources.
+Open **Science → 2,829 SVGs** inside the app to browse licensed sources.
 
 Bioicons is integrated directly: SciCanvas loads its complete machine-readable index, shows lazy-loaded previews, and embeds only the SVGs selected by the user. This keeps the full library searchable without forcing the browser to download thousands of illustrations at startup.
 
 The Packs drawer also provides whole-package download links for Bioicons and the complete Servier Medical Art slide set. NIH BioArt Source and Reactome are linked as additional reputable sources because their entries require source-specific licence review.
 
 See [`docs/ASSET_PACKS.md`](docs/ASSET_PACKS.md) for sources and licensing behavior.
+
+## Export behavior
+
+PowerPoint export creates a matching 12 × 7.5 inch slide for every SciCanvas page. The complete figure is placed on the slide as a high-resolution rendered image, preserving the visual output and page background. Individual SciCanvas objects are not yet converted into native editable PowerPoint shapes.
+
+See [`docs/POWERPOINT_EXPORT.md`](docs/POWERPOINT_EXPORT.md) for details.
 
 ## Requirement status
 
@@ -72,7 +80,8 @@ Attribution reports assist with recordkeeping but do not replace reviewing curre
 2. Account-based encrypted cloud vault and shared lab workspaces
 3. Configurable smart biological components with scientifically constrained variants
 4. Grouping, multi-selection, masking, and richer vector editing
-5. Better text layout, equations, chemical notation, and gene/protein formatting rules
-6. Collaborative comments and publication-figure review
-7. Accessible figure descriptions and machine-readable pathway export
-8. Additional normalized illustration-pack importers
+5. Native editable PowerPoint-object export
+6. Better text layout, equations, chemical notation, and gene/protein formatting rules
+7. Collaborative comments and publication-figure review
+8. Accessible figure descriptions and machine-readable pathway export
+9. Additional normalized illustration-pack importers
