@@ -20,7 +20,7 @@ for (const script of scripts) {
 const required = [
   'assistant-universal.js','control-usability.js','canvas-navigation.js','water-icons.js',
   'theme-font-pairs.js','figure-assistant.js','external-packs.js','expanded-library.js',
-  'map-studio.js','layout-stability.js','workspace-state.js','insert-tools.js'
+  'map-studio.js','layout-stability.js','layout-polish.js','workspace-state.js','insert-tools.js'
 ];
 for (const file of required) {
   if (!scripts.includes(file)) fail(`Required module is not loaded: ${file}`);
@@ -40,6 +40,7 @@ before('canvas-navigation.js','control-usability.js');
 before('insert-tools.js','map-studio.js');
 before('canvas-navigation.js','layout-stability.js');
 before('workspace-state.js','layout-stability.js');
+before('layout-stability.js','layout-polish.js');
 
 const usability = read('control-usability.js');
 for (const marker of ['overflow:scroll!important','show-pages-panel','show-format-panel','scrollbar-gutter']) {
