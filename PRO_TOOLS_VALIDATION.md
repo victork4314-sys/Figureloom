@@ -1,0 +1,1 @@
+Validation-only marker after the Data Lab point-position syntax fix. Production code remains on main.
