@@ -17,7 +17,7 @@ for (const script of scripts) {
 }
 
 const required = [
-  'assistant-universal.js','control-usability.js','canvas-navigation.js','water-icons.js','theme-font-pairs.js','figure-assistant.js','external-packs.js','expanded-library.js','map-studio.js','layout-stability.js','layout-polish.js','workspace-state.js','insert-tools.js','pro-tools-hub.js','selection-layout-tools.js','data-science-tools.js','scientific-annotation-tools.js','component-object-tools.js','review-accessibility-tools.js','publish-presentation-tools.js','finishing-touches.js','office-bridge.js','office-import-fix.js','pro-office-tools.js','stability-hardening.js','product-experience.js','advanced-science-tools.js','workspace-controls-pages.js','refresh-safety.js','polish-delight.js','cloud-config.js','cloud-account.js','collaboration-tools.js','svg-path-editor.js','tex-typesetting.js','pathway-exchange.js','local-prompt-assistant.js'
+  'assistant-universal.js','control-usability.js','canvas-navigation.js','water-icons.js','theme-font-pairs.js','figure-assistant.js','external-packs.js','expanded-library.js','map-studio.js','layout-stability.js','layout-polish.js','workspace-state.js','insert-tools.js','pro-tools-hub.js','selection-layout-tools.js','data-science-tools.js','scientific-annotation-tools.js','component-object-tools.js','review-accessibility-tools.js','publish-presentation-tools.js','finishing-touches.js','office-bridge.js','office-import-fix.js','pro-office-tools.js','stability-hardening.js','product-experience.js','advanced-science-tools.js','workspace-controls-pages.js','refresh-safety.js','polish-delight.js','cloud-config.js','cloud-account.js','collaboration-tools.js','account-header-polish.js','svg-path-editor.js','tex-typesetting.js','pathway-exchange.js','local-prompt-assistant.js'
 ];
 for (const file of required) if (!scripts.includes(file)) fail(`Required module is not loaded: ${file}`);
 
@@ -56,6 +56,8 @@ before('refresh-safety.js','polish-delight.js');
 before('polish-delight.js','cloud-config.js');
 before('cloud-config.js','cloud-account.js');
 before('cloud-account.js','collaboration-tools.js');
+before('collaboration-tools.js','account-header-polish.js');
+before('account-header-polish.js','svg-path-editor.js');
 before('editable-svg-import.js','svg-path-editor.js');
 before('assistant-universal.js','local-prompt-assistant.js');
 before('pathway-exchange.js','app-bootstrap.js');
@@ -84,6 +86,7 @@ const checks = {
   'polish-delight.js':['scicanvas-user-name-v1','scicanvas-guided-tour-v3','Beautiful figures, without the software-induced despair','Nothing is opened, moved, selected, or scrolled','lab-focus-mode','Genome unlocked','microscope','prefers-reduced-motion'],
   'cloud-account.js':['resetPasswordForEmail','signInWithPassword','auth.signUp','auth.resend','PASSWORD_RECOVERY','rpc(\'get_project_key\'','rpc(\'invite_project_member\'','AES-GCM','localProjectGallery','cloudProjectGallery','email and password only','SciCanvasCloud'],
   'collaboration-tools.js':['project-update','collaboration_comments','presenceState','collabCursorLayer','Apply remote update','private:true','project-edit:'],
+  'account-header-polish.js':['accountProfileButton','collaborateRibbonButton','removeLegacyHeaderItems','account-avatar-face','ribbon-tab{border-bottom:0!important','openCollaboration'],
   'svg-path-editor.js':['PARAM_COUNTS','parsePath','path-node-handle','Break artwork apart','ancestorWrappedMarkup'],
   'tex-typesetting.js':['tex2svgPromise','mathSvgMarkup','TeX → embedded SVG','MathJax'],
   'pathway-exchange.js':['SBGN-ML','BioPAX','SBML Level 3','http://sbgn.org/libsbgn','biopax-level3.owl'],
@@ -102,6 +105,7 @@ if (!cloudConfig.includes('yzjqciycdbnpnndxvpgq.supabase.co') || !cloudConfig.in
 const cloudAccount = read('cloud-account.js');
 if (/signInWithOAuth|oauth\(['"](?:apple|azure)/.test(cloudAccount)) fail('Email-only accounts must not include social OAuth handlers.');
 if (cloudAccount.includes('client.functions.invoke')) fail('Live account build must use deployed database RPCs, not undeployed Edge Functions.');
+if (!html.includes('id="accountProfileButton"') || !html.includes('id="collaborateRibbonButton"')) fail('Unified profile avatar or Collaborate ribbon button is missing.');
 
 const hardening = read('stability-hardening.js');
 if (!hardening.includes("new Set(['local','bio','healthicons','tabler'])")) fail('Asset trust layer must allow only approved library sources');
@@ -118,7 +122,7 @@ if (finishing.includes('scrollIntoView')) fail('Passive tour must not scroll the
 if (finishing.includes('tour-target')) fail('Passive tour must not mutate target element layout');
 const polish = read('polish-delight.js');
 if (polish.includes('scrollIntoView')) fail('Expanded tour must remain passive');
-if (!worker.includes('scicanvas-shell-v35')) fail('Live email account build requires offline shell v35');
+if (!worker.includes('scicanvas-shell-v36')) fail('Unified profile header build requires offline shell v36');
 if (!fs.existsSync(path.join(root,'favicon.svg'))) fail('favicon.svg is missing');
 if (!html.includes('href="./favicon.svg"')) fail('index.html does not reference favicon.svg');
 if (!worker.includes('"./favicon.svg"')) fail('Service worker does not cache favicon.svg');
@@ -127,4 +131,4 @@ const ids = [...html.matchAll(/\sid=["']([^"']+)["']/g)].map(match => match[1]);
 const duplicateIds = ids.filter((id,index) => ids.indexOf(id) !== index);
 if (duplicateIds.length) fail(`Duplicate static HTML IDs: ${[...new Set(duplicateIds)].join(', ')}`);
 
-console.log(`Static audit passed: ${scripts.length} scripts, deployed email/password accounts, recovery, encrypted project gallery, private role-aware collaboration, SVG path editing, TeX SVG, pathway exchange, local prompt interpretation, complete offline shell, and no duplicate static IDs.`);
+console.log(`Static audit passed: ${scripts.length} scripts, unified account avatar, Collaborate navigation, one short active-tab indicator, deployed email/password accounts, recovery, encrypted project gallery, private role-aware collaboration, complete offline shell, and no duplicate static IDs.`);
