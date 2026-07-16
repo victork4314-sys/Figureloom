@@ -1,0 +1,1 @@
+Validation marker for refresh-safe persistence, movable/collapsible canvas controls, and page deletion.
