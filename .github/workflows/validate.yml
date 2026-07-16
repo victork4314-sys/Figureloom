@@ -41,10 +41,13 @@ jobs:
           test -f layer-drag.js
           test -f asset-vault.js
           test -f editable-svg-import.js
+          test -f export-svg-placement.js
           test -f external-packs.js
           test -f fun-design-tools.js
           test -f project-themes.js
           test -f theme-control-fix.js
+          test -f page-size-tools.js
+          test -f figure-assistant.js
           test -f pptx-export.js
           test -f app-bootstrap.js
           test -f manifest.webmanifest
