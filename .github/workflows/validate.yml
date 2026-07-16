@@ -39,6 +39,8 @@ jobs:
           test -f resize-tools.js
           test -f asset-vault.js
           test -f external-packs.js
+          test -f fun-design-tools.js
+          test -f pptx-export.js
           test -f app-bootstrap.js
           test -f manifest.webmanifest
           test -f service-worker.js
