@@ -133,7 +133,7 @@
     baseRestore(data);
     const checkbox = document.getElementById('themeFonts');
     if (checkbox) checkbox.checked = state.themeFontsEnabled;
-    if (state.themeFontsEnabled) applyThemeFonts(state.projectTheme, { renderNow:false });
+    if (state.themeFontsEnabled) applyThemeFonts(state.projectTheme);
     updateThemeFontLabels();
   };
 
