@@ -87,11 +87,7 @@ projectDrawer.querySelector(".utility-body").insertBefore(vaultButton, projectNo
 document.querySelector(".statusbar span:last-child").textContent = "IndexedDB vault enabled";
 
 window.addEventListener("pagehide", () => {
-  try { vaultWrite("autosave", projectData()); } catch {}
+  void vaultWrite("autosave", projectData()).catch(() => {});
 });
-
-if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
-  window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js").catch(error => console.warn("Offline registration failed", error)));
-}
 
 restoreVaultIfNeeded();
