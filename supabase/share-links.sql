@@ -15,6 +15,7 @@ create table if not exists public.project_share_links (
 
 create index if not exists project_share_links_project_idx on public.project_share_links(project_id, created_at desc);
 create index if not exists project_share_links_expiry_idx on public.project_share_links(expires_at) where revoked_at is null;
+create index if not exists project_share_links_created_by_idx on public.project_share_links(created_by);
 
 alter table public.project_share_links enable row level security;
 grant select, delete on public.project_share_links to authenticated;
@@ -22,15 +23,16 @@ revoke all on public.project_share_links from anon;
 
 drop policy if exists "owners read project share links" on public.project_share_links;
 create policy "owners read project share links" on public.project_share_links for select to authenticated
-using (scicanvas_private.project_role_for(project_id, auth.uid()) = 'owner');
+using (scicanvas_private.project_role_for(project_id, (select auth.uid())) = 'owner');
 
 drop policy if exists "owners delete project share links" on public.project_share_links;
 create policy "owners delete project share links" on public.project_share_links for delete to authenticated
-using (scicanvas_private.project_role_for(project_id, auth.uid()) = 'owner');
+using (scicanvas_private.project_role_for(project_id, (select auth.uid())) = 'owner');
 
 drop function if exists public.create_project_share_link(uuid, text, integer);
 drop function if exists public.accept_project_share_link(text);
 drop function if exists public.revoke_project_share_links(uuid);
+drop function if exists public.redeem_project_share_link(text);
 
 create function public.create_project_share_link(
   target_project uuid,
