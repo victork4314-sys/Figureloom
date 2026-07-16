@@ -29,12 +29,14 @@ jobs:
           test -f app.js
           test -f science-library.js
           test -f science-vocabulary.js
+          test -f library-dedup.js
           test -f project-tools.js
           test -f advanced-tools.js
           test -f design-tools.js
           test -f export-tools.js
           test -f storage-vault.js
           test -f interaction-tools.js
+          test -f resize-tools.js
           test -f asset-vault.js
           test -f external-packs.js
           test -f app-bootstrap.js
