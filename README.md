@@ -20,8 +20,10 @@ This repository contains a functional MVP rather than a static mock-up. It is a 
 - Continuous local autosave using IndexedDB with a localStorage fallback
 - Manual and automatic recovery snapshots
 - Multiple editable pages
+- Screen, A4, A3, A2, A1, A0, square, and custom project formats
+- Portrait/landscape poster geometry with real millimetre dimensions
 - Per-page solid, gradient, transparent, preset, and randomized backgrounds
-- Twelve full-project color themes that can change the editor chrome, every page background, existing object colors, text, arrows, and future-object defaults
+- Twelve project color themes that recolor only page backgrounds and project artwork; the editor interface remains unchanged
 - Layers with visibility, drag-and-drop/touch reordering, keyboard reordering, duplication, renaming, and deletion
 - Optional grid, adjustable spacing and style, magnetic grid/object snapping, and alignment guides
 - Move, resize with eight on-canvas handles or inspector fields, rotate, recolor, rename, and annotate objects
@@ -29,10 +31,12 @@ This repository contains a functional MVP rather than a static mock-up. It is a 
 - Thirty-eight bundled/open/system font choices with searchable previews
 - Local `.woff`, `.woff2`, `.ttf`, and `.otf` font import stored in the device vault
 - Project-wide default fonts and one-click apply-to-all-text behavior
+- Private no-API Figure Assistant that assembles editable scientific figures from a written description
+- Dedicated editable wastewater, host-pathogen, PCR, CRISPR, sequencing, biofilm, and generic workflow generation paths
 - Scientific metadata fields and general/detailed attribution reports
 - Editable templates for graphical abstracts, workflows, pathways, host-pathogen interactions, and publication panels
-- PNG, SVG, PowerPoint `.pptx`, and complete `.scicanvas` project exports
-- Multi-page PowerPoint export with one visually preserved SciCanvas page per slide
+- Format-aware PNG, physical-size SVG, print PNG, PowerPoint `.pptx`, and complete `.scicanvas` project exports
+- Multi-page PowerPoint export with one visually preserved SciCanvas page per slide at the selected physical dimensions
 - Offline application shell through a registered service worker
 - Simple and Advanced interface modes
 - GitHub Actions workflows for JavaScript syntax validation and GitHub Pages deployment
@@ -49,9 +53,21 @@ See [`docs/ASSET_PACKS.md`](docs/ASSET_PACKS.md) for sources and licensing behav
 
 ## Editable SVG behavior
 
-Use **Editable SVG** in the ribbon to import an SVG into the reusable local SVG vault. Imported SVGs keep their vector structure and can be moved, resized, rotated, layered, switched between original colors and whole-object recoloring, and downloaded again as SVG.
+Use **Export → Editable SVG library** to import an SVG into the reusable local SVG vault. Imported SVGs keep their vector structure and can be moved, resized, rotated, layered, switched between original colors and whole-object recoloring, and downloaded again as SVG.
 
 Individual path-node editing, Boolean operations, masks, and breaking one imported SVG into multiple independent canvas objects are not implemented yet.
+
+## Page and poster formats
+
+Open **Layout → Page and poster size** to choose Screen, A4, A3, A2, A1, A0, square, or custom millimetre dimensions. The project uses one physical format so every page, SVG, PNG, and PowerPoint slide remains consistent.
+
+Poster SVG export writes the selected physical dimensions into the SVG. **Print PNG · 150 DPI** uses the same millimetre size and warns before unusually large mobile-browser exports.
+
+## Figure Assistant
+
+Use **✨ Figure Assistant** beside Export and describe a figure such as “wastewater treatment with screening, bacteria, filtration, and clean effluent.” The assistant runs entirely in the browser and assembles movable, recolorable, resizable SciCanvas objects rather than generating a flattened raster image.
+
+It is a private rule-based scientific layout assistant, not a downloaded diffusion model. This keeps the feature fast, editable, offline-capable, and practical on phones and tablets.
 
 ## Fonts
 
@@ -59,7 +75,7 @@ Use **Fonts** in the ribbon to browse the built-in font catalogue, select a proj
 
 ## Export behavior
 
-PowerPoint export creates a matching 12 × 7.5 inch slide for every SciCanvas page. The complete figure is placed on the slide as a high-resolution rendered image, preserving the visual output and page background. Individual SciCanvas objects are not yet converted into native editable PowerPoint shapes.
+PowerPoint export creates slides matching the selected physical project size. The complete figure is placed on each slide as high-resolution rendered artwork, preserving the visual output and page background. Individual SciCanvas objects are not yet converted into native editable PowerPoint shapes.
 
 See [`docs/POWERPOINT_EXPORT.md`](docs/POWERPOINT_EXPORT.md) for details.
 
@@ -97,6 +113,7 @@ Users are responsible for the licences of uploaded SVGs, images, and font files.
 4. Grouping, multi-selection, SVG path-node editing, masking, Boolean operations, and richer vector editing
 5. Native editable PowerPoint-object export
 6. Better text layout, equations, chemical notation, and gene/protein formatting rules
-7. Collaborative comments and publication-figure review
-8. Accessible figure descriptions and machine-readable pathway export
-9. Additional normalized illustration-pack importers
+7. Optional local model-assisted prompt interpretation after a practical small browser model becomes available
+8. Collaborative comments and publication-figure review
+9. Accessible figure descriptions and machine-readable pathway export
+10. Additional normalized illustration-pack importers
