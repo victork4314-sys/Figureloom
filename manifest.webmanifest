@@ -1,7 +1,7 @@
 {
-  "name": "SciCanvas Scientific Illustration Workspace",
-  "short_name": "SciCanvas",
-  "description": "A local-first scientific illustration and figure editor.",
+  "name": "Figureloom Open Scientific Figure Workspace",
+  "short_name": "Figureloom",
+  "description": "An open, local-first scientific illustration and figure editor.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
