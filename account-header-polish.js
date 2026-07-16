@@ -141,11 +141,12 @@
     #accountProfileButton.brand-mark:focus-visible{outline:3px solid rgba(74,128,191,.28);outline-offset:3px}
     #accountProfileButton::after{content:'';position:absolute;right:-1px;bottom:-1px;z-index:3;width:10px;height:10px;border:2px solid white;border-radius:50%;background:#9aa8b8}
     #accountProfileButton[data-signed-in="true"]::after{background:#4aa382}
-    .account-avatar-face{display:grid;place-items:center;width:100%;height:100%;overflow:hidden;border-radius:50%;background:inherit}
-    .account-avatar-face img{width:100%;height:100%;object-fit:cover}
-    .account-avatar-initials{font-size:12px;font-weight:850;letter-spacing:.01em;color:white;text-shadow:0 1px 3px rgba(20,31,50,.24)}
+    #accountProfileButton .account-avatar-face{display:grid!important;place-items:center;width:100%;height:100%;margin:0!important;overflow:hidden;border-radius:50%;background:inherit;color:white!important}
+    #accountProfileButton .account-avatar-face img{display:block;width:100%;height:100%;margin:0;object-fit:cover}
+    #accountProfileButton .account-avatar-initials{display:block;margin:0!important;color:white!important;font-size:12px;font-weight:850;line-height:1;letter-spacing:.01em;text-shadow:0 1px 3px rgba(20,31,50,.24)}
     #cloudSignedIn .cloud-user-avatar{overflow:hidden;padding:0}
-    #cloudSignedIn .cloud-user-avatar .account-avatar-face{width:100%;height:100%}
+    #cloudSignedIn .cloud-user-avatar .account-avatar-face{display:grid;place-items:center;width:100%;height:100%;margin:0}
+    #cloudSignedIn .cloud-user-avatar .account-avatar-initials{margin:0;color:white;font-weight:850}
 
     .ribbon-tab{border-bottom:0!important}
     .ribbon-tab.active{border-bottom-color:transparent!important}
