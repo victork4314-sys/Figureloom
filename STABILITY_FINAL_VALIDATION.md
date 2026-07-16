@@ -1,0 +1,1 @@
+Final validation marker for presentation and trusted asset hardening.
