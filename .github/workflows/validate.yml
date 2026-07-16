@@ -74,6 +74,9 @@ jobs:
           test -f object-quick-menu.js
           test -f finishing-touches.js
           test -f pptx-export.js
+          test -f office-bridge.js
+          test -f office-import-fix.js
+          test -f pro-office-tools.js
           test -f app-bootstrap.js
           test -f manifest.webmanifest
           test -f service-worker.js
