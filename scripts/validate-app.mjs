@@ -17,7 +17,7 @@ for (const script of scripts) {
 }
 
 const required = [
-  'assistant-universal.js','control-usability.js','canvas-navigation.js','water-icons.js','theme-font-pairs.js','figure-assistant.js','external-packs.js','expanded-library.js','map-studio.js','layout-stability.js','layout-polish.js','workspace-state.js','insert-tools.js','pro-tools-hub.js','selection-layout-tools.js','data-science-tools.js','scientific-annotation-tools.js','component-object-tools.js','review-accessibility-tools.js','publish-presentation-tools.js','finishing-touches.js','office-bridge.js','office-import-fix.js','pro-office-tools.js','stability-hardening.js','product-experience.js','advanced-science-tools.js','workspace-controls-pages.js','refresh-safety.js','polish-delight.js','cloud-config.js','cloud-account.js','collaboration-tools.js','account-header-polish.js','svg-path-editor.js','tex-typesetting.js','pathway-exchange.js','local-prompt-assistant.js'
+  'assistant-universal.js','control-usability.js','canvas-navigation.js','water-icons.js','theme-font-pairs.js','figure-assistant.js','external-packs.js','expanded-library.js','map-studio.js','layout-stability.js','layout-polish.js','workspace-state.js','insert-tools.js','pro-tools-hub.js','selection-layout-tools.js','data-science-tools.js','scientific-annotation-tools.js','component-object-tools.js','review-accessibility-tools.js','publish-presentation-tools.js','finishing-touches.js','office-bridge.js','office-import-fix.js','pro-office-tools.js','stability-hardening.js','product-experience.js','advanced-science-tools.js','workspace-controls-pages.js','refresh-safety.js','polish-delight.js','cloud-config.js','cloud-account.js','collaboration-tools.js','account-header-polish.js','profile-gallery-polish.js','collaboration-share-links.js','svg-path-editor.js','tex-typesetting.js','pathway-exchange.js','local-prompt-assistant.js'
 ];
 for (const file of required) if (!scripts.includes(file)) fail(`Required module is not loaded: ${file}`);
 
@@ -57,7 +57,8 @@ before('polish-delight.js','cloud-config.js');
 before('cloud-config.js','cloud-account.js');
 before('cloud-account.js','collaboration-tools.js');
 before('collaboration-tools.js','account-header-polish.js');
-before('account-header-polish.js','svg-path-editor.js');
+before('account-header-polish.js','profile-gallery-polish.js');
+before('profile-gallery-polish.js','collaboration-share-links.js');
 before('editable-svg-import.js','svg-path-editor.js');
 before('assistant-universal.js','local-prompt-assistant.js');
 before('pathway-exchange.js','app-bootstrap.js');
@@ -86,7 +87,9 @@ const checks = {
   'polish-delight.js':['scicanvas-user-name-v1','scicanvas-guided-tour-v3','Beautiful figures, without the software-induced despair','Nothing is opened, moved, selected, or scrolled','lab-focus-mode','Genome unlocked','microscope','prefers-reduced-motion'],
   'cloud-account.js':['resetPasswordForEmail','signInWithPassword','auth.signUp','auth.resend','PASSWORD_RECOVERY','rpc(\'get_project_key\'','rpc(\'invite_project_member\'','AES-GCM','localProjectGallery','cloudProjectGallery','email and password only','SciCanvasCloud'],
   'collaboration-tools.js':['project-update','collaboration_comments','presenceState','collabCursorLayer','Apply remote update','private:true','project-edit:'],
-  'account-header-polish.js':['accountProfileButton','collaborateRibbonButton','removeLegacyHeaderItems','account-avatar-face','ribbon-tab{border-bottom:0!important','openCollaboration'],
+  'account-header-polish.js':['accountProfileButton','collaborateRibbonButton','scicanvas-profile-avatar-v1','margin-left:auto','openCollaboration','scicanvas-collaboration-opened'],
+  'profile-gallery-polish.js':['scientific-avatar-picker','welcome-avatar-chooser','cloud-uniform-button','scAccountProfileCard','scicanvas-avatar-changed'],
+  'collaboration-share-links.js':['create_project_share_link','accept_project_share_link','revoke_project_share_links','navigator.share','scshare','openSciCanvasCollaboration'],
   'svg-path-editor.js':['PARAM_COUNTS','parsePath','path-node-handle','Break artwork apart','ancestorWrappedMarkup'],
   'tex-typesetting.js':['tex2svgPromise','mathSvgMarkup','TeX → embedded SVG','MathJax'],
   'pathway-exchange.js':['SBGN-ML','BioPAX','SBML Level 3','http://sbgn.org/libsbgn','biopax-level3.owl'],
@@ -97,9 +100,11 @@ for (const [file, markers] of Object.entries(checks)) {
   for (const marker of markers) if (!source.includes(marker)) fail(`${file} is missing marker: ${marker}`);
 }
 
-for (const file of ['supabase/schema.sql','docs/CLOUD_SETUP.md']) if (!fs.existsSync(path.join(root,file))) fail(`Cloud backend file is missing: ${file}`);
+for (const file of ['supabase/schema.sql','supabase/share-links.sql','docs/CLOUD_SETUP.md']) if (!fs.existsSync(path.join(root,file))) fail(`Cloud backend file is missing: ${file}`);
 const schema = read('supabase/schema.sql');
 for (const marker of ['enable row level security','project_members','project_invitations','collaboration_comments','get_project_key','invite_project_member','private.app_secrets','scicanvas_private','supabase_realtime','realtime_project_id','realtime.messages','project editors send edit broadcasts']) if (!schema.includes(marker)) fail(`Cloud schema is missing marker: ${marker}`);
+const shareSchema = read('supabase/share-links.sql');
+for (const marker of ['project_share_links','create_project_share_link','accept_project_share_link','revoke_project_share_links','token_hash','expires_at']) if (!shareSchema.includes(marker)) fail(`Share-link schema is missing marker: ${marker}`);
 const cloudConfig = read('cloud-config.js');
 if (!cloudConfig.includes('yzjqciycdbnpnndxvpgq.supabase.co') || !cloudConfig.includes('sb_publishable_')) fail('Live Supabase browser configuration is missing.');
 const cloudAccount = read('cloud-account.js');
@@ -122,7 +127,7 @@ if (finishing.includes('scrollIntoView')) fail('Passive tour must not scroll the
 if (finishing.includes('tour-target')) fail('Passive tour must not mutate target element layout');
 const polish = read('polish-delight.js');
 if (polish.includes('scrollIntoView')) fail('Expanded tour must remain passive');
-if (!worker.includes('scicanvas-shell-v36')) fail('Unified profile header build requires offline shell v36');
+if (!worker.includes('scicanvas-shell-v37')) fail('Profile and secure-share build requires offline shell v37');
 if (!fs.existsSync(path.join(root,'favicon.svg'))) fail('favicon.svg is missing');
 if (!html.includes('href="./favicon.svg"')) fail('index.html does not reference favicon.svg');
 if (!worker.includes('"./favicon.svg"')) fail('Service worker does not cache favicon.svg');
@@ -131,4 +136,4 @@ const ids = [...html.matchAll(/\sid=["']([^"']+)["']/g)].map(match => match[1]);
 const duplicateIds = ids.filter((id,index) => ids.indexOf(id) !== index);
 if (duplicateIds.length) fail(`Duplicate static HTML IDs: ${[...new Set(duplicateIds)].join(', ')}`);
 
-console.log(`Static audit passed: ${scripts.length} scripts, unified account avatar, Collaborate navigation, one short active-tab indicator, deployed email/password accounts, recovery, encrypted project gallery, private role-aware collaboration, complete offline shell, and no duplicate static IDs.`);
+console.log(`Static audit passed: ${scripts.length} scripts, polished account gallery, scientific profile avatars, deployed email/password accounts, expiring role share links, private collaboration, complete offline shell, and no duplicate static IDs.`);
