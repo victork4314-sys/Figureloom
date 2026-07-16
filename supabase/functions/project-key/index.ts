@@ -16,6 +16,17 @@ function base64(bytes: Uint8Array) {
   return btoa(binary);
 }
 
+function adminKey() {
+  const direct = Deno.env.get('SUPABASE_SECRET_KEY') || Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+  if (direct) return direct;
+  try {
+    const keys = JSON.parse(Deno.env.get('SUPABASE_SECRET_KEYS') || '{}');
+    return keys.default || Object.values(keys)[0] || '';
+  } catch {
+    return '';
+  }
+}
+
 Deno.serve(async request => {
   if (request.method === 'OPTIONS') return new Response('ok', { headers:corsHeaders });
   try {
@@ -23,11 +34,11 @@ Deno.serve(async request => {
     if (!authorization?.startsWith('Bearer ')) return json({ error:'Missing authenticated session.' }, 401);
     const token = authorization.slice(7);
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
-    const serviceRole = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+    const secretKey = adminKey();
     const masterSecret = Deno.env.get('VAULT_MASTER_SECRET');
-    if (!supabaseUrl || !serviceRole || !masterSecret) return json({ error:'Cloud vault secrets are not configured.' }, 500);
+    if (!supabaseUrl || !secretKey || !masterSecret) return json({ error:'Cloud vault secrets are not configured.' }, 500);
 
-    const admin = createClient(supabaseUrl, serviceRole, { auth:{ persistSession:false, autoRefreshToken:false } });
+    const admin = createClient(supabaseUrl, secretKey, { auth:{ persistSession:false, autoRefreshToken:false } });
     const { data:userData, error:userError } = await admin.auth.getUser(token);
     if (userError || !userData.user) return json({ error:'Invalid or expired session.' }, 401);
 
