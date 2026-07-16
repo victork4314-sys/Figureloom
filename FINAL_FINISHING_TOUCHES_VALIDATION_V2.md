@@ -1,0 +1,1 @@
+Final validation marker for the guided tour, visible chart editing, responsive title bar, persistent Export button, documentation, audit markers, and offline shell v17.
