@@ -16,14 +16,14 @@
     <section class="collab-section">
       <h3>Invite collaborator</h3>
       <div class="collab-invite-row"><input id="collabInviteEmail" type="email" placeholder="colleague@example.com"><select id="collabInviteRole"><option value="editor">Can edit</option><option value="reviewer">Can review</option><option value="viewer">Can view</option></select><button id="collabInviteButton" type="button">Send invite</button></div>
-      <p class="collab-note">The invite function adds an existing SciCanvas account by email. Email delivery can be connected in the backend function.</p>
+      <p class="collab-note">Only the project owner can change access. New users receive the configured account invitation email.</p>
     </section>
     <section class="collab-section">
       <div class="collab-heading"><h3>Review comments</h3><button id="collabReloadComments" type="button">Reload</button></div>
       <div id="collabComments" class="collab-comments"><p>No comments yet.</p></div>
       <div class="collab-comment-compose"><textarea id="collabCommentText" rows="3" placeholder="Leave an encrypted project comment…"></textarea><button id="collabCommentSend" type="button" class="primary">Post comment</button></div>
     </section>
-    <details class="collab-details"><summary>How live editing works</summary><p>Project updates are encrypted with the project key and broadcast through the authenticated realtime channel. When you are actively typing or dragging, incoming work pauses behind an Apply/Keep mine banner instead of overwriting the local interaction.</p></details>
+    <details class="collab-details"><summary>How live editing works</summary><p>Private authenticated channels separate room presence/cursors from editor-only project broadcasts. Project updates and comments are encrypted with the project key. Incoming work pauses while you are typing or dragging instead of overwriting the local interaction.</p></details>
     <p id="collabMessage" class="collab-message" aria-live="polite"></p>
   `;
 
@@ -33,9 +33,11 @@
   document.querySelector('.canvas-area')?.appendChild(cursorLayer);
 
   const clientId = crypto.randomUUID();
-  let channel = null;
+  let roomChannel = null;
+  let documentChannel = null;
   let projectId = '';
   let projectKey = null;
+  let sessionRole = '';
   let live = false;
   let localChangeAt = 0;
   let lastAppliedRevision = 0;
@@ -68,18 +70,44 @@
     return cloud().currentProjectId || localStorage.getItem('scicanvas-current-cloud-project-v1') || '';
   }
 
+  function roleRank(role) {
+    return ({ viewer:1, reviewer:2, editor:3, owner:4 })[role] || 0;
+  }
+
+  function canReview() { return roleRank(sessionRole) >= roleRank('reviewer'); }
+  function canEdit() { return roleRank(sessionRole) >= roleRank('editor'); }
+
+  function updateRoleControls() {
+    q('#collabInviteButton').disabled = sessionRole !== 'owner';
+    q('#collabInviteEmail').disabled = sessionRole !== 'owner';
+    q('#collabInviteRole').disabled = sessionRole !== 'owner';
+    q('#collabCommentText').disabled = !canReview();
+    q('#collabCommentSend').disabled = !canReview();
+  }
+
   function updateProjectLabel() {
     projectId = activeProjectId();
     q('#collabProjectTitle').textContent = projectId ? (document.getElementById('documentName')?.value || 'Cloud project') : 'No cloud project open';
-    q('#collabStatus').textContent = live ? 'Realtime review session active.' : projectId ? 'Ready to start a review session.' : 'Save or open a cloud project to collaborate.';
+    const roleCopy = sessionRole ? ` · ${sessionRole}` : '';
+    q('#collabStatus').textContent = live ? `Private realtime session active${roleCopy}.` : projectId ? 'Ready to start a private review session.' : 'Save or open a cloud project to collaborate.';
     q('#collabSessionToggle').disabled = !projectId || !cloud().getUser?.();
     q('#collabSessionToggle').textContent = live ? 'Stop review session' : 'Start review session';
+    updateRoleControls();
+  }
+
+  async function loadRole(client, user) {
+    const { data:project, error:projectError } = await client.from('projects').select('owner_id').eq('id', projectId).single();
+    if (projectError) throw projectError;
+    if (project.owner_id === user.id) return 'owner';
+    const { data:member, error:memberError } = await client.from('project_members').select('role').eq('project_id', projectId).eq('user_id', user.id).maybeSingle();
+    if (memberError) throw memberError;
+    return member?.role || '';
   }
 
   function renderPresence() {
     const host = q('#collabPresence');
     host.replaceChildren();
-    const states = channel ? channel.presenceState() : {};
+    const states = roomChannel ? roomChannel.presenceState() : {};
     const entries = Object.values(states).flat();
     if (!entries.length) {
       host.innerHTML = '<span>Nobody connected yet.</span>';
@@ -88,7 +116,7 @@
     entries.forEach(entry => {
       const badge = document.createElement('span');
       badge.className = 'collab-person';
-      badge.innerHTML = `<i style="background:${entry.color || colorFor(entry.userId)}"></i>${entry.name || 'Scientist'}`;
+      badge.innerHTML = `<i style="background:${entry.color || colorFor(entry.userId)}"></i>${entry.name || 'Scientist'}${entry.role ? ` · ${entry.role}` : ''}`;
       host.appendChild(badge);
     });
   }
@@ -156,19 +184,20 @@
   }
 
   async function broadcastProject() {
-    if (!live || !channel || !projectKey || window.__scApplyingRemote) return;
+    if (!live || !documentChannel || !projectKey || !canEdit() || window.__scApplyingRemote) return;
     const data = typeof projectData === 'function' ? projectData() : JSON.parse(snapshot());
     const encrypted = await cloud().encryptJson(data, projectKey);
     const revision = Date.now();
     lastAppliedRevision = revision;
-    await channel.send({ type:'broadcast', event:'project-update', payload:{
+    const response = await documentChannel.send({ type:'broadcast', event:'project-update', payload:{
       clientId, revision, cipherText:encrypted.cipherText, iv:encrypted.iv,
       author:displayName(cloud().getUser?.())
     } });
+    if (response !== 'ok' && response !== 'timed out') console.warn('Realtime project broadcast response', response);
   }
 
   function scheduleBroadcast() {
-    if (!live || window.__scApplyingRemote) return;
+    if (!live || !canEdit() || window.__scApplyingRemote) return;
     localChangeAt = Date.now();
     clearTimeout(broadcastTimer);
     broadcastTimer = setTimeout(() => broadcastProject().catch(error => message(error.message, 'error')), 700);
@@ -205,6 +234,7 @@
     const text = q('#collabCommentText').value.trim();
     if (!text) return;
     if (!live || !projectKey) throw new Error('Start the review session first.');
+    if (!canReview()) throw new Error('This project role cannot post review comments.');
     const user = cloud().getUser?.();
     const encrypted = await cloud().encryptJson({ text }, projectKey);
     const client = await cloud().getClient();
@@ -220,6 +250,7 @@
   async function invite() {
     const email = q('#collabInviteEmail').value.trim();
     const role = q('#collabInviteRole').value;
+    if (sessionRole !== 'owner') throw new Error('Only the project owner can invite collaborators.');
     if (!email) throw new Error('Enter the collaborator’s email.');
     if (!projectId) throw new Error('Open a cloud project first.');
     const result = await cloud().invite(projectId, email, role);
@@ -227,19 +258,37 @@
     message(result?.message || `Added ${email} as ${role}.`, 'success');
   }
 
+  async function removeChannel(client, activeChannel) {
+    if (!activeChannel) return;
+    try { await activeChannel.untrack?.(); } catch {}
+    try { await client.removeChannel(activeChannel); } catch {}
+  }
+
   async function stopSession() {
     live = false;
     clearTimeout(broadcastTimer);
-    if (channel) {
-      try { await channel.untrack(); } catch {}
-      try { await (await cloud().getClient()).removeChannel(channel); } catch {}
-    }
-    channel = null;
+    try {
+      const client = window.SciCanvasCloud?.configured?.() ? await cloud().getClient() : null;
+      if (client) await Promise.all([removeChannel(client, roomChannel), removeChannel(client, documentChannel)]);
+    } catch {}
+    roomChannel = null;
+    documentChannel = null;
     projectKey = null;
+    sessionRole = '';
     cursorLayer.replaceChildren();
     remoteCursors.clear();
     updateProjectLabel();
     renderPresence();
+  }
+
+  async function subscribe(channel, onSubscribed) {
+    await new Promise((resolve, reject) => channel.subscribe(async status => {
+      if (status === 'SUBSCRIBED') {
+        try { await onSubscribed?.(); resolve(); }
+        catch (error) { reject(error); }
+      }
+      if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') reject(new Error(`The private realtime channel could not connect (${status}).`));
+    }));
   }
 
   async function startSession() {
@@ -251,27 +300,33 @@
     projectId = activeProjectId();
     projectKey = await cloud().getProjectKey(projectId);
     const client = await cloud().getClient();
+    sessionRole = await loadRole(client, user);
+    if (!sessionRole) throw new Error('This account is not a member of the cloud project.');
+    await client.realtime.setAuth();
     const name = displayName(user);
     const color = colorFor(user.id);
-    channel = client.channel(`scicanvas-project-${projectId}`, { config:{ broadcast:{ self:false }, presence:{ key:clientId } } });
-    channel
-      .on('broadcast', { event:'project-update' }, ({ payload }) => receiveProjectUpdate(payload).catch(error => message(error.message, 'error')))
+
+    roomChannel = client.channel(`project-room:${projectId}`, {
+      config:{ private:true, broadcast:{ self:false, ack:true }, presence:{ key:clientId } }
+    });
+    roomChannel
       .on('broadcast', { event:'cursor' }, ({ payload }) => showRemoteCursor(payload))
       .on('presence', { event:'sync' }, renderPresence)
       .on('presence', { event:'leave' }, ({ leftPresences }) => leftPresences?.forEach(entry => removeRemoteCursor(entry.clientId)))
       .on('postgres_changes', { event:'*', schema:'public', table:'collaboration_comments', filter:`project_id=eq.${projectId}` }, () => loadComments());
-    await new Promise((resolve, reject) => channel.subscribe(async status => {
-      if (status === 'SUBSCRIBED') {
-        await channel.track({ clientId, userId:user.id, name, color, joinedAt:new Date().toISOString() });
-        resolve();
-      }
-      if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') reject(new Error('The realtime review channel could not connect.'));
-    }));
+
+    documentChannel = client.channel(`project-edit:${projectId}`, {
+      config:{ private:true, broadcast:{ self:false, ack:true } }
+    });
+    documentChannel.on('broadcast', { event:'project-update' }, ({ payload }) => receiveProjectUpdate(payload).catch(error => message(error.message, 'error')));
+
+    await subscribe(roomChannel, () => roomChannel.track({ clientId, userId:user.id, name, color, role:sessionRole, joinedAt:new Date().toISOString() }));
+    await subscribe(documentChannel);
     live = true;
     updateProjectLabel();
     renderPresence();
     await loadComments();
-    message('Live review session started.', 'success');
+    message(`Private review session started as ${sessionRole}.`, 'success');
   }
 
   q('#collabSessionToggle').addEventListener('click', () => (live ? stopSession() : startSession()).catch(error => message(error.message, 'error')));
@@ -283,12 +338,12 @@
 
   const canvas = document.getElementById('canvas');
   canvas?.addEventListener('pointermove', event => {
-    if (!live || !channel || Date.now() - cursorSentAt < 70) return;
+    if (!live || !roomChannel || Date.now() - cursorSentAt < 70) return;
     cursorSentAt = Date.now();
     const rect = canvas.getBoundingClientRect();
     if (!rect.width || !rect.height) return;
     const user = cloud().getUser?.();
-    channel.send({ type:'broadcast', event:'cursor', payload:{
+    roomChannel.send({ type:'broadcast', event:'cursor', payload:{
       clientId, x:Math.max(0,Math.min(1,(event.clientX-rect.left)/rect.width)), y:Math.max(0,Math.min(1,(event.clientY-rect.top)/rect.height)),
       name:displayName(user), color:colorFor(user?.id || clientId)
     } });
