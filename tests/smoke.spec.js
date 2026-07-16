@@ -3,12 +3,28 @@ const { test, expect } = require('@playwright/test');
 async function openApp(page) {
   await page.addInitScript(() => {
     localStorage.setItem('scicanvas-guided-tour-v2', 'complete');
+    localStorage.setItem('scicanvas-guided-tour-v3', 'complete');
+    localStorage.setItem('scicanvas-welcome-v1', 'complete');
+    localStorage.setItem('scicanvas-user-name-v1', 'Test Scientist');
     localStorage.setItem('scicanvas-motion-v1', 'off');
   });
   await page.goto('/');
   await expect(page.locator('#canvas')).toBeVisible();
   await page.waitForTimeout(300);
 }
+
+test('first run asks for a local name and opens the passive expanded tour', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop', 'one onboarding run is sufficient');
+  await page.goto('/');
+  await expect(page.locator('#scWelcome')).toHaveClass(/open/);
+  await page.locator('#welcomeNameInput').fill('Ada');
+  await page.locator('.welcome-primary').click();
+  await expect(page.locator('#scWelcome')).not.toHaveClass(/open/);
+  await expect(page.locator('#userGreetingButton')).toContainText('Ada');
+  await expect(page.locator('#scicanvasTour')).toHaveClass(/open/);
+  await expect(page.locator('#scicanvasTour')).toContainText('Nothing is opened, moved, selected, or scrolled');
+  await expect.poll(() => page.evaluate(() => localStorage.getItem('scicanvas-user-name-v1'))).toBe('Ada');
+});
 
 test('core editor controls remain clickable and persist content', async ({ page }) => {
   await openApp(page);
