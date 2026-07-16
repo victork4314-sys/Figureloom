@@ -92,3 +92,19 @@
     new MutationObserver(enhanceBuiltInCards).observe(grid, { childList: true });
   }
 })();
+
+(() => {
+  const NAME_KEY = "scicanvas-user-name-v1";
+  function syncPersonalTourTitle() {
+    const name = (localStorage.getItem(NAME_KEY) || "").trim();
+    const title = document.getElementById("delightTourTitle");
+    const counter = document.querySelector("#scicanvasTour .tour-counter")?.textContent || "";
+    if (!name || !title) return;
+    if (counter.startsWith("1 of")) title.textContent = `Hi, ${name}. This is your studio.`;
+    if (counter.startsWith("12 of")) title.textContent = `You are ready, ${name}.`;
+  }
+  new MutationObserver(syncPersonalTourTitle).observe(document.body, { childList:true, subtree:true, characterData:true });
+  document.addEventListener("submit", event => {
+    if (event.target.closest?.("#scWelcome")) setTimeout(syncPersonalTourTitle, 320);
+  });
+})();
