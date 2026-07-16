@@ -1,0 +1,1 @@
+Validation marker for the responsive canvas toolbar crop and touch-target fix.
