@@ -39,6 +39,7 @@ const APP_SHELL = [
   "./pinch-zoom.js",
   "./workspace-state.js",
   "./layout-stability.js",
+  "./layout-polish.js",
   "./object-quick-menu.js",
   "./pptx-export.js",
   "./app-bootstrap.js",
