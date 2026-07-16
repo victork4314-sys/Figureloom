@@ -11,14 +11,15 @@ SciCanvas remains fully local when `cloud-config.js` contains empty values. The 
 - A local project gallery that works without accounts
 - An account gallery of owned and shared projects
 - Application-layer AES-GCM encryption of project payloads
-- Row-level access policies
+- Row-level database access policies
 - Shared projects with owner, editor, reviewer and viewer roles
-- Realtime encrypted project updates, presence, remote cursors and encrypted comments
+- Private authenticated realtime project updates, presence and remote cursors
+- Encrypted persistent review comments
 - Email invitations for new or existing collaborators
 
 The server stores project titles and optional SVG thumbnails as gallery metadata. The editable project payload and review-comment bodies are encrypted before storage. Project keys are derived inside an authenticated Edge Function from a server-only master secret and the project ID.
 
-This is not a zero-knowledge design: an operator with the Edge Function secret can derive project keys. It is intended to protect stored payloads, isolate projects by account and preserve password-recovery/OAuth usability. A later KMS or user-controlled recovery-key design can replace the key function without changing the project table format.
+This is not a zero-knowledge design: an operator with the Edge Function secret can derive project keys. It protects stored payloads, isolates projects by account and preserves ordinary password recovery and OAuth usability. A later KMS or user-controlled recovery-key design can replace the key function without changing the project table format.
 
 ## 1. Create and link a Supabase project
 
@@ -41,7 +42,10 @@ The script creates:
 - `collaboration_comments`
 - access helper functions
 - Row Level Security policies
-- Realtime publication for collaboration comments
+- private Realtime Broadcast/Presence authorization policies
+- the Realtime publication for collaboration comments
+
+Keep **Allow public access** disabled in Supabase Realtime settings. The client opens channels with `private: true`; public channels are not part of the collaboration design.
 
 ## 3. Configure Edge Function secrets
 
@@ -53,7 +57,7 @@ supabase secrets set VAULT_MASTER_SECRET='PASTE_THE_RANDOM_VALUE'
 supabase secrets set SITE_URL='https://YOUR_GITHUB_PAGES_OR_CUSTOM_DOMAIN/'
 ```
 
-`SUPABASE_URL` and the service-role credentials are provided to deployed Supabase Edge Functions by the platform. Never place the service-role key in `cloud-config.js` or any browser file.
+Supabase provides `SUPABASE_URL` and server credentials to hosted Edge Functions. The functions accept the modern `SUPABASE_SECRET_KEY`, the legacy `SUPABASE_SERVICE_ROLE_KEY`, or the platform-provided `SUPABASE_SECRET_KEYS` map. Never place any server secret in `cloud-config.js` or another browser file.
 
 Changing `VAULT_MASTER_SECRET` makes existing encrypted project payloads unreadable unless they are migrated with the old key, so store and back it up as a production secret.
 
@@ -88,7 +92,7 @@ Add the production URL and local development URLs to the Supabase Auth redirect 
 
 ## 6. Email and password recovery
 
-Enable Email authentication in Supabase Auth. Configure the site URL, redirect allow list and SMTP sender.
+Enable Email authentication in Supabase Auth. Configure the site URL, redirect allow list, custom SMTP sender and email templates.
 
 SciCanvas calls `resetPasswordForEmail()` with `redirectUrl`. When the user returns through the recovery link, the account panel detects the `PASSWORD_RECOVERY` event and displays a new-password form that calls `updateUser({ password })`.
 
@@ -124,13 +128,24 @@ In Microsoft Entra ID:
 4. Enable Azure in Supabase Auth and enter the application/client ID, secret and appropriate tenant URL.
 5. Choose the supported account types required by the deployment.
 
-The client uses the Supabase provider name `azure` and requests email/profile scopes.
+The client uses the Supabase provider name `azure` and requests email, OpenID and profile scopes.
 
-## 9. Realtime authorization
+## 9. Private Realtime authorization
 
-Project payload updates and cursors use authenticated Realtime Broadcast/Presence channels named from the project UUID. Persistent comments use Postgres Changes on `collaboration_comments` and are protected by RLS.
+SciCanvas uses two private authenticated topics per project:
 
-For a stricter production deployment, add Realtime Authorization policies for private broadcast channels and disable public channel access in the Realtime settings. Keep RLS enabled on every public table.
+- `project-room:<project UUID>` for presence and cursors. Any project member may join and send room events.
+- `project-edit:<project UUID>` for encrypted document broadcasts. All members may receive updates, but only owners and editors may send them.
+
+The SQL schema authorizes `realtime.messages` by extracting the project UUID from the topic and checking `project_role()` / `can_access_project()`. The client refreshes Realtime authentication before subscribing.
+
+Persistent encrypted comments use Postgres Changes on `collaboration_comments`:
+
+- viewers can read
+- reviewers can create comments
+- authors or editors can update/delete comments
+
+Review these policies with four separate test accounts before production.
 
 ## 10. Invitation email behavior
 
@@ -144,12 +159,13 @@ Configure Auth email templates and production SMTP before inviting real collabor
 
 ## 11. Production checklist
 
-- Use a custom SMTP sender and test delivery/recovery links.
+- Use a custom SMTP sender and test delivery, confirmation and recovery links.
 - Configure Apple and Microsoft provider secrets and redirect URLs.
 - Store `VAULT_MASTER_SECRET` in the platform secret manager and back it up securely.
-- Keep the service-role key out of browser assets and logs.
+- Keep all server/secret keys out of browser assets and logs.
+- Disable public Realtime channels and verify private authorization policies.
 - Review RLS policies with separate owner/editor/reviewer/viewer test accounts.
 - Test a shared project simultaneously in two browsers.
 - Configure rate limits and abuse monitoring for Auth and Edge Functions.
 - Add database backups and a key-migration procedure before rotating the vault secret.
-- Publish privacy, retention and account-deletion policies appropriate for the deployment.
+- Publish privacy, retention, account-deletion and breach-response policies appropriate for the deployment.
