@@ -1,4 +1,4 @@
-const CACHE_NAME = "scicanvas-shell-v15";
+const CACHE_NAME = "scicanvas-shell-v16";
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -10,6 +10,7 @@ const APP_SHELL = [
   "./science-vocabulary.js",
   "./library-dedup.js",
   "./project-tools.js",
+  "./pro-tools-hub.js",
   "./advanced-tools.js",
   "./design-tools.js",
   "./export-tools.js",
@@ -40,6 +41,12 @@ const APP_SHELL = [
   "./workspace-state.js",
   "./layout-stability.js",
   "./layout-polish.js",
+  "./selection-layout-tools.js",
+  "./data-science-tools.js",
+  "./scientific-annotation-tools.js",
+  "./component-object-tools.js",
+  "./review-accessibility-tools.js",
+  "./publish-presentation-tools.js",
   "./object-quick-menu.js",
   "./pptx-export.js",
   "./app-bootstrap.js",
