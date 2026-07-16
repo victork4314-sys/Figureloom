@@ -27,6 +27,7 @@ jobs:
         run: |
           test -f index.html
           test -f styles.css
+          test -f favicon.svg
           test -f app.js
           test -f science-library.js
           test -f water-icons.js
@@ -58,8 +59,10 @@ jobs:
           test -f canvas-navigation.js
           test -f control-usability.js
           test -f insert-tools.js
+          test -f map-studio.js
           test -f pinch-zoom.js
           test -f workspace-state.js
+          test -f layout-stability.js
           test -f object-quick-menu.js
           test -f pptx-export.js
           test -f app-bootstrap.js
