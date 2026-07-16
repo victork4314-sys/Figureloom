@@ -21,7 +21,8 @@
     ['annotate', 'Scientific annotation', 'Callouts, brackets, scale bars, panel labels, equations and symbols.', '✦'],
     ['components', 'Components & objects', 'Reusable components, image crop/masks, flipping and shape combinations.', '◇'],
     ['review', 'Review & references', 'Comments, sources, version comparison, accessibility and visual checks.', '✓'],
-    ['publish', 'Publish & present', 'Journal presets, print checks, presentation mode and export readiness.', '▣']
+    ['publish', 'Publish & present', 'Journal presets, print checks, presentation mode and export readiness.', '▣'],
+    ['office', 'Office bridge', 'Import PowerPoint, Excel, ODS, CSV and TSV; export editable or compatibility PowerPoint.', '▦']
   ];
 
   function renderWorkspaces() {
