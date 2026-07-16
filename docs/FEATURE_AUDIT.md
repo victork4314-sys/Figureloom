@@ -19,7 +19,7 @@ This document maps the original product requirements to the current implementati
 
 - **Upload PNG, JPEG, WebP, and SVG:** Implemented.
 - **Reusable personal upload library:** Implemented with IndexedDB.
-- **Reusable editable SVG library:** Implemented with IndexedDB.
+- **Reusable editable SVG library:** Implemented with IndexedDB and placed beside Export.
 - **Imported SVGs remain vector objects:** Implemented for resize, rotation, layering, opacity, original colors, whole-object recoloring, and SVG re-export.
 - **SVG path-node editing and breaking apart imported SVGs:** Not implemented.
 - **Project embeds selected external SVGs:** Implemented.
@@ -32,7 +32,7 @@ This document maps the original product requirements to the current implementati
 - **True account-based cloud backup:** Not implemented; requires a backend and authentication.
 - **Shared lab libraries and collaboration:** Not implemented.
 
-## Canvas and editing
+## Canvas, page formats, and editing
 
 - **Optional grid:** Implemented.
 - **Adjustable grid spacing and line/dot style:** Implemented.
@@ -51,13 +51,26 @@ This document maps the original product requirements to the current implementati
 - **Undo and redo:** Implemented.
 - **Attached arrows and inhibition connectors:** Implemented.
 - **Multiple pages:** Implemented.
+- **Screen, A4, A3, A2, A1, A0, square, and custom formats:** Implemented as project-wide physical dimensions.
+- **Portrait and landscape poster geometry:** Implemented.
+- **Physical millimetre dimensions in SVG export:** Implemented.
+- **Format-aware standard, 2×, and 150-DPI print PNG export:** Implemented.
 - **Independent per-page solid, gradient, and transparent backgrounds:** Implemented.
 - **Background presets and randomized palette selection:** Implemented.
-- **Twelve full-project color themes:** Implemented.
-- **Theme-controlled editor chrome, page backgrounds, object palettes, text, arrows, and future-object defaults:** Implemented.
-- **Zoom and fit:** Implemented.
+- **Twelve project color themes:** Implemented.
+- **Themes recolor project artwork and page backgrounds without recoloring the editor interface:** Implemented.
+- **Zoom and format-aware fit:** Implemented.
 - **Grouping and multi-selection:** Not implemented.
 - **Freeform vector node editing, masks, and Boolean operations:** Not implemented.
+
+## Local Figure Assistant
+
+- **Written-description figure generation without an API:** Implemented as a private in-browser rule-based layout assistant.
+- **Wastewater-treatment figure generation:** Implemented with editable treatment stages, labels, arrows, bacteria, filtration, and effluent elements.
+- **Host-pathogen, PCR, CRISPR, sequencing, biofilm, and general workflows:** Implemented.
+- **Generated output remains movable, resizable, recolorable, layered, and exportable:** Implemented.
+- **Flattened text-to-image diffusion generation:** Not implemented by design; the current assistant prioritizes scientific editability and mobile/browser practicality.
+- **Optional local model-assisted language interpretation:** Not implemented.
 
 ## Text and scientific formatting
 
@@ -90,12 +103,14 @@ This document maps the original product requirements to the current implementati
 ## Export
 
 - **Editable SVG export:** Implemented.
-- **Standard and high-resolution PNG export:** Implemented.
+- **Poster-ready physical-size SVG export:** Implemented.
+- **Standard and high-resolution PNG export:** Implemented with the selected canvas aspect ratio.
+- **Print PNG at 150 DPI:** Implemented from the selected physical project dimensions.
 - **Optional grid in exported graphics:** Implemented.
 - **Transparent figure export option:** Implemented for PowerPoint slide art.
 - **Complete editable project export:** Implemented.
 - **Detailed attribution report:** Implemented.
-- **PowerPoint `.pptx` export:** Implemented with one visually preserved high-resolution SciCanvas page per slide.
+- **PowerPoint `.pptx` export:** Implemented with one visually preserved high-resolution SciCanvas page per slide at the selected project dimensions.
 - **Native editable PowerPoint shapes:** Not implemented; current PowerPoint slides contain flattened high-resolution page artwork.
 - **PDF and TIFF export:** Not implemented.
 - **Machine-readable SBGN/BioPAX/SBML export:** Not implemented.
@@ -108,5 +123,6 @@ This document maps the original product requirements to the current implementati
 4. Native editable PowerPoint-object export.
 5. Equations, chemical notation, and scientific text rules.
 6. A normalized import pipeline for additional licensed packs.
-7. Collaborative lab workspaces, comments, and review history.
-8. Accessible figure descriptions and standards-based pathway export.
+7. Optional small local model-assisted prompt interpretation when practical browser models mature.
+8. Collaborative lab workspaces, comments, and review history.
+9. Accessible figure descriptions and standards-based pathway export.
