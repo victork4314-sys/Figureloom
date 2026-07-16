@@ -16,14 +16,19 @@ This repository contains a functional MVP rather than a static mock-up. It is a 
 - Microbiology, virology, immunology, molecular biology, cell biology, laboratory equipment, pathway symbols, and specialist scientific search terms
 - Add built-in assets to an editable SVG canvas
 - Upload PNG, JPEG, WebP, and SVG images into a reusable personal library stored on the device
+- Import SVG files as reusable vector objects that remain resizable, rotatable, recolorable, and independently exportable
 - Continuous local autosave using IndexedDB with a localStorage fallback
 - Manual and automatic recovery snapshots
 - Multiple editable pages
 - Per-page solid, gradient, transparent, preset, and randomized backgrounds
-- Layers with visibility, ordering, duplication, renaming, and deletion
+- Twelve full-project color themes that can change the editor chrome, every page background, existing object colors, text, arrows, and future-object defaults
+- Layers with visibility, drag-and-drop/touch reordering, keyboard reordering, duplication, renaming, and deletion
 - Optional grid, adjustable spacing and style, magnetic grid/object snapping, and alignment guides
 - Move, resize with eight on-canvas handles or inspector fields, rotate, recolor, rename, and annotate objects
 - Editable text, rectangles, ellipses, arrows, inhibition lines, attached object-to-object connectors, and tidy-up alignment
+- Thirty-eight bundled/open/system font choices with searchable previews
+- Local `.woff`, `.woff2`, `.ttf`, and `.otf` font import stored in the device vault
+- Project-wide default fonts and one-click apply-to-all-text behavior
 - Scientific metadata fields and general/detailed attribution reports
 - Editable templates for graphical abstracts, workflows, pathways, host-pathogen interactions, and publication panels
 - PNG, SVG, PowerPoint `.pptx`, and complete `.scicanvas` project exports
@@ -41,6 +46,16 @@ Bioicons is integrated directly: SciCanvas loads its complete machine-readable i
 The Packs drawer also provides whole-package download links for Bioicons and the complete Servier Medical Art slide set. NIH BioArt Source and Reactome are linked as additional reputable sources because their entries require source-specific licence review.
 
 See [`docs/ASSET_PACKS.md`](docs/ASSET_PACKS.md) for sources and licensing behavior.
+
+## Editable SVG behavior
+
+Use **Editable SVG** in the ribbon to import an SVG into the reusable local SVG vault. Imported SVGs keep their vector structure and can be moved, resized, rotated, layered, switched between original colors and whole-object recoloring, and downloaded again as SVG.
+
+Individual path-node editing, Boolean operations, masks, and breaking one imported SVG into multiple independent canvas objects are not implemented yet.
+
+## Fonts
+
+Use **Fonts** in the ribbon to browse the built-in font catalogue, select a project default, apply a font to all text, or import a local font file. Google Fonts load on demand. Imported font files remain stored only on the current device and are not embedded in `.scicanvas` or PowerPoint exports, so recipients must have the same font available for identical text rendering.
 
 ## Export behavior
 
@@ -64,7 +79,7 @@ Then open `http://localhost:8080`.
 
 ## Data safety
 
-Projects and uploaded images are stored locally in the browser's IndexedDB vault. The app also maintains a lightweight localStorage fallback when the project is small enough. Use **Create recovery snapshot** for named restore points and download a `.scicanvas` project backup for storage outside the browser.
+Projects, uploaded images, reusable editable SVGs, and imported font files are stored locally in the browser's IndexedDB vault. The app also maintains a lightweight localStorage fallback when the project is small enough. Use **Create recovery snapshot** for named restore points and download a `.scicanvas` project backup for storage outside the browser.
 
 Browser storage is not a substitute for true account-based cloud backup. A later backend phase should add authenticated encrypted synchronization and shared lab libraries.
 
@@ -72,14 +87,14 @@ Browser storage is not a substitute for true account-based cloud backup. A later
 
 The initial built-in scientific illustrations are original programmatic SVG drawings created for this project. External Bioicons retain their individual authors, licences, source URLs, and prepared attribution text inside the project. Servier Medical Art is linked under CC BY 4.0. NIH BioArt and Reactome assets must be checked individually before import and publication.
 
-Attribution reports assist with recordkeeping but do not replace reviewing current source terms.
+Users are responsible for the licences of uploaded SVGs, images, and font files. Attribution reports assist with recordkeeping but do not replace reviewing current source terms.
 
 ## Near-term roadmap
 
 1. Browser-level interaction tests and automated deployment verification
 2. Account-based encrypted cloud vault and shared lab workspaces
 3. Configurable smart biological components with scientifically constrained variants
-4. Grouping, multi-selection, masking, and richer vector editing
+4. Grouping, multi-selection, SVG path-node editing, masking, Boolean operations, and richer vector editing
 5. Native editable PowerPoint-object export
 6. Better text layout, equations, chemical notation, and gene/protein formatting rules
 7. Collaborative comments and publication-figure review
