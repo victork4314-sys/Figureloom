@@ -44,6 +44,7 @@ jobs:
           test -f external-packs.js
           test -f fun-design-tools.js
           test -f project-themes.js
+          test -f theme-control-fix.js
           test -f pptx-export.js
           test -f app-bootstrap.js
           test -f manifest.webmanifest
