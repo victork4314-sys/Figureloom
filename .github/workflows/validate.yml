@@ -34,6 +34,7 @@ jobs:
           test -f science-vocabulary.js
           test -f library-dedup.js
           test -f project-tools.js
+          test -f pro-tools-hub.js
           test -f advanced-tools.js
           test -f design-tools.js
           test -f export-tools.js
@@ -64,6 +65,12 @@ jobs:
           test -f workspace-state.js
           test -f layout-stability.js
           test -f layout-polish.js
+          test -f selection-layout-tools.js
+          test -f data-science-tools.js
+          test -f scientific-annotation-tools.js
+          test -f component-object-tools.js
+          test -f review-accessibility-tools.js
+          test -f publish-presentation-tools.js
           test -f object-quick-menu.js
           test -f pptx-export.js
           test -f app-bootstrap.js
