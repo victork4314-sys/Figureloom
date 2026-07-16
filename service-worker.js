@@ -1,4 +1,4 @@
-const CACHE_NAME = "scicanvas-shell-v3";
+const CACHE_NAME = "scicanvas-shell-v4";
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -6,12 +6,14 @@ const APP_SHELL = [
   "./app.js",
   "./science-library.js",
   "./science-vocabulary.js",
+  "./library-dedup.js",
   "./project-tools.js",
   "./advanced-tools.js",
   "./design-tools.js",
   "./export-tools.js",
   "./storage-vault.js",
   "./interaction-tools.js",
+  "./resize-tools.js",
   "./asset-vault.js",
   "./external-packs.js",
   "./app-bootstrap.js",
