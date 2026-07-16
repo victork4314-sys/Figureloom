@@ -1,0 +1,1 @@
+Validation-only marker for the namespace-safe Office bridge build.
