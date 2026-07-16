@@ -1,0 +1,36 @@
+name: Validate SciCanvas
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  syntax:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Check JavaScript syntax
+        run: |
+          for file in *.js; do
+            echo "Checking $file"
+            node --check "$file"
+          done
+
+      - name: Check required application files
+        run: |
+          test -f index.html
+          test -f styles.css
+          test -f app.js
+          test -f science-library.js
+          test -f project-tools.js
+          test -f advanced-tools.js
+          test -f export-tools.js
+          test -f storage-vault.js
+          test -f manifest.webmanifest
+          test -f sw.js
