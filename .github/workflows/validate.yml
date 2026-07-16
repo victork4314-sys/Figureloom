@@ -88,6 +88,7 @@ jobs:
           test -f cloud-config.js
           test -f cloud-account.js
           test -f collaboration-tools.js
+          test -f account-header-polish.js
           test -f svg-path-editor.js
           test -f tex-typesetting.js
           test -f pathway-exchange.js
