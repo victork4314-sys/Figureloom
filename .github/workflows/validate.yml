@@ -55,6 +55,9 @@ jobs:
           test -f assistant-universal.js
           test -f canvas-navigation.js
           test -f control-usability.js
+          test -f insert-tools.js
+          test -f pinch-zoom.js
+          test -f workspace-state.js
           test -f pptx-export.js
           test -f app-bootstrap.js
           test -f manifest.webmanifest
