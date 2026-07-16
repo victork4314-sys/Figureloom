@@ -1,0 +1,1 @@
+Validates the deployed email/password account, encrypted gallery, RLS, RPC and private collaboration build.
