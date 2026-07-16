@@ -112,9 +112,11 @@ for (const marker of ['Journal · single column','Run publication checks','Start
 }
 
 const finishing = read('finishing-touches.js');
-for (const marker of ['scicanvas-guided-tour-v1','Edit chart or table data','tourHelpButton','#exportButton','openSciCanvasTour']) {
+for (const marker of ['scicanvas-guided-tour-v2','Edit chart or table data','tourHelpButton','#exportButton','openSciCanvasTour','tour-highlight','never opens panels']) {
   if (!finishing.includes(marker)) fail(`Finishing touches module is missing marker: ${marker}`);
 }
+if (finishing.includes('scrollIntoView')) fail('Passive tour must not scroll the application');
+if (finishing.includes('tour-target')) fail('Passive tour must not mutate target element layout');
 
 if (!fs.existsSync(path.join(root,'favicon.svg'))) fail('favicon.svg is missing');
 if (!html.includes('href="./favicon.svg"')) fail('index.html does not reference favicon.svg');
@@ -125,4 +127,4 @@ const ids = [...html.matchAll(/\sid=["']([^"']+)["']/g)].map(match => match[1]);
 const duplicateIds = ids.filter((id,index) => ids.indexOf(id) !== index);
 if (duplicateIds.length) fail(`Duplicate static HTML IDs: ${[...new Set(duplicateIds)].join(', ')}`);
 
-console.log(`Static audit passed: ${scripts.length} scripts, complete offline shell, valid Pro Tools and onboarding architecture, persistent Export action, favicon present, and no duplicate static IDs.`);
+console.log(`Static audit passed: ${scripts.length} scripts, complete offline shell, valid Pro Tools and passive onboarding architecture, persistent Export action, favicon present, and no duplicate static IDs.`);
