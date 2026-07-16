@@ -2,102 +2,117 @@
 
 SciCanvas is a local-first scientific illustration and figure editor designed to feel familiar to people who know Microsoft Office or Apple Keynote.
 
-This repository contains a functional MVP rather than a static mock-up. It is a dependency-light web app that can run locally or deploy directly to GitHub Pages. PowerPoint generation loads the official PptxGenJS browser bundle only when requested.
+This repository contains a functional web application rather than a static mock-up. It is dependency-light, runs locally, and deploys directly to GitHub Pages. PowerPoint generation loads the official PptxGenJS browser bundle only when requested.
 
 ## What works now
 
 - Searchable built-in scientific asset library with original programmatic SVG artwork
-- Complete in-app Bioicons browser with 2,829 online SVG illustrations
-- Bioicons search by name, category, author, and licence
-- Secure embedding of selected external SVGs into the editable project
-- Per-item source, author, licence, and attribution metadata
-- Complete-package download links for Bioicons and Servier Medical Art
-- Links to NIH BioArt Source and Reactome with licence guidance
-- Microbiology, virology, immunology, molecular biology, cell biology, laboratory equipment, pathway symbols, and specialist scientific search terms
-- Thirty-two additional original water, wastewater, hydrology, monitoring, pollution, marine, and treatment vectors
-- Add built-in assets to an editable SVG canvas
-- Upload PNG, JPEG, WebP, and SVG images into a reusable personal library stored on the device
-- Import SVG files as reusable vector objects that remain resizable, rotatable, recolorable, and independently exportable
+- Deduplicated expanded search across built-in artwork, Water 32, Bioicons, Healthicons, and Tabler
+- Complete Bioicons index with 2,829 individually licensed SVG illustrations
+- Secure embedding of selected external SVGs with author, licence, source, and attribution metadata
+- Thirty-two original water, wastewater, hydrology, monitoring, pollution, marine, and treatment vectors
+- Map Studio for world maps, country silhouettes, highlighted-country maps, locator maps, and imported GeoJSON
+- Upload PNG, JPEG, WebP, and SVG images into a reusable device-local library
+- Import SVG files as reusable vector objects that remain resizable, rotatable, layered, recolorable, and independently exportable
 - Continuous local autosave using IndexedDB with a localStorage fallback
 - Manual and automatic recovery snapshots
 - Multiple editable pages
-- Screen, A4, A3, A2, A1, A0, square, and custom project formats
-- Portrait/landscape poster geometry with real millimetre dimensions
-- Hand-tool poster panning, hold-Space temporary panning, middle-button panning, fit/actual-size controls, and an interactive minimap
-- Modifier-wheel zooming around the pointer position
+- Screen, A4, A3, A2, A1, A0, square, custom, and publication/presentation formats
+- Portrait/landscape geometry with real millimetre dimensions
+- Adaptive millimetre grids, grid snapping, object snapping, and smart alignment guides
+- Hand-tool panning, hold-Space panning, middle-button panning, pinch zoom, pointer-centred wheel zoom, fit, actual size, and a movable/closable navigator
 - Per-page solid, gradient, transparent, preset, and randomized backgrounds
-- Twelve project color themes that recolor only page backgrounds and project artwork; the editor interface remains unchanged
-- Optional project-only heading/body font pairs for every color theme
-- Layers with visibility, drag-and-drop/touch reordering, keyboard reordering, duplication, renaming, and deletion
-- Optional grid, adjustable spacing and style, magnetic grid/object snapping, and alignment guides
-- Move, resize with eight on-canvas handles or inspector fields, rotate, recolor, rename, and annotate objects
-- Editable text, rectangles, ellipses, arrows, inhibition lines, attached object-to-object connectors, and tidy-up alignment
-- Thirty-eight bundled/open/system font choices with searchable previews
-- Local `.woff`, `.woff2`, `.ttf`, and `.otf` font import stored in the device vault
-- Project-wide default fonts and one-click apply-to-all-text behavior
-- Private no-API Figure Assistant that assembles editable scientific figures from a written description
-- Dedicated editable wastewater, host-pathogen, PCR, CRISPR, sequencing, biofilm, and generic workflow generation paths
-- Scientific metadata fields and general/detailed attribution reports
+- Twelve project color themes and optional project-only heading/body font pairs
+- Layers with visibility, mouse/touch reordering, keyboard reordering, duplication, renaming, locking, and deletion
+- On-canvas resizing, rotation, recoloring, opacity, inspector fields, and click/tap quick actions
+- Multi-selection by Shift-click or marquee drag
+- Grouping, shared movement and resizing, alignment, equal distribution, and simple shape combinations
+- Anchored connectors that follow the objects they connect
+- Editable text, rectangles, ellipses, arrows, inhibition lines, charts, tables, maps, annotations, uploaded images, and reusable components
+- Thirty-eight bundled/open/system font choices plus local `.woff`, `.woff2`, `.ttf`, and `.otf` import
+- Private no-API Figure Assistant that assembles editable scientific figures from a written description and the full available illustration search
 - Editable templates for graphical abstracts, workflows, pathways, host-pathogen interactions, and publication panels
+- CSV/TSV Data Lab with bar, line, scatter, box, heatmap, and table objects
+- Scientific annotation tools for callouts, scale bars, measurements, panel labels, significance brackets, legends, equations, Greek symbols, superscripts, and subscripts
+- Reusable project components with update-all-instances behavior
+- Image crop, flip, rounded mask, and circular mask tools
+- Page/object comments, DOI/source records, automatic reference collection, and downloadable reference lists
+- Named version checkpoints with added/changed object highlighting
+- Alt text, long descriptions, automatic description drafts, contrast checks, small-text checks, and color-vision previews
+- Generic journal/presentation physical presets, publication-readiness reports, and fullscreen presentation mode
 - Format-aware PNG, physical-size SVG, print PNG, PowerPoint `.pptx`, and complete `.scicanvas` project exports
-- Multi-page PowerPoint export with one visually preserved SciCanvas page per slide at the selected physical dimensions
 - Offline application shell through a registered service worker
 - Simple and Advanced interface modes
-- GitHub Actions workflows for JavaScript syntax validation and GitHub Pages deployment
+- GitHub Actions workflows for JavaScript syntax, architecture, offline-shell, and GitHub Pages validation
+
+## Pro Tools without interface chaos
+
+Open **Pro tools** to access six focused workspaces:
+
+1. Arrange & group
+2. Data & charts
+3. Scientific annotation
+4. Components & objects
+5. Review & references
+6. Publish & present
+
+The advanced controls stay hidden until their workspace is opened. The ordinary ribbon, Science library, Insert panel, Canvas Design, and Export menu remain uncluttered.
+
+See [`docs/PRO_TOOLS.md`](docs/PRO_TOOLS.md) for detailed behavior and limitations.
 
 ## Illustration packs
 
-Open **Science → 2,829 SVGs** inside the app to browse licensed sources.
+Open **Science → ≈10k Library** to search complementary science, health, and general diagram collections. Results are streamed on demand rather than downloading thousands of SVGs at startup. Duplicate names and common style variants are normalized before display.
 
-Bioicons is integrated directly: SciCanvas loads its complete machine-readable index, shows lazy-loaded previews, and embeds only the SVGs selected by the user. This keeps the full library searchable without forcing the browser to download thousands of illustrations at startup.
-
-The Packs drawer also provides whole-package download links for Bioicons and the complete Servier Medical Art slide set. NIH BioArt Source and Reactome are linked as additional reputable sources because their entries require source-specific licence review.
+Bioicons retains its individual author and licence metadata. Healthicons and Tabler results retain source and licence information when embedded.
 
 See [`docs/ASSET_PACKS.md`](docs/ASSET_PACKS.md) for sources and licensing behavior.
 
 ## Water and wastewater library
 
-Open **Science → 🌊 Water 32** for the dedicated water library. It includes editable icons for droplets, molecules, waves, rivers, reservoirs, ocean water, groundwater, wells, rainfall, storm drains, sewer pipes, pumps, valves, influent, screens, grit removal, clarifiers, aeration, sludge flocs, membrane/sand/carbon filtration, UV and chlorine disinfection, effluent, sampling, turbidity, pH, nutrients, microplastics, algal blooms, and treatment plants.
+Open **Science → 🌊 Water 32** for dedicated editable water, treatment, infrastructure, monitoring, pollution, and marine vectors. The Figure Assistant can use these assets alongside the rest of the library.
 
-The wastewater Figure Assistant path automatically uses the relevant treatment-stage artwork rather than generic laboratory placeholders.
+## Map Studio
 
-## Canvas navigation
+Open **Insert → Maps** for:
 
-Use the **✋ Hand tool** to drag around a large poster. Holding **Space** temporarily activates panning, and the middle mouse button also pans. **Fit** calculates a true fit for the selected poster dimensions, **100%** restores actual size, and the minimap can be clicked or dragged to jump across the project. Holding Control, Command, or Alt while using the wheel zooms around the pointer position.
+- World political maps
+- Country silhouettes
+- Country highlights on a world map
+- City or study-site locator maps
+- Imported GeoJSON for streets, districts, routes, watersheds, coastlines, and research boundaries
+
+World and country boundaries use Natural Earth public-domain data. User-supplied GeoJSON retains a reminder to verify its original source licence.
+
+## Canvas navigation and page formats
+
+Open **Design → Canvas and poster size** to select Screen, A4–A0, square, or custom millimetre dimensions. The project uses one physical format so every page and export remains consistent.
+
+Use the Hand tool, Space, or middle mouse button to pan. The navigator can be dragged, docked, hidden, and reopened. Pinch with two fingers to zoom on touch devices.
+
+The adaptive grid can use automatic physical spacing or explicit 2, 5, 10, 20, 25, 50, or 100 mm divisions.
 
 ## Editable SVG behavior
 
-Use **Export → Editable SVG library** to import an SVG into the reusable local SVG vault. Imported SVGs keep their vector structure and can be moved, resized, rotated, layered, switched between original colors and whole-object recoloring, and downloaded again as SVG.
+Use **Export → Editable SVG library** to import SVGs into the reusable local vector vault. Imported SVGs keep their vector markup and can be moved, resized, rotated, layered, switched between original colors and whole-object recoloring, and downloaded again.
 
-Individual path-node editing, Boolean operations, masks, and breaking one imported SVG into multiple independent canvas objects are not implemented yet.
-
-## Page and poster formats
-
-Open **Layout → Page and poster size** to choose Screen, A4, A3, A2, A1, A0, square, or custom millimetre dimensions. The project uses one physical format so every page, SVG, PNG, and PowerPoint slide remains consistent.
-
-Poster SVG export writes the selected physical dimensions into the SVG. **Print PNG · 150 DPI** uses the same millimetre size and warns before unusually large mobile-browser exports.
+Individual imported path-node editing and breaking one imported SVG into separate canvas paths are not implemented. Boolean operations currently apply to SciCanvas rectangles and ellipses rather than arbitrary imported SVG paths.
 
 ## Figure Assistant
 
-Use **✨ Figure Assistant** beside Export and describe a figure such as “wastewater treatment with screening, bacteria, filtration, and clean effluent.” The assistant runs entirely in the browser and assembles movable, recolorable, resizable SciCanvas objects rather than generating a flattened raster image.
+Use **✨ Figure Assistant** and describe a scientific figure. It searches built-in science artwork, Water 32, and—when online—the deduplicated Bioicons, Healthicons, and Tabler sources. It creates movable, resizable, layered objects rather than a flattened AI image.
 
-It is a private rule-based scientific layout assistant, not a downloaded diffusion model. This keeps the feature fast, editable, offline-capable, and practical on phones and tablets.
+It is a private rule-based layout assistant, not a diffusion model or cloud API.
 
 ## Fonts and theme typography
 
-Use **Fonts** in the ribbon to browse the built-in font catalogue, select a project default, apply a font to all text, or import a local font file. Google Fonts load on demand. Imported font files remain stored only on the current device and are not embedded in `.scicanvas` or PowerPoint exports, so recipients must have the same font available for identical text rendering.
-
-Each project color theme now has a matching heading/body font pair. The **Change project fonts** checkbox can disable this behavior. Theme typography changes only text inside the project; it does not restyle the editor interface.
+Use **Fonts** to browse the font catalogue, set a project default, apply a font to all text, or import a local font file. Imported font files remain stored on the current device and are not embedded into PowerPoint exports.
 
 ## Export behavior
 
-PowerPoint export creates slides matching the selected physical project size. The complete figure is placed on each slide as high-resolution rendered artwork, preserving the visual output and page background. Individual SciCanvas objects are not yet converted into native editable PowerPoint shapes.
+PowerPoint export creates slides matching the selected physical project size. Each slide contains high-resolution rendered page artwork. Individual SciCanvas objects are not converted into native editable PowerPoint shapes.
 
 See [`docs/POWERPOINT_EXPORT.md`](docs/POWERPOINT_EXPORT.md) for details.
-
-## Requirement status
-
-See [`docs/FEATURE_AUDIT.md`](docs/FEATURE_AUDIT.md) for an explicit implemented/not-implemented audit against the original product requirements.
 
 ## Run locally
 
@@ -111,25 +126,20 @@ Then open `http://localhost:8080`.
 
 ## Data safety
 
-Projects, uploaded images, reusable editable SVGs, and imported font files are stored locally in the browser's IndexedDB vault. The app also maintains a lightweight localStorage fallback when the project is small enough. Use **Create recovery snapshot** for named restore points and download a `.scicanvas` project backup for storage outside the browser.
+Projects, uploads, editable SVGs, imported fonts, comments, references, components, and checkpoints are stored locally in the browser. Download `.scicanvas` backups for storage outside the browser.
 
-Browser storage is not a substitute for true account-based cloud backup. A later backend phase should add authenticated encrypted synchronization and shared lab libraries.
+Browser storage is not a substitute for authenticated cloud backup. Account-based encrypted synchronization and shared lab workspaces require a future backend.
 
 ## Asset licensing
 
-The initial built-in scientific illustrations and the water/environment icon family are original programmatic SVG drawings created for this project. External Bioicons retain their individual authors, licences, source URLs, and prepared attribution text inside the project. Servier Medical Art is linked under CC BY 4.0. NIH BioArt and Reactome assets must be checked individually before import and publication.
+Built-in scientific illustrations and Water 32 are original programmatic SVG drawings created for this project. External assets preserve their available source and licence metadata. Users remain responsible for verifying the licences of uploaded files, imported GeoJSON, fonts, and external source material.
 
-Users are responsible for the licences of uploaded SVGs, images, and font files. Attribution reports assist with recordkeeping but do not replace reviewing current source terms.
+## Remaining major limitations
 
-## Near-term roadmap
-
-1. Browser-level interaction tests and automated deployment verification
-2. Account-based encrypted cloud vault and shared lab workspaces
-3. Configurable smart biological components with scientifically constrained variants
-4. Grouping, multi-selection, SVG path-node editing, masking, Boolean operations, and richer vector editing
-5. Native editable PowerPoint-object export
-6. Better text layout, equations, chemical notation, and gene/protein formatting rules
-7. Optional local model-assisted prompt interpretation after a practical small browser model becomes available
-8. Collaborative comments and publication-figure review
-9. Accessible figure descriptions and machine-readable pathway export
-10. Additional normalized illustration-pack importers
+1. Browser-level automated interaction tests are still limited compared with the static validation suite.
+2. Account-based encrypted cloud storage and real-time collaboration are not implemented.
+3. Imported SVG path-node editing and breaking SVGs into independent paths are not implemented.
+4. PowerPoint export does not create native editable PowerPoint shapes.
+5. Equation support is a practical subset rather than a complete TeX engine.
+6. PDF, TIFF, SBGN, BioPAX, and SBML export are not implemented.
+7. The Figure Assistant is rule-based rather than a local generative language or diffusion model.
