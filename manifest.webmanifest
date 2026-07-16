@@ -7,5 +7,13 @@
   "display": "standalone",
   "background_color": "#eef2f7",
   "theme_color": "#f4f7fb",
-  "orientation": "landscape"
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "./favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
 }
