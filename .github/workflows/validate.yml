@@ -21,6 +21,7 @@ jobs:
             echo "Checking $file"
             node --check "$file"
           done
+          node --check scripts/validate-app.mjs
 
       - name: Check required application files
         run: |
@@ -51,8 +52,14 @@ jobs:
           test -f figure-assistant.js
           test -f poster-assistant-fixes.js
           test -f theme-font-pairs.js
+          test -f assistant-universal.js
           test -f canvas-navigation.js
+          test -f control-usability.js
           test -f pptx-export.js
           test -f app-bootstrap.js
           test -f manifest.webmanifest
           test -f service-worker.js
+          test -f scripts/validate-app.mjs
+
+      - name: Audit app wiring and offline shell
+        run: node scripts/validate-app.mjs
