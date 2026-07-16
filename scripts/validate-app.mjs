@@ -65,7 +65,7 @@ const checks = {
   'assistant-universal.js':['scienceAssets','BIOICONS','Search all 2,829 Bioicons','assistantLayout'],
   'layout-stability.js':['scicanvas-page-format-v2','applyAdaptiveGrid','navigator-hidden','#scienceDrawer .science-search'],
   'map-studio.js':['world-atlas@2','geoNaturalEarth1','Import GeoJSON map','City / site locator map'],
-  'pro-tools-hub.js':['Accounts & gallery','Live collaboration','SVG path editor','TeX typesetting','Pathway exchange','SciCanvasPro'],
+  'pro-tools-hub.js':['Accounts & gallery','Email sign-in and recovery','Live collaboration','correctCollaborationCopy','SVG path editor','TeX typesetting','Pathway exchange','SciCanvasPro'],
   'selection-layout-tools.js':['marquee-selection','multi-resize-handle','Smart alignment guides','Anchored connector'],
   'data-science-tools.js':['Bar chart','Scatter plot','Box plot','Heatmap','Double-click chart','window.openDataLab'],
   'scientific-annotation-tools.js':['Scale bar','Significance bracket','Equation / chemical formula','annotationKind'],
@@ -82,7 +82,7 @@ const checks = {
   'workspace-controls-pages.js':['movable-toolbar-bubble','toolbar-collapse','deletePageButton','deleteCurrentSciCanvasPage'],
   'refresh-safety.js':['scicanvas-last-good-v1','saveSciCanvasImmediately','beforeunload','restoreAuthoritatively'],
   'polish-delight.js':['scicanvas-user-name-v1','scicanvas-guided-tour-v3','Beautiful figures, without the software-induced despair','Nothing is opened, moved, selected, or scrolled','lab-focus-mode','Genome unlocked','microscope','prefers-reduced-motion'],
-  'cloud-account.js':['resetPasswordForEmail','signInWithPassword','auth.signUp','auth.resend','PASSWORD_RECOVERY','get_project_key','invite_project_member','AES-GCM','localProjectGallery','cloudProjectGallery','email and password only','SciCanvasCloud'],
+  'cloud-account.js':['resetPasswordForEmail','signInWithPassword','auth.signUp','auth.resend','PASSWORD_RECOVERY','rpc(\'get_project_key\'','rpc(\'invite_project_member\'','AES-GCM','localProjectGallery','cloudProjectGallery','email and password only','SciCanvasCloud'],
   'collaboration-tools.js':['project-update','collaboration_comments','presenceState','collabCursorLayer','Apply remote update','private:true','project-edit:'],
   'svg-path-editor.js':['PARAM_COUNTS','parsePath','path-node-handle','Break artwork apart','ancestorWrappedMarkup'],
   'tex-typesetting.js':['tex2svgPromise','mathSvgMarkup','TeX → embedded SVG','MathJax'],
@@ -96,10 +96,12 @@ for (const [file, markers] of Object.entries(checks)) {
 
 for (const file of ['supabase/schema.sql','docs/CLOUD_SETUP.md']) if (!fs.existsSync(path.join(root,file))) fail(`Cloud backend file is missing: ${file}`);
 const schema = read('supabase/schema.sql');
-for (const marker of ['enable row level security','project_members','project_invitations','collaboration_comments','get_project_key','invite_project_member','private.app_secrets','supabase_realtime','realtime_project_id','realtime.messages','project editors send edit broadcasts']) if (!schema.includes(marker)) fail(`Cloud schema is missing marker: ${marker}`);
+for (const marker of ['enable row level security','project_members','project_invitations','collaboration_comments','get_project_key','invite_project_member','private.app_secrets','scicanvas_private','supabase_realtime','realtime_project_id','realtime.messages','project editors send edit broadcasts']) if (!schema.includes(marker)) fail(`Cloud schema is missing marker: ${marker}`);
 const cloudConfig = read('cloud-config.js');
 if (!cloudConfig.includes('yzjqciycdbnpnndxvpgq.supabase.co') || !cloudConfig.includes('sb_publishable_')) fail('Live Supabase browser configuration is missing.');
-if (/signInWithOAuth|oauth\(['"](?:apple|azure)/.test(read('cloud-account.js'))) fail('Email-only accounts must not include social OAuth handlers.');
+const cloudAccount = read('cloud-account.js');
+if (/signInWithOAuth|oauth\(['"](?:apple|azure)/.test(cloudAccount)) fail('Email-only accounts must not include social OAuth handlers.');
+if (cloudAccount.includes('client.functions.invoke')) fail('Live account build must use deployed database RPCs, not undeployed Edge Functions.');
 
 const hardening = read('stability-hardening.js');
 if (!hardening.includes("new Set(['local','bio','healthicons','tabler'])")) fail('Asset trust layer must allow only approved library sources');
@@ -116,7 +118,7 @@ if (finishing.includes('scrollIntoView')) fail('Passive tour must not scroll the
 if (finishing.includes('tour-target')) fail('Passive tour must not mutate target element layout');
 const polish = read('polish-delight.js');
 if (polish.includes('scrollIntoView')) fail('Expanded tour must remain passive');
-if (!worker.includes('scicanvas-shell-v34')) fail('Live email account build requires offline shell v34');
+if (!worker.includes('scicanvas-shell-v35')) fail('Live email account build requires offline shell v35');
 if (!fs.existsSync(path.join(root,'favicon.svg'))) fail('favicon.svg is missing');
 if (!html.includes('href="./favicon.svg"')) fail('index.html does not reference favicon.svg');
 if (!worker.includes('"./favicon.svg"')) fail('Service worker does not cache favicon.svg');
@@ -125,4 +127,4 @@ const ids = [...html.matchAll(/\sid=["']([^"']+)["']/g)].map(match => match[1]);
 const duplicateIds = ids.filter((id,index) => ids.indexOf(id) !== index);
 if (duplicateIds.length) fail(`Duplicate static HTML IDs: ${[...new Set(duplicateIds)].join(', ')}`);
 
-console.log(`Static audit passed: ${scripts.length} scripts, live email/password accounts, recovery, encrypted project gallery, private collaboration, SVG path editing, TeX SVG, pathway exchange, local prompt interpretation, complete offline shell, and no duplicate static IDs.`);
+console.log(`Static audit passed: ${scripts.length} scripts, deployed email/password accounts, recovery, encrypted project gallery, private role-aware collaboration, SVG path editing, TeX SVG, pathway exchange, local prompt interpretation, complete offline shell, and no duplicate static IDs.`);
