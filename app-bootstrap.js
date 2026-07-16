@@ -100,8 +100,10 @@
     const title = document.getElementById("delightTourTitle");
     const counter = document.querySelector("#scicanvasTour .tour-counter")?.textContent || "";
     if (!name || !title) return;
-    if (counter.startsWith("1 of")) title.textContent = `Hi, ${name}. This is your studio.`;
-    if (counter.startsWith("12 of")) title.textContent = `You are ready, ${name}.`;
+    let desired = "";
+    if (counter.startsWith("1 of")) desired = `Hi, ${name}. This is your studio.`;
+    if (counter.startsWith("12 of")) desired = `You are ready, ${name}.`;
+    if (desired && title.textContent !== desired) title.textContent = desired;
   }
   new MutationObserver(syncPersonalTourTitle).observe(document.body, { childList:true, subtree:true, characterData:true });
   document.addEventListener("submit", event => {
