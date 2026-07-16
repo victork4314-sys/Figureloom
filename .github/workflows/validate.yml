@@ -45,6 +45,7 @@ jobs:
           test -f editable-svg-import.js
           test -f export-svg-placement.js
           test -f external-packs.js
+          test -f expanded-library.js
           test -f fun-design-tools.js
           test -f project-themes.js
           test -f theme-control-fix.js
@@ -53,11 +54,13 @@ jobs:
           test -f poster-assistant-fixes.js
           test -f theme-font-pairs.js
           test -f assistant-universal.js
+          test -f assistant-10k.js
           test -f canvas-navigation.js
           test -f control-usability.js
           test -f insert-tools.js
           test -f pinch-zoom.js
           test -f workspace-state.js
+          test -f object-quick-menu.js
           test -f pptx-export.js
           test -f app-bootstrap.js
           test -f manifest.webmanifest
