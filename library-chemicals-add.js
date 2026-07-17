@@ -11,7 +11,7 @@
     button.id = 'insertChemicalStructures';
     button.type = 'button';
     button.className = 'insert-action';
-    button.innerHTML = '<strong>Chemical structures</strong><small>Search PubChem by name, synonym, formula, or CID</small>';
+    button.innerHTML = '<strong>Chemical structures</strong><small>Search PubChem by name, synonym, or CID</small>';
     button.addEventListener('click', () => {
       window.openPubChemLibrary();
       document.getElementById('insertDrawer')?.classList.remove('open');
