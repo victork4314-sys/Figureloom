@@ -1,4 +1,4 @@
-const FIGURELOOM_BUILD_ID = "chunk-16-chat-visibility-loop-fix-20260718-v1";
+const FIGURELOOM_BUILD_ID = "chunk-17-tab-close-pptx-export-20260718-v1";
 const FIGURELOOM_CACHE_PREFIX = "figureloom-app-";
 const FIGURELOOM_CACHE_NAME = `${FIGURELOOM_CACHE_PREFIX}${FIGURELOOM_BUILD_ID}`;
 const LEGACY_CACHE_PREFIXES = ["figureloom-shell", "scicanvas-shell"];
