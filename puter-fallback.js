@@ -141,6 +141,43 @@
     }
   }
 
+  async function ensurePuterAuth(puter) {
+    if (!puter?.auth?.isSignedIn || puter.auth.isSignedIn()) return;
+
+    setProgress('Puter backup is ready', 'Tap Continue with Puter to authorize the backup…', 84);
+
+    await new Promise((resolve, reject) => {
+      const article = document.createElement('article');
+      article.className = 'figureloom-chat-message assistant';
+      article.innerHTML = `
+        <small>Puter AI</small>
+        <div class="figureloom-chat-bubble">
+          <p>Gemini is unavailable. Continue with Puter to use its independent AI backup. Puter may create a temporary account or ask you to sign in.</p>
+          <div class="figureloom-chat-actions"><button type="button" class="primary">Continue with Puter</button></div>
+        </div>`;
+      messages.appendChild(article);
+      messages.scrollTop = messages.scrollHeight;
+
+      const button = article.querySelector('button');
+      button.addEventListener('click', async () => {
+        button.disabled = true;
+        button.textContent = 'Opening Puter…';
+        try {
+          await puter.auth.signIn({ attempt_temp_user_creation:true });
+          article.remove();
+          resolve();
+        } catch (error) {
+          article.classList.add('error');
+          const paragraph = article.querySelector('p');
+          if (paragraph) paragraph.textContent = 'Puter sign-in was cancelled or blocked, so the backup did not run.';
+          button.disabled = false;
+          button.textContent = 'Try Puter again';
+          reject(new Error(error?.msg || error?.message || 'Puter sign-in was not completed.'));
+        }
+      });
+    });
+  }
+
   async function askPuter(body = {}) {
     const mode = ['build','rewrite','feedback'].includes(body.mode) ? body.mode : 'build';
     const request = String(body.prompt || '').trim();
@@ -148,6 +185,7 @@
 
     setProgress('Switching to Puter AI', 'Gemini is unavailable. Puter may ask you to sign in…', 82);
     const puter = await loadPuter();
+    await ensurePuterAuth(puter);
     setProgress('Puter AI is thinking', 'Designing the same protected editable blueprint…', 88);
 
     const system = `You are Loomy's independent backup scientific-figure designer for FigureLoom.
