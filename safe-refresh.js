@@ -2,9 +2,27 @@
   if (window.__figureLoomSafeRefreshV1) return;
   window.__figureLoomSafeRefreshV1 = true;
 
-  const EXPECTED_BUILD = "chunk-2-quota-20260717-v1";
+  const EXPECTED_BUILD = "chunk-3-libraries-20260717-v1";
   const SEEN_BUILD_KEY = "figureloom-session-build-v1";
+  const CHUNK_ADDONS = [
+    "library-more-illustrations.js",
+    "library-more-templates.js",
+    "library-more-fonts-styles.js",
+    "library-chemicals-add.js"
+  ];
   let reloading = false;
+
+  function loadChunkAddons() {
+    CHUNK_ADDONS.forEach(path => {
+      if (document.querySelector(`script[data-figureloom-addon="${path}"]`)) return;
+      const script = document.createElement("script");
+      script.src = `${path}?v=${encodeURIComponent(EXPECTED_BUILD)}`;
+      script.dataset.figureloomAddon = path;
+      document.head.appendChild(script);
+    });
+  }
+
+  loadChunkAddons();
 
   if (!("serviceWorker" in navigator)) return;
 
