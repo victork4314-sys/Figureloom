@@ -6,6 +6,7 @@
   const measureContext = measureCanvas.getContext('2d');
   let active = null;
   let pointerCandidate = null;
+  let suppressClickUntil = 0;
 
   function fontSize(item) {
     return Math.max(6, Number(item.fontSize) || 30);
@@ -211,19 +212,31 @@
     }
   }, true);
 
+  document.addEventListener('pointerup', event => {
+    const candidate = pointerCandidate;
+    if (!candidate || candidate.pointerId !== event.pointerId) return;
+    pointerCandidate = null;
+    if (candidate.moved) return;
+    const item = textItem(candidate.id);
+    const textNode = renderedTextNode(candidate.id);
+    if (!item || !textNode) return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    state.drag = null;
+    if (state.history.length) {
+      state.history.pop();
+      updateHistoryButtons();
+    }
+    suppressClickUntil = performance.now() + 600;
+    start(item, textNode);
+  }, true);
+
   document.addEventListener('pointercancel', () => { pointerCandidate = null; }, true);
 
   document.addEventListener('click', event => {
-    const textNode = event.target.closest?.('#objectLayer .canvas-object text');
-    const candidate = pointerCandidate;
-    pointerCandidate = null;
-    if (!textNode || !candidate || candidate.moved) return;
-    const group = textNode.closest('.canvas-object[data-id]');
-    const item = textItem(group?.dataset.id);
-    if (!item || item.id !== candidate.id) return;
+    if (performance.now() > suppressClickUntil) return;
     event.preventDefault();
     event.stopImmediatePropagation();
-    start(item, textNode);
   }, true);
 
   window.addEventListener('resize', () => finish(true));
