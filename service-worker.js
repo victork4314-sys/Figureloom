@@ -1,4 +1,4 @@
-const FIGURELOOM_BUILD_ID = "chunk-6-loomy-all-assets-20260717-v1";
+const FIGURELOOM_BUILD_ID = "chunk-7-collaboration-finish-20260717-v1";
 const FIGURELOOM_CACHE_PREFIX = "figureloom-app-";
 const FIGURELOOM_CACHE_NAME = `${FIGURELOOM_CACHE_PREFIX}${FIGURELOOM_BUILD_ID}`;
 const LEGACY_CACHE_PREFIXES = ["figureloom-shell", "scicanvas-shell"];
