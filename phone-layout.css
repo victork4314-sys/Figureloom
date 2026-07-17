@@ -1,0 +1,396 @@
+/* Phone-only layout. The phone-ui class is added by phone-layout.js after device checks. */
+html.phone-ui {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #e9eef5;
+}
+
+html.phone-ui body {
+  width: 100%;
+  min-width: 0 !important;
+  height: 100dvh;
+  min-height: 100dvh;
+  overflow: hidden;
+  overscroll-behavior: none;
+  -webkit-text-size-adjust: 100%;
+}
+
+html.phone-ui .app-shell {
+  grid-template-rows: 56px 42px 72px minmax(0, 1fr) 26px !important;
+  width: 100%;
+  height: 100dvh !important;
+  min-height: 0;
+}
+
+html.phone-ui .titlebar {
+  grid-template-columns: auto minmax(0, 1fr) auto !important;
+  gap: 8px !important;
+  min-width: 0;
+  padding: max(6px, env(safe-area-inset-top)) 10px 6px !important;
+}
+
+html.phone-ui .brand {
+  min-width: 0;
+  gap: 7px;
+}
+
+html.phone-ui .brand-mark {
+  flex: 0 0 auto;
+  width: 36px !important;
+  height: 36px !important;
+  border-radius: 11px !important;
+}
+
+html.phone-ui .brand > div {
+  min-width: 0;
+}
+
+html.phone-ui .brand strong {
+  max-width: 86px;
+  overflow: hidden;
+  font-size: 13px;
+  line-height: 1.1;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+html.phone-ui .brand span {
+  display: none !important;
+}
+
+html.phone-ui .document-title {
+  min-width: 0;
+  text-align: center;
+}
+
+html.phone-ui .document-title input {
+  width: 100% !important;
+  max-width: 150px;
+  padding: 5px 4px !important;
+  overflow: hidden;
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+html.phone-ui .document-title span {
+  margin-top: 0;
+  overflow: hidden;
+  font-size: 9px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+html.phone-ui .title-actions {
+  gap: 4px !important;
+}
+
+html.phone-ui .title-actions #undoButton,
+html.phone-ui .title-actions #redoButton {
+  display: none !important;
+}
+
+html.phone-ui #exportButton {
+  min-height: 36px;
+  padding: 7px 10px !important;
+  border-radius: 10px !important;
+  font-size: 12px;
+}
+
+html.phone-ui .ribbon-tabs {
+  min-width: 0;
+  align-items: stretch !important;
+  gap: 1px !important;
+  padding: 0 6px !important;
+  overflow-x: auto;
+  overflow-y: hidden;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+html.phone-ui .ribbon-tabs::-webkit-scrollbar,
+html.phone-ui .ribbon::-webkit-scrollbar {
+  display: none;
+}
+
+html.phone-ui .ribbon-tab,
+html.phone-ui .ribbon-command-tab {
+  flex: 0 0 auto;
+  height: 42px !important;
+  min-width: max-content;
+  padding: 0 12px !important;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+html.phone-ui .ribbon-command-tab {
+  border: 0;
+  border-bottom: 3px solid transparent;
+  background: transparent;
+  color: #4b5563;
+}
+
+html.phone-ui .ribbon {
+  min-width: 0;
+  gap: 8px !important;
+  align-items: stretch !important;
+  padding: 7px 10px 8px !important;
+  overflow-x: auto;
+  overflow-y: hidden;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+html.phone-ui .tool-group {
+  flex: 0 0 auto;
+  min-height: 56px;
+  gap: 6px !important;
+  padding: 0 10px 13px 0 !important;
+}
+
+html.phone-ui .tool-group-label {
+  font-size: 9px;
+}
+
+html.phone-ui .tool-group label {
+  flex: 0 0 auto;
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+html.phone-ui .ribbon button {
+  min-height: 38px;
+  padding: 8px 11px !important;
+  border-radius: 9px !important;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+html.phone-ui .workspace {
+  position: relative;
+  display: block !important;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+html.phone-ui .canvas-area {
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+}
+
+html.phone-ui .canvas-stage {
+  width: 100%;
+  height: 100%;
+  padding: 54px 12px calc(88px + env(safe-area-inset-bottom)) !important;
+  place-items: start center !important;
+  overflow: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+html.phone-ui #canvas {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  flex: 0 0 auto;
+  touch-action: none;
+  box-shadow: 0 10px 28px rgba(39, 51, 71, .19), 0 0 0 1px #ccd5e1 !important;
+}
+
+html.phone-ui .canvas-toolbar {
+  top: 9px !important;
+  gap: 5px !important;
+  padding: 4px !important;
+  border-radius: 11px !important;
+}
+
+html.phone-ui .canvas-toolbar button {
+  width: 34px !important;
+  height: 32px !important;
+  border-radius: 8px !important;
+}
+
+html.phone-ui #zoomValue {
+  min-width: 48px;
+}
+
+html.phone-ui .left-panel,
+html.phone-ui .right-panel {
+  position: absolute !important;
+  top: 0;
+  bottom: 0;
+  z-index: 42;
+  display: block !important;
+  width: min(88vw, 360px) !important;
+  max-width: none !important;
+  min-height: 0;
+  overflow: auto;
+  padding-top: 54px !important;
+  box-shadow: 0 18px 48px rgba(12, 29, 25, .28);
+  transition: transform .22s ease;
+  -webkit-overflow-scrolling: touch;
+}
+
+html.phone-ui .left-panel {
+  left: 0;
+  border-right: 1px solid #d9e0e9;
+  transform: translateX(-105%);
+}
+
+html.phone-ui .right-panel {
+  right: 0;
+  border-left: 1px solid #d9e0e9;
+  transform: translateX(105%);
+}
+
+html.phone-ui .left-panel.phone-sheet-open,
+html.phone-ui .right-panel.phone-sheet-open {
+  transform: translateX(0);
+}
+
+html.phone-ui .phone-sheet-close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 1px solid #cfd7e3;
+  border-radius: 11px;
+  background: white;
+  color: #334155;
+  font-size: 26px;
+  line-height: 1;
+  box-shadow: 0 4px 12px rgba(36, 48, 68, .08);
+}
+
+html.phone-ui .phone-sheet-backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 41;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  background: rgba(7, 24, 20, .32);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+}
+
+html.phone-ui .phone-sheet-backdrop[hidden] {
+  display: none !important;
+}
+
+html.phone-ui .phone-dock {
+  position: absolute;
+  left: 50%;
+  bottom: calc(10px + env(safe-area-inset-bottom));
+  z-index: 32;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(52px, 1fr));
+  width: min(calc(100% - 24px), 350px);
+  padding: 6px;
+  border: 1px solid rgba(202, 225, 216, .34);
+  border-radius: 18px;
+  background: rgba(18, 54, 46, .94);
+  box-shadow: 0 12px 30px rgba(12, 35, 29, .28);
+  transform: translateX(-50%);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+html.phone-ui .phone-dock button {
+  display: grid;
+  place-items: center;
+  gap: 2px;
+  min-width: 0;
+  min-height: 48px;
+  padding: 5px 3px;
+  border: 0;
+  border-radius: 13px;
+  background: transparent;
+  color: #e7f2ed;
+}
+
+html.phone-ui .phone-dock button:active,
+html.phone-ui .phone-dock button[aria-expanded="true"] {
+  background: rgba(223, 241, 234, .16);
+}
+
+html.phone-ui .phone-dock button > span {
+  font-size: 20px;
+  line-height: 1;
+}
+
+html.phone-ui .phone-dock button > small {
+  max-width: 100%;
+  overflow: hidden;
+  font-size: 9px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+html.phone-ui .statusbar {
+  justify-content: center !important;
+  min-width: 0;
+  padding: 0 8px calc(env(safe-area-inset-bottom) / 3) !important;
+}
+
+html.phone-ui .statusbar > span:first-child,
+html.phone-ui .statusbar > span:last-child {
+  display: none !important;
+}
+
+html.phone-ui dialog,
+html.phone-ui [role="dialog"],
+html.phone-ui .modal,
+html.phone-ui .dialog,
+html.phone-ui .account-modal,
+html.phone-ui .gallery-modal {
+  max-width: calc(100vw - 20px) !important;
+  max-height: calc(100dvh - 20px) !important;
+}
+
+html.phone-ui input,
+html.phone-ui select,
+html.phone-ui textarea {
+  font-size: max(16px, 1em);
+}
+
+@media (orientation: landscape) {
+  html.phone-ui .app-shell {
+    grid-template-rows: 50px 38px 62px minmax(0, 1fr) 24px !important;
+  }
+
+  html.phone-ui .titlebar {
+    padding-top: max(4px, env(safe-area-inset-top)) !important;
+    padding-bottom: 4px !important;
+  }
+
+  html.phone-ui .ribbon-tab,
+  html.phone-ui .ribbon-command-tab {
+    height: 38px !important;
+  }
+
+  html.phone-ui .ribbon {
+    padding-top: 5px !important;
+    padding-bottom: 6px !important;
+  }
+
+  html.phone-ui .tool-group {
+    min-height: 48px;
+  }
+
+  html.phone-ui .canvas-stage {
+    padding-top: 50px !important;
+  }
+}
