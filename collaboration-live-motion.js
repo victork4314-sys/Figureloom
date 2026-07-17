@@ -6,7 +6,7 @@
   if (!canvas) return;
 
   const clientId = `motion-${crypto.randomUUID()}`;
-  const SEND_INTERVAL = 30;
+  const SEND_INTERVAL = 125;
   let client = null;
   let channel = null;
   let project = '';
@@ -120,7 +120,10 @@
     pendingPayload = null;
     lastSentAt = Date.now();
     try {
-      await channel.send({ type:'broadcast', event:'object-motion', payload });
+      const response = await channel.send({ type:'broadcast', event:'object-motion', payload });
+      if (response !== 'ok' && response !== 'timed out') {
+        console.warn('Live object motion was rejected.', response);
+      }
     } catch (error) {
       console.warn('Live object motion could not send.', error);
     }
