@@ -1,5 +1,6 @@
 (() => {
-  if (window.__figureLoomHelperFit) return;
+  if (window.__figureLoomHelperFitV3) return;
+  window.__figureLoomHelperFitV3 = true;
   window.__figureLoomHelperFit = true;
 
   const drawer = document.getElementById('figureAssistantDrawer');
@@ -21,31 +22,34 @@
     initialMessage.textContent = 'Loomy is a small optional helper for getting a first draft started. Pick Gemini, Puter, or Builder, then edit everything yourself in FigureLoom.';
   }
   if (safety) {
-    safety.textContent = 'Loomy only helps you get started. FigureLoom remains a manual editor. Generated drafts open on a new page and cannot delete or replace existing work. Shared quota is used only when you deliberately send with Gemini; Puter and Builder do not use it.';
+    safety.textContent = 'Loomy only helps you get started. FigureLoom remains a manual editor. Generated drafts open on a new page and cannot delete or replace existing work. Shared quota is used only when you deliberately send with Gemini; Puter and Builder never use it.';
   }
 
-  function puterIsSelected() {
-    return Boolean(shell.querySelector('.figureloom-chat-source[data-source="puter"].active'));
+  function selectedSource() {
+    return shell.querySelector('.figureloom-chat-source.active')?.dataset.source || 'gemini';
   }
 
-  function clearPuterQuotaNoise() {
-    if (!puterIsSelected()) return;
+  function clearIrrelevantQuotaNoise() {
+    if (selectedSource() === 'gemini') return;
     messages.querySelectorAll('.figureloom-chat-quota').forEach(line => line.remove());
     messages.querySelectorAll('.figureloom-chat-message.error').forEach(article => {
       const text = article.textContent || '';
-      if (/daily shared AI limit|shared request|FigureLoom quota|quota reached/i.test(text)) article.remove();
+      if (/daily shared AI limit|shared requests? left|shared Gemini.{0,30}limit|FigureLoom quota|quota (?:was )?reached|reached.{0,20}quota/i.test(text)) article.remove();
     });
   }
 
-  shell.querySelector('.figureloom-chat-source[data-source="puter"]')?.addEventListener('click', () => {
-    window.setTimeout(clearPuterQuotaNoise, 0);
-    window.setTimeout(clearPuterQuotaNoise, 300);
-  });
-  sendButton.addEventListener('click', () => {
-    if (!puterIsSelected()) return;
-    window.setTimeout(clearPuterQuotaNoise, 0);
-    window.setTimeout(clearPuterQuotaNoise, 1200);
+  shell.querySelector('.figureloom-chat-sources')?.addEventListener('click', () => {
+    window.setTimeout(clearIrrelevantQuotaNoise, 0);
+    window.setTimeout(clearIrrelevantQuotaNoise, 350);
   }, true);
+  sendButton.addEventListener('click', () => {
+    if (selectedSource() === 'gemini') return;
+    window.setTimeout(clearIrrelevantQuotaNoise, 0);
+    window.setTimeout(clearIrrelevantQuotaNoise, 1200);
+  }, true);
+
+  const quotaObserver = new MutationObserver(clearIrrelevantQuotaNoise);
+  quotaObserver.observe(messages, { childList:true, subtree:true, characterData:true });
 
   function appState() {
     if (typeof state !== 'undefined' && state) return state;
@@ -93,7 +97,16 @@
     const y = number(item.y);
     const width = Math.max(1, number(item.width, 1));
     const height = Math.max(1, number(item.height, 1));
-    return { x, y, width, height, right:x + width, bottom:y + height };
+    const rotation = Math.abs(number(item.rotation)) % 180;
+    if (!rotation) return { x, y, width, height, right:x + width, bottom:y + height };
+    const radians = rotation * Math.PI / 180;
+    const rotatedWidth = Math.abs(width * Math.cos(radians)) + Math.abs(height * Math.sin(radians));
+    const rotatedHeight = Math.abs(width * Math.sin(radians)) + Math.abs(height * Math.cos(radians));
+    const centerX = x + width / 2;
+    const centerY = y + height / 2;
+    const left = centerX - rotatedWidth / 2;
+    const top = centerY - rotatedHeight / 2;
+    return { x:left, y:top, width:rotatedWidth, height:rotatedHeight, right:left + rotatedWidth, bottom:top + rotatedHeight };
   }
 
   function normalizeGeneratedPage(objects) {
@@ -131,34 +144,42 @@
       item.height = Math.max(8, number(item.height, 8) * scale);
       if (Number.isFinite(Number(item.fontSize))) item.fontSize = Math.max(10, Number(item.fontSize) * scale);
 
-      if (item.width > safeWidth) {
-        const itemScale = safeWidth / item.width;
+      if (item.width > safeWidth || item.height > safeHeight) {
+        const itemScale = Math.min(1, safeWidth / item.width, safeHeight / item.height);
         item.width *= itemScale;
         item.height *= itemScale;
-      }
-      if (item.height > safeHeight) {
-        const itemScale = safeHeight / item.height;
-        item.width *= itemScale;
-        item.height *= itemScale;
+        if (Number.isFinite(Number(item.fontSize))) item.fontSize = Math.max(10, Number(item.fontSize) * itemScale);
       }
       item.x = Math.min(size.width - margin - item.width, Math.max(margin, item.x));
       item.y = Math.min(size.height - margin - item.height, Math.max(margin, item.y));
     });
 
-    window.syncPage?.();
-    window.render?.();
-    window.renderPages?.();
-    window.scheduleSave?.();
+    if (typeof syncPage === 'function') syncPage();
+    else window.syncPage?.();
+    if (typeof render === 'function') render();
+    else window.render?.();
+    if (typeof renderPages === 'function') renderPages();
+    else window.renderPages?.();
+    if (typeof scheduleSave === 'function') scheduleSave();
+    else window.scheduleSave?.();
     return true;
   }
 
-  function startFitWatch() {
+  window.FigureLoomFitGeneratedPage = () => normalizeGeneratedPage(appState()?.objects);
+
+  function signatureFor(objects) {
+    return objects.map(item => `${item?.id || ''}:${number(item?.x)}:${number(item?.y)}:${number(item?.width)}:${number(item?.height)}:${number(item?.rotation)}`).join('|');
+  }
+
+  function startFitWatch(mode = selectedSource()) {
     const initialState = appState();
     const initialPageCount = Array.isArray(initialState?.pages) ? initialState.pages.length : 0;
     const initialPage = Number(initialState?.activePage ?? -1);
     const started = Date.now();
-    let stableTicks = 0;
     let previousSignature = '';
+    let lastChange = started;
+    let lastFit = 0;
+    let fitted = false;
 
     const timer = window.setInterval(() => {
       const currentState = appState();
@@ -167,35 +188,52 @@
       const pageChanged = pages.length > initialPageCount || activePage !== initialPage;
       const objects = Array.isArray(currentState?.objects) ? currentState.objects : [];
       const builderDone = /^Built\b/i.test(String(builderStatus?.textContent || ''));
+      const now = Date.now();
 
       if (pageChanged && objects.length >= 2) {
-        const signature = objects.map(item => `${item?.id || ''}:${number(item?.x)}:${number(item?.y)}:${number(item?.width)}:${number(item?.height)}`).join('|');
-        stableTicks = signature === previousSignature ? stableTicks + 1 : 0;
-        previousSignature = signature;
-        if (stableTicks >= 2 || builderDone || Date.now() - started > 5000) {
-          window.clearInterval(timer);
+        const signature = signatureFor(objects);
+        if (signature !== previousSignature) {
+          previousSignature = signature;
+          lastChange = now;
+        }
+
+        const quietFor = now - lastChange;
+        const ready = builderDone || quietFor >= (mode === 'builder' ? 1400 : 700) || now - started > 9000;
+        if (ready && (!lastFit || now - lastFit > 700)) {
           normalizeGeneratedPage(objects);
+          fitted = true;
+          lastFit = now;
+          previousSignature = signatureFor(objects);
+          lastChange = now;
+        }
+
+        const settledAfterFit = fitted && now - lastFit > (mode === 'builder' ? 2600 : 1800);
+        if ((builderDone && settledAfterFit) || (mode !== 'builder' && settledAfterFit)) {
+          window.clearInterval(timer);
           return;
         }
       }
 
-      if (Date.now() - started > 95000) window.clearInterval(timer);
-    }, 220);
+      if (now - started > 95000) window.clearInterval(timer);
+    }, 240);
   }
 
   messages.addEventListener('click', event => {
     const button = event.target.closest('button');
     if (!button) return;
     const text = button.textContent.trim();
-    if (/Create .*figure on new page|Build .*plan on new page|Use Builder instead/i.test(text)) startFitWatch();
+    if (/Use Builder instead/i.test(text)) startFitWatch('builder');
+    else if (/Create .*figure on new page|Build .*plan on new page/i.test(text)) startFitWatch(selectedSource());
   }, true);
 
   sendButton.addEventListener('click', () => {
-    const builderSelected = shell.querySelector('.figureloom-chat-source[data-source="builder"]')?.classList.contains('active');
-    if (builderSelected && input.value.trim()) startFitWatch();
+    const builderSelected = selectedSource() === 'builder';
+    if (builderSelected && input.value.trim()) startFitWatch('builder');
   }, true);
   input.addEventListener('keydown', event => {
-    const builderSelected = shell.querySelector('.figureloom-chat-source[data-source="builder"]')?.classList.contains('active');
-    if (builderSelected && event.key === 'Enter' && !event.shiftKey && input.value.trim()) startFitWatch();
+    const builderSelected = selectedSource() === 'builder';
+    if (builderSelected && event.key === 'Enter' && !event.shiftKey && input.value.trim()) startFitWatch('builder');
   }, true);
+
+  window.addEventListener('beforeunload', () => quotaObserver.disconnect());
 })();
