@@ -5,6 +5,19 @@
   const replaceBrand = value => String(value || '')
     .replace(/SciCanvas/gi, 'FigureLoom')
     .replace(/Figureloom/g, 'FigureLoom');
+  const CURRENT_GEMINI_MODELS = ['gemini-3.1-flash-lite', 'gemini-3.5-flash', 'gemini-flash-latest'];
+  const GEMINI_RESPONSE_SCHEMA = {
+    type:'object',
+    properties:{
+      kind:{type:'string',enum:['build','rewrite','feedback']},
+      title:{type:'string'}, summary:{type:'string'},
+      layout:{type:'string',enum:['auto','workflow','comparison','cycle']},
+      stages:{type:'array',items:{type:'string'},minItems:0,maxItems:8},
+      improvedPrompt:{type:'string'}, replacementText:{type:'string'},
+      suggestions:{type:'array',items:{type:'string'},minItems:0,maxItems:6}
+    },
+    required:['kind','title','summary','layout','stages','improvedPrompt','replacementText','suggestions']
+  };
 
   function cleanNode(root) {
     if (!root) return;
@@ -107,18 +120,54 @@
     };
   }
 
+  async function directGeminiRequest(body) {
+    const apiKey = String(body.userApiKey || '').trim();
+    if (!apiKey) throw new Error('Add a Gemini API key first.');
+    const systemInstruction = `You are FigureLoom AI, a cautious planning assistant for an editable scientific-figure editor.
+Return only JSON matching the supplied schema. Never return HTML, JavaScript, SVG, markdown fences, or executable instructions.
+The context contains every page and editable object in the project, the complete built-in illustration catalogue, available templates, and the searchable online library capabilities. Use real available assets when planning.
+For build mode, provide 2-8 ordered stages and an improvedPrompt for the editable builder. For rewrite mode, preserve meaning and put the final wording in replacementText. For feedback mode, review all supplied pages and objects.`;
+    let lastMessage = 'Gemini could not create a proposal.';
+    for (const model of CURRENT_GEMINI_MODELS) {
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`, {
+        method:'POST',
+        headers:{'Content-Type':'application/json','x-goog-api-key':apiKey},
+        body:JSON.stringify({
+          systemInstruction:{parts:[{text:systemInstruction}]},
+          contents:[{role:'user',parts:[{text:JSON.stringify({mode:body.mode,request:body.prompt,figure:body.figure})}]}],
+          generationConfig:{temperature:.2,maxOutputTokens:2200,responseMimeType:'application/json',responseSchema:GEMINI_RESPONSE_SCHEMA}
+        })
+      });
+      const payload = await response.json().catch(() => null);
+      if (!response.ok) {
+        lastMessage = String(payload?.error?.message || `Google rejected the Gemini request (${response.status}).`).replace(/AIza[0-9A-Za-z_-]+/g,'[redacted key]');
+        if ([400,404].includes(response.status)) continue;
+        throw new Error(lastMessage);
+      }
+      const text = (payload?.candidates?.[0]?.content?.parts || []).map(part => part?.text || '').join('').trim();
+      if (!text) { lastMessage = 'Gemini returned an empty proposal.'; continue; }
+      try {
+        const plan = JSON.parse(text.replace(/^```(?:json)?\s*/i,'').replace(/\s*```$/,''));
+        plan.kind = body.mode;
+        return {plan,quota:{personalKey:true},model,usedPersonalKey:true};
+      } catch {
+        lastMessage = 'Gemini returned JSON that FigureLoom could not read.';
+      }
+    }
+    throw new Error(lastMessage);
+  }
+
   function wrapAiClient(client) {
     if (!client?.functions?.invoke || client.__figureLoomFullAiContext) return client;
     const baseInvoke = client.functions.invoke.bind(client.functions);
-    client.functions.invoke = function invokeWithFullFigureContext(functionName, options = {}) {
+    client.functions.invoke = async function invokeWithFullFigureContext(functionName, options = {}) {
       if (functionName !== 'figureloom-ai') return baseInvoke(functionName, options);
-      return baseInvoke(functionName, {
-        ...options,
-        body: {
-          ...(options.body || {}),
-          figure: fullFigureContext()
-        }
-      });
+      const body = { ...(options.body || {}), figure: fullFigureContext() };
+      if (String(body.userApiKey || '').trim()) {
+        const data = await directGeminiRequest(body);
+        return { data, error:null };
+      }
+      return baseInvoke(functionName, { ...options, body });
     };
     Object.defineProperty(client, '__figureLoomFullAiContext', { value: true });
     return client;
@@ -140,6 +189,10 @@
     const prompt = document.getElementById('figurePrompt');
     const buildButton = document.getElementById('generateEditableFigure');
     if (!body || !geminiPanel || !prompt || !buildButton || body.querySelector('.figureloom-builder-card')) return;
+    const drawerTitle = drawer.querySelector('.utility-head strong');
+    const drawerSubtitle = drawer.querySelector('.utility-head span');
+    if (drawerTitle) drawerTitle.textContent = 'FigureLoom AI';
+    if (drawerSubtitle) drawerSubtitle.textContent = 'Online Gemini assistance and direct editable figure building';
 
     const card = document.createElement('section');
     card.className = 'figureloom-builder-card';
