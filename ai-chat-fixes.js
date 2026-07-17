@@ -8,11 +8,37 @@
     body.style.minHeight = '0';
   }
 
+  // Puter is the independent backup now. Prevent the older reliability layer
+  // from invoking the quota-counted Edge Function twice for one user action.
+  const cloud = window.SciCanvasCloud;
+  if (cloud && !cloud.__loomyReliableGetClient) {
+    Object.defineProperty(cloud, '__loomyReliableGetClient', { value:true, configurable:true });
+  }
+
+  function loadHelperFit() {
+    if (window.__figureLoomHelperFit || document.querySelector('script[data-loomy-helper-fit]')) return;
+    const script = document.createElement('script');
+    script.src = 'loomy-helper-fit.js?v=1';
+    script.dataset.loomyHelperFit = '1';
+    document.head.appendChild(script);
+  }
+
   function loadDirectPuterSelector() {
-    if (window.__figureLoomPuterDirectSelector || document.querySelector('script[data-loomy-puter-selector]')) return;
+    if (window.__figureLoomPuterDirectSelector) {
+      loadHelperFit();
+      return;
+    }
+
+    const existing = document.querySelector('script[data-loomy-puter-selector]');
+    if (existing) {
+      existing.addEventListener('load', loadHelperFit, { once:true });
+      return;
+    }
+
     const script = document.createElement('script');
     script.src = 'puter-direct-selector.js?v=1';
     script.dataset.loomyPuterSelector = '1';
+    script.addEventListener('load', loadHelperFit, { once:true });
     document.head.appendChild(script);
   }
 
