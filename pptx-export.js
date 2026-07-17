@@ -107,6 +107,7 @@
       await pptx.writeFile({ fileName:safeFileName("pptx"), compression:true });
     } catch (error) {
       console.error("PowerPoint export failed", error);
+      if (options.rethrow) throw error;
       alert(`PowerPoint export failed: ${error.message}\n\nSVG and PNG export are still available.`);
     } finally {
       state.activePage = Math.min(originalPage, state.pages.length - 1);
@@ -122,6 +123,9 @@
       }
     }
   }
+
+  window.renderCurrentPagePngData = renderCurrentPagePngData;
+  window.FigureLoomExportPowerPointAllPages = options => exportPowerPoint({ ...options, rethrow:true });
 
   const options = document.createElement("label");
   options.className = "pptx-export-option";
