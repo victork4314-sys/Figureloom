@@ -193,6 +193,10 @@ For build mode, provide 2-8 ordered stages and an improvedPrompt for the editabl
     const drawerSubtitle = drawer.querySelector('.utility-head span');
     if (drawerTitle) drawerTitle.textContent = 'FigureLoom AI';
     if (drawerSubtitle) drawerSubtitle.textContent = 'Online Gemini assistance and direct editable figure building';
+    const aiStatus = drawer.querySelector('#geminiAiStatus');
+    if (aiStatus && /compact figure summary/i.test(aiStatus.textContent || '')) aiStatus.textContent = 'Gemini receives every project page, editable object, built-in illustration, and template name—never embedded image bytes or raw SVG source.';
+    const keyNote = drawer.querySelector('.gemini-key-panel p');
+    if (keyNote) keyNote.textContent = 'The key stays in this browser session and is sent directly to Google’s Gemini API for the request. It is never saved in the figure or cloud gallery.';
 
     const card = document.createElement('section');
     card.className = 'figureloom-builder-card';
