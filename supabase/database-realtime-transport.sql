@@ -76,6 +76,9 @@ begin
 end;
 $$;
 
+-- Trigger-only function: never expose it as an RPC.
+revoke execute on function public.figureloom_guard_chat_message() from public, anon, authenticated;
+
 create or replace function public.figureloom_touch_motion()
 returns trigger
 language plpgsql
