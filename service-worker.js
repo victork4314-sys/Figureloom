@@ -1,4 +1,4 @@
-const FIGURELOOM_BUILD_ID = "chunk-10-db-realtime-20260717-v1";
+const FIGURELOOM_BUILD_ID = "chunk-11-smooth-object-state-20260717-v1";
 const FIGURELOOM_CACHE_PREFIX = "figureloom-app-";
 const FIGURELOOM_CACHE_NAME = `${FIGURELOOM_CACHE_PREFIX}${FIGURELOOM_BUILD_ID}`;
 const LEGACY_CACHE_PREFIXES = ["figureloom-shell", "scicanvas-shell"];
