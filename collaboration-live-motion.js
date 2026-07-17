@@ -5,9 +5,18 @@
   const canvas = document.getElementById('canvas');
   if (!canvas) return;
 
-  const clientId = `motion-${crypto.randomUUID()}`;
-  const SEND_INTERVAL = 125;
-  const POLL_INTERVAL = 350;
+  const clientId = `state-${crypto.randomUUID()}`;
+  const SEND_INTERVAL = 80;
+  const POLL_INTERVAL = 220;
+  const WATCH_INTERVAL = 40;
+  const FINAL_DELAY = 180;
+  const INTERPOLATION_MS = 105;
+  const TRANSFORM_KEYS = new Set(['x','y','width','height','rotation']);
+  const BLOCKED_STATE_KEYS = new Set([
+    'id','metadata','svgMarkup','rawSvg','sourceSvg','imageData','dataUrl','thumbnail',
+    'src','href','blob','file','originalFile','base64','children','groupItems'
+  ]);
+
   let client = null;
   let channel = null;
   let project = '';
@@ -18,8 +27,13 @@
   let pendingPayload = null;
   let flushTimer = 0;
   let pollTimer = 0;
+  let watchTimer = 0;
+  let finalTimer = 0;
   let renderFrame = 0;
+  let animationFrame = 0;
   const appliedVersions = new Map();
+  const localSignatures = new Map();
+  const animations = new Map();
 
   const cloud = () => window.SciCanvasCloud;
   const user = () => cloud()?.getUser?.() || null;
@@ -34,13 +48,67 @@
     };
   }
 
-  function selectedMovingObject() {
-    if (!state?.drag) return null;
-    const id = state.drag.id || state.selectedId;
-    return state.objects?.find?.(item => item.id === id) || null;
+  function objectKey(pageId, objectId) {
+    return `${projectId()}:${pageId || ''}:${objectId}`;
   }
 
-  function motionPayload(item, final = false) {
+  function selectedLiveObject() {
+    const activeId = state?.drag?.id || state?.resize?.id || state?.selectedId;
+    if (!activeId) return null;
+    return state.objects?.find?.(item => String(item.id) === String(activeId)) || null;
+  }
+
+  function cloneCompact(value) {
+    if (value == null || typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') return value;
+    if (typeof value !== 'object') return undefined;
+    try {
+      const text = JSON.stringify(value);
+      if (!text || text.length > 12000) return undefined;
+      return JSON.parse(text);
+    } catch {
+      return undefined;
+    }
+  }
+
+  function visualState(item) {
+    const result = {};
+    for (const [key, value] of Object.entries(item || {})) {
+      if (BLOCKED_STATE_KEYS.has(key) || key.startsWith('_') || typeof value === 'function' || value === undefined) continue;
+      const compact = cloneCompact(value);
+      if (compact !== undefined) result[key] = compact;
+    }
+
+    result.x = Number(item?.x) || 0;
+    result.y = Number(item?.y) || 0;
+    result.width = Math.max(1, Number(item?.width) || 20);
+    result.height = Math.max(1, Number(item?.height) || 20);
+    result.rotation = Number(item?.rotation) || 0;
+
+    const serialized = JSON.stringify(result);
+    if (serialized.length <= 60000) return result;
+
+    const fallbackKeys = [
+      'type','name','x','y','width','height','rotation','fill','stroke','strokeWidth','opacity',
+      'text','fontSize','fontFamily','fontWeight','fontStyle','textDecoration','textAlign',
+      'verticalAlign','lineHeight','letterSpacing','cornerRadius','radius','rx','ry','dashArray',
+      'strokeDasharray','lineCap','lineJoin','background','backgroundColor','color','shadow',
+      'blur','filter','blendMode','visible','locked','svgColorMode','svgTint','tintColor',
+      'arrowStart','arrowEnd','markerStart','markerEnd','label','labelColor','labelFontSize'
+    ];
+    const fallback = {};
+    for (const key of fallbackKeys) {
+      if (!(key in item)) continue;
+      const compact = cloneCompact(item[key]);
+      if (compact !== undefined) fallback[key] = compact;
+    }
+    return fallback;
+  }
+
+  function signatureFor(value) {
+    try { return JSON.stringify(value); } catch { return ''; }
+  }
+
+  function statePayload(item, objectState, final = false) {
     const page = pageIdentity();
     return {
       project_id:projectId(),
@@ -49,11 +117,12 @@
       object_id:String(item.id),
       user_id:user()?.id,
       client_id:clientId,
-      x:Number(item.x) || 0,
-      y:Number(item.y) || 0,
-      width:Number(item.width) || 20,
-      height:Number(item.height) || 20,
-      rotation:Number(item.rotation) || 0,
+      x:Number(objectState.x) || 0,
+      y:Number(objectState.y) || 0,
+      width:Math.max(1, Number(objectState.width) || 20),
+      height:Math.max(1, Number(objectState.height) || 20),
+      rotation:Number(objectState.rotation) || 0,
+      object_state:objectState,
       final:Boolean(final),
       client_sent_at:Date.now()
     };
@@ -77,9 +146,86 @@
     try { return typeof currentPage === 'function' ? currentPage() : null; } catch { return null; }
   }
 
-  function receiveMotion(row) {
+  function locallyManipulating(objectId) {
+    return String(state?.drag?.id || '') === String(objectId) ||
+      String(state?.resize?.id || '') === String(objectId) ||
+      String(state?.multiDrag?.id || '') === String(objectId) ||
+      String(state?.multiResize?.id || '') === String(objectId);
+  }
+
+  function applyNonTransformState(item, objectState) {
+    for (const [key, value] of Object.entries(objectState || {})) {
+      if (TRANSFORM_KEYS.has(key) || key === 'id') continue;
+      item[key] = cloneCompact(value);
+    }
+  }
+
+  function ensureAnimationLoop() {
+    if (animationFrame) return;
+    const tick = now => {
+      let active = false;
+      window.__scApplyingRemote = true;
+      try {
+        for (const [key, animation] of animations) {
+          const progress = Math.min(1, Math.max(0, (now - animation.startedAt) / animation.duration));
+          const eased = 1 - Math.pow(1 - progress, 3);
+          for (const property of TRANSFORM_KEYS) {
+            const start = animation.start[property];
+            const target = animation.target[property];
+            animation.item[property] = start + (target - start) * eased;
+          }
+          if (progress >= 1) animations.delete(key);
+          else active = true;
+        }
+      } finally {
+        window.__scApplyingRemote = false;
+      }
+      if (active || animations.size) {
+        scheduleRender();
+        animationFrame = requestAnimationFrame(tick);
+      } else {
+        animationFrame = 0;
+        scheduleRender();
+      }
+    };
+    animationFrame = requestAnimationFrame(tick);
+  }
+
+  function animateTransform(key, item, objectState, final) {
+    const target = {
+      x:Number(objectState.x) || 0,
+      y:Number(objectState.y) || 0,
+      width:Math.max(1, Number(objectState.width) || item.width || 20),
+      height:Math.max(1, Number(objectState.height) || item.height || 20),
+      rotation:Number(objectState.rotation) || 0
+    };
+
+    if (final) {
+      animations.delete(key);
+      Object.assign(item, target);
+      scheduleRender();
+      return;
+    }
+
+    animations.set(key, {
+      item,
+      start:{
+        x:Number(item.x) || 0,
+        y:Number(item.y) || 0,
+        width:Math.max(1, Number(item.width) || 20),
+        height:Math.max(1, Number(item.height) || 20),
+        rotation:Number(item.rotation) || 0
+      },
+      target,
+      startedAt:performance.now(),
+      duration:INTERPOLATION_MS
+    });
+    ensureAnimationLoop();
+  }
+
+  function receiveState(row) {
     if (!row || row.client_id === clientId || row.project_id !== projectId()) return;
-    if (state?.drag && (state.drag.id || state.selectedId) === row.object_id) return;
+    if (locallyManipulating(row.object_id)) return;
 
     const key = `${row.project_id}:${row.page_id}:${row.object_id}`;
     const version = Number(row.client_sent_at) || new Date(row.updated_at || 0).getTime();
@@ -91,11 +237,18 @@
     const item = objects?.find?.(candidate => String(candidate.id) === String(row.object_id));
     if (!item) return;
 
-    item.x = Number(row.x) || 0;
-    item.y = Number(row.y) || 0;
-    item.width = Math.max(20, Number(row.width) || item.width || 20);
-    item.height = Math.max(20, Number(row.height) || item.height || 20);
-    item.rotation = Number(row.rotation) || 0;
+    const objectState = row.object_state && typeof row.object_state === 'object'
+      ? row.object_state
+      : { x:row.x, y:row.y, width:row.width, height:row.height, rotation:row.rotation };
+
+    window.__scApplyingRemote = true;
+    try {
+      applyNonTransformState(item, objectState);
+      localSignatures.set(objectKey(row.page_id, row.object_id), signatureFor(objectState));
+    } finally {
+      window.__scApplyingRemote = false;
+    }
+    animateTransform(key, item, objectState, Boolean(row.final));
 
     let activePage = null;
     try { activePage = typeof currentPage === 'function' ? currentPage() : null; } catch {}
@@ -118,26 +271,30 @@
     }
   }
 
-  async function pollMotion() {
+  async function pollState() {
     if (!client || !project) return;
-    const since = new Date(Date.now() - 2500).toISOString();
+    const since = new Date(Date.now() - 1800).toISOString();
     const { data, error } = await client
       .from('collaboration_object_motion')
-      .select('project_id,page_id,page_index,object_id,user_id,client_id,x,y,width,height,rotation,final,client_sent_at,updated_at')
+      .select('project_id,page_id,page_index,object_id,user_id,client_id,x,y,width,height,rotation,object_state,final,client_sent_at,updated_at')
       .eq('project_id', project)
       .gte('updated_at', since)
       .order('updated_at', { ascending:true })
       .limit(250);
     if (error) throw error;
-    for (const row of data || []) receiveMotion(row);
+    for (const row of data || []) receiveState(row);
   }
 
-  async function flushMotion() {
+  async function flushState() {
     flushTimer = 0;
-    if (!ready || !client || !pendingPayload || sending) return;
+    if (!ready || !client || !pendingPayload) return;
+    if (sending) {
+      flushTimer = window.setTimeout(flushState, 20);
+      return;
+    }
     const elapsed = Date.now() - lastSentAt;
     if (elapsed < SEND_INTERVAL) {
-      flushTimer = window.setTimeout(flushMotion, SEND_INTERVAL - elapsed);
+      flushTimer = window.setTimeout(flushState, SEND_INTERVAL - elapsed);
       return;
     }
 
@@ -151,32 +308,60 @@
         .upsert(payload, { onConflict:'project_id,page_id,object_id' });
       if (error) throw error;
     } catch (error) {
-      console.warn('Live object motion could not save.', error);
+      console.warn('Live object state could not save.', error);
     } finally {
       sending = false;
-      if (pendingPayload && !flushTimer) flushTimer = window.setTimeout(flushMotion, SEND_INTERVAL);
+      if (pendingPayload && !flushTimer) flushTimer = window.setTimeout(flushState, 0);
     }
   }
 
-  function queueMotion(item, final = false) {
+  function queueState(item, objectState, final = false) {
     if (!item || !ready || !user()?.id) return;
-    pendingPayload = motionPayload(item, final);
+    pendingPayload = statePayload(item, objectState || visualState(item), final);
     if (final) {
       clearTimeout(flushTimer);
       flushTimer = 0;
-      void flushMotion();
+      void flushState();
       return;
     }
-    if (!flushTimer) void flushMotion();
+    if (!flushTimer) void flushState();
+  }
+
+  function observeSelected(force = false) {
+    if (!ready || window.__scApplyingRemote) return;
+    const item = selectedLiveObject();
+    if (!item) return;
+    const objectState = visualState(item);
+    const page = pageIdentity();
+    const key = objectKey(page.pageId, item.id);
+    const signature = signatureFor(objectState);
+    if (!force && signature === localSignatures.get(key)) return;
+    localSignatures.set(key, signature);
+    queueState(item, objectState, false);
+    clearTimeout(finalTimer);
+    finalTimer = window.setTimeout(() => {
+      const current = selectedLiveObject();
+      if (!current || String(current.id) !== String(item.id)) return;
+      const finalState = visualState(current);
+      localSignatures.set(key, signatureFor(finalState));
+      queueState(current, finalState, true);
+    }, FINAL_DELAY);
   }
 
   async function disconnect() {
     ready = false;
     pendingPayload = null;
     clearTimeout(flushTimer);
+    clearTimeout(finalTimer);
     clearInterval(pollTimer);
+    clearInterval(watchTimer);
+    if (animationFrame) cancelAnimationFrame(animationFrame);
     flushTimer = 0;
+    finalTimer = 0;
     pollTimer = 0;
+    watchTimer = 0;
+    animationFrame = 0;
+    animations.clear();
     if (client && channel) {
       try { await client.removeChannel(channel); } catch {}
     }
@@ -184,6 +369,7 @@
     client = null;
     project = '';
     appliedVersions.clear();
+    localSignatures.clear();
   }
 
   async function connect() {
@@ -202,13 +388,13 @@
       ready = true;
 
       channel = client
-        .channel(`figureloom-motion-db:${nextProject}`)
+        .channel(`figureloom-object-state:${nextProject}`)
         .on('postgres_changes', {
           event:'*',
           schema:'public',
           table:'collaboration_object_motion',
           filter:`project_id=eq.${nextProject}`
-        }, event => receiveMotion(event.new));
+        }, event => receiveState(event.new));
 
       await new Promise(resolve => {
         let settled = false;
@@ -220,33 +406,26 @@
             finish();
           }
         });
-        setTimeout(finish, 1800);
+        setTimeout(finish, 1600);
       });
 
-      pollTimer = window.setInterval(() => pollMotion().catch(error => console.warn('Live motion fallback retrying.', error)), POLL_INTERVAL);
-      await pollMotion().catch(() => {});
+      pollTimer = window.setInterval(() => pollState().catch(error => console.warn('Live object fallback retrying.', error)), POLL_INTERVAL);
+      watchTimer = window.setInterval(() => observeSelected(false), WATCH_INTERVAL);
+      await pollState().catch(() => {});
     } catch (error) {
-      console.warn('Live motion database transport could not connect.', error);
+      console.warn('Live object-state transport could not connect.', error);
       await disconnect();
     } finally {
       connecting = false;
     }
   }
 
-  canvas.addEventListener('pointermove', () => {
-    const item = selectedMovingObject();
-    if (item) queueMotion(item, false);
-  });
-
-  canvas.addEventListener('pointerup', () => {
-    const item = selectedMovingObject();
-    if (item) queueMotion(item, true);
-  }, true);
-
-  canvas.addEventListener('pointercancel', () => {
-    const item = selectedMovingObject();
-    if (item) queueMotion(item, true);
-  }, true);
+  canvas.addEventListener('pointermove', () => observeSelected(false), true);
+  canvas.addEventListener('pointerup', () => observeSelected(true), true);
+  canvas.addEventListener('pointercancel', () => observeSelected(true), true);
+  document.addEventListener('input', () => setTimeout(() => observeSelected(false), 0), true);
+  document.addEventListener('change', () => setTimeout(() => observeSelected(true), 0), true);
+  document.addEventListener('keyup', () => setTimeout(() => observeSelected(false), 0), true);
 
   ['scicanvas-cloud-opened','scicanvas-cloud-saved','scicanvas-share-link-accepted'].forEach(type => {
     window.addEventListener(type, () => setTimeout(connect, 80));
@@ -257,7 +436,9 @@
   window.addEventListener('beforeunload', () => {
     clearInterval(reconnectTimer);
     clearTimeout(flushTimer);
+    clearTimeout(finalTimer);
     clearInterval(pollTimer);
+    clearInterval(watchTimer);
     void disconnect();
   }, { once:true });
 })();
