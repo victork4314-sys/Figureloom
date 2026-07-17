@@ -2,7 +2,7 @@
   if (window.__figureLoomSafeRefreshV1) return;
   window.__figureLoomSafeRefreshV1 = true;
 
-  const EXPECTED_BUILD = "chunk-13-projects-ribbon-20260717-v1";
+  const EXPECTED_BUILD = "chunk-13-projects-ribbon-20260717-v2";
   const SEEN_BUILD_KEY = "figureloom-session-build-v1";
   const CHUNK_ADDONS = [
     "library-more-illustrations.js",
@@ -21,7 +21,8 @@
     "project-tabs.js",
     "project-tabs-window-fix.js",
     "project-tabs-grid-fix.js",
-    "projects-ribbon.js"
+    "projects-ribbon.js",
+    "projects-ribbon-close-fix.js"
   ];
   let reloading = false;
 
