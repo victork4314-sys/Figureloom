@@ -8,11 +8,30 @@
     body.style.minHeight = '0';
   }
 
+  function loadDirectPuterSelector() {
+    if (window.__figureLoomPuterDirectSelector || document.querySelector('script[data-loomy-puter-selector]')) return;
+    const script = document.createElement('script');
+    script.src = 'puter-direct-selector.js?v=1';
+    script.dataset.loomyPuterSelector = '1';
+    document.head.appendChild(script);
+  }
+
   function loadPuterFallback() {
-    if (window.__figureLoomPuterFallback || document.querySelector('script[data-loomy-puter-fallback]')) return;
+    if (window.__figureLoomPuterFallback) {
+      loadDirectPuterSelector();
+      return;
+    }
+
+    const existing = document.querySelector('script[data-loomy-puter-fallback]');
+    if (existing) {
+      existing.addEventListener('load', loadDirectPuterSelector, { once:true });
+      return;
+    }
+
     const script = document.createElement('script');
     script.src = 'puter-fallback.js?v=2';
     script.dataset.loomyPuterFallback = '1';
+    script.addEventListener('load', loadDirectPuterSelector, { once:true });
     document.head.appendChild(script);
   }
 
