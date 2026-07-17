@@ -2,7 +2,7 @@
   if (window.__figureLoomSafeRefreshV1) return;
   window.__figureLoomSafeRefreshV1 = true;
 
-  const EXPECTED_BUILD = "chunk-14-projects-polish-20260717-v1";
+  const EXPECTED_BUILD = "chunk-15-manual-collaboration-20260718-v1";
   const SEEN_BUILD_KEY = "figureloom-session-build-v1";
   const CHUNK_ADDONS = [
     "library-more-illustrations.js",
@@ -12,10 +12,7 @@
     "library-illustration-gallery-fix.js",
     "map-privacy-theme-fix.js",
     "theme-background-stability.js",
-    "collaboration-always-on.js",
     "collaboration-guest-links.js",
-    "collaboration-live-motion.js",
-    "collaboration-realtime-delivery-fix.js",
     "shared-content-state-bridge.js",
     "shared-content-safety.js",
     "project-tabs.js",
@@ -23,7 +20,7 @@
     "project-tabs-grid-fix.js",
     "projects-ribbon.js",
     "projects-ribbon-close-fix.js",
-    "projects-ribbon-polish.js"
+    "manual-collaboration-projects-ui.js"
   ];
   let reloading = false;
 
