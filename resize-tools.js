@@ -9,7 +9,7 @@
   renderSelection = function renderResizableSelection() {
     baseRenderSelection();
     const item = selectedObject();
-    if (!item || item.type === "connector" || item.visible === false) return;
+    if (!item || item.type === "connector" || item.visible === false || item.locked) return;
 
     const points = {
       nw: [item.x, item.y],
