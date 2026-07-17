@@ -1,19 +1,26 @@
 {
+  "id": "/",
   "name": "Figureloom Open Scientific Figure Workspace",
   "short_name": "Figureloom",
-  "description": "An open, local-first scientific illustration and figure editor.",
-  "start_url": "./",
-  "scope": "./",
+  "description": "Free, open-source scientific figure editor. Works offline, no account needed.",
+  "start_url": "/",
+  "scope": "/",
   "display": "standalone",
-  "background_color": "#eef2f7",
-  "theme_color": "#f4f7fb",
+  "background_color": "#0c2e28",
+  "theme_color": "#0c2e28",
   "orientation": "any",
   "icons": [
     {
-      "src": "./favicon.svg",
+      "src": "/apple-touch-icon.svg?v=4",
       "sizes": "any",
       "type": "image/svg+xml",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "/favicon.svg?v=4",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
     }
   ]
 }
