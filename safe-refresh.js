@@ -2,7 +2,7 @@
   if (window.__figureLoomSafeRefreshV1) return;
   window.__figureLoomSafeRefreshV1 = true;
 
-  const EXPECTED_BUILD = "chunk-15-manual-collaboration-20260718-v2";
+  const EXPECTED_BUILD = "chunk-16-exact-home-colors-chat-hide-20260718-v1";
   const SEEN_BUILD_KEY = "figureloom-session-build-v1";
   const CHUNK_ADDONS = [
     "library-more-illustrations.js",
