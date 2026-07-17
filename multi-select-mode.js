@@ -10,6 +10,7 @@
 
   let active = false;
   let suppressClickUntil = 0;
+  let emptyPointer = null;
 
   const button = document.createElement('button');
   button.id = 'multiSelectModeButton';
@@ -44,12 +45,25 @@
       : 'Tap several objects to select them together';
   }
 
+  function collapseToOne(renderNow = true) {
+    const ids = selectionIds();
+    if (ids.length <= 1) return false;
+    const primary = state.selectedId && ids.includes(state.selectedId) ? state.selectedId : ids.at(-1);
+    window.SciCanvasSelection.set(primary ? [primary] : [], primary || null, false);
+    if (renderNow) render();
+    return true;
+  }
+
   function setActive(next) {
+    const wasActive = active;
     active = Boolean(next);
     document.body.classList.toggle('figureloom-multi-select-active', active);
     state.drag = null;
     state.resize = null;
+    state.multiDrag = null;
+    state.multiResize = null;
     closeObjectMenu();
+    if (wasActive && !active) collapseToOne(true);
     updateButton();
   }
 
@@ -70,7 +84,19 @@
 
   const baseBeginDrag = beginDrag;
   beginDrag = function beginExplicitMultiSelect(event, id) {
-    if (!active) return baseBeginDrag(event, id);
+    if (!active) {
+      if (event.shiftKey || event.ctrlKey || event.metaKey) {
+        const neutralEvent = new Proxy(event, {
+          get(target, property) {
+            if (property === 'shiftKey' || property === 'ctrlKey' || property === 'metaKey') return false;
+            const value = Reflect.get(target, property, target);
+            return typeof value === 'function' ? value.bind(target) : value;
+          }
+        });
+        return baseBeginDrag(neutralEvent, id);
+      }
+      return baseBeginDrag(event, id);
+    }
     event.preventDefault();
     event.stopImmediatePropagation();
     suppressClickUntil = performance.now() + 700;
@@ -80,6 +106,7 @@
 
   const baseRenderSelection = renderSelection;
   renderSelection = function renderTouchFriendlyMultiSelection() {
+    if (!active && selectionIds().length > 1) collapseToOne(false);
     baseRenderSelection();
     updateButton();
 
@@ -150,6 +177,40 @@
     });
   };
 
+  document.addEventListener('pointerdown', event => {
+    if (active || event.button !== 0) return;
+    if (!event.target.closest?.('#canvas')) return;
+    if (event.target.closest?.('.canvas-object,.resize-handle,.multi-resize-handle')) return;
+    if (document.getElementById('handToolButton')?.classList.contains('active')) return;
+    if (document.getElementById('canvasStage')?.classList.contains('canvas-pan-ready')) return;
+    emptyPointer = {
+      pointerId: event.pointerId,
+      x: event.clientX,
+      y: event.clientY,
+      moved: false
+    };
+    event.preventDefault();
+    event.stopPropagation();
+  }, true);
+
+  document.addEventListener('pointermove', event => {
+    if (!emptyPointer || emptyPointer.pointerId !== event.pointerId) return;
+    if (Math.hypot(event.clientX - emptyPointer.x, event.clientY - emptyPointer.y) > 7) emptyPointer.moved = true;
+    event.preventDefault();
+    event.stopPropagation();
+  }, true);
+
+  document.addEventListener('pointerup', event => {
+    if (!emptyPointer || emptyPointer.pointerId !== event.pointerId) return;
+    const shouldClear = !emptyPointer.moved;
+    emptyPointer = null;
+    event.preventDefault();
+    event.stopPropagation();
+    if (shouldClear) window.SciCanvasSelection.clear?.();
+  }, true);
+
+  document.addEventListener('pointercancel', () => { emptyPointer = null; }, true);
+
   document.addEventListener('click', event => {
     if (!active && performance.now() > suppressClickUntil) return;
     if (!event.target.closest?.('#canvas .canvas-object')) return;
@@ -160,8 +221,16 @@
   }, true);
 
   document.addEventListener('keydown', event => {
-    if (event.key === 'Escape' && active) setActive(false);
-  });
+    if (event.key === 'Escape' && active) {
+      setActive(false);
+      return;
+    }
+    const commandA = (event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'a';
+    if (!active && commandA && !event.target.matches?.('input,textarea,select,[contenteditable="true"],[contenteditable="plaintext-only"]')) {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+    }
+  }, true);
 
   const style = document.createElement('style');
   style.textContent = `
