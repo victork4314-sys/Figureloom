@@ -187,6 +187,10 @@
 
   document.addEventListener('pointerdown', event => {
     if (event.target.closest?.('.figureloom-direct-label-editor')) return;
+    if (event.button !== 0 || event.shiftKey || event.ctrlKey || event.metaKey) {
+      pointerCandidate = null;
+      return;
+    }
     const textNode = event.target.closest?.('#objectLayer .canvas-object text');
     if (!textNode) {
       pointerCandidate = null;
@@ -202,7 +206,8 @@
       x:event.clientX,
       y:event.clientY,
       moved:false,
-      historyLength:state.history.length
+      historyLength:state.history.length,
+      startedAt:performance.now()
     };
   }, true);
 
@@ -217,7 +222,7 @@
     const candidate = pointerCandidate;
     if (!candidate || candidate.pointerId !== event.pointerId) return;
     pointerCandidate = null;
-    if (candidate.moved) return;
+    if (candidate.moved || performance.now() - candidate.startedAt > 480) return;
     const item = textItem(candidate.id);
     const textNode = renderedTextNode(candidate.id);
     if (!item || !textNode) return;
