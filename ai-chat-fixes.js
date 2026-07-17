@@ -1,7 +1,19 @@
 (() => {
-  if (window.__figureLoomUnifiedAiChatFixesV3) return;
-  window.__figureLoomUnifiedAiChatFixesV3 = true;
+  if (window.__figureLoomUnifiedAiChatFixesV4) return;
+  window.__figureLoomUnifiedAiChatFixesV4 = true;
   window.__figureLoomUnifiedAiChatFixes = true;
+
+  function loadCompanion(src, marker) {
+    if (document.querySelector(`script[data-${marker}]`)) return;
+    const script = document.createElement('script');
+    script.src = src;
+    script.dataset[marker.replace(/-([a-z])/g, (_, letter) => letter.toUpperCase())] = '1';
+    document.head.appendChild(script);
+  }
+
+  loadCompanion('interface-dark-mode.js?v=1', 'figureloom-dark-mode');
+  loadCompanion('collaboration-chat.js?v=1', 'figureloom-collaboration-chat');
+  loadCompanion('loomy-honesty.js?v=1', 'loomy-honesty');
 
   const body = document.getElementById('figureAssistantDrawer')?.querySelector('.utility-body');
   if (body) {
@@ -19,7 +31,7 @@
   function loadHelperFit() {
     if (window.__figureLoomHelperFitV3 || document.querySelector('script[data-loomy-helper-fit]')) return;
     const script = document.createElement('script');
-    script.src = 'loomy-helper-fit.js?v=3';
+    script.src = 'loomy-helper-fit.js?v=4';
     script.dataset.loomyHelperFit = '1';
     document.head.appendChild(script);
   }
