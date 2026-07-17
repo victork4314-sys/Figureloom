@@ -45,11 +45,17 @@
     return (item.fontSize || 30) >= 34 || /\b(title|heading|poster|figure|abstract|workflow)\b/i.test(label);
   }
 
-  function applyThemeFonts(themeId = state.projectTheme, { renderNow = true } = {}) {
-    if (!state.themeFontsEnabled) return;
+  function prepareThemeFonts(themeId = state.projectTheme) {
     const pair = FONT_PAIRS[themeId] || FONT_PAIRS['lab-light'];
     ensureFont(pair.heading);
     ensureFont(pair.body);
+    state.defaultFont ||= pair.body;
+    return pair;
+  }
+
+  function applyThemeFonts(themeId = state.projectTheme, { renderNow = true } = {}) {
+    if (!state.themeFontsEnabled) return;
+    const pair = prepareThemeFonts(themeId);
     state.defaultFont = pair.body;
     state.pages.forEach(page => page.objects.forEach(item => {
       if (item.type !== 'text') return;
@@ -123,6 +129,7 @@
   snapshot = function snapshotWithThemeFonts() {
     const data = JSON.parse(baseSnapshot());
     data.themeFontsEnabled = state.themeFontsEnabled;
+    data.defaultFont = state.defaultFont || null;
     return JSON.stringify(data);
   };
 
@@ -130,16 +137,21 @@
   restore = function restoreWithThemeFonts(serialized) {
     const data = typeof serialized === 'string' ? JSON.parse(serialized) : serialized;
     state.themeFontsEnabled = data.themeFontsEnabled ?? true;
+    state.defaultFont = data.defaultFont || state.defaultFont || null;
     baseRestore(data);
     const checkbox = document.getElementById('themeFonts');
     if (checkbox) checkbox.checked = state.themeFontsEnabled;
-    if (state.themeFontsEnabled) applyThemeFonts(state.projectTheme);
+    if (state.themeFontsEnabled) prepareThemeFonts(state.projectTheme);
     updateThemeFontLabels();
   };
 
   const baseProjectData = projectData;
   projectData = function projectDataWithThemeFonts() {
-    return { ...baseProjectData(), themeFontsEnabled:state.themeFontsEnabled };
+    return {
+      ...baseProjectData(),
+      themeFontsEnabled:state.themeFontsEnabled,
+      defaultFont:state.defaultFont || null
+    };
   };
 
   const style = document.createElement('style');
@@ -149,5 +161,5 @@
   document.head.appendChild(style);
 
   updateThemeFontLabels();
-  if (state.themeFontsEnabled) applyThemeFonts(state.projectTheme, { renderNow:false });
+  if (state.themeFontsEnabled) prepareThemeFonts(state.projectTheme);
 })();
