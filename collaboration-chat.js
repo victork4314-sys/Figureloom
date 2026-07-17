@@ -36,7 +36,11 @@
     online.textContent=remote.length?`${remote.length} collaborator${remote.length===1?'':'s'} online`:connected?'Nobody else is here yet':'Chat is offline';
     if(!remote.length) panel.hidden=true;
   }
-  function syncPeople(){people.clear();Object.values(channel?.presenceState?.()||{}).flat().forEach(p=>p?.userId&&people.set(p.clientId||p.userId,p));renderPeople()}
+  async function syncPeople(){
+    people.clear();Object.values(channel?.presenceState?.()||{}).flat().forEach(p=>{if(!p?.userId)return;const old=people.get(p.userId);people.set(p.userId,old?.avatar&&!p.avatar?old:p)});renderPeople();
+    const ids=[...people.keys()];if(!client||!ids.length)return;
+    try{const {data}=await client.from('profiles').select('id,display_name,avatar_url').in('id',ids);for(const profile of data||[]){const p=people.get(profile.id);if(p){p.name=profile.display_name||p.name;p.avatar=profile.avatar_url||p.avatar}}renderPeople()}catch{}
+  }
   function addMessage(p){
     if(!p?.id||seen.has(p.id))return;seen.add(p.id);host.querySelector('.cc-empty')?.remove();
     const mine=p.userId===user()?.id,a=document.createElement('article');a.className=mine?'mine':'';
