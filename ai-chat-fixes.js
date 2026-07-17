@@ -1,5 +1,6 @@
 (() => {
-  if (window.__figureLoomUnifiedAiChatFixes) return;
+  if (window.__figureLoomUnifiedAiChatFixesV3) return;
+  window.__figureLoomUnifiedAiChatFixesV3 = true;
   window.__figureLoomUnifiedAiChatFixes = true;
 
   const body = document.getElementById('figureAssistantDrawer')?.querySelector('.utility-body');
@@ -8,37 +9,28 @@
     body.style.minHeight = '0';
   }
 
-  // Puter is the independent backup now. Prevent the older reliability layer
-  // from invoking the quota-counted Edge Function twice for one user action.
+  // Puter is independent. Do not let the older shared-Gemini reliability
+  // wrapper duplicate a quota-counted Edge Function request.
   const cloud = window.SciCanvasCloud;
   if (cloud && !cloud.__loomyReliableGetClient) {
     Object.defineProperty(cloud, '__loomyReliableGetClient', { value:true, configurable:true });
   }
 
   function loadHelperFit() {
-    if (window.__figureLoomHelperFit || document.querySelector('script[data-loomy-helper-fit]')) return;
+    if (window.__figureLoomHelperFitV3 || document.querySelector('script[data-loomy-helper-fit]')) return;
     const script = document.createElement('script');
-    script.src = 'loomy-helper-fit.js?v=1';
+    script.src = 'loomy-helper-fit.js?v=3';
     script.dataset.loomyHelperFit = '1';
     document.head.appendChild(script);
   }
 
   function loadDirectPuterSelector() {
-    if (window.__figureLoomPuterDirectSelector) {
-      loadHelperFit();
-      return;
-    }
-
+    if (window.__figureLoomPuterDirectSelector) return;
     const existing = document.querySelector('script[data-loomy-puter-selector]');
-    if (existing) {
-      existing.addEventListener('load', loadHelperFit, { once:true });
-      return;
-    }
-
+    if (existing) return;
     const script = document.createElement('script');
-    script.src = 'puter-direct-selector.js?v=1';
+    script.src = 'puter-direct-selector.js?v=2';
     script.dataset.loomyPuterSelector = '1';
-    script.addEventListener('load', loadHelperFit, { once:true });
     document.head.appendChild(script);
   }
 
@@ -55,11 +47,14 @@
     }
 
     const script = document.createElement('script');
-    script.src = 'puter-fallback.js?v=2';
+    script.src = 'puter-fallback.js?v=3';
     script.dataset.loomyPuterFallback = '1';
     script.addEventListener('load', loadDirectPuterSelector, { once:true });
     document.head.appendChild(script);
   }
+
+  // The fitter and non-AI-first wording do not depend on any AI provider.
+  loadHelperFit();
 
   const existingReliability = document.querySelector('script[data-loomy-reliability]');
   if (existingReliability) {
@@ -69,7 +64,7 @@
   }
 
   const reliability = document.createElement('script');
-  reliability.src = 'loomy-reliability.js?v=1';
+  reliability.src = 'loomy-reliability.js?v=2';
   reliability.dataset.loomyReliability = '1';
   reliability.addEventListener('load', loadPuterFallback, { once:true });
   document.head.appendChild(reliability);
