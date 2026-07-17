@@ -1,6 +1,6 @@
 (() => {
-  if (window.__figureLoomUnifiedAiChatFixesV8) return;
-  window.__figureLoomUnifiedAiChatFixesV8 = true;
+  if (window.__figureLoomUnifiedAiChatFixesV9) return;
+  window.__figureLoomUnifiedAiChatFixesV9 = true;
   window.__figureLoomUnifiedAiChatFixes = true;
 
   function loadCompanion(src, marker) {
@@ -17,6 +17,7 @@
   loadCompanion('illustrations-ui-polish.js?v=1', 'figureloom-illustrations-polish');
   loadCompanion('collaboration-chat.js?v=2', 'figureloom-collaboration-chat');
   loadCompanion('loomy-honesty.js?v=1', 'loomy-honesty');
+  loadCompanion('loomy-theme-save-guard.js?v=1', 'figureloom-loomy-theme-save');
 
   const body = document.getElementById('figureAssistantDrawer')?.querySelector('.utility-body');
   if (body) {
