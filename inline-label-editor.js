@@ -147,38 +147,3 @@
 
   window.addEventListener('resize', () => finish(true));
 })();
-
-(() => {
-  const RECOVERY_PARAMETER = '_figureloom_recovered';
-
-  async function removeBrokenOfflineShell() {
-    try {
-      if ('serviceWorker' in navigator) {
-        const registrations = await navigator.serviceWorker.getRegistrations();
-        await Promise.all(registrations.map(registration => registration.unregister()));
-      }
-    } catch (error) {
-      console.warn('Figureloom service-worker cleanup failed.', error);
-    }
-
-    try {
-      if ('caches' in window) {
-        const keys = await caches.keys();
-        await Promise.all(
-          keys
-            .filter(key => key.startsWith('figureloom-shell'))
-            .map(key => caches.delete(key))
-        );
-      }
-    } catch (error) {
-      console.warn('Figureloom cache cleanup failed.', error);
-    }
-
-    const url = new URL(window.location.href);
-    if (url.searchParams.get(RECOVERY_PARAMETER) === '1') return;
-    url.searchParams.set(RECOVERY_PARAMETER, '1');
-    window.location.replace(url.toString());
-  }
-
-  removeBrokenOfflineShell();
-})();
