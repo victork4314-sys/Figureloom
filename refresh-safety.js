@@ -57,7 +57,7 @@
     try {
       const previous = localStorage.getItem(PRIMARY_KEY);
       if (previous && previous !== job.serialized && parse(previous)) {
-        try { localStorage.setItem(BACKUP_KEY, previous); } catch { /* primary save remains authoritative */ }
+        try { localStorage.setItem(BACKUP_KEY, previous); } catch { /* keep primary save authoritative */ }
       }
       localStorage.setItem(PRIMARY_KEY, job.serialized);
       localStorage.setItem(LOCAL_UPDATED_KEY, String(job.updatedAt));
@@ -126,6 +126,17 @@
   };
   window.saveSciCanvasImmediately = saveNow;
 
+  function readSnapshotFallback() {
+    try {
+      const snapshots = JSON.parse(localStorage.getItem('scicanvas-snapshots') || '[]');
+      if (!Array.isArray(snapshots)) return null;
+      const item = snapshots.find(candidate => validProject(candidate?.data));
+      return item ? { value: item.data, updatedAt: Date.parse(item.savedAt || item.data.savedAt || '') || 0 } : null;
+    } catch {
+      return null;
+    }
+  }
+
   async function restoreBestAvailableProject() {
     const primaryRaw = (() => { try { return localStorage.getItem(PRIMARY_KEY); } catch { return null; } })();
     const backupRaw = (() => { try { return localStorage.getItem(BACKUP_KEY); } catch { return null; } })();
@@ -138,40 +149,44 @@
       try { vaultRecord = await vaultRead('autosave'); }
       catch (error) { console.warn('Figureloom vault restore was unavailable.', error); }
     }
-    const vault = parse(vaultRecord?.value);
-    const vaultUpdatedAt = Number(vaultRecord?.updatedAt) || 0;
+    const snapshotRecord = readSnapshotFallback();
 
-    let chosen = null;
-    let source = '';
-    if (vault && (!primary || !localUpdatedAt || vaultUpdatedAt >= localUpdatedAt)) {
-      chosen = vaultRecord.value;
-      source = 'vault';
-    } else if (primary) {
-      chosen = primaryRaw;
-      source = 'local';
-    } else if (vault) {
-      chosen = vaultRecord.value;
-      source = 'vault';
-    } else if (backup) {
-      chosen = backupRaw;
-      source = 'backup';
+    const candidates = [
+      vaultRecord && parse(vaultRecord.value) ? { source:'vault', value:vaultRecord.value, data:parse(vaultRecord.value), updatedAt:Number(vaultRecord.updatedAt) || 0, priority:4 } : null,
+      primary ? { source:'local', value:primaryRaw, data:primary, updatedAt:localUpdatedAt, priority:3 } : null,
+      backup ? { source:'backup', value:backupRaw, data:backup, updatedAt:0, priority:2 } : null,
+      snapshotRecord && parse(snapshotRecord.value) ? { source:'snapshot', value:snapshotRecord.value, data:parse(snapshotRecord.value), updatedAt:snapshotRecord.updatedAt, priority:1 } : null
+    ].filter(Boolean);
+
+    if (!candidates.length || userInteracted) return;
+
+    candidates.forEach(candidate => { candidate.objectCount = projectObjectCount(candidate.data); });
+    const nonEmpty = candidates.filter(candidate => candidate.objectCount > 0);
+    let chosen;
+
+    const newestTimestamp = Math.max(...candidates.map(candidate => candidate.updatedAt || 0));
+    if (newestTimestamp > 0) {
+      chosen = candidates
+        .filter(candidate => candidate.updatedAt === newestTimestamp)
+        .sort((a, b) => b.priority - a.priority)[0];
+    } else {
+      chosen = [...candidates].sort((a, b) => b.priority - a.priority)[0];
     }
 
-    if (!vault && primary && backup && projectObjectCount(primary) === 0 && projectObjectCount(backup) > 0) {
-      chosen = backupRaw;
-      source = 'backup';
+    if (chosen.objectCount === 0 && nonEmpty.length) {
+      chosen = [...nonEmpty].sort((a, b) =>
+        (b.updatedAt - a.updatedAt) || (b.objectCount - a.objectCount) || (b.priority - a.priority)
+      )[0];
     }
-
-    if (!chosen || userInteracted) return;
 
     try {
       restoring = true;
-      restore(chosen);
+      restore(chosen.value);
       window.syncPage?.();
       render?.();
       window.renderPages?.();
       restoring = false;
-      setStatus(source === 'backup' ? 'Recovered last good copy' : 'Restored safely');
+      setStatus(['backup', 'snapshot'].includes(chosen.source) ? 'Recovered last good copy' : 'Restored safely');
       await saveNow('autosave');
     } catch (error) {
       restoring = false;
