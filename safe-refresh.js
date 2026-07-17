@@ -2,7 +2,7 @@
   if (window.__figureLoomSafeRefreshV1) return;
   window.__figureLoomSafeRefreshV1 = true;
 
-  const EXPECTED_BUILD = "chunk-17-tab-close-pptx-export-20260718-v1";
+  const EXPECTED_BUILD = "chunk-18-global-pptx-export-fix-20260718-v1";
   const SEEN_BUILD_KEY = "figureloom-session-build-v1";
   const CHUNK_ADDONS = [
     "library-more-illustrations.js",
@@ -21,7 +21,8 @@
     "projects-ribbon-close-fix.js",
     "manual-collaboration-projects-ui.js",
     "projects-home-button-match.js",
-    "project-tab-close-export.js"
+    "project-tab-close-export.js",
+    "global-pptx-export-fix.js"
   ];
   let reloading = false;
 
