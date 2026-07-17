@@ -2,10 +2,10 @@
   if (document.getElementById('figureloomLegalFooter')) return;
   const footer = document.createElement('div');
   footer.id = 'figureloomLegalFooter';
-  footer.setAttribute('aria-label', 'Figureloom legal and project links');
+  footer.setAttribute('aria-label', 'FigureLoom legal and project links');
   footer.innerHTML = `
-    <span>Figureloom · open scientific figure workspace</span>
-    <span><a href="./legal.html">Privacy & legal</a><a href="https://github.com/victork4314-sys/SciCanvas" target="_blank" rel="noreferrer">Source</a></span>
+    <span>FigureLoom · open scientific figure workspace</span>
+    <span><a href="./legal.html">Privacy & legal</a><a href="https://github.com/victork4314-sys/Figureloom" target="_blank" rel="noreferrer">Source</a></span>
   `;
   document.body.appendChild(footer);
 
