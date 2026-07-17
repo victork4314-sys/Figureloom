@@ -2,7 +2,7 @@
   if (window.__figureLoomSafeRefreshV1) return;
   window.__figureLoomSafeRefreshV1 = true;
 
-  const EXPECTED_BUILD = "chunk-15-manual-collaboration-20260718-v1";
+  const EXPECTED_BUILD = "chunk-15-manual-collaboration-20260718-v2";
   const SEEN_BUILD_KEY = "figureloom-session-build-v1";
   const CHUNK_ADDONS = [
     "library-more-illustrations.js",
@@ -17,10 +17,10 @@
     "shared-content-safety.js",
     "project-tabs.js",
     "project-tabs-window-fix.js",
-    "project-tabs-grid-fix.js",
     "projects-ribbon.js",
     "projects-ribbon-close-fix.js",
-    "manual-collaboration-projects-ui.js"
+    "manual-collaboration-projects-ui.js",
+    "projects-home-button-match.js"
   ];
   let reloading = false;
 
