@@ -92,26 +92,22 @@
   function syncLiveVisibility() {
     const button = document.getElementById('projectDisconnectRibbonButton');
     const connected = button?.dataset.state === 'connected' && !button.hidden;
-    root.dataset.figureloomLiveConnected = connected ? '1' : '0';
+    const nextState = connected ? '1' : '0';
+    if (root.dataset.figureloomLiveConnected !== nextState) {
+      root.dataset.figureloomLiveConnected = nextState;
+    }
     if (!connected) {
       const bubble = document.getElementById('collabChatBubble');
       const panel = document.getElementById('collabChatPanel');
-      if (bubble) bubble.hidden = true;
-      if (panel) panel.hidden = true;
+      if (bubble && !bubble.hidden) bubble.hidden = true;
+      if (panel && !panel.hidden) panel.hidden = true;
     }
   }
 
-  const observer = new MutationObserver(syncLiveVisibility);
-  observer.observe(document.body, {
-    subtree:true,
-    childList:true,
-    attributes:true,
-    attributeFilter:['data-state', 'hidden']
-  });
-
   syncLiveVisibility();
+  const timer = setInterval(syncLiveVisibility, 300);
   window.addEventListener('figureloom-collaboration-connected', syncLiveVisibility);
   window.addEventListener('figureloom-collaboration-disconnected', syncLiveVisibility);
   window.addEventListener('scicanvas-cloud-opened', syncLiveVisibility);
-  window.addEventListener('beforeunload', () => observer.disconnect(), { once:true });
+  window.addEventListener('beforeunload', () => clearInterval(timer), { once:true });
 })();
