@@ -2,7 +2,7 @@
   if (window.__figureLoomSafeRefreshV1) return;
   window.__figureLoomSafeRefreshV1 = true;
 
-  const EXPECTED_BUILD = "chunk-8-live-motion-chat-moderation-20260717-v1";
+  const EXPECTED_BUILD = "chunk-9-realtime-safety-20260717-v1";
   const SEEN_BUILD_KEY = "figureloom-session-build-v1";
   const CHUNK_ADDONS = [
     "library-more-illustrations.js",
@@ -14,7 +14,9 @@
     "theme-background-stability.js",
     "collaboration-always-on.js",
     "collaboration-guest-links.js",
-    "collaboration-live-motion.js"
+    "collaboration-live-motion.js",
+    "collaboration-realtime-delivery-fix.js",
+    "shared-content-safety.js"
   ];
   let reloading = false;
 
