@@ -4,18 +4,18 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#f4f7fb">
-  <meta name="description" content="Figureloom privacy, legal and security information">
+  <meta name="description" content="FigureLoom privacy, legal and security information">
   <link rel="icon" href="./favicon.svg" type="image/svg+xml">
-  <title>Privacy & legal · Figureloom</title>
+  <title>Privacy & legal · FigureLoom</title>
   <style>
     :root{font-family:Inter,"Avenir Next","Segoe UI",system-ui,sans-serif;color:#24344b;background:#edf3f5}*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 8% 8%,rgba(104,169,177,.14),transparent 28%),radial-gradient(circle at 92% 12%,rgba(143,130,184,.13),transparent 30%),linear-gradient(145deg,#edf3f5,#f5f4f8 48%,#edf2f7);line-height:1.6}.shell{width:min(850px,calc(100% - 28px));margin:36px auto;padding:28px;border:1px solid rgba(105,125,151,.24);border-radius:24px;background:rgba(252,254,255,.94);box-shadow:0 22px 70px rgba(38,55,80,.14)}.brand{display:flex;align-items:center;gap:12px}.mark{display:grid;place-items:center;width:46px;height:46px;border-radius:15px;background:linear-gradient(145deg,#365eae,#5d91a0 56%,#8175a8);color:white;font-size:23px}.brand strong,.brand small{display:block}.brand strong{font-size:18px}.brand small{color:#718095}h1{margin:32px 0 8px;font-size:clamp(30px,6vw,48px);line-height:1.05;letter-spacing:-.045em}h2{margin:28px 0 8px;font-size:17px}p,li{color:#5f6f84}a{color:#315f9b}code{padding:2px 5px;border-radius:5px;background:#eef2f6}.notice{margin:20px 0;padding:14px;border:1px solid #cbdbe0;border-radius:14px;background:linear-gradient(135deg,#eef8f5,#f5f2fa)}footer{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px;margin-top:34px;padding-top:18px;border-top:1px solid rgba(105,125,151,.2);font-size:12px;color:#788699}@media(max-width:600px){.shell{margin:14px auto;padding:20px;border-radius:18px}}
   </style>
 </head>
 <body>
   <main class="shell">
-    <div class="brand"><div class="mark">⌬</div><div><strong>Figureloom</strong><small>Open scientific figure workspace</small></div></div>
+    <div class="brand"><div class="mark">⌬</div><div><strong>FigureLoom</strong><small>Open scientific figure workspace</small></div></div>
     <h1>Privacy, legal & security</h1>
-    <p>Last updated 17 July 2026. Figureloom is the public name for the open scientific illustration project currently maintained in the SciCanvas GitHub repository.</p>
+    <p>Last updated 17 July 2026. FigureLoom is an open scientific illustration workspace maintained in the FigureLoom GitHub repository.</p>
 
     <div class="notice"><strong>No personal email is published here.</strong> General questions, privacy requests and non-sensitive bug reports can be submitted through the project’s GitHub issue tracker. Never place passwords, access tokens, private health information or unpublished research data in a public issue.</div>
 
@@ -23,13 +23,16 @@
     <p>The editor works locally without an account. Local projects, recovery copies and preferences remain in the browser unless the user exports or deliberately saves to the cloud. Signed-in accounts use Supabase for authentication, encrypted cloud projects, project membership, collaboration presence and encrypted comments.</p>
 
     <h2>Account information</h2>
-    <p>When an account is created, Figureloom processes the email address, authentication records, display name, selected profile symbol, project-access roles and timestamps required to operate the service. Passwords are handled by Supabase Auth and are not stored in the Figureloom repository.</p>
+    <p>When an account is created, FigureLoom processes the email address, authentication records, display name, selected profile symbol, project-access roles and timestamps required to operate the service. Passwords are handled by Supabase Auth and are not stored in the FigureLoom repository.</p>
 
     <h2>Project encryption</h2>
     <p>Editable cloud-project payloads and collaboration-comment bodies are encrypted in the browser before database storage. Project titles, ownership, roles, revision numbers and timestamps remain operational metadata. This is application-layer encryption rather than a zero-knowledge guarantee.</p>
 
     <h2>Third-party infrastructure</h2>
-    <ul><li>GitHub hosts the source repository and static website.</li><li>Supabase provides authentication, database and realtime collaboration infrastructure.</li><li>The domain registrar and DNS provider route <code>figureloom.org</code> to the website.</li></ul>
+    <ul><li>GitHub hosts the source repository and static website.</li><li>Supabase provides authentication, database and realtime collaboration infrastructure.</li><li>Google Gemini provides optional online AI when enabled by the user.</li><li>The domain registrar and DNS provider route <code>figureloom.org</code> to the website.</li></ul>
+
+    <h2>AI and personal API keys</h2>
+    <p>FigureLoom sends a compact figure summary and the user’s prompt to Gemini only when the user asks for AI assistance. Embedded image bytes and raw SVG source are not included. A personal Gemini API key may be supplied for a request; it is not stored in the project or cloud gallery. Users should avoid sending confidential or unpublished research and should review Google’s terms for the API key being used.</p>
 
     <h2>Acceptable use and warranty</h2>
     <p>Do not use the service to violate law, distribute malicious material, impersonate another person or expose information without permission. Scientific and accessibility checks are assistive tools and do not replace professional review. The software is provided without a promise that it will be uninterrupted, error-free or suitable for a particular publication, clinical or regulatory purpose.</p>
@@ -38,9 +41,9 @@
     <p>The source is publicly available on GitHub. A formal software licence should be reviewed in the repository before copying, modifying or redistributing the code; public source visibility alone does not create licence permission.</p>
 
     <h2>Contact and requests</h2>
-    <p>Use the <a href="https://github.com/victork4314-sys/SciCanvas/issues/new" rel="noreferrer">GitHub issue form</a> for ordinary questions, data-access/deletion requests and non-sensitive reports. Sensitive security information should not be posted publicly; a private reporting route will be added before a broader public launch.</p>
+    <p>Use the <a href="https://github.com/victork4314-sys/Figureloom/issues/new" rel="noreferrer">GitHub issue form</a> for ordinary questions, data-access/deletion requests and non-sensitive reports. Sensitive security information should not be posted publicly; a private reporting route will be added before a broader public launch.</p>
 
-    <footer><span>© 2026 Figureloom</span><span><a href="./">Back to the editor</a> · <a href="https://github.com/victork4314-sys/SciCanvas" rel="noreferrer">Source</a></span></footer>
+    <footer><span>© 2026 FigureLoom</span><span><a href="./">Back to the editor</a> · <a href="https://github.com/victork4314-sys/Figureloom" rel="noreferrer">Source</a></span></footer>
   </main>
 </body>
 </html>
