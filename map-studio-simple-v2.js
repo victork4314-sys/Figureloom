@@ -47,6 +47,7 @@
   let markerCounter = 0;
   let searchController = null;
   let dragRecentlyEnded = false;
+  let editingSite = null;
   const sites = [];
 
   function loadStyle(url) {
@@ -86,10 +87,16 @@
     });
   }
 
+  function escapeText(value) {
+    return String(value || "").replace(/[&<>"']/g, character => ({
+      "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;"
+    }[character]));
+  }
+
   const drawer = createDrawer(
     "mapStudioSimpleV2Drawer",
     "Map Studio",
-    "Search, drag, zoom, and deliberately add map sites"
+    "Search, drag, zoom, and deliberately add annotated map sites"
   );
   drawer.classList.add("map-studio-simple-v2");
   drawer.querySelector(".utility-body").innerHTML = `
@@ -108,13 +115,36 @@
     </div>
     <div id="mapv2SearchResults" class="mapv2-results"></div>
     <div class="mapv2-sitebar">
-      <input id="mapv2SiteLabel" type="text" placeholder="Site label · optional" aria-label="Map site label">
+      <input id="mapv2SiteLabel" type="text" placeholder="Site name · optional" aria-label="Map site name">
       <button id="mapv2SiteButton" type="button">Add map site</button>
       <button id="mapv2ClearSites" type="button">Clear sites</button>
       <span id="mapv2ModeHint">Drag to move · pinch, scroll, double-tap, or use +/− to zoom</span>
     </div>
     <div id="mapv2Map" class="mapv2-map" aria-label="Interactive map"></div>
     <div id="mapv2SiteList" class="mapv2-site-list"><span>No map sites added.</span></div>
+    <section id="mapv2SiteEditor" class="mapv2-site-editor" hidden>
+      <div class="mapv2-editor-heading">
+        <div><strong>Edit map site</strong><span>Add the finished description and callout here.</span></div>
+        <button id="mapv2EditorClose" type="button" aria-label="Close site editor">×</button>
+      </div>
+      <div class="mapv2-editor-grid">
+        <label>Name<input id="mapv2EditLabel" type="text" maxlength="80"></label>
+        <label>Callout position
+          <select id="mapv2EditPosition">
+            <option value="right">Right</option>
+            <option value="left">Left</option>
+            <option value="above">Above</option>
+            <option value="below">Below</option>
+          </select>
+        </label>
+      </div>
+      <label class="mapv2-description-field">Description<textarea id="mapv2EditDescription" rows="3" maxlength="500" placeholder="What happened here, what was sampled, or why this site matters…"></textarea></label>
+      <label class="mapv2-show-callout"><input id="mapv2EditShowCallout" type="checkbox" checked> Show the name and description on the map</label>
+      <div class="mapv2-editor-actions">
+        <button id="mapv2EditorCancel" type="button">Cancel</button>
+        <button id="mapv2EditorSave" class="primary" type="button">Save site</button>
+      </div>
+    </section>
     <details class="mapv2-options">
       <summary>Map options</summary>
       <div class="mapv2-option-grid">
@@ -142,6 +172,14 @@
     clearSites: q("#mapv2ClearSites"),
     modeHint: q("#mapv2ModeHint"),
     siteList: q("#mapv2SiteList"),
+    siteEditor: q("#mapv2SiteEditor"),
+    editorClose: q("#mapv2EditorClose"),
+    editorCancel: q("#mapv2EditorCancel"),
+    editorSave: q("#mapv2EditorSave"),
+    editLabel: q("#mapv2EditLabel"),
+    editDescription: q("#mapv2EditDescription"),
+    editPosition: q("#mapv2EditPosition"),
+    editShowCallout: q("#mapv2EditShowCallout"),
     title: q("#mapv2Title"),
     showTitle: q("#mapv2ShowTitle"),
     showNorth: q("#mapv2ShowNorth"),
@@ -162,18 +200,73 @@
     controls.siteButton.textContent = markerArmed ? "Cancel site" : "Add map site";
     q("#mapv2Map").classList.toggle("placing-site", markerArmed);
     controls.modeHint.textContent = markerArmed
-      ? "Tap once to place one site · dragging and zooming still move the map"
+      ? "Tap once to place one circle · dragging and zooming still move the map"
       : "Drag to move · pinch, scroll, double-tap, or use +/− to zoom";
   }
 
   function siteIcon() {
     return window.L.divIcon({
       className: "mapv2-leaflet-site",
-      html: '<span class="mapv2-site-dot"></span>',
-      iconSize: [28, 36],
-      iconAnchor: [14, 34],
-      popupAnchor: [0, -32]
+      html: '<span class="mapv2-site-circle"></span>',
+      iconSize: [24, 24],
+      iconAnchor: [12, 12],
+      popupAnchor: [0, -16]
     });
+  }
+
+  function tooltipDirection(position) {
+    return ({ left: "left", above: "top", below: "bottom", right: "right" })[position] || "right";
+  }
+
+  function tooltipOffset(position) {
+    return ({ left: [-14, 0], above: [0, -14], below: [0, 14], right: [14, 0] })[position] || [14, 0];
+  }
+
+  function tooltipHtml(record) {
+    const description = record.description.trim();
+    return `<div class="mapv2-callout-content"><strong>${escapeText(record.label)}</strong>${description ? `<span>${escapeText(description)}</span>` : ""}</div>`;
+  }
+
+  function updateSitePresentation(record) {
+    record.marker.setIcon(siteIcon());
+    record.marker.unbindTooltip();
+    if (!record.showCallout) return;
+    record.marker.bindTooltip(tooltipHtml(record), {
+      permanent: true,
+      direction: tooltipDirection(record.calloutPosition),
+      offset: tooltipOffset(record.calloutPosition),
+      className: "mapv2-site-tooltip",
+      opacity: 1
+    });
+  }
+
+  function closeSiteEditor() {
+    editingSite = null;
+    controls.siteEditor.hidden = true;
+  }
+
+  function openSiteEditor(record) {
+    editingSite = record;
+    controls.editLabel.value = record.label;
+    controls.editDescription.value = record.description;
+    controls.editPosition.value = record.calloutPosition;
+    controls.editShowCallout.checked = record.showCallout;
+    controls.siteEditor.hidden = false;
+    controls.editLabel.focus({ preventScroll: true });
+    controls.siteEditor.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  }
+
+  function saveSiteEditor() {
+    if (!editingSite) return;
+    editingSite.label = controls.editLabel.value.trim() || `Site ${editingSite.number}`;
+    editingSite.description = controls.editDescription.value.trim();
+    editingSite.calloutPosition = controls.editPosition.value;
+    editingSite.showCallout = controls.editShowCallout.checked;
+    updateSitePresentation(editingSite);
+    const savedName = editingSite.label;
+    closeSiteEditor();
+    renderSites();
+    setStatus(`${savedName} updated. Its callout will be included in the exported map.`);
   }
 
   function renderSites() {
@@ -196,43 +289,52 @@
         setSiteMode(false);
         map.setView(record.marker.getLatLng(), Math.max(map.getZoom(), 16), { animate: false });
       });
+      const edit = document.createElement("button");
+      edit.type = "button";
+      edit.className = "mapv2-site-edit";
+      edit.textContent = "Edit";
+      edit.addEventListener("click", () => openSiteEditor(record));
       const remove = document.createElement("button");
       remove.type = "button";
       remove.className = "mapv2-site-remove";
       remove.textContent = "Remove";
       remove.addEventListener("click", () => {
+        if (editingSite === record) closeSiteEditor();
         map.removeLayer(record.marker);
         const index = sites.indexOf(record);
         if (index >= 0) sites.splice(index, 1);
         renderSites();
       });
-      row.append(name, remove);
+      row.append(name, edit, remove);
       controls.siteList.appendChild(row);
     });
   }
 
   function addSite(latlng) {
     if (!markerArmed) return;
-    const label = controls.siteLabel.value.trim() || `Site ${++markerCounter}`;
-    const marker = window.L.marker(latlng, {
+    const number = ++markerCounter;
+    const record = {
+      id: `site:${Date.now()}:${Math.random()}`,
+      number,
+      label: controls.siteLabel.value.trim() || `Site ${number}`,
+      description: "",
+      calloutPosition: "right",
+      showCallout: true,
+      marker: null
+    };
+    record.marker = window.L.marker(latlng, {
       icon: siteIcon(),
       draggable: true,
       keyboard: true,
       autoPan: true
     }).addTo(map);
-    marker.bindTooltip(label, {
-      permanent: true,
-      direction: "right",
-      offset: [10, -15],
-      className: "mapv2-site-tooltip"
-    });
-    const record = { id: `site:${Date.now()}:${Math.random()}`, label, marker };
     sites.push(record);
-    marker.on("dragend", renderSites);
+    updateSitePresentation(record);
+    record.marker.on("dragend", renderSites);
     controls.siteLabel.value = "";
     setSiteMode(false);
     renderSites();
-    setStatus(`${label} added. Normal tapping, dragging, and zooming cannot add another site.`);
+    setStatus(`${record.label} added. Press Edit to add a description and choose where its callout sits.`);
   }
 
   function removeBasemapLayers() {
@@ -456,6 +558,117 @@
     return node;
   }
 
+  function wrapDescription(value, maxCharacters = 42) {
+    const words = String(value || "").trim().split(/\s+/).filter(Boolean);
+    const lines = [];
+    let current = "";
+    for (const word of words) {
+      const proposed = current ? `${current} ${word}` : word;
+      if (proposed.length > maxCharacters && current) {
+        lines.push(current);
+        current = word;
+      } else {
+        current = proposed;
+      }
+    }
+    if (current) lines.push(current);
+    return lines.slice(0, 7);
+  }
+
+  function clamp(value, minimum, maximum) {
+    return Math.max(minimum, Math.min(maximum, value));
+  }
+
+  function appendExportSite(root, record, mapPoint, scaleX, scaleY, exportHeight) {
+    const x = mapPoint.x * scaleX;
+    const y = mapPoint.y * scaleY;
+    if (x < -40 || x > EXPORT_WIDTH + 40 || y < -40 || y > exportHeight + 40) return;
+
+    root.appendChild(svgNode("circle", {
+      cx: x,
+      cy: y,
+      r: 10,
+      fill: COLORS.primary,
+      stroke: COLORS.white,
+      "stroke-width": 3
+    }));
+    root.appendChild(svgNode("circle", {
+      cx: x,
+      cy: y,
+      r: 13,
+      fill: "none",
+      stroke: COLORS.text,
+      "stroke-width": 1.5,
+      opacity: 0.8
+    }));
+
+    if (!record.showCallout) return;
+    const descriptionLines = wrapDescription(record.description);
+    const longestLine = Math.max(record.label.length, ...descriptionLines.map(line => line.length), 10);
+    const boxWidth = clamp(longestLine * 7.3 + 34, 130, 340);
+    const boxHeight = descriptionLines.length ? 48 + descriptionLines.length * 18 : 42;
+    const gap = 28;
+    let boxX = x + gap;
+    let boxY = y - boxHeight / 2;
+    if (record.calloutPosition === "left") {
+      boxX = x - boxWidth - gap;
+      boxY = y - boxHeight / 2;
+    } else if (record.calloutPosition === "above") {
+      boxX = x - boxWidth / 2;
+      boxY = y - boxHeight - gap;
+    } else if (record.calloutPosition === "below") {
+      boxX = x - boxWidth / 2;
+      boxY = y + gap;
+    }
+    boxX = clamp(boxX, 10, EXPORT_WIDTH - boxWidth - 10);
+    boxY = clamp(boxY, 10, exportHeight - boxHeight - 10);
+    const lineEndX = clamp(x, boxX, boxX + boxWidth);
+    const lineEndY = clamp(y, boxY, boxY + boxHeight);
+
+    root.appendChild(svgNode("line", {
+      x1: x,
+      y1: y,
+      x2: lineEndX,
+      y2: lineEndY,
+      stroke: COLORS.text,
+      "stroke-width": 2
+    }));
+    root.appendChild(svgNode("rect", {
+      x: boxX,
+      y: boxY,
+      width: boxWidth,
+      height: boxHeight,
+      rx: 8,
+      fill: COLORS.white,
+      stroke: COLORS.line,
+      "stroke-width": 1.4,
+      opacity: 0.96
+    }));
+    root.appendChild(svgNode("text", {
+      x: boxX + 15,
+      y: boxY + 25,
+      fill: COLORS.text,
+      "font-size": 15,
+      "font-weight": 700
+    }, record.label));
+    if (descriptionLines.length) {
+      const text = svgNode("text", {
+        x: boxX + 15,
+        y: boxY + 47,
+        fill: COLORS.text,
+        "font-size": 12,
+        "font-weight": 400
+      });
+      descriptionLines.forEach((line, index) => {
+        text.appendChild(svgNode("tspan", {
+          x: boxX + 15,
+          dy: index === 0 ? 0 : 18
+        }, line));
+      });
+      root.appendChild(text);
+    }
+  }
+
   async function addMapToCanvas() {
     await ensureMap();
     setSiteMode(false);
@@ -502,26 +715,7 @@
       const scaleY = exportHeight / Math.max(1, size.y);
       sites.forEach(record => {
         const point = map.latLngToContainerPoint(record.marker.getLatLng());
-        const x = point.x * scaleX;
-        const y = point.y * scaleY;
-        if (x < -40 || x > EXPORT_WIDTH + 40 || y < -40 || y > exportHeight + 40) return;
-        const group = svgNode("g", { transform: `translate(${x} ${y})` });
-        group.appendChild(svgNode("path", {
-          d: "M0 16 C-17 -3 -18 -25 0 -34 C18 -25 17 -3 0 16Z",
-          fill: COLORS.primary,
-          stroke: COLORS.text,
-          "stroke-width": 2
-        }));
-        group.appendChild(svgNode("circle", { cx: 0, cy: -18, r: 5, fill: COLORS.white }));
-        const labelWidth = Math.max(82, Math.min(280, record.label.length * 8 + 24));
-        group.appendChild(svgNode("rect", {
-          x: 13, y: -38, width: labelWidth, height: 29, rx: 7,
-          fill: COLORS.white, stroke: COLORS.line, "stroke-width": 1.2, opacity: 0.96
-        }));
-        group.appendChild(svgNode("text", {
-          x: 24, y: -19, fill: COLORS.text, "font-size": 14, "font-weight": 650
-        }, record.label));
-        root.appendChild(group);
+        appendExportSite(root, record, point, scaleX, scaleY, exportHeight);
       });
 
       const title = controls.title.value.trim() || "Map";
@@ -585,7 +779,7 @@
           sourceUrl: `https://services.arcgisonline.com/ArcGIS/rest/services/${config.service}/MapServer`,
           license: "Esri basemap attribution required",
           attribution: `${config.label} basemap © Esri. Place search © OpenStreetMap contributors.`,
-          notes: `Exact current map view embedded with ${sites.length} deliberately added site(s).`
+          notes: `Exact current map view embedded with ${sites.length} deliberately added annotated site(s).`
         }
       };
 
@@ -616,10 +810,20 @@
   });
   controls.siteButton.addEventListener("click", () => setSiteMode(!markerArmed));
   controls.clearSites.addEventListener("click", () => {
+    closeSiteEditor();
     sites.splice(0).forEach(record => map?.removeLayer(record.marker));
     renderSites();
     setSiteMode(false);
     setStatus("All map sites cleared. The map centre and zoom did not change.");
+  });
+  controls.editorClose.addEventListener("click", closeSiteEditor);
+  controls.editorCancel.addEventListener("click", closeSiteEditor);
+  controls.editorSave.addEventListener("click", saveSiteEditor);
+  controls.editLabel.addEventListener("keydown", event => {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      saveSiteEditor();
+    }
   });
   controls.reset.addEventListener("click", () => {
     ensureMap().then(() => {
@@ -636,9 +840,9 @@
     #mapStudioSimpleV2Drawer{width:min(980px,calc(100vw - 18px))}
     .mapv2-topbar{display:grid;grid-template-columns:1fr 130px;gap:8px;align-items:end}
     .mapv2-search{display:grid;grid-template-columns:1fr auto;gap:7px}
-    .mapv2-search input,.mapv2-sitebar input,.mapv2-basemap select,.mapv2-option-grid input[type=text]{min-width:0;min-height:39px;border:1px solid ${COLORS.line};border-radius:8px;background:${COLORS.white};padding:8px 10px;color:${COLORS.text}}
-    .mapv2-search button,.mapv2-sitebar button,.mapv2-actions button{min-height:39px;border:1px solid ${COLORS.line};border-radius:8px;background:${COLORS.white};padding:8px 11px;color:${COLORS.text}}
-    .mapv2-search button:hover,.mapv2-sitebar button:hover,.mapv2-actions button:hover{background:${COLORS.surface}}
+    .mapv2-search input,.mapv2-sitebar input,.mapv2-basemap select,.mapv2-option-grid input[type=text],.mapv2-editor-grid input,.mapv2-editor-grid select,.mapv2-description-field textarea{min-width:0;min-height:39px;border:1px solid ${COLORS.line};border-radius:8px;background:${COLORS.white};padding:8px 10px;color:${COLORS.text}}
+    .mapv2-search button,.mapv2-sitebar button,.mapv2-actions button,.mapv2-editor-actions button,.mapv2-editor-heading button{min-height:39px;border:1px solid ${COLORS.line};border-radius:8px;background:${COLORS.white};padding:8px 11px;color:${COLORS.text}}
+    .mapv2-search button:hover,.mapv2-sitebar button:hover,.mapv2-actions button:hover,.mapv2-editor-actions button:hover{background:${COLORS.surface}}
     .mapv2-basemap{display:grid;gap:5px;color:#596579;font-size:10px}
     .mapv2-results{display:grid;gap:5px;max-height:190px;overflow:auto;margin:7px 0}
     .mapv2-results>p{margin:0;padding:8px;color:${COLORS.muted};font-size:10px}
@@ -653,13 +857,17 @@
     .mapv2-map .leaflet-tile{transition:none!important;animation:none!important}
     .mapv2-map .leaflet-zoom-animated{transition:none!important}
     .mapv2-leaflet-site{background:none!important;border:none!important}
-    .mapv2-leaflet-site::before{content:"";display:block;width:24px;height:32px;border-radius:50% 50% 50% 0;background:${COLORS.primary};border:2px solid ${COLORS.text};transform:rotate(-45deg);box-sizing:border-box;box-shadow:0 2px 5px rgba(0,0,0,.24)}
-    .mapv2-site-dot{position:absolute;left:8px;top:7px;width:8px;height:8px;border-radius:50%;background:${COLORS.white};z-index:2}
-    .mapv2-site-tooltip{border:1px solid ${COLORS.line};border-radius:7px;background:rgba(255,255,255,.96);box-shadow:none;color:${COLORS.text};font-size:11px;font-weight:650;padding:5px 8px}
+    .mapv2-site-circle{display:block;width:22px;height:22px;border-radius:50%;background:${COLORS.primary};border:3px solid ${COLORS.white};box-shadow:0 0 0 1.5px ${COLORS.text},0 2px 6px rgba(0,0,0,.28);box-sizing:border-box}
+    .mapv2-site-tooltip{border:1px solid ${COLORS.line};border-radius:8px;background:rgba(255,255,255,.97);box-shadow:0 3px 10px rgba(0,0,0,.14);color:${COLORS.text};padding:7px 9px;max-width:270px}
+    .mapv2-callout-content{display:grid;gap:3px}.mapv2-callout-content strong{font-size:11px}.mapv2-callout-content span{font-size:9px;line-height:1.35;white-space:pre-wrap;color:${COLORS.text}}
     .mapv2-site-list{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0;min-height:28px;align-items:center;color:${COLORS.muted};font-size:10px}
     .mapv2-site-row{display:flex;border:1px solid #d9e0e9;border-radius:999px;overflow:hidden;background:${COLORS.white}}
     .mapv2-site-row button{border:0;background:transparent;padding:6px 9px;font-size:9px;color:${COLORS.text}}
-    .mapv2-site-name{font-weight:650}.mapv2-site-remove{border-left:1px solid #e2e8f0!important;color:${COLORS.muted}!important}
+    .mapv2-site-name{font-weight:650}.mapv2-site-edit,.mapv2-site-remove{border-left:1px solid #e2e8f0!important}.mapv2-site-edit{color:${COLORS.primaryDark}!important}.mapv2-site-remove{color:${COLORS.muted}!important}
+    .mapv2-site-editor{margin:8px 0;padding:11px;border:1px solid #d9e0e9;border-radius:10px;background:${COLORS.panel}}
+    .mapv2-editor-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:9px}.mapv2-editor-heading strong,.mapv2-editor-heading span{display:block}.mapv2-editor-heading strong{font-size:12px;color:${COLORS.text}}.mapv2-editor-heading span{margin-top:2px;font-size:9px;color:${COLORS.muted}}.mapv2-editor-heading button{min-width:36px;min-height:34px;padding:2px;font-size:20px;line-height:1}
+    .mapv2-editor-grid{display:grid;grid-template-columns:1fr 150px;gap:8px}.mapv2-editor-grid label,.mapv2-description-field{display:grid;gap:5px;color:#596579;font-size:10px}.mapv2-description-field{margin-top:8px}.mapv2-description-field textarea{resize:vertical;line-height:1.35}
+    .mapv2-show-callout{display:flex;align-items:center;gap:6px;margin:9px 0;color:#596579;font-size:10px}.mapv2-editor-actions{display:grid;grid-template-columns:1fr 2fr;gap:8px}.mapv2-editor-actions .primary{background:${COLORS.primary};border-color:${COLORS.primary};color:${COLORS.white};font-weight:700}
     .mapv2-options{margin:8px 0;border:1px solid #d9e0e9;border-radius:9px;background:${COLORS.panel};padding:8px 10px}
     .mapv2-options summary{cursor:pointer;color:${COLORS.text};font-size:10px;font-weight:650}
     .mapv2-option-grid{display:grid;grid-template-columns:1fr auto auto auto;gap:10px;align-items:center;margin-top:9px}
@@ -668,7 +876,7 @@
     .mapv2-actions .primary{background:${COLORS.primary};border-color:${COLORS.primary};color:${COLORS.white};font-weight:700}
     .mapv2-actions .primary:hover{background:${COLORS.primaryDark}}
     @media(max-width:760px){
-      .mapv2-topbar{grid-template-columns:1fr}.mapv2-sitebar{grid-template-columns:1fr 1fr}.mapv2-sitebar input,.mapv2-sitebar>span{grid-column:1/-1}.mapv2-sitebar>span{text-align:left}.mapv2-option-grid{grid-template-columns:1fr 1fr}.mapv2-option-grid label:first-child{grid-column:1/-1}.mapv2-map{min-height:350px}.mapv2-actions{grid-template-columns:1fr}
+      .mapv2-topbar{grid-template-columns:1fr}.mapv2-sitebar{grid-template-columns:1fr 1fr}.mapv2-sitebar input,.mapv2-sitebar>span{grid-column:1/-1}.mapv2-sitebar>span{text-align:left}.mapv2-option-grid{grid-template-columns:1fr 1fr}.mapv2-option-grid label:first-child{grid-column:1/-1}.mapv2-map{min-height:350px}.mapv2-actions,.mapv2-editor-actions,.mapv2-editor-grid{grid-template-columns:1fr}
     }
   `;
   document.head.appendChild(style);
@@ -686,7 +894,7 @@
       controls.basemap.value = "satellite";
       if (!baseLayer || controls.basemap.value !== "satellite") setBasemap("satellite");
       window.setTimeout(() => map.invalidateSize({ animate: false, pan: false }), 60);
-      setStatus("Satellite ready. Search or move freely; press Add map site only when you want to place one.");
+      setStatus("Satellite ready. Add a circle with Add map site, then press Edit for its description.");
     } catch (error) {
       setStatus(error.message, true);
     }
@@ -710,7 +918,7 @@
   function polishInsertButton() {
     const button = document.getElementById("insertMapStudio");
     if (!button) return false;
-    button.innerHTML = "<strong>Interactive maps</strong><small>Satellite first · search, drag, zoom, then deliberately add sites</small>";
+    button.innerHTML = "<strong>Interactive maps</strong><small>Satellite first · circles, descriptions, search, drag, and zoom</small>";
     return true;
   }
   if (!polishInsertButton()) {
