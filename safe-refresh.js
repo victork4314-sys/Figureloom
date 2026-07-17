@@ -16,6 +16,7 @@
     "collaboration-guest-links.js",
     "collaboration-live-motion.js",
     "collaboration-realtime-delivery-fix.js",
+    "shared-content-state-bridge.js",
     "shared-content-safety.js"
   ];
   let reloading = false;
