@@ -147,3 +147,15 @@
 
   window.addEventListener('resize', () => finish(true));
 })();
+
+(() => {
+  if (document.querySelector('script[data-figureloom-intuitive-interface]')) return;
+  const script = document.createElement('script');
+  script.src = './intuitive-interface.js';
+  script.dataset.figureloomIntuitiveInterface = 'true';
+  script.async = false;
+  script.addEventListener('error', () => {
+    console.error('Figureloom usability guidance could not be loaded.');
+  }, { once:true });
+  document.head.appendChild(script);
+})();
