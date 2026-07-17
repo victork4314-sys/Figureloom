@@ -8,11 +8,11 @@
   async function resolveExporter(timeout = 12000) {
     const started = Date.now();
     while (Date.now() - started < timeout) {
-      if (typeof window.SciCanvasOffice?.exportPowerPoint === 'function') {
-        return options => window.SciCanvasOffice.exportPowerPoint(options);
-      }
       if (typeof window.FigureLoomExportPowerPointAllPages === 'function') {
         return options => window.FigureLoomExportPowerPointAllPages(options);
+      }
+      if (typeof window.SciCanvasOffice?.exportPowerPoint === 'function') {
+        return options => window.SciCanvasOffice.exportPowerPoint(options);
       }
       await sleep(100);
     }
