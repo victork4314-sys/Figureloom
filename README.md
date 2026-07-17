@@ -1,14 +1,14 @@
-# SciCanvas
+# Figureloom
 
 **A local-first scientific illustration studio for figures, posters, data, maps, presentations, collaborative review, and gloriously specific scientific nonsense.**
 
-SciCanvas feels familiar to people who know PowerPoint, Keynote, or office-style editors, while keeping scientific tools editable and progressively disclosed. It runs in the browser, supports touch devices, and remains usable without an account.
+Figureloom feels familiar to people who know PowerPoint, Keynote, or office-style editors, while keeping scientific tools editable and progressively disclosed. It runs in the browser, supports touch devices, and remains usable without an account.
 
 ## The experience
 
 The interface uses a calm editorial-laboratory aesthetic: luminous neutral surfaces, restrained botanical and spectral accents, clear typography, frosted drawers, responsive cards, and subtle motion. It is polished without becoming toy-like or visually noisy.
 
-On first launch, SciCanvas asks what it should call the user. The locally stored name appears as an editable title-bar greeting and leads into a passive tour that highlights visible controls without opening panels, scrolling the workspace, selecting objects, or modifying the project.
+On first launch, Figureloom asks what it should call the user. The locally stored name appears as an editable title-bar greeting and leads into a passive tour that highlights visible controls without opening panels, scrolling the workspace, selecting objects, or modifying the project.
 
 ## Core editor
 
@@ -28,7 +28,7 @@ On first launch, SciCanvas asks what it should call the user. The locally stored
 
 ## Live email accounts and project gallery
 
-**Pro Tools → Accounts & gallery** is connected to the SciCanvas Supabase project.
+**Pro Tools → Accounts & gallery** is connected to the Figureloom Supabase project.
 
 It provides:
 
@@ -42,7 +42,7 @@ It provides:
 - Owner, editor, reviewer, and viewer roles
 - Browser-side AES-GCM encryption before cloud storage
 
-SciCanvas deliberately uses **email and password only**. Apple, Microsoft, and other social sign-in providers are not included.
+Figureloom deliberately uses **email and password only**. Apple, Microsoft, and other social sign-in providers are not included.
 
 The browser contains only the Supabase project URL and publishable key. Database access is enforced through Row Level Security. No service-role key, database password, SMTP credential, or server secret belongs in browser code.
 
@@ -68,13 +68,13 @@ Project owners grant access by email:
 - Unknown emails become pending invitations.
 - Access activates automatically when that exact email creates an account.
 
-SciCanvas currently reserves collaboration access but does not send a separate collaboration-invitation email. Owners should share the app link themselves. Supabase Auth still sends normal account-confirmation and password-recovery emails.
+Figureloom currently reserves collaboration access but does not send a separate collaboration-invitation email. Owners should share the app link themselves. Supabase Auth still sends normal account-confirmation and password-recovery emails.
 
 The collaboration model favors understandable conflict handling over pretending to be a CRDT. Whole-project revisions are encrypted, revision-tracked, and never silently applied over an active local interaction.
 
 ## Scientific illustration libraries
 
-SciCanvas combines complementary sources while loading results on demand:
+Figureloom combines complementary sources while loading results on demand:
 
 - Original built-in programmatic scientific artwork
 - **Water 32** for water, wastewater, hydrology, pollution, monitoring, marine systems, and treatment
@@ -89,7 +89,7 @@ Search results are normalized and deduplicated. External SVGs are sanitized, val
 
 The private Figure Assistant accepts a description of a pathway, comparison, workflow, cycle, environmental system, or laboratory process and assembles an editable figure from available libraries.
 
-It does not generate a flattened picture. It creates movable, recolorable, resizable SciCanvas objects.
+It does not generate a flattened picture. It creates movable, recolorable, resizable Figureloom objects.
 
 When a compatible browser exposes an on-device language-model API, an optional local interpreter can restructure vague prompts and suggest an automatic, workflow, comparison, or cycle layout. The deterministic assistant remains the fallback.
 
@@ -191,7 +191,7 @@ The Office bridge accepts `.xlsx`, `.xls`, `.xlsm`, `.ods`, `.csv`, and `.tsv`. 
 
 ## Refresh and recovery
 
-Before refresh, tab suspension, or page close, SciCanvas synchronously saves the active page into the complete multi-page project. Data is validated before replacing the primary copy, and the previous valid project remains a fallback.
+Before refresh, tab suspension, or page close, Figureloom synchronously saves the active page into the complete multi-page project. Data is validated before replacing the primary copy, and the previous valid project remains a fallback.
 
 After all modules load, a final authoritative restore runs using the current multi-page format. For irreplaceable work, also download a `.scicanvas` backup.
 
@@ -254,7 +254,7 @@ Remaining work is operational: configure the production Auth Site URL/redirect a
 
 ## Licensing
 
-Original SciCanvas and Water 32 artwork is project-authored programmatic SVG. External assets retain available source, creator, licence, and attribution information. Users remain responsible for reviewing current source terms before publication.
+Original Figureloom and Water 32 artwork is project-authored programmatic SVG. External assets retain available source, creator, licence, and attribution information. Users remain responsible for reviewing current source terms before publication.
 
 See also:
 
