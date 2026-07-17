@@ -177,6 +177,7 @@
     const initialPage = Number(initialState?.activePage ?? -1);
     const started = Date.now();
     let previousSignature = '';
+    let lastFittedSignature = '';
     let lastChange = started;
     let lastFit = 0;
     let fitted = false;
@@ -199,11 +200,12 @@
 
         const quietFor = now - lastChange;
         const ready = builderDone || quietFor >= (mode === 'builder' ? 1400 : 700) || now - started > 9000;
-        if (ready && (!lastFit || now - lastFit > 700)) {
+        if (ready && signature !== lastFittedSignature && (!lastFit || now - lastFit > 700)) {
           normalizeGeneratedPage(objects);
           fitted = true;
           lastFit = now;
-          previousSignature = signatureFor(objects);
+          lastFittedSignature = signatureFor(objects);
+          previousSignature = lastFittedSignature;
           lastChange = now;
         }
 
