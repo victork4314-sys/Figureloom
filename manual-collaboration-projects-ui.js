@@ -21,33 +21,26 @@
   let enabledProjectId = '';
   let busy = false;
   let bypassDrawerToggle = false;
-  let switchingProject = false;
   let transportPromise = null;
 
-  function projectId() {
-    return String(cloud.currentProjectId || localStorage.getItem('scicanvas-current-cloud-project-v1') || '');
-  }
-
-  function user() {
-    return cloud.getUser?.() || null;
-  }
-
-  function isLocalDraft() {
-    return Boolean(sessionStorage.getItem(ACTIVE_DRAFT_KEY));
-  }
-
-  function isEnabled(id = projectId()) {
-    return Boolean(id && enabledProjectId === String(id));
-  }
+  const projectId = () => String(cloud.currentProjectId || localStorage.getItem('scicanvas-current-cloud-project-v1') || '');
+  const user = () => cloud.getUser?.() || null;
+  const isLocalDraft = () => Boolean(sessionStorage.getItem(ACTIVE_DRAFT_KEY));
+  const isEnabled = (id = projectId()) => Boolean(id && enabledProjectId === String(id));
 
   function setText(node, text) {
     if (node && node.textContent !== text) node.textContent = text;
   }
 
+  function setDisabled(node, value) {
+    const next = Boolean(value);
+    if (node && node.disabled !== next) node.disabled = next;
+  }
+
   function setMessage(text, kind = '') {
     const message = drawer.querySelector('#collabMessage');
     if (!message) return;
-    message.textContent = text;
+    setText(message, text);
     message.dataset.kind = kind;
   }
 
@@ -90,25 +83,24 @@
     const windowButton = host.querySelector('[data-project-action="window"]');
     const closeButton = host.querySelector('[data-project-action="close"]');
     if (windowButton) {
-      windowButton.textContent = 'New window';
+      setText(windowButton, 'New window');
       windowButton.title = 'Open this project in another window';
     }
     if (closeButton) {
-      closeButton.textContent = 'Close';
+      setText(closeButton, 'Close');
       closeButton.title = 'Close this project from the open list without deleting it';
     }
 
-    const status = host.querySelector('.projects-current-copy small');
-    const activeDraft = isLocalDraft();
     const id = projectId();
-    if (status) {
-      if (activeDraft) status.textContent = 'Local draft · save to cloud when ready';
-      else if (!id) status.textContent = 'No cloud project open';
-      else status.textContent = isEnabled(id) ? 'Live collaboration connected' : 'Cloud project open · live collaboration off';
-    }
+    const status = host.querySelector('.projects-current-copy small');
+    if (isLocalDraft()) setText(status, 'Local draft · save to cloud when ready');
+    else if (!id) setText(status, 'No cloud project open');
+    else setText(status, isEnabled(id) ? 'Live collaboration connected' : 'Cloud project open · live collaboration off');
 
-    host.querySelectorAll('.projects-open-chip i[data-live]').forEach(dot => { dot.dataset.live = '0'; });
-    if (isEnabled(id) && !activeDraft) {
+    host.querySelectorAll('.projects-open-chip i[data-live]').forEach(dot => {
+      if (dot.dataset.live !== '0') dot.dataset.live = '0';
+    });
+    if (isEnabled(id) && !isLocalDraft()) {
       const activeDot = host.querySelector('.projects-open-chip.active i[data-live]');
       if (activeDot) activeDot.dataset.live = '1';
     }
@@ -119,29 +111,26 @@
     const signedIn = Boolean(user());
     const localDraft = isLocalDraft();
     const connected = isEnabled(id);
-    const topButton = ensureTopButton();
     const canConnect = Boolean(id && signedIn && !localDraft);
+    const topButton = ensureTopButton();
 
     topButton.hidden = !Boolean(id && !localDraft);
-    topButton.disabled = busy || !canConnect;
+    setDisabled(topButton, busy || !canConnect);
     topButton.dataset.state = connected ? 'connected' : 'disconnected';
-    topButton.textContent = connected ? 'Disconnect' : 'Connect';
+    setText(topButton, connected ? 'Disconnect' : 'Connect');
     topButton.title = connected
       ? 'Save the latest project state and disconnect live collaboration'
       : 'Connect live collaboration for this project';
     topButton.setAttribute('aria-label', topButton.title);
 
-    const title = drawer.querySelector('.utility-head strong');
-    const subtitle = drawer.querySelector('.utility-head span');
-    setText(title, 'Live collaboration');
-    setText(subtitle, 'Connect only when you are ready to edit together, chat, and see live changes');
-
+    setText(drawer.querySelector('.utility-head strong'), 'Live collaboration');
+    setText(drawer.querySelector('.utility-head span'), 'Connect only when you are ready to edit together, chat, and see live changes');
     const details = drawer.querySelector('.collab-details');
     setText(details?.querySelector('summary'), 'How live editing works');
     setText(details?.querySelector('p'), 'Live editing is manual. Opening or saving a cloud project does not connect anyone. Press Connect to start encrypted collaboration, and Disconnect to save the latest state and leave the live session.');
 
-    drawerToggle.disabled = busy || !canConnect;
-    drawerToggle.textContent = connected ? 'Disconnect' : busy ? 'Working…' : 'Connect';
+    setDisabled(drawerToggle, busy || !canConnect);
+    setText(drawerToggle, connected ? 'Disconnect' : busy ? 'Working…' : 'Connect');
     drawerToggle.title = connected
       ? 'Save and leave the live collaboration session'
       : canConnect ? 'Start live collaboration for this project' : localDraft ? 'Save this draft to the cloud before collaborating' : 'Open a signed-in cloud project first';
@@ -157,10 +146,11 @@
 
   function loadScript(path, flag) {
     if (window[flag]) return Promise.resolve();
-    const existing = document.querySelector(`script[data-figureloom-manual-transport="${path}"]`);
+    const selector = `script[data-figureloom-manual-transport="${path}"]`;
+    const existing = document.querySelector(selector);
     if (existing) {
+      if (existing.dataset.loaded === '1') return Promise.resolve();
       return new Promise((resolve, reject) => {
-        if (window[flag]) return resolve();
         existing.addEventListener('load', resolve, { once:true });
         existing.addEventListener('error', () => reject(new Error(`${path} could not load.`)), { once:true });
       });
@@ -169,24 +159,28 @@
       const script = document.createElement('script');
       script.src = `${path}?v=${encodeURIComponent(TRANSPORT_BUILD)}`;
       script.dataset.figureloomManualTransport = path;
-      script.addEventListener('load', resolve, { once:true });
+      script.addEventListener('load', () => {
+        script.dataset.loaded = '1';
+        resolve();
+      }, { once:true });
       script.addEventListener('error', () => reject(new Error(`${path} could not load.`)), { once:true });
       document.head.appendChild(script);
     });
   }
 
   function loadTransports() {
-    if (transportPromise) return transportPromise;
-    transportPromise = (async () => {
-      for (const [path, flag] of TRANSPORTS) await loadScript(path, flag);
-    })();
+    if (!transportPromise) {
+      transportPromise = (async () => {
+        for (const [path, flag] of TRANSPORTS) await loadScript(path, flag);
+      })();
+    }
     return transportPromise;
   }
 
   function startBaseSession() {
     bypassDrawerToggle = true;
     try {
-      drawerToggle.disabled = false;
+      setDisabled(drawerToggle, false);
       drawerToggle.click();
     } finally {
       bypassDrawerToggle = false;
@@ -247,9 +241,7 @@
     }
   }
 
-  function toggleManual() {
-    return isEnabled(projectId()) ? disconnectManual() : connectManual();
-  }
+  const toggleManual = () => isEnabled(projectId()) ? disconnectManual() : connectManual();
 
   drawerToggle.addEventListener('click', event => {
     if (bypassDrawerToggle) return;
@@ -270,7 +262,6 @@
     const openedId = String(event.detail?.projectId || projectId());
     if (enabledProjectId && openedId !== enabledProjectId) {
       enabledProjectId = '';
-      switchingProject = true;
       hideChat();
       window.dispatchEvent(new CustomEvent('figureloom-collaboration-disconnected', { detail:{ projectId:openedId, saved:true, reason:'project-switch' } }));
       setTimeout(() => location.reload(), 0);
@@ -282,7 +273,6 @@
   });
 
   window.addEventListener('scicanvas-share-link-accepted', event => {
-    if (switchingProject) return;
     enabledProjectId = '';
     hideChat();
     render();
@@ -293,18 +283,10 @@
     window.addEventListener(type, () => setTimeout(render, 40));
   });
 
-  const observer = new MutationObserver(() => {
-    requestAnimationFrame(render);
-  });
-  observer.observe(drawer, { childList:true, subtree:true, characterData:true, attributes:true, attributeFilter:['disabled','hidden','class'] });
-  observer.observe(document.querySelector('.ribbon') || document.body, { childList:true, subtree:true });
-
   const style = document.createElement('style');
   style.id = 'manualCollaborationProjectsStyle';
   style.textContent = `
-    .projects-main-actions button,
-    .projects-current-group>button,
-    .projects-open-chip{
+    .projects-main-actions button,.projects-current-group>button,.projects-open-chip{
       display:inline-flex!important;align-items:center!important;justify-content:center!important;gap:7px!important;
       min-width:0!important;height:auto!important;padding:7px 10px!important;
       border:1px solid #cfd7e3!important;border-radius:7px!important;
@@ -312,11 +294,8 @@
       font:inherit!important;font-size:inherit!important;font-weight:400!important;line-height:normal!important
     }
     .projects-main-actions button strong{display:none!important}
-    .projects-main-actions button span,
-    .projects-open-chip span{font:inherit!important;font-size:inherit!important;font-weight:400!important}
-    .projects-main-actions button:hover:not(:disabled),
-    .projects-current-group>button:hover:not(:disabled),
-    .projects-open-chip:hover:not(:disabled){background:#f4f7fb!important;border-color:#cfd7e3!important;box-shadow:none!important}
+    .projects-main-actions button span,.projects-open-chip span{font:inherit!important;font-size:inherit!important;font-weight:400!important}
+    .projects-main-actions button:hover:not(:disabled),.projects-current-group>button:hover:not(:disabled),.projects-open-chip:hover:not(:disabled){background:#f4f7fb!important;border-color:#cfd7e3!important;box-shadow:none!important}
     .projects-open-chip{justify-content:flex-start!important;flex:0 1 180px!important;max-width:180px!important;white-space:nowrap!important}
     .projects-open-chip.active{border-color:#8fa7d2!important;background:#f2f6fc!important;box-shadow:inset 0 -2px 0 rgba(65,105,193,.42)!important}
     .projects-open-chip i{flex:0 0 auto}
@@ -327,31 +306,18 @@
     #projectDisconnectRibbonButton::before{content:'○';margin-right:6px;color:#5f7896}
     #projectDisconnectRibbonButton[data-state="connected"]::before{content:'●';color:#d58a43}
     #projectDisconnectRibbonButton[hidden]{display:none!important}
-    html[data-figureloom-theme="dark"] .projects-main-actions button,
-    html[data-figureloom-theme="dark"] .projects-current-group>button,
-    html[data-figureloom-theme="dark"] .projects-open-chip{
-      border-color:#455365!important;background:#293440!important;color:#dce3eb!important
-    }
-    html[data-figureloom-theme="dark"] .projects-main-actions button:hover:not(:disabled),
-    html[data-figureloom-theme="dark"] .projects-current-group>button:hover:not(:disabled),
-    html[data-figureloom-theme="dark"] .projects-open-chip:hover:not(:disabled){background:#313d4a!important}
+    html[data-figureloom-theme="dark"] .projects-main-actions button,html[data-figureloom-theme="dark"] .projects-current-group>button,html[data-figureloom-theme="dark"] .projects-open-chip{border-color:#455365!important;background:#293440!important;color:#dce3eb!important}
+    html[data-figureloom-theme="dark"] .projects-main-actions button:hover:not(:disabled),html[data-figureloom-theme="dark"] .projects-current-group>button:hover:not(:disabled),html[data-figureloom-theme="dark"] .projects-open-chip:hover:not(:disabled){background:#313d4a!important}
     html[data-figureloom-theme="dark"] .projects-open-chip.active{border-color:#7188bb!important;background:#303c4b!important}
-    @media(max-width:900px){
-      .projects-current-copy{display:none!important}
-      .projects-open-chip{flex-basis:135px!important;max-width:135px!important}
-      #projectDisconnectRibbonButton{padding-inline:9px!important}
-    }
+    @media(max-width:900px){.projects-current-copy{display:none!important}.projects-open-chip{flex-basis:135px!important;max-width:135px!important}#projectDisconnectRibbonButton{padding-inline:9px!important}}
   `;
   document.head.appendChild(style);
 
-  // Every page load begins disconnected. A previous manual connection never silently returns.
+  // A page load always starts disconnected; manual sessions never resurrect themselves.
   enabledProjectId = '';
   hideChat();
   render();
 
-  const timer = setInterval(render, 700);
-  window.addEventListener('beforeunload', () => {
-    clearInterval(timer);
-    observer.disconnect();
-  }, { once:true });
+  const timer = setInterval(render, 500);
+  window.addEventListener('beforeunload', () => clearInterval(timer), { once:true });
 })();
