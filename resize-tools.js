@@ -1,6 +1,6 @@
 (() => {
-  const HANDLE_SIZE = 20;
-  const HANDLE_HIT_SIZE = 38;
+  const HANDLE_SIZE = 26;
+  const HANDLE_HIT_SIZE = 58;
   const MIN_SIZE = 20;
   const directions = ["nw", "n", "ne", "e", "se", "s", "sw", "w"];
   const textDirections = ["nw", "ne", "se", "sw"];
@@ -26,12 +26,12 @@
     activeDirections.forEach(direction => {
       const [cx, cy] = points[direction];
       const hitTarget = createSvg("rect", {
-        class: `resize-hit-target resize-${direction}`,
+        class: `resize-handle resize-hit-target resize-${direction}`,
         x: cx - HANDLE_HIT_SIZE / 2,
         y: cy - HANDLE_HIT_SIZE / 2,
         width: HANDLE_HIT_SIZE,
         height: HANDLE_HIT_SIZE,
-        rx: 8,
+        rx: 11,
         "data-direction": direction,
         role: "button",
         "aria-label": `Resize ${direction}`
@@ -39,12 +39,12 @@
       hitTarget.addEventListener("pointerdown", beginResize);
 
       const handle = createSvg("rect", {
-        class: `resize-handle resize-${direction}`,
+        class: `resize-handle resize-grip resize-${direction}`,
         x: cx - HANDLE_SIZE / 2,
         y: cy - HANDLE_SIZE / 2,
         width: HANDLE_SIZE,
         height: HANDLE_SIZE,
-        rx: 4,
+        rx: 5,
         "aria-hidden": "true"
       });
       selectionLayer.append(hitTarget, handle);
@@ -55,7 +55,10 @@
     const item = selectedObject();
     if (!item || item.type === "connector" || item.locked) return;
     event.preventDefault();
-    event.stopPropagation();
+    event.stopImmediatePropagation();
+    state.drag = null;
+    state.multiDrag = null;
+    state.multiResize = null;
     pushHistory();
     const point = canvasPoint(event);
     state.resize = {
@@ -149,7 +152,7 @@
     const item = state.objects.find(object => object.id === resize.id);
     if (!item) return;
     event.preventDefault();
-    event.stopPropagation();
+    event.stopImmediatePropagation();
 
     const point = canvasPoint(event);
     const dx = point.x - resize.startPointerX;
@@ -179,7 +182,7 @@
     }
 
     render();
-  });
+  }, true);
 
   function finishResize(event) {
     if (!state.resize || (event?.pointerId != null && event.pointerId !== state.resize.pointerId)) return;
@@ -188,14 +191,14 @@
     scheduleSave();
   }
 
-  canvas.addEventListener("pointerup", finishResize);
-  canvas.addEventListener("pointercancel", finishResize);
+  canvas.addEventListener("pointerup", finishResize, true);
+  canvas.addEventListener("pointercancel", finishResize, true);
 
   const style = document.createElement("style");
   style.textContent = `
-    .resize-hit-target{fill:transparent;stroke:transparent;pointer-events:all;touch-action:none}
-    .resize-handle{fill:#fff;stroke:#2563eb;stroke-width:2.5;vector-effect:non-scaling-stroke;pointer-events:none}
-    .resize-hit-target:hover + .resize-handle{fill:#dbe8ff}
+    .resize-handle.resize-hit-target{fill:transparent!important;stroke:transparent!important;pointer-events:all!important;touch-action:none}
+    .resize-handle.resize-grip{fill:#fff;stroke:#2563eb;stroke-width:3;vector-effect:non-scaling-stroke;pointer-events:none}
+    .resize-hit-target:hover + .resize-grip{fill:#dbe8ff}
     .resize-nw,.resize-se{cursor:nwse-resize}.resize-ne,.resize-sw{cursor:nesw-resize}
     .resize-n,.resize-s{cursor:ns-resize}.resize-e,.resize-w{cursor:ew-resize}
   `;
