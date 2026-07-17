@@ -2,7 +2,7 @@
   if (window.__figureLoomSafeRefreshV1) return;
   window.__figureLoomSafeRefreshV1 = true;
 
-  const EXPECTED_BUILD = "safe-refresh-20260717-v1";
+  const EXPECTED_BUILD = "chunk-2-quota-20260717-v1";
   const SEEN_BUILD_KEY = "figureloom-session-build-v1";
   let reloading = false;
 
