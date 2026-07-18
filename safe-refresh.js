@@ -27,7 +27,8 @@
     "code-window-tools.js",
     "code-window-startup-render.js",
     "text-layout-tools.js",
-    "text-layout-default-migration.js"
+    "text-layout-default-migration.js",
+    "text-paste-auto-grow-fix.js"
   ];
   let reloading = false;
 
