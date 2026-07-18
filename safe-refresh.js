@@ -1,8 +1,8 @@
 (() => {
-  if (window.__figureLoomStableRuntime71d36dfV20) return;
-  window.__figureLoomStableRuntime71d36dfV20 = true;
+  if (window.__figureLoomStableRuntime71d36dfV21) return;
+  window.__figureLoomStableRuntime71d36dfV21 = true;
 
-  const STABLE_BUILD = "stable-71d36df-locked-20260718-v20";
+  const STABLE_BUILD = "stable-71d36df-locked-20260718-v21";
   const GENERAL_ADDONS = [
     "library-more-illustrations.js",
     "library-more-templates.js",
@@ -30,6 +30,7 @@
     "object-rotate-handle.js",
     "arrange-layout-template-tools.js",
     "arrangement-finish.js",
+    "layer-manager.js",
     "stable-gentle-fixes.js"
   ];
   const TEXT_ADDONS = [
