@@ -1,6 +1,6 @@
 (() => {
-  if (window.__figureLoomCodeLanguagePackV1) return;
-  window.__figureLoomCodeLanguagePackV1 = true;
+  if (window.__figureLoomCodeLanguagePackV2) return;
+  window.__figureLoomCodeLanguagePackV2 = true;
 
   const GROUPS = [
     ['Popular', [
@@ -80,7 +80,7 @@
 
   function enhanceSelect() {
     const select = document.getElementById('proCodeLanguage');
-    if (!select || select.dataset.languagePack === '1') return false;
+    if (!select || select.dataset.languagePack === '2') return false;
     const selected = select.value;
     select.replaceChildren();
     GROUPS.forEach(([label, entries]) => {
@@ -90,25 +90,74 @@
       select.appendChild(group);
     });
     if (selected && LABELS.has(selected)) select.value = selected;
-    select.dataset.languagePack = '1';
+    select.dataset.languagePack = '2';
     return true;
   }
 
+  function languageBadgeLabel(language) {
+    const label = LABELS.get(language) || String(language || 'Code');
+    const compact = {
+      javascript:'JavaScript', typescript:'TypeScript', objectivec:'Objective-C',
+      commonlisp:'Common Lisp', systemverilog:'SystemVerilog', githubactions:'GitHub Actions',
+      kubernetes:'Kubernetes', postgresql:'PostgreSQL', powershell:'PowerShell',
+      dockerfile:'Dockerfile', plantuml:'PlantUML', asciidoc:'AsciiDoc'
+    }[language] || label;
+    return compact.length > 18 ? `${compact.slice(0, 17)}…` : compact;
+  }
+
+  function addLanguageBadge(group, item, language) {
+    if (!group?.appendChild || item?.codeHeader === false) return group;
+    const label = languageBadgeLabel(language);
+    const width = Math.max(38, Math.min(116, 18 + label.length * 6.2));
+    const copySpace = item.codeCopyButton === false ? 12 : 78;
+    const x = Math.max(92, Number(item.width || 0) - copySpace - width - 8);
+    if (x + width > Number(item.width || 0) - copySpace) return group;
+
+    const badge = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    badge.classList.add('figureloom-code-language-badge');
+    badge.setAttribute('transform', `translate(${x} 6)`);
+    badge.setAttribute('pointer-events', 'none');
+
+    const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+    rect.setAttribute('width', String(width));
+    rect.setAttribute('height', '22');
+    rect.setAttribute('rx', '6');
+    rect.setAttribute('fill', item.codeTheme === 'light' ? '#ffffff' : '#111827');
+    rect.setAttribute('stroke', item.codeTheme === 'light' ? '#94a3b8' : '#64748b');
+    rect.setAttribute('stroke-width', '1');
+
+    const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    text.setAttribute('x', String(width / 2));
+    text.setAttribute('y', '15');
+    text.setAttribute('fill', item.codeTheme === 'light' ? '#334155' : '#e2e8f0');
+    text.setAttribute('font-size', '9');
+    text.setAttribute('font-weight', '800');
+    text.setAttribute('font-family', 'Segoe UI, sans-serif');
+    text.setAttribute('text-anchor', 'middle');
+    text.textContent = label;
+
+    badge.append(rect, text);
+    group.appendChild(badge);
+    return group;
+  }
+
   function patchRenderer() {
-    if (window.__figureLoomCodeLanguageRendererV1 || typeof renderObject !== 'function') return;
-    window.__figureLoomCodeLanguageRendererV1 = true;
+    if (window.__figureLoomCodeLanguageRendererV2 || typeof renderObject !== 'function') return;
+    window.__figureLoomCodeLanguageRendererV2 = true;
     const baseRenderObject = renderObject;
     renderObject = function renderObjectWithExpandedCodeLanguages(item) {
       if (item?.type !== 'code') return baseRenderObject(item);
+
       const originalLanguage = item.language;
       const alias = ALIASES[originalLanguage];
-      if (!alias || alias === originalLanguage) return baseRenderObject(item);
-
       const originalTitle = item.codeTitle;
-      item.language = alias;
-      if (!originalTitle) item.codeTitle = LABELS.get(originalLanguage) || 'Code';
+      if (alias && alias !== originalLanguage) {
+        item.language = alias;
+        if (!originalTitle) item.codeTitle = LABELS.get(originalLanguage) || 'Code';
+      }
+
       try {
-        return baseRenderObject(item);
+        return addLanguageBadge(baseRenderObject(item), item, originalLanguage);
       } finally {
         item.language = originalLanguage;
         item.codeTitle = originalTitle;
