@@ -18,6 +18,7 @@
   const defaults = [
     ['arrange', 'Layouts & templates', 'Editable starting layouts, reusable FigureLoom files, and PowerPoint templates.', '▦'],
     ['data', 'Data & charts', 'Paste CSV/TSV data into editable tables, charts and heatmaps.', '▥'],
+    ['code', 'Code & instructions', 'Create and edit code windows and structured technical instructions.', '</>'],
     ['annotate', 'Scientific annotation', 'Callouts, brackets, scale bars, panel labels, equations and symbols.', '✦'],
     ['components', 'Components & objects', 'Reusable components, image crop/masks, flipping and shape combinations.', '◇'],
     ['review', 'Review & references', 'Comments, sources, version comparison, accessibility and visual checks.', '✓'],
