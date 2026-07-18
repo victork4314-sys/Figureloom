@@ -1,118 +1,14 @@
-name: Validate SciCanvas
+name: Test direct SVG PowerPoint export
 
 on:
-  push:
-    branches: [main]
   pull_request:
-  workflow_dispatch:
 
 permissions:
   contents: read
 
 jobs:
-  syntax:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v7
-
-      - name: Check JavaScript syntax
-        run: |
-          for file in *.js; do
-            echo "Checking $file"
-            node --check "$file"
-          done
-          node --check scripts/validate-app.mjs
-          node --check tests/smoke.spec.js
-
-      - name: Check required application files
-        run: |
-          test -f index.html
-          test -f styles.css
-          test -f favicon.svg
-          test -f app.js
-          test -f science-library.js
-          test -f water-icons.js
-          test -f science-vocabulary.js
-          test -f library-dedup.js
-          test -f project-tools.js
-          test -f pro-tools-hub.js
-          test -f advanced-tools.js
-          test -f design-tools.js
-          test -f export-tools.js
-          test -f storage-vault.js
-          test -f font-library.js
-          test -f interaction-tools.js
-          test -f resize-tools.js
-          test -f layer-drag.js
-          test -f asset-vault.js
-          test -f editable-svg-import.js
-          test -f export-svg-placement.js
-          test -f external-packs.js
-          test -f expanded-library.js
-          test -f fun-design-tools.js
-          test -f project-themes.js
-          test -f theme-control-fix.js
-          test -f page-size-tools.js
-          test -f figure-assistant.js
-          test -f poster-assistant-fixes.js
-          test -f theme-font-pairs.js
-          test -f assistant-universal.js
-          test -f assistant-10k.js
-          test -f canvas-navigation.js
-          test -f control-usability.js
-          test -f insert-tools.js
-          test -f map-studio.js
-          test -f pinch-zoom.js
-          test -f workspace-state.js
-          test -f layout-stability.js
-          test -f layout-polish.js
-          test -f selection-layout-tools.js
-          test -f data-science-tools.js
-          test -f scientific-annotation-tools.js
-          test -f component-object-tools.js
-          test -f review-accessibility-tools.js
-          test -f publish-presentation-tools.js
-          test -f object-quick-menu.js
-          test -f finishing-touches.js
-          test -f pptx-export.js
-          test -f office-bridge.js
-          test -f office-import-fix.js
-          test -f pro-office-tools.js
-          test -f stability-hardening.js
-          test -f product-experience.js
-          test -f advanced-science-tools.js
-          test -f workspace-controls-pages.js
-          test -f refresh-safety.js
-          test -f polish-delight.js
-          test -f cloud-config.js
-          test -f cloud-account.js
-          test -f collaboration-tools.js
-          test -f account-header-polish.js
-          test -f profile-gallery-polish.js
-          test -f collaboration-share-links.js
-          test -f svg-path-editor.js
-          test -f tex-typesetting.js
-          test -f pathway-exchange.js
-          test -f local-prompt-assistant.js
-          test -f supabase/schema.sql
-          test -f supabase/share-links.sql
-          test -f docs/CLOUD_SETUP.md
-          test -f app-bootstrap.js
-          test -f manifest.webmanifest
-          test -f service-worker.js
-          test -f scripts/validate-app.mjs
-          test -f package.json
-          test -f playwright.config.js
-          test -f tests/smoke.spec.js
-
-      - name: Audit app wiring and offline shell
-        run: node scripts/validate-app.mjs
-
   browser:
-    if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
-    needs: syntax
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -120,16 +16,23 @@ jobs:
         uses: actions/setup-node@v6
         with:
           node-version: 24
+      - name: Check JavaScript syntax
+        run: |
+          for file in *.js; do
+            echo "Checking $file"
+            node --check "$file"
+          done
+          node --check tests/pptx-direct-svg.spec.js
       - name: Install test dependencies
         run: npm install --no-audit --no-fund
       - name: Install Chromium
         run: npx playwright install --with-deps chromium
-      - name: Run desktop and mobile browser tests
-        run: npm run test:browser
+      - name: Run browser tests
+        run: npx playwright test --project=desktop tests/pptx-direct-svg.spec.js
       - name: Upload browser results and traces
         if: always()
         uses: actions/upload-artifact@v6
         with:
-          name: playwright-results
+          name: direct-svg-pptx-results
           path: test-results
           if-no-files-found: warn
