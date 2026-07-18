@@ -8,6 +8,11 @@
     return item?.type === 'text' && item.textFlow && item.textFlow !== 'single';
   }
 
+  function activeWidthResize(item) {
+    return state?.resize?.id === item?.id && state.resize.textBoxResize &&
+      (state.resize.direction === 'e' || state.resize.direction === 'w');
+  }
+
   function editorItem(editor) {
     if (!editor || typeof state === 'undefined') return null;
     const id = editor.dataset.figureloomTextId;
@@ -33,6 +38,7 @@
   }
 
   function savedWidth(item) {
+    if (activeWidthResize(item)) return Math.max(20, Number(item.width) || 320);
     return Math.max(
       20,
       Number(item.__figureLoomEditingWrapWidth) ||
@@ -42,10 +48,18 @@
     );
   }
 
-  function editorScale() {
+  function canvasMetrics() {
     const canvas = document.getElementById('canvas');
-    const viewWidth = Number(canvas?.viewBox?.baseVal?.width) || 1200;
-    return Math.max(.1, (canvas?.getBoundingClientRect?.().width || viewWidth) / viewWidth);
+    const rect = canvas?.getBoundingClientRect?.();
+    const viewBox = canvas?.viewBox?.baseVal;
+    const viewWidth = Number(viewBox?.width) || 1200;
+    const viewHeight = Number(viewBox?.height) || 750;
+    return {
+      canvas,
+      rect,
+      scaleX:Math.max(.01, (rect?.width || viewWidth) / viewWidth),
+      scaleY:Math.max(.01, (rect?.height || viewHeight) / viewHeight)
+    };
   }
 
   function fitEditor(editor, item) {
@@ -53,24 +67,40 @@
     item.width = width;
     item.textBoxWidth = width;
 
-    const scale = editorScale();
-    const left = Number.parseFloat(editor.style.left) || 0;
-    const top = Number.parseFloat(editor.style.top) || 0;
-    const cssWidth = Math.min(
-      Math.max(80, window.innerWidth - left - 6),
-      Math.max(80, width * scale + 6)
-    );
+    const { rect, scaleX, scaleY } = canvasMetrics();
+    if (!rect) return;
 
+    const paddingX = Math.max(0, Number(item.textPadding) || 0) * scaleX;
+    const paddingY = Math.max(0, Number(item.textPadding) || 0) * scaleY;
+    const size = Math.max(6, Number(item.fontSize) || 30) * scaleY;
+    const lineHeight = size * Math.max(1, Number(item.lineHeight) || 1.25);
+    const left = rect.left + Number(item.x || 0) * scaleX;
+    const top = rect.top + Number(item.y || 0) * scaleY;
+    const availableWidth = Math.max(80, window.innerWidth - left - 6);
+    const cssWidth = Math.min(availableWidth, Math.max(80, width * scaleX));
+
+    editor.style.left = `${left}px`;
+    editor.style.top = `${top}px`;
     editor.style.width = `${cssWidth}px`;
-    editor.style.maxWidth = `${Math.max(80, window.innerWidth - left - 6)}px`;
+    editor.style.maxWidth = `${availableWidth}px`;
+    editor.style.minHeight = `${Math.max(24, Number(item.height || 20) * scaleY)}px`;
     editor.style.height = 'auto';
+    editor.style.boxSizing = 'border-box';
+    editor.style.padding = `${paddingY}px ${paddingX}px`;
     editor.style.overflow = 'hidden';
     editor.style.whiteSpace = 'pre-wrap';
     editor.style.overflowWrap = 'anywhere';
     editor.style.wordBreak = 'break-word';
+    editor.style.fontSize = `${size}px`;
+    editor.style.lineHeight = `${lineHeight}px`;
+    editor.style.fontFamily = item.fontFamily || 'Segoe UI, sans-serif';
+    editor.style.fontWeight = String(item.fontWeight || 650);
+    editor.style.fontStyle = item.fontStyle || 'normal';
+    editor.style.textAlign = item.textAlign === 'justify' ? 'justify' : (item.textAlign || 'left');
+    editor.style.color = item.fill || '#172033';
 
     const maximumHeight = Math.max(24, window.innerHeight - top - 6);
-    editor.style.height = `${Math.min(maximumHeight, Math.max(24, editor.scrollHeight + 4))}px`;
+    editor.style.height = `${Math.min(maximumHeight, Math.max(Number(item.height || 20) * scaleY, editor.scrollHeight + 4))}px`;
   }
 
   const style = document.createElement('style');
@@ -81,19 +111,20 @@
       word-break:break-word!important;
       overflow:hidden!important
     }
+    #selectionLayer .text-box-resize-hit{fill:transparent!important;stroke:transparent!important}
   `;
   document.head.appendChild(style);
 
   document.addEventListener('focusin', event => {
     const editor = event.target.closest?.(EDITOR_SELECTOR);
     const item = editorItem(editor);
-    if (item) fitEditor(editor, item);
+    if (item) requestAnimationFrame(() => fitEditor(editor, item));
   });
 
   document.addEventListener('input', event => {
     const editor = event.target.closest?.(EDITOR_SELECTOR);
     const item = editorItem(editor);
-    if (item) fitEditor(editor, item);
+    if (item) requestAnimationFrame(() => fitEditor(editor, item));
   });
 
   const baseRenderObject = renderObject;
@@ -112,6 +143,10 @@
     item.height = height;
     item.textBoxWidth = width;
     group?.setAttribute('transform', `translate(${item.x} ${item.y}) rotate(${item.rotation || 0} ${width / 2} ${height / 2})`);
+
+    if (activeWidthResize(item)) {
+      item.textBoxWidth = Math.max(20, Number(item.width) || width);
+    }
 
     if (temporaryWidth > 0) {
       const editorStillOpen = [...document.querySelectorAll(EDITOR_SELECTOR)]
