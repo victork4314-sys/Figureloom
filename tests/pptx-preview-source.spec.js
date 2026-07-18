@@ -6,7 +6,10 @@ const path = require('node:path');
 
 test('rendered page previews become six correctly ordered PowerPoint slides', async ({ page }) => {
   await page.goto('/');
-  await page.waitForFunction(() => typeof window.FigureLoomThumbnailPowerPoint === 'function');
+  await page.waitForFunction(() =>
+    typeof window.FigureLoomThumbnailPowerPoint === 'function' &&
+    Boolean(document.querySelector('button[data-export="pptx-prepared-preview"]'))
+  );
 
   const expected = await page.evaluate(() => {
     const fills = ['#e53935', '#43a047', '#1e88e5', '#8e24aa', '#00acc1', '#fb8c00'];
