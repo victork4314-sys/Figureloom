@@ -2,7 +2,7 @@
   if (window.__figureLoomSafeRefreshV1) return;
   window.__figureLoomSafeRefreshV1 = true;
 
-  const EXPECTED_BUILD = "chunk-23-thumbnail-source-pptx-20260718-v1";
+  const EXPECTED_BUILD = "chunk-23-thumbnail-source-pptx-20260718-v2";
   const SEEN_BUILD_KEY = "figureloom-session-build-v1";
   const CHUNK_ADDONS = [
     "library-more-illustrations.js",
@@ -23,7 +23,8 @@
     "projects-home-button-match.js",
     "project-tab-close-export.js",
     "global-pptx-export-fix.js",
-    "pptx-thumbnail-source-export.js"
+    "pptx-thumbnail-source-export.js",
+    "pptx-thumbnail-embedded-fix.js"
   ];
   let reloading = false;
 
