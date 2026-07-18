@@ -133,7 +133,7 @@
 
     const temporaryWidth = Number(item.__figureLoomEditingWrapWidth);
     const width = savedWidth(item);
-    const height = Math.max(20, Number(item.height) || 62);
+    const height = Math.max(20, Number(item.height) || Number(item.textBoxHeight) || 62);
 
     item.width = width;
     item.textBoxWidth = width;
@@ -142,6 +142,7 @@
     item.width = width;
     item.height = height;
     item.textBoxWidth = width;
+    item.textBoxHeight = height;
     group?.setAttribute('transform', `translate(${item.x} ${item.y}) rotate(${item.rotation || 0} ${width / 2} ${height / 2})`);
 
     if (activeWidthResize(item)) {
