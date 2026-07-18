@@ -16,7 +16,7 @@
   const shortcutList = body.querySelector('#proShortcutList');
 
   const defaults = [
-    ['arrange', 'Arrange & group', 'Multi-select, groups, alignment, distribution, guides and anchored connectors.', '⌘'],
+    ['arrange', 'Layouts & templates', 'Editable starting layouts, reusable FigureLoom files, and PowerPoint templates.', '▦'],
     ['data', 'Data & charts', 'Paste CSV/TSV data into editable tables, charts and heatmaps.', '▥'],
     ['annotate', 'Scientific annotation', 'Callouts, brackets, scale bars, panel labels, equations and symbols.', '✦'],
     ['components', 'Components & objects', 'Reusable components, image crop/masks, flipping and shape combinations.', '◇'],
