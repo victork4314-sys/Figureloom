@@ -1,4 +1,4 @@
-const FIGURELOOM_BUILD_ID = "chunk-39-restored-layout-gallery-style-tools-20260718-v1";
+const FIGURELOOM_BUILD_ID = "stable-71d36df-locked-20260718-v1";
 const FIGURELOOM_CACHE_PREFIX = "figureloom-app-";
 const FIGURELOOM_CACHE_NAME = `${FIGURELOOM_CACHE_PREFIX}${FIGURELOOM_BUILD_ID}`;
 const LEGACY_CACHE_PREFIXES = ["figureloom-shell", "scicanvas-shell"];
@@ -8,20 +8,15 @@ function isAppCache(name) {
     LEGACY_CACHE_PREFIXES.some(prefix => name.startsWith(prefix));
 }
 
-async function notifyClients() {
-  const clients = await self.clients.matchAll({ type:"window", includeUncontrolled:true });
-  clients.forEach(client => client.postMessage({
-    type:"FIGURELOOM_BUILD_READY",
-    build:FIGURELOOM_BUILD_ID
-  }));
-}
-
 self.addEventListener("install", event => {
   event.waitUntil((async () => {
     const cache = await caches.open(FIGURELOOM_CACHE_NAME);
     await Promise.allSettled([
       cache.add(new Request("./", { cache:"reload" })),
-      cache.add(new Request("./index.html", { cache:"reload" }))
+      cache.add(new Request("./index.html", { cache:"reload" })),
+      cache.add(new Request("./styles.css", { cache:"reload" })),
+      cache.add(new Request("./app.js", { cache:"reload" })),
+      cache.add(new Request("./safe-refresh.js", { cache:"reload" }))
     ]);
     await self.skipWaiting();
   })());
@@ -34,7 +29,6 @@ self.addEventListener("activate", event => {
       .filter(name => isAppCache(name) && name !== FIGURELOOM_CACHE_NAME)
       .map(name => caches.delete(name)));
     await self.clients.claim();
-    await notifyClients();
   })());
 });
 
