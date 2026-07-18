@@ -69,7 +69,7 @@ test('all-pages PowerPoint produces six unique SVG slides without canvases', asy
   result.slides.forEach((data, index) => {
     expect(data.startsWith('data:image/svg+xml;base64,')).toBe(true);
     const xml = Buffer.from(data.split(',')[1], 'base64').toString('utf8');
-    expect(xml).toContain(`&quot;figureloomPage&quot;:${index + 1}`);
+    expect(xml).toContain(`"figureloomPage":${index + 1}`);
     expect(xml).toContain(`test-page-${index + 1}`);
     expect(xml).toContain(`Unique page ${index + 1}`);
   });
