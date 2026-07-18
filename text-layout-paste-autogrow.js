@@ -83,6 +83,17 @@
     return group;
   };
 
+  function selectPlaceholder(editor, item) {
+    if (String(item?.text || '').trim() !== 'Scientific label') return;
+    if (String(editor?.textContent || '').trim() !== 'Scientific label') return;
+    const selection = window.getSelection?.();
+    if (!selection) return;
+    const range = document.createRange();
+    range.selectNodeContents(editor);
+    selection.removeAllRanges();
+    selection.addRange(range);
+  }
+
   function installPasteBehavior() {
     const field = document.getElementById('textContent');
     if (!field || field.dataset.figureloomPasteAutogrow === '1') return;
@@ -98,8 +109,11 @@
     });
 
     document.addEventListener('paste', event => {
-      if (!event.target.closest?.('.figureloom-direct-label-editor')) return;
-      preparePastedBlock(selectedText());
+      const editor = event.target.closest?.('.figureloom-direct-label-editor');
+      if (!editor) return;
+      const item = selectedText();
+      preparePastedBlock(item);
+      selectPlaceholder(editor, item);
     }, true);
 
     document.getElementById('textBoxFlow')?.addEventListener('change', () => {
