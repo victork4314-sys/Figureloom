@@ -2,7 +2,7 @@
   if (window.__figureLoomSafeRefreshV1) return;
   window.__figureLoomSafeRefreshV1 = true;
 
-  const EXPECTED_BUILD = "chunk-30-text-style-refresh-persistence-20260718-v1";
+  const EXPECTED_BUILD = "chunk-31-arrange-rotate-handle-20260718-v1";
   const SEEN_BUILD_KEY = "figureloom-session-build-v1";
   const CHUNK_ADDONS = [
     "library-more-illustrations.js",
@@ -26,7 +26,8 @@
     "pptx-safe-jpeg-export.js",
     "code-window-tools.js",
     "code-window-startup-render.js",
-    "text-layout-bundle.js"
+    "text-layout-bundle.js",
+    "object-rotate-handle.js"
   ];
   let reloading = false;
 
