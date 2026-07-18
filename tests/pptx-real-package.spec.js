@@ -47,7 +47,7 @@ test('six unique pages become six unique JPEG media files in the actual pptx', a
   const entries = execFileSync('unzip', ['-Z1', pptxPath], { encoding:'utf8' })
     .split(/\r?\n/)
     .filter(Boolean);
-  const jpegEntries = entries.filter(entry => /^ppt\/media\/image\d+\.(?:jpe?g)$/i.test(entry));
+  const jpegEntries = entries.filter(entry => /^ppt\/media\/image[-\d]+\.(?:jpe?g)$/i.test(entry));
   expect(jpegEntries).toHaveLength(6);
 
   const hashes = jpegEntries.map(entry => {
