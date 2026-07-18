@@ -2,133 +2,123 @@
   if (window.__figureLoomTextPasteAutoGrowFix) return;
   window.__figureLoomTextPasteAutoGrowFix = true;
 
-  const measureCanvas = document.createElement('canvas');
-  const measureContext = measureCanvas.getContext('2d');
+  let installed = false;
 
-  function fontString(item) {
-    return `${item.fontStyle || 'normal'} ${Number(item.fontWeight) || 400} ${Math.max(6, Number(item.fontSize) || 30)}px ${item.fontFamily || 'Segoe UI, sans-serif'}`;
-  }
-
-  function measuredWidth(value, item) {
-    if (!measureContext) return String(value).length * (Number(item.fontSize) || 30) * .56;
-    measureContext.font = fontString(item);
-    return measureContext.measureText(String(value)).width;
-  }
-
-  function splitLongToken(token, maximumWidth, item) {
-    if (!token || measuredWidth(token, item) <= maximumWidth) return [token || ''];
-    const pieces = [];
-    let current = '';
-    Array.from(token).forEach(character => {
-      const candidate = current + character;
-      if (current && measuredWidth(candidate, item) > maximumWidth) {
-        pieces.push(current);
-        current = character;
-      } else {
-        current = candidate;
-      }
-    });
-    if (current) pieces.push(current);
-    return pieces.length ? pieces : [token];
-  }
-
-  function wrappedLineCount(item) {
-    const padding = Math.max(0, Number(item.textPadding) || 0);
-    const maximumWidth = Math.max(1, Number(item.width) - padding * 2);
-    let count = 0;
-
-    String(item.text || '').split('\n').forEach(paragraph => {
-      const words = paragraph.trim().split(/\s+/).filter(Boolean);
-      if (!words.length) {
-        count += 1;
-        return;
-      }
-
-      let current = '';
-      words.forEach(word => {
-        splitLongToken(word, maximumWidth, item).forEach(piece => {
-          const candidate = current ? `${current} ${piece}` : piece;
-          if (current && measuredWidth(candidate, item) > maximumWidth) {
-            count += 1;
-            current = piece;
-          } else {
-            current = candidate;
-          }
-        });
-      });
-      if (current) count += 1;
-    });
-
-    return Math.max(1, count);
-  }
-
-  function fullTextHeight(item) {
+  function lineMetrics(group, item) {
+    const lines = Math.max(1, group?.querySelectorAll('text > tspan').length || 0);
     const fontSize = Math.max(6, Number(item.fontSize) || 30);
     const lineHeight = fontSize * Math.max(1, Number(item.lineHeight) || 1.25);
     const padding = Math.max(0, Number(item.textPadding) || 0);
-    return Math.max(30, Math.ceil(wrappedLineCount(item) * lineHeight + padding * 2));
+    return {
+      lines,
+      height:Math.max(30, Math.ceil(lines * lineHeight + padding * 2))
+    };
   }
 
-  const baseRenderObject = renderObject;
-  renderObject = function renderObjectWithoutAutoHeightClipping(item) {
-    if (item?.type !== 'text' || item.textFlow !== 'auto-height') return baseRenderObject(item);
-
-    item.height = fullTextHeight(item);
-    const flow = item.textFlow;
-    item.textFlow = 'wrap';
-    try {
-      return baseRenderObject(item);
-    } finally {
-      item.textFlow = flow;
+  function install() {
+    if (installed) return;
+    if (!window.__figureLoomTextLayoutTools || typeof renderObject !== 'function' || typeof render !== 'function') {
+      setTimeout(install, 60);
+      return;
     }
-  };
+    installed = true;
 
-  function installLivePaste() {
-    const editor = document.getElementById('textContent');
-    if (!editor || editor.dataset.figureloomLivePaste === '1') return;
-    editor.dataset.figureloomLivePaste = '1';
-    let liveChanged = false;
+    const baseRenderObject = renderObject;
+    renderObject = function renderObjectWithoutAutoHeightClipping(item) {
+      if (item?.type !== 'text' || item.textFlow !== 'auto-height') return baseRenderObject(item);
 
-    editor.addEventListener('input', () => {
-      const item = selectedObject();
-      if (!item || item.type !== 'text') return;
-      if (!liveChanged) {
-        pushHistory();
-        liveChanged = true;
+      let group = baseRenderObject(item);
+      let metrics = lineMetrics(group, item);
+      const canvasView = document.getElementById('canvas')?.viewBox?.baseVal;
+      const pageWidth = Number(canvasView?.width) || 1200;
+      const pageHeight = Number(canvasView?.height) || 750;
+      const currentX = Math.max(0, Number(item.x) || 0);
+      const maximumBlockWidth = Math.max(280, Math.min(600, pageWidth - currentX - 20));
+
+      if (!item.textWidthManual && metrics.height > pageHeight && Number(item.width) < maximumBlockWidth) {
+        item.width = maximumBlockWidth;
+        group = baseRenderObject(item);
+        metrics = lineMetrics(group, item);
       }
-      item.text = editor.value;
-      item.name = editor.value.trim().slice(0, 40) || 'Text label';
-      item.textFlow ??= 'auto-height';
-      render();
-      scheduleSave();
-    });
 
-    editor.addEventListener('change', event => {
-      if (!liveChanged) return;
-      liveChanged = false;
-      event.stopImmediatePropagation();
+      item.height = metrics.height;
+      if (item.height <= pageHeight && Number(item.y || 0) + item.height > pageHeight) {
+        item.y = Math.max(0, pageHeight - item.height);
+      } else if (item.height > pageHeight) {
+        item.y = 0;
+      }
+
+      const flow = item.textFlow;
+      item.textFlow = 'wrap';
+      try {
+        return baseRenderObject(item);
+      } finally {
+        item.textFlow = flow;
+      }
+    };
+
+    function installLivePaste() {
+      const editor = document.getElementById('textContent');
+      if (!editor || editor.dataset.figureloomLivePaste === '1') return;
+      editor.dataset.figureloomLivePaste = '1';
+      let liveChanged = false;
+
+      editor.addEventListener('input', () => {
+        const item = selectedObject();
+        if (!item || item.type !== 'text') return;
+        if (!liveChanged) {
+          pushHistory();
+          liveChanged = true;
+        }
+        item.text = editor.value;
+        item.name = editor.value.trim().slice(0, 40) || 'Text label';
+        if (!item.textFlowManual) item.textFlow = 'auto-height';
+        render();
+        scheduleSave();
+      });
+
+      editor.addEventListener('change', event => {
+        if (!liveChanged) return;
+        liveChanged = false;
+        event.stopImmediatePropagation();
+      }, true);
+
+      editor.addEventListener('blur', () => {
+        liveChanged = false;
+      });
+    }
+
+    const flowControl = document.getElementById('textBoxFlow');
+    flowControl?.addEventListener('change', () => {
+      const item = selectedObject();
+      if (item?.type === 'text') item.textFlowManual = true;
     }, true);
 
-    editor.addEventListener('blur', () => {
-      liveChanged = false;
+    document.addEventListener('pointerdown', event => {
+      const handle = event.target.closest?.('.text-box-resize-hit.resize-e,.text-box-resize-hit.resize-w');
+      if (!handle) return;
+      const item = selectedObject();
+      if (item?.type === 'text') item.textWidthManual = true;
+    }, true);
+
+    function widenFreshTextBox() {
+      const item = selectedObject();
+      if (!item || item.type !== 'text' || item.textFlow !== 'auto-height') return;
+      if (item.text === 'Scientific label' && Number(item.width) <= 280) {
+        item.width = 420;
+        item.textWidthManual = false;
+        render();
+        scheduleSave();
+      }
+    }
+
+    document.getElementById('addTextButton')?.addEventListener('click', () => setTimeout(widenFreshTextBox, 0));
+    installLivePaste();
+    setTimeout(installLivePaste, 500);
+    requestAnimationFrame(() => {
+      try { render(); } catch (error) { console.warn('FigureLoom could not apply full pasted-text layout.', error); }
     });
   }
 
-  function widenFreshTextBox() {
-    const item = selectedObject();
-    if (!item || item.type !== 'text' || item.textFlow !== 'auto-height') return;
-    if (item.text === 'Scientific label' && Number(item.width) <= 280) {
-      item.width = 420;
-      item.height = fullTextHeight(item);
-      render();
-      scheduleSave();
-    }
-  }
-
-  document.getElementById('addTextButton')?.addEventListener('click', () => setTimeout(widenFreshTextBox, 0));
-  installLivePaste();
-  setTimeout(installLivePaste, 500);
-  requestAnimationFrame(() => {
-    try { render(); } catch (error) { console.warn('FigureLoom could not apply full pasted-text layout.', error); }
-  });
+  install();
 })();
