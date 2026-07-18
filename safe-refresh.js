@@ -2,7 +2,7 @@
   if (window.__figureLoomSafeRefreshV1) return;
   window.__figureLoomSafeRefreshV1 = true;
 
-  const EXPECTED_BUILD = "chunk-31-arrange-rotate-handle-20260718-v1";
+  const EXPECTED_BUILD = "chunk-32-normal-pasted-text-blocks-20260718-v1";
   const SEEN_BUILD_KEY = "figureloom-session-build-v1";
   const CHUNK_ADDONS = [
     "library-more-illustrations.js",
@@ -45,32 +45,7 @@
 
   if (!("serviceWorker" in navigator)) return;
 
-  async function flushBeforeReload() {
-    try { window.captureFigureLoomTextPresentation?.(); } catch {}
-
-    try {
-      if (typeof syncPage === "function") syncPage();
-      else window.syncPage?.();
-      if (typeof snapshot === "function") {
-        localStorage.setItem("scicanvas-document", snapshot());
-        localStorage.setItem("scicanvas-document-updated-at", String(Date.now()));
-      }
-    } catch (error) {
-      console.warn("FigureLoom could not write the immediate refresh checkpoint.", error);
-    }
-
-    try {
-      const save = window.saveSciCanvasImmediately?.("refresh");
-      if (save?.then) {
-        await Promise.race([
-          save.catch(() => false),
-          new Promise(resolve => setTimeout(resolve, 600))
-        ]);
-      }
-    } catch {}
-  }
-
-  async function reloadForBuild(build) {
+  function reloadForBuild(build) {
     const nextBuild = String(build || EXPECTED_BUILD);
     if (reloading) return;
 
@@ -80,7 +55,6 @@
     } catch {}
 
     reloading = true;
-    await flushBeforeReload();
     location.reload();
   }
 
@@ -96,12 +70,12 @@
 
   navigator.serviceWorker.addEventListener("message", event => {
     if (event.data?.type === "FIGURELOOM_BUILD_READY") {
-      void reloadForBuild(event.data.build);
+      reloadForBuild(event.data.build);
     }
   });
 
   navigator.serviceWorker.addEventListener("controllerchange", () => {
-    if (navigator.serviceWorker.controller) void reloadForBuild(EXPECTED_BUILD);
+    if (navigator.serviceWorker.controller) reloadForBuild(EXPECTED_BUILD);
   });
 
   window.addEventListener("load", async () => {
