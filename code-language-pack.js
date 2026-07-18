@@ -106,16 +106,18 @@
   }
 
   function addLanguageBadge(group, item, language) {
-    if (!group?.appendChild || item?.codeHeader === false) return group;
+    if (!group?.appendChild) return group;
     const label = languageBadgeLabel(language);
     const width = Math.max(38, Math.min(116, 18 + label.length * 6.2));
-    const copySpace = item.codeCopyButton === false ? 12 : 78;
+    const headerVisible = item.codeHeader !== false;
+    const copySpace = headerVisible && item.codeCopyButton !== false ? 78 : 12;
     const x = Math.max(92, Number(item.width || 0) - copySpace - width - 8);
+    const y = headerVisible ? 6 : Math.max(7, Number(item.height || 0) - 29);
     if (x + width > Number(item.width || 0) - copySpace) return group;
 
     const badge = document.createElementNS('http://www.w3.org/2000/svg', 'g');
     badge.classList.add('figureloom-code-language-badge');
-    badge.setAttribute('transform', `translate(${x} 6)`);
+    badge.setAttribute('transform', `translate(${x} ${y})`);
     badge.setAttribute('pointer-events', 'none');
 
     const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
