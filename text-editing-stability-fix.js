@@ -1,11 +1,13 @@
 (() => {
-  if (window.__figureLoomTextEditingStabilityFixV5) return;
-  window.__figureLoomTextEditingStabilityFixV5 = true;
+  if (window.__figureLoomTextEditingStabilityFixV6) return;
+  window.__figureLoomTextEditingStabilityFixV6 = true;
 
   let editor = null;
   let overlay = null;
   let savedRange = null;
   let savedExpandedRange = null;
+  let lastGoodHtml = '';
+  let deliberateClear = false;
 
   function normalizePlain(value) {
     return String(value || '')
@@ -74,6 +76,32 @@
     if (typeof scheduleSave === 'function') scheduleSave();
   }
 
+  function hasMeaningfulContent() {
+    if (!editor) return false;
+    if (normalizePlain(editor.textContent)) return true;
+    return Boolean(editor.querySelector('[data-figure-label],[data-figure-ref],a[href]'));
+  }
+
+  function rememberHealthyContent() {
+    if (!editor || !hasMeaningfulContent()) return false;
+    lastGoodHtml = editor.innerHTML;
+    return true;
+  }
+
+  function restoreHealthyContent() {
+    if (!editor || !lastGoodHtml || deliberateClear || hasMeaningfulContent()) return false;
+    editor.innerHTML = lastGoodHtml;
+    const range = document.createRange();
+    range.selectNodeContents(editor);
+    range.collapse(false);
+    const selection = window.getSelection();
+    selection.removeAllRanges();
+    selection.addRange(range);
+    savedRange = range.cloneRange();
+    savedExpandedRange = null;
+    return true;
+  }
+
   function selectionInsideEditor() {
     const selection = window.getSelection();
     return Boolean(editor && selection?.rangeCount && editor.contains(selection.getRangeAt(0).commonAncestorContainer));
@@ -88,26 +116,82 @@
 
   function restoreSelection(preferExpanded = false) {
     const range = preferExpanded && savedExpandedRange ? savedExpandedRange : savedRange;
-    if (!editor || !range) return;
-    const selection = window.getSelection();
-    editor.focus({ preventScroll:true });
-    selection.removeAllRanges();
-    selection.addRange(range);
+    if (!editor || !range) return false;
+    try {
+      const selection = window.getSelection();
+      editor.focus({ preventScroll:true });
+      selection.removeAllRanges();
+      selection.addRange(range);
+      return true;
+    } catch {
+      savedRange = null;
+      savedExpandedRange = null;
+      return false;
+    }
   }
 
-  function installEditorSelectionGuard() {
+  function selectionCoversEditor() {
+    if (!editor || !selectionInsideEditor()) return false;
+    const selection = window.getSelection();
+    if (!selection?.rangeCount || selection.getRangeAt(0).collapsed) return false;
+    const selected = normalizePlain(selection.toString());
+    const all = normalizePlain(editor.textContent);
+    return Boolean(all && selected === all);
+  }
+
+  function runOwnedCommand(event, command) {
+    event.preventDefault();
+    event.stopPropagation();
+    event.stopImmediatePropagation();
+    restoreSelection(true);
+    document.execCommand(command, false, null);
+    rememberSelection();
+    queueMicrotask(() => {
+      if (!restoreHealthyContent()) rememberHealthyContent();
+    });
+  }
+
+  function prepareOpenEditor() {
+    savedRange = null;
+    savedExpandedRange = null;
+    deliberateClear = false;
+    lastGoodHtml = '';
+    requestAnimationFrame(() => {
+      rememberHealthyContent();
+      repairPlainFallbacks();
+    });
+  }
+
+  function installEditorGuard() {
     overlay = document.getElementById('figureloomRichTextOverlay');
     editor = overlay?.querySelector('[data-rich-editor]') || null;
     if (!overlay || !editor) return false;
-    if (overlay.dataset.selectionGuardV5 === '1') return true;
-    overlay.dataset.selectionGuardV5 = '1';
+    if (overlay.dataset.selectionGuardV6 === '1') return true;
+    overlay.dataset.selectionGuardV6 = '1';
 
-    ['keyup','mouseup','pointerup','input','focus'].forEach(type => {
-      editor.addEventListener(type, rememberSelection, true);
+    ['keyup','mouseup','pointerup','focus','selectionchange'].forEach(type => {
+      const target = type === 'selectionchange' ? document : editor;
+      target.addEventListener(type, () => {
+        if (!overlay.hidden) rememberSelection();
+      }, true);
     });
-    document.addEventListener('selectionchange', () => {
-      if (!overlay.hidden) rememberSelection();
-    });
+
+    editor.addEventListener('beforeinput', event => {
+      rememberHealthyContent();
+      const deletion = String(event.inputType || '').startsWith('delete');
+      deliberateClear = deletion && selectionCoversEditor();
+    }, true);
+
+    editor.addEventListener('input', () => {
+      queueMicrotask(() => {
+        if (hasMeaningfulContent()) {
+          deliberateClear = false;
+          rememberHealthyContent();
+          return;
+        }
+        if (!deliberateClear) restoreHealthyContent();
+      });
+    }, true);
 
     overlay.addEventListener('pointerdown', event => {
       const control = event.target.closest?.('.rich-toolbar button,.rich-science-toolbar button,.rich-symbols button');
@@ -127,11 +211,32 @@
       }
     }, true);
 
+    overlay.addEventListener('click', event => {
+      const commandButton = event.target.closest?.('[data-command]');
+      if (commandButton) {
+        runOwnedCommand(event, commandButton.dataset.command);
+        return;
+      }
+      if (event.target.closest?.('[data-rich-sup]')) {
+        runOwnedCommand(event, 'superscript');
+        return;
+      }
+      if (event.target.closest?.('[data-rich-sub]')) {
+        runOwnedCommand(event, 'subscript');
+        return;
+      }
+      if (event.target.closest?.('[data-rich-save]')) {
+        if (!hasMeaningfulContent() && lastGoodHtml && !deliberateClear) restoreHealthyContent();
+      }
+    }, true);
+
     const observer = new MutationObserver(() => {
-      if (!overlay.hidden) {
+      if (!overlay.hidden) prepareOpenEditor();
+      else {
         savedRange = null;
         savedExpandedRange = null;
-        requestAnimationFrame(repairPlainFallbacks);
+        deliberateClear = false;
+        lastGoodHtml = '';
       }
     });
     observer.observe(overlay, { attributes:true, attributeFilter:['hidden'] });
@@ -141,9 +246,10 @@
   document.getElementById('figureloomRichTextThemeFix')?.remove();
   document.getElementById('figureloomRichTextThemeFixV2')?.remove();
   document.getElementById('figureloomRichTextThemeFixV3')?.remove();
+  document.getElementById('figureloomRichTextThemeFixV5')?.remove();
 
   const style = document.createElement('style');
-  style.id = 'figureloomRichTextThemeFixV5';
+  style.id = 'figureloomRichTextThemeFixV6';
   style.textContent = `
     html[data-figureloom-theme="dark"] #figureloomRichTextOverlay{background:rgba(8,10,14,.64)!important;color:#e9ecf0!important}
     html[data-figureloom-theme="dark"] #figureloomRichTextOverlay .figureloom-rich-editor{background:#292e35!important;color:#e9ecf0!important;border-color:#454c57!important;box-shadow:0 22px 58px rgba(0,0,0,.42)!important}
@@ -167,7 +273,7 @@
 
   function install() {
     repairPlainFallbacks();
-    if (!installEditorSelectionGuard()) setTimeout(install, 80);
+    if (!installEditorGuard()) setTimeout(install, 80);
   }
 
   install();
