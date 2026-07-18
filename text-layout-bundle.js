@@ -7,7 +7,8 @@
   const files = [
     'text-layout-protect-bounds.js',
     'text-layout-tools.js',
-    'text-layout-new-text-default.js'
+    'text-layout-new-text-default.js',
+    'text-layout-full-paste.js'
   ];
 
   async function loadInOrder() {
