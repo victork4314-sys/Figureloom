@@ -42,7 +42,7 @@ test('text boxes wrap, align, resize, and restore', async ({ page }) => {
   await page.click('[data-text-vertical] button[data-value="bottom"]');
   await page.evaluate(id => {
     const item = state.objects.find(entry => entry.id === id);
-    item.height = 260;
+    item.height = 450;
     render();
   }, created.id);
 
