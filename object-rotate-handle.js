@@ -56,6 +56,55 @@
     };
   }
 
+  function objectNode(id) {
+    return [...document.querySelectorAll('#objectLayer .canvas-object[data-id]')]
+      .find(node => node.dataset.id === id) || null;
+  }
+
+  function updateLiveHandle(item) {
+    const geometry = handleGeometry(item);
+    const stem = selectionLayer.querySelector('.object-rotate-stem');
+    const hit = selectionLayer.querySelector('.object-rotate-hit');
+    const grip = selectionLayer.querySelector('.object-rotate-grip');
+    const icon = selectionLayer.querySelector('.object-rotate-icon');
+
+    if (stem) {
+      stem.setAttribute('x1', geometry.stem.x);
+      stem.setAttribute('y1', geometry.stem.y);
+      stem.setAttribute('x2', geometry.handle.x);
+      stem.setAttribute('y2', geometry.handle.y);
+    }
+    [hit, grip].forEach(node => {
+      if (!node) return;
+      node.setAttribute('cx', geometry.handle.x);
+      node.setAttribute('cy', geometry.handle.y);
+    });
+    if (icon) {
+      icon.setAttribute('x', geometry.handle.x);
+      icon.setAttribute('y', geometry.handle.y + 5);
+    }
+  }
+
+  function applyLiveRotation(item) {
+    const node = objectNode(item.id);
+    if (node) {
+      node.setAttribute(
+        'transform',
+        `translate(${Number(item.x) || 0} ${Number(item.y) || 0}) rotate(${Number(item.rotation) || 0} ${Number(item.width) / 2 || 0} ${Number(item.height) / 2 || 0})`
+      );
+    }
+
+    const centerX = Number(item.x) + Number(item.width) / 2;
+    const centerY = Number(item.y) + Number(item.height) / 2;
+    selectionLayer.querySelectorAll('.selection-box').forEach(box => {
+      box.setAttribute('transform', `rotate(${Number(item.rotation) || 0} ${centerX} ${centerY})`);
+    });
+    updateLiveHandle(item);
+
+    const rotationInput = document.getElementById('objectRotation');
+    if (rotationInput && state.selectedId === item.id) rotationInput.value = String(item.rotation);
+  }
+
   function beginRotate(event) {
     const item = rotatableObject();
     if (!item || event.button > 0) return;
@@ -74,14 +123,16 @@
     rotating = {
       id:item.id,
       pointerId:event.pointerId,
-      pointerType:event.pointerType,
       centerX:geometry.centerX,
       centerY:geometry.centerY,
       startRotation:Number(item.rotation) || 0,
-      startPointerAngle:pointAngle(point, geometry.centerX, geometry.centerY)
+      startPointerAngle:pointAngle(point, geometry.centerX, geometry.centerY),
+      captureTarget:event.currentTarget
     };
     state.rotate = rotating;
     document.documentElement.classList.add('figureloom-object-rotating');
+
+    try { event.currentTarget.setPointerCapture(event.pointerId); } catch {}
   }
 
   const baseRenderSelection = renderSelection;
@@ -103,10 +154,10 @@
       class:'object-rotate-hit',
       cx:geometry.handle.x,
       cy:geometry.handle.y,
-      r:28,
+      r:30,
       role:'button',
       tabindex:'0',
-      'aria-label':'Press and drag to rotate selected object'
+      'aria-label':'Press and move around the object to rotate it'
     });
     const grip = makeSvg('circle', {
       class:'object-rotate-grip',
@@ -143,14 +194,24 @@
     let next = rotating.startRotation + currentAngle - rotating.startPointerAngle;
     if (event.shiftKey) next = Math.round(next / 15) * 15;
     item.rotation = Math.round(normalizeAngle(next) * 10) / 10;
-    render();
+
+    // Do not call render() here. Rendering replaces the SVG handle and cancels
+    // touch pointer capture on iPad. Update the existing SVG nodes directly so
+    // the object visibly follows the finger for the entire circular gesture.
+    applyLiveRotation(item);
   }
 
   function finishRotate(event) {
     if (!rotating || (event?.pointerId != null && event.pointerId !== rotating.pointerId)) return;
+    const session = rotating;
     rotating = null;
     state.rotate = null;
     document.documentElement.classList.remove('figureloom-object-rotating');
+    try {
+      if (session.captureTarget?.hasPointerCapture?.(session.pointerId)) {
+        session.captureTarget.releasePointerCapture(session.pointerId);
+      }
+    } catch {}
     render();
     scheduleSave();
   }
@@ -168,7 +229,8 @@
     .object-rotate-grip{fill:#fff;stroke:#2563eb;stroke-width:3;vector-effect:non-scaling-stroke;pointer-events:none}
     .object-rotate-icon{fill:#2563eb;font:700 16px Inter,ui-sans-serif,sans-serif;pointer-events:none;user-select:none}
     .object-rotate-hit:hover + .object-rotate-grip{fill:#dbeafe}
-    .figureloom-object-rotating,.figureloom-object-rotating *{cursor:grabbing!important;touch-action:none!important;-webkit-user-select:none!important;user-select:none!important}
+    .figureloom-object-rotating,.figureloom-object-rotating *{cursor:grabbing!important;touch-action:none!important;-webkit-user-select:none!important;user-select:none!important;overscroll-behavior:none!important}
+    .figureloom-object-rotating .resize-handle,.figureloom-object-rotating .resize-grip,.figureloom-object-rotating .text-box-resize-hit,.figureloom-object-rotating .text-box-resize-grip{pointer-events:none!important;opacity:.35}
     html[data-figureloom-theme="dark"] .object-rotate-grip{fill:#172033;stroke:#8bb2ff}
     html[data-figureloom-theme="dark"] .object-rotate-icon{fill:#a9c5ff}
   `;
