@@ -12,12 +12,12 @@
     return element;
   }
 
-  function defaults(item, newObject = false) {
+  function defaults(item) {
     item.fontSize ??= 30;
     item.fontWeight ??= 650;
     item.fontStyle ??= 'normal';
     item.fontFamily ??= 'Segoe UI, sans-serif';
-    item.textFlow ??= newObject ? 'auto-height' : 'single';
+    item.textFlow ??= 'auto-height';
     item.textAlign ??= 'left';
     item.textVerticalAlign ??= 'top';
     item.textPadding ??= 9;
@@ -297,8 +297,8 @@
 
   function makeNewTextNormal() {
     const item = selectedObject();
-    if (!item || item.type !== 'text' || item.textFlow != null) return;
-    defaults(item, true);
+    if (!item || item.type !== 'text') return;
+    defaults(item);
     item.width = Math.max(280, Number(item.width) || 0);
     item.height = Math.max(62, Number(item.height) || 0);
     render();
@@ -311,19 +311,16 @@
   style.textContent = `
     .figureloom-text-layout-controls{margin-top:12px;padding-top:11px;border-top:1px solid #e1e6ee}
     .figureloom-text-layout-controls h3{margin:0 0 9px;font-size:11px;color:#526077;text-transform:uppercase;letter-spacing:.04em}
-    .figureloom-text-layout-controls select{width:100%;border:1px solid #cfd7e3;border-radius:6px;padding:7px;background:#fff}
-    .text-layout-label{display:block;margin:10px 0 5px;font-size:10px;color:#6e798c}
-    .text-layout-buttons{display:flex;gap:5px}.text-layout-buttons button{flex:1;min-width:0;border:1px solid #cfd7e3;border-radius:7px;background:#f8fafc;padding:7px 3px;font-size:10px}
-    .text-layout-buttons button.active{background:#e8efff;border-color:#7095e0;color:#1e4fa8}
-    .text-box-resize-grip{fill:#eef5ff!important}
-    html[data-figureloom-theme="dark"] .figureloom-text-layout-controls{border-color:#414854}
-    html[data-figureloom-theme="dark"] .figureloom-text-layout-controls select,html[data-figureloom-theme="dark"] .text-layout-buttons button{border-color:#4b5563;background:#1f2937;color:#e5e7eb}
-    html[data-figureloom-theme="dark"] .text-layout-buttons button.active{background:#263b66;border-color:#6f97e7;color:#dbe8ff}
+    .figureloom-text-layout-controls select{width:100%;border:1px solid #cfd7e3;border-radius:7px;padding:7px;background:#fff}
+    .text-layout-label{display:block;margin:9px 0 5px;color:#6e798c;font-size:10px}
+    .text-layout-buttons{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px}.text-layout-buttons[data-text-vertical]{grid-template-columns:repeat(3,minmax(0,1fr))}
+    .text-layout-buttons button{min-width:0;border:1px solid #cfd7e3;border-radius:7px;background:#f8fafc;padding:7px 3px;font-size:10px;white-space:normal}.text-layout-buttons button.active{background:#e8efff;border-color:#7095e0;color:#1e4fa8}
+    .text-box-resize-grip{fill:#fff!important;stroke:#0f766e!important}.text-box-resize-hit:hover + .text-box-resize-grip{fill:#ccfbf1!important}
+    html[data-figureloom-theme="dark"] .figureloom-text-layout-controls{border-color:#404854}html[data-figureloom-theme="dark"] .figureloom-text-layout-controls select,html[data-figureloom-theme="dark"] .text-layout-buttons button{border-color:#4c535e;background:#353b44;color:#e8ebef}html[data-figureloom-theme="dark"] .text-layout-buttons button.active{background:#27495c;border-color:#5c9ec2;color:#eef8ff}
   `;
   document.head.appendChild(style);
 
   installInspector();
-  requestAnimationFrame(() => {
-    try { render(); } catch (error) { console.warn('FigureLoom text layout could not rerender immediately.', error); }
-  });
+  render();
+  window.FigureLoomTextLayout = { layoutLines, defaults };
 })();
