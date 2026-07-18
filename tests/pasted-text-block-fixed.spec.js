@@ -1,5 +1,6 @@
 const { test, expect } = require('@playwright/test');
 
+// Validation-only coverage for the stable production branch.
 const pastedText = Array.from({ length: 60 }, (_, index) => `sample${String(index + 1).padStart(2, '0')}`).join(' ');
 
 async function dismissOverlays(page) {
