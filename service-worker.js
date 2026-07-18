@@ -1,4 +1,4 @@
-const FIGURELOOM_BUILD_ID = "chunk-28-text-selection-resize-20260718-v1";
+const FIGURELOOM_BUILD_ID = "chunk-29-normal-pasted-text-blocks-20260718-v1";
 const FIGURELOOM_CACHE_PREFIX = "figureloom-app-";
 const FIGURELOOM_CACHE_NAME = `${FIGURELOOM_CACHE_PREFIX}${FIGURELOOM_BUILD_ID}`;
 const LEGACY_CACHE_PREFIXES = ["figureloom-shell", "scicanvas-shell"];
