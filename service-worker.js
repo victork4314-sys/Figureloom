@@ -1,4 +1,4 @@
-const FIGURELOOM_BUILD_ID = "chunk-38-focused-template-gallery-20260718-v1";
+const FIGURELOOM_BUILD_ID = "chunk-39-restored-layout-gallery-style-tools-20260718-v1";
 const FIGURELOOM_CACHE_PREFIX = "figureloom-app-";
 const FIGURELOOM_CACHE_NAME = `${FIGURELOOM_CACHE_PREFIX}${FIGURELOOM_BUILD_ID}`;
 const LEGACY_CACHE_PREFIXES = ["figureloom-shell", "scicanvas-shell"];
