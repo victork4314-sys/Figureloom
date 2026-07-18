@@ -14,18 +14,38 @@
 
   async function loadInOrder() {
     for (const path of files) {
-      if (document.querySelector(`script[data-figureloom-addon="${path}"]`)) continue;
+      const existing = document.querySelector(`script[data-figureloom-addon="${path}"]`);
+      if (existing) {
+        if (existing.dataset.figureloomLoaded === '1') continue;
+        await new Promise(resolve => {
+          existing.addEventListener('load', resolve, { once:true });
+          existing.addEventListener('error', resolve, { once:true });
+          setTimeout(resolve, 8000);
+        });
+        continue;
+      }
+
       await new Promise((resolve, reject) => {
         const script = document.createElement('script');
         script.async = false;
         script.src = `${path}${version}`;
         script.dataset.figureloomAddon = path;
-        script.addEventListener('load', resolve, { once:true });
+        script.addEventListener('load', () => {
+          script.dataset.figureloomLoaded = '1';
+          resolve();
+        }, { once:true });
         script.addEventListener('error', () => reject(new Error(`Could not load ${path}`)), { once:true });
         document.head.appendChild(script);
       });
     }
   }
 
-  loadInOrder().catch(error => console.error('FigureLoom text layout could not start.', error));
+  window.__figureLoomTextLayoutReady = loadInOrder()
+    .then(() => {
+      window.dispatchEvent(new CustomEvent('figureloom-text-layout-ready'));
+    })
+    .catch(error => {
+      console.error('FigureLoom text layout could not start.', error);
+      throw error;
+    });
 })();
