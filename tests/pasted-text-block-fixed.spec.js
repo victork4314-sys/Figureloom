@@ -5,7 +5,8 @@ const pastedText = Array.from({ length: 60 }, (_, index) => `sample${String(inde
 async function dismissOverlays(page) {
   await page.evaluate(() => {
     document.getElementById('scWelcome')?.classList.remove('open');
-    document.querySelectorAll('.quick-start-overlay,.quick-start.open').forEach(node => node.classList.remove('open'));
+    document.getElementById('figureloomQuickStartLite')?.remove();
+    document.querySelectorAll('.quick-start-overlay,.quick-start.open').forEach(node => node.remove());
   });
 }
 
