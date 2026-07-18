@@ -1,8 +1,8 @@
 (() => {
-  if (window.__figureLoomImporterCoreLoaderV2) return;
-  window.__figureLoomImporterCoreLoaderV2 = true;
+  if (window.__figureLoomImporterCoreLoaderV3) return;
+  window.__figureLoomImporterCoreLoaderV3 = true;
 
-  const CORE_URL = 'office-import-core.js?v=import-layer-lock-v2';
+  const CORE_URL = 'office-import-core.js?v=import-layer-lock-v3';
 
   function setImportBusy(busy) {
     const input = document.getElementById('officePptxFile');
@@ -55,11 +55,55 @@
   }
 
   function installImportedLayerLockUi() {
-    if (window.__figureLoomImportedLayerLockUiV1) return;
-    window.__figureLoomImportedLayerLockUiV1 = true;
+    if (window.__figureLoomImportedLayerLockUiV2) return;
+    window.__figureLoomImportedLayerLockUiV2 = true;
 
     const isRestrictedImport = item => Boolean(item?.metadata?.unlockOnlyFromLayers);
     const isCanvasBlocked = item => Boolean(item?.locked && isRestrictedImport(item));
+
+    function itemById(id) {
+      return (state.objects || []).find(item => item.id === id) || null;
+    }
+
+    function itemFromTarget(target) {
+      const node = target?.closest?.('.canvas-object[data-id]');
+      return node ? itemById(node.dataset.id) : null;
+    }
+
+    function closeQuickMenu() {
+      const menu = document.getElementById('objectQuickMenu');
+      if (menu) menu.classList.remove('open');
+    }
+
+    function clearBlockedSelection(item = null) {
+      const selected = item || (typeof selectedObject === 'function' ? selectedObject() : null);
+      if (!isCanvasBlocked(selected)) return;
+      if (state.selectedId === selected.id) state.selectedId = null;
+      if (Array.isArray(state.selectedIds)) {
+        state.selectedIds = state.selectedIds.filter(id => id !== selected.id);
+      }
+      if (typeof selectionLayer !== 'undefined') selectionLayer?.replaceChildren?.();
+      closeQuickMenu();
+    }
+
+    function applyCanvasBlockers() {
+      document.querySelectorAll('.canvas-object[data-id]').forEach(node => {
+        const item = itemById(node.dataset.id);
+        const blocked = isCanvasBlocked(item);
+        node.classList.toggle('imported-canvas-locked', blocked);
+        node.style.pointerEvents = blocked ? 'none' : '';
+        if (blocked) {
+          node.setAttribute('data-imported-canvas-locked', 'true');
+          node.setAttribute('aria-disabled', 'true');
+        } else {
+          node.removeAttribute('data-imported-canvas-locked');
+          node.removeAttribute('aria-disabled');
+        }
+      });
+
+      const selected = typeof selectedObject === 'function' ? selectedObject() : null;
+      if (isCanvasBlocked(selected)) clearBlockedSelection(selected);
+    }
 
     if (typeof renderObject === 'function') {
       const baseRenderObject = renderObject;
@@ -68,9 +112,38 @@
         if (node && isCanvasBlocked(item)) {
           node.style.pointerEvents = 'none';
           node.classList?.add('imported-canvas-locked');
+          node.setAttribute?.('data-imported-canvas-locked', 'true');
+          node.setAttribute?.('aria-disabled', 'true');
         }
         return node;
       };
+    }
+
+    if (typeof render === 'function') {
+      const baseRender = render;
+      render = function renderWithImportedCanvasGate(...args) {
+        const result = baseRender(...args);
+        queueMicrotask(applyCanvasBlockers);
+        return result;
+      };
+    }
+
+    const objectHost = typeof objectLayer !== 'undefined'
+      ? objectLayer
+      : document.getElementById('objectLayer');
+    if (objectHost) {
+      new MutationObserver(() => applyCanvasBlockers()).observe(objectHost, {
+        childList:true,
+        subtree:true
+      });
+    }
+
+    const menu = document.getElementById('objectQuickMenu');
+    if (menu) {
+      new MutationObserver(() => {
+        const selected = typeof selectedObject === 'function' ? selectedObject() : null;
+        if (menu.classList.contains('open') && isCanvasBlocked(selected)) closeQuickMenu();
+      }).observe(menu, { attributes:true, attributeFilter:['class'] });
     }
 
     if (typeof updateInspector === 'function') {
@@ -124,6 +197,7 @@
             state.resize = null;
             state.multiDrag = null;
             state.multiResize = null;
+            clearBlockedSelection(item);
             if (typeof render === 'function') render();
             if (typeof scheduleSave === 'function') scheduleSave();
           };
@@ -141,15 +215,32 @@
       };
     }
 
-    document.addEventListener('click', event => {
-      const lockAction = event.target.closest?.('[data-action="lock"]');
-      if (!lockAction) return;
-      const item = typeof selectedObject === 'function' ? selectedObject() : null;
+    function blockImportedCanvasInteraction(event) {
+      const directItem = itemFromTarget(event.target);
+      const selected = typeof selectedObject === 'function' ? selectedObject() : null;
+      const item = directItem || (
+        event.target?.closest?.('#objectQuickMenu') && isCanvasBlocked(selected)
+          ? selected
+          : null
+      );
       if (!isCanvasBlocked(item)) return;
+
       event.preventDefault();
       event.stopPropagation();
-      event.stopImmediatePropagation();
-    }, true);
+      event.stopImmediatePropagation?.();
+      clearBlockedSelection(item);
+    }
+
+    [
+      'pointerdown','pointerup','pointercancel',
+      'mousedown','mouseup','click','dblclick',
+      'touchstart','touchend','contextmenu'
+    ].forEach(type => {
+      document.addEventListener(type, blockImportedCanvasInteraction, {
+        capture:true,
+        passive:false
+      });
+    });
 
     document.addEventListener('keydown', event => {
       const item = typeof selectedObject === 'function' ? selectedObject() : null;
@@ -160,6 +251,7 @@
       event.preventDefault();
       event.stopPropagation();
       event.stopImmediatePropagation();
+      clearBlockedSelection(item);
     }, true);
 
     const style = document.createElement('style');
@@ -170,6 +262,7 @@
     `;
     document.head.appendChild(style);
 
+    applyCanvasBlockers();
     if (typeof render === 'function') render();
   }
 
