@@ -1,4 +1,4 @@
-const FIGURELOOM_BUILD_ID = "chunk-20-frozen-pptx-pages-20260718-v2";
+const FIGURELOOM_BUILD_ID = "chunk-21-direct-svg-pptx-20260718-v1";
 const FIGURELOOM_CACHE_PREFIX = "figureloom-app-";
 const FIGURELOOM_CACHE_NAME = `${FIGURELOOM_CACHE_PREFIX}${FIGURELOOM_BUILD_ID}`;
 const LEGACY_CACHE_PREFIXES = ["figureloom-shell", "scicanvas-shell"];
