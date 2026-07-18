@@ -1,4 +1,4 @@
-const FIGURELOOM_BUILD_ID = "chunk-26-text-paste-block-20260718-v1";
+const FIGURELOOM_BUILD_ID = "chunk-27-text-reload-stability-20260718-v1";
 const FIGURELOOM_CACHE_PREFIX = "figureloom-app-";
 const FIGURELOOM_CACHE_NAME = `${FIGURELOOM_CACHE_PREFIX}${FIGURELOOM_BUILD_ID}`;
 const LEGACY_CACHE_PREFIXES = ["figureloom-shell", "scicanvas-shell"];
