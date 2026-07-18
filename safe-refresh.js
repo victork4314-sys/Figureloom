@@ -1,9 +1,8 @@
 (() => {
-  if (window.__figureLoomSafeRefreshV1) return;
-  window.__figureLoomSafeRefreshV1 = true;
+  if (window.__figureLoomStableRuntime71d36df) return;
+  window.__figureLoomStableRuntime71d36df = true;
 
-  const EXPECTED_BUILD = "chunk-39-restored-layout-gallery-style-tools-20260718-v1";
-  const SEEN_BUILD_KEY = "figureloom-session-build-v1";
+  const STABLE_BUILD = "stable-71d36df-locked-20260718-v1";
   const CHUNK_ADDONS = [
     "library-more-illustrations.js",
     "library-more-templates.js",
@@ -30,100 +29,76 @@
     "object-rotate-handle.js",
     "arrange-layout-template-tools.js"
   ];
-  let reloading = false;
 
-  function loadChunkAddons() {
-    CHUNK_ADDONS.forEach(path => {
-      if (document.querySelector(`script[data-figureloom-addon="${path}"]`)) return;
+  const root = document.documentElement;
+  root.dataset.figureloomStableLoading = "1";
+
+  const bootStyle = document.createElement("style");
+  bootStyle.id = "figureloomStableBootStyle";
+  bootStyle.textContent = `
+    html[data-figureloom-stable-loading="1"] .app-shell{visibility:hidden!important}
+    #figureloomStableBoot{position:fixed;inset:0;z-index:2147483647;display:grid;place-items:center;background:#f4f7f8;color:#29413d;font:600 13px/1.4 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+    #figureloomStableBoot>div{display:grid;justify-items:center;gap:10px;padding:20px}
+    #figureloomStableBoot i{width:24px;height:24px;border:3px solid #b8c9c5;border-top-color:#39786d;border-radius:50%;animation:figureloomStableSpin .75s linear infinite}
+    #figureloomStableBoot small{color:#70817e;font-size:10px;font-weight:500}
+    @keyframes figureloomStableSpin{to{transform:rotate(360deg)}}
+    html[data-figureloom-theme="dark"] #figureloomStableBoot{background:#18211f;color:#e5efec}
+  `;
+  document.head.appendChild(bootStyle);
+
+  const bootScreen = document.createElement("div");
+  bootScreen.id = "figureloomStableBoot";
+  bootScreen.setAttribute("role", "status");
+  bootScreen.setAttribute("aria-live", "polite");
+  bootScreen.innerHTML = `<div><i aria-hidden="true"></i><span>Opening FigureLoom</span><small>Stable version</small></div>`;
+  document.body.appendChild(bootScreen);
+
+  function loadAddon(path) {
+    const selector = `script[data-figureloom-addon="${path}"]`;
+    const existing = document.querySelector(selector);
+    if (existing) {
+      if (existing.dataset.figureloomLoaded === "1") return Promise.resolve();
+      return new Promise(resolve => {
+        existing.addEventListener("load", resolve, { once:true });
+        existing.addEventListener("error", resolve, { once:true });
+        setTimeout(resolve, 8000);
+      });
+    }
+
+    return new Promise(resolve => {
       const script = document.createElement("script");
-      script.src = `${path}?v=${encodeURIComponent(EXPECTED_BUILD)}`;
+      script.src = `${path}?v=${encodeURIComponent(STABLE_BUILD)}`;
       script.dataset.figureloomAddon = path;
+      script.async = false;
+      script.addEventListener("load", () => {
+        script.dataset.figureloomLoaded = "1";
+        resolve();
+      }, { once:true });
+      script.addEventListener("error", () => {
+        console.warn(`FigureLoom stable add-on could not load: ${path}`);
+        resolve();
+      }, { once:true });
       document.head.appendChild(script);
     });
   }
 
-  loadChunkAddons();
-
-  if (!("serviceWorker" in navigator)) return;
-
-  async function flushBeforeReload() {
-    try { window.captureFigureLoomTextPresentation?.(); } catch {}
-
+  function revealStableApp() {
+    if (!root.dataset.figureloomStableLoading) return;
+    delete root.dataset.figureloomStableLoading;
+    bootScreen.remove();
+    requestAnimationFrame(() => bootStyle.remove());
+    window.__FIGURELOOM_STABLE_BUILD__ = STABLE_BUILD;
     try {
-      if (typeof syncPage === "function") syncPage();
-      else window.syncPage?.();
-      if (typeof snapshot === "function") {
-        localStorage.setItem("scicanvas-document", snapshot());
-        localStorage.setItem("scicanvas-document-updated-at", String(Date.now()));
-      }
-    } catch (error) {
-      console.warn("FigureLoom could not write the immediate refresh checkpoint.", error);
-    }
-
-    try {
-      const save = window.saveSciCanvasImmediately?.("refresh");
-      if (save?.then) {
-        await Promise.race([
-          save.catch(() => false),
-          new Promise(resolve => setTimeout(resolve, 600))
-        ]);
-      }
+      sessionStorage.setItem("figureloom-session-build-v1", STABLE_BUILD);
     } catch {}
+    window.dispatchEvent(new CustomEvent("figureloom-stable-ready", {
+      detail:{ build:STABLE_BUILD, baseline:"71d36dfaed96e8512d7399be2e36718c38854c84" }
+    }));
   }
 
-  async function reloadForBuild(build) {
-    const nextBuild = String(build || EXPECTED_BUILD);
-    if (reloading) return;
-
-    try {
-      if (sessionStorage.getItem(SEEN_BUILD_KEY) === nextBuild) return;
-      sessionStorage.setItem(SEEN_BUILD_KEY, nextBuild);
-    } catch {}
-
-    reloading = true;
-    await flushBeforeReload();
-    location.reload();
-  }
-
-  function watchInstallingWorker(worker) {
-    if (!worker || worker.__figureLoomRefreshWatched) return;
-    worker.__figureLoomRefreshWatched = true;
-    worker.addEventListener("statechange", () => {
-      if (worker.state === "installed" && navigator.serviceWorker.controller) {
-        worker.postMessage({ type:"SKIP_WAITING" });
-      }
-    });
-  }
-
-  navigator.serviceWorker.addEventListener("message", event => {
-    if (event.data?.type === "FIGURELOOM_BUILD_READY") {
-      void reloadForBuild(event.data.build);
-    }
-  });
-
-  navigator.serviceWorker.addEventListener("controllerchange", () => {
-    if (navigator.serviceWorker.controller) void reloadForBuild(EXPECTED_BUILD);
-  });
-
-  window.addEventListener("load", async () => {
-    try {
-      const registration = await navigator.serviceWorker.register("./service-worker.js", {
-        scope:"./",
-        updateViaCache:"none"
-      });
-
-      watchInstallingWorker(registration.installing);
-      registration.addEventListener("updatefound", () => watchInstallingWorker(registration.installing));
-
-      await registration.update();
-
-      if (registration.waiting) {
-        registration.waiting.postMessage({ type:"SKIP_WAITING" });
-      }
-
-      navigator.serviceWorker.controller?.postMessage({ type:"GET_BUILD" });
-    } catch (error) {
-      console.warn("FigureLoom automatic refresh could not start.", error);
-    }
+  const fallback = setTimeout(revealStableApp, 12000);
+  void Promise.all(CHUNK_ADDONS.map(loadAddon)).finally(() => {
+    clearTimeout(fallback);
+    revealStableApp();
   });
 })();
