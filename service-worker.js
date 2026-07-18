@@ -1,4 +1,4 @@
-const FIGURELOOM_BUILD_ID = "chunk-36-rotated-selection-overlay-20260718-v1";
+const FIGURELOOM_BUILD_ID = "chunk-37-arrange-layout-template-exchange-20260718-v1";
 const FIGURELOOM_CACHE_PREFIX = "figureloom-app-";
 const FIGURELOOM_CACHE_NAME = `${FIGURELOOM_CACHE_PREFIX}${FIGURELOOM_BUILD_ID}`;
 const LEGACY_CACHE_PREFIXES = ["figureloom-shell", "scicanvas-shell"];
