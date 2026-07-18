@@ -1,8 +1,8 @@
 (() => {
-  if (window.__figureLoomStableRuntime71d36dfV16) return;
-  window.__figureLoomStableRuntime71d36dfV16 = true;
+  if (window.__figureLoomStableRuntime71d36dfV17) return;
+  window.__figureLoomStableRuntime71d36dfV17 = true;
 
-  const STABLE_BUILD = "stable-71d36df-locked-20260718-v16";
+  const STABLE_BUILD = "stable-71d36df-locked-20260718-v17";
   const GENERAL_ADDONS = [
     "library-more-illustrations.js",
     "library-more-templates.js",
