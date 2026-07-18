@@ -12,6 +12,10 @@
     return Math.max(6, Number(item.fontSize) || 30);
   }
 
+  function usesWrappedLayout(item) {
+    return item?.type === 'text' && item.textFlow && item.textFlow !== 'single';
+  }
+
   function editorValue(editor) {
     return String(editor?.textContent || '').replace(/[\r\n]+/g, '');
   }
@@ -39,6 +43,18 @@
 
   function syncTextBounds(item, value = item?.text || '') {
     if (!item || item.type !== 'text') return;
+
+    if (usesWrappedLayout(item)) {
+      const width = Math.max(20, Number(item.textBoxWidth) || Number(item.width) || 320);
+      const minimumHeight = Math.max(20, Math.ceil(fontSize(item) * Math.max(1, Number(item.lineHeight) || 1.25) + Math.max(0, Number(item.textPadding) || 0) * 2));
+      const height = Math.max(minimumHeight, Number(item.textBoxHeight) || Number(item.height) || minimumHeight);
+      item.width = width;
+      item.height = height;
+      item.textBoxWidth = width;
+      item.textBoxHeight = height;
+      return;
+    }
+
     const metrics = textMetrics(item, value);
     item.width = metrics.width;
     item.height = metrics.height;
@@ -48,7 +64,7 @@
   renderObject = function renderTightTextObject(item) {
     if (item?.type === 'text') syncTextBounds(item);
     const group = baseRenderObject(item);
-    if (item?.type === 'text') {
+    if (item?.type === 'text' && !usesWrappedLayout(item)) {
       const text = group?.querySelector('text');
       if (text) text.setAttribute('y', String(fontSize(item)));
     }
@@ -101,6 +117,8 @@
         item.name = session.original.name;
         item.width = session.original.width;
         item.height = session.original.height;
+        if (session.original.textBoxWidth != null) item.textBoxWidth = session.original.textBoxWidth;
+        if (session.original.textBoxHeight != null) item.textBoxHeight = session.original.textBoxHeight;
         if (session.historyPushed) {
           state.history.pop();
           updateHistoryButtons();
@@ -122,6 +140,19 @@
     const value = editorValue(session.editor);
     const metrics = textMetrics(item, value);
     const scale = session.cssScale || 1;
+
+    if (usesWrappedLayout(item)) {
+      const width = Math.max(80, (Number(item.textBoxWidth) || Number(item.width) || 320) * scale);
+      session.editor.style.width = `${Math.min(window.innerWidth - 12, width)}px`;
+      session.editor.style.height = 'auto';
+      session.editor.style.whiteSpace = 'pre-wrap';
+      session.editor.style.overflowWrap = 'anywhere';
+      session.editor.style.wordBreak = 'break-word';
+      session.editor.style.lineHeight = `${Math.max(18, fontSize(item) * Math.max(1, Number(item.lineHeight) || 1.25) * scale)}px`;
+      session.editor.style.height = `${Math.max(22, session.editor.scrollHeight + 4)}px`;
+      return;
+    }
+
     const width = Math.min(window.innerWidth - 12, Math.max(18, metrics.width * scale + 6));
     const height = Math.max(22, metrics.height * scale + 4);
     session.editor.style.width = `${width}px`;
@@ -148,7 +179,9 @@
     const liveTextNode = renderedTextNode(item.id) || textNode;
     const rect = liveTextNode.getBoundingClientRect();
     const metrics = textMetrics(item);
-    const cssScale = Math.max(.1, rect.width / Math.max(1, metrics.width));
+    const cssScale = usesWrappedLayout(item)
+      ? Math.max(.1, (document.getElementById('canvas')?.getBoundingClientRect?.().width || 1200) / (Number(document.getElementById('canvas')?.viewBox?.baseVal?.width) || 1200))
+      : Math.max(.1, rect.width / Math.max(1, metrics.width));
     const editor = document.createElement('div');
     editor.contentEditable = 'plaintext-only';
     if (editor.contentEditable !== 'plaintext-only') editor.contentEditable = 'true';
@@ -156,7 +189,7 @@
     editor.className = 'figureloom-direct-label-editor';
     editor.setAttribute('role', 'textbox');
     editor.setAttribute('aria-label', 'Edit text label');
-    editor.setAttribute('aria-multiline', 'false');
+    editor.setAttribute('aria-multiline', usesWrappedLayout(item) ? 'true' : 'false');
     editor.spellcheck = false;
     editor.style.left = `${Math.max(6, Math.min(rect.left - 3, window.innerWidth - 28))}px`;
     editor.style.top = `${Math.max(6, Math.min(rect.top - 3, window.innerHeight - 28))}px`;
@@ -172,7 +205,9 @@
         text: item.text || '',
         name: item.name || 'Text label',
         width: item.width,
-        height: item.height
+        height: item.height,
+        textBoxWidth:item.textBoxWidth,
+        textBoxHeight:item.textBoxHeight
       },
       editor,
       textNode: liveTextNode,
@@ -187,11 +222,12 @@
     resizeEditor(session);
 
     editor.addEventListener('beforeinput', event => {
-      if (event.inputType === 'insertParagraph' || event.inputType === 'insertLineBreak') event.preventDefault();
+      if (!usesWrappedLayout(item) && (event.inputType === 'insertParagraph' || event.inputType === 'insertLineBreak')) event.preventDefault();
     });
     editor.addEventListener('paste', event => {
       event.preventDefault();
-      const text = event.clipboardData?.getData('text/plain')?.replace(/[\r\n]+/g, ' ') || '';
+      const plain = event.clipboardData?.getData('text/plain') || '';
+      const text = usesWrappedLayout(item) ? plain : plain.replace(/[\r\n]+/g, ' ');
       document.execCommand?.('insertText', false, text);
     });
     editor.addEventListener('input', () => {
@@ -214,7 +250,7 @@
 
     editor.addEventListener('keydown', event => {
       event.stopPropagation();
-      if (event.key === 'Enter') {
+      if (event.key === 'Enter' && !usesWrappedLayout(item)) {
         event.preventDefault();
         finish(true);
       } else if (event.key === 'Escape') {
