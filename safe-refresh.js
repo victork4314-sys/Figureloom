@@ -26,9 +26,7 @@
     "pptx-safe-jpeg-export.js",
     "code-window-tools.js",
     "code-window-startup-render.js",
-    "text-layout-protect-bounds.js",
-    "text-layout-tools.js",
-    "text-layout-new-text-default.js"
+    "text-layout-bundle.js"
   ];
   let reloading = false;
 
