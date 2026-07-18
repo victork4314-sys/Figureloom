@@ -2,7 +2,7 @@
   if (window.__figureLoomSafeRefreshV1) return;
   window.__figureLoomSafeRefreshV1 = true;
 
-  const EXPECTED_BUILD = "chunk-36-rotated-selection-overlay-20260718-v1";
+  const EXPECTED_BUILD = "chunk-37-arrange-layout-template-exchange-20260718-v1";
   const SEEN_BUILD_KEY = "figureloom-session-build-v1";
   const CHUNK_ADDONS = [
     "library-more-illustrations.js",
@@ -27,7 +27,8 @@
     "code-window-tools.js",
     "code-window-startup-render.js",
     "text-layout-bundle.js",
-    "object-rotate-handle.js"
+    "object-rotate-handle.js",
+    "arrange-layout-template-tools.js"
   ];
   let reloading = false;
 
