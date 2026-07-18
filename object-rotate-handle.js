@@ -5,6 +5,7 @@
   const SVG_NS = 'http://www.w3.org/2000/svg';
   const HANDLE_GAP = 34;
   let rotating = null;
+  let rotationShield = null;
 
   function makeSvg(tag, attrs = {}) {
     const element = document.createElementNS(SVG_NS, tag);
@@ -105,9 +106,27 @@
     if (rotationInput && state.selectedId === item.id) rotationInput.value = String(item.rotation);
   }
 
-  function beginRotate(event) {
+  function installRotationShield() {
+    rotationShield?.remove();
+    rotationShield = document.createElement('div');
+    rotationShield.className = 'figureloom-rotation-shield';
+    rotationShield.setAttribute('aria-hidden', 'true');
+    document.body.appendChild(rotationShield);
+  }
+
+  function removeRotationShield() {
+    rotationShield?.remove();
+    rotationShield = null;
+  }
+
+  function rotateHitFromEvent(event) {
+    const target = event.target instanceof Element ? event.target : event.target?.parentElement;
+    return target?.closest?.('.object-rotate-hit') || null;
+  }
+
+  function beginRotate(event, hit) {
     const item = rotatableObject();
-    if (!item || event.button > 0) return;
+    if (!item || !hit || (event.pointerType === 'mouse' && event.button !== 0)) return;
 
     event.preventDefault();
     event.stopImmediatePropagation();
@@ -127,12 +146,14 @@
       centerY:geometry.centerY,
       startRotation:Number(item.rotation) || 0,
       startPointerAngle:pointAngle(point, geometry.centerX, geometry.centerY),
-      captureTarget:event.currentTarget
+      captureTarget:hit
     };
     state.rotate = rotating;
+    window.__figureLoomRotationActive = true;
     document.documentElement.classList.add('figureloom-object-rotating');
+    installRotationShield();
 
-    try { event.currentTarget.setPointerCapture(event.pointerId); } catch {}
+    try { hit.setPointerCapture(event.pointerId); } catch {}
   }
 
   const baseRenderSelection = renderSelection;
@@ -154,10 +175,10 @@
       class:'object-rotate-hit',
       cx:geometry.handle.x,
       cy:geometry.handle.y,
-      r:30,
+      r:32,
       role:'button',
       tabindex:'0',
-      'aria-label':'Press and move around the object to rotate it'
+      'aria-label':'Hold and move around the object to rotate it'
     });
     const grip = makeSvg('circle', {
       class:'object-rotate-grip',
@@ -174,10 +195,14 @@
       'aria-hidden':'true'
     });
     icon.textContent = '↻';
-
-    hit.addEventListener('pointerdown', beginRotate);
     selectionLayer.append(stem, hit, grip, icon);
   };
+
+  function captureRotationStart(event) {
+    const hit = rotateHitFromEvent(event);
+    if (!hit) return;
+    beginRotate(event, hit);
+  }
 
   function rotateFromPointer(event) {
     if (!rotating || event.pointerId !== rotating.pointerId) return;
@@ -195,9 +220,8 @@
     if (event.shiftKey) next = Math.round(next / 15) * 15;
     item.rotation = Math.round(normalizeAngle(next) * 10) / 10;
 
-    // Do not call render() here. Rendering replaces the SVG handle and cancels
-    // touch pointer capture on iPad. Update the existing SVG nodes directly so
-    // the object visibly follows the finger for the entire circular gesture.
+    // Keep the original handle alive for the entire gesture. Re-rendering here
+    // would replace it and cancel pointer capture, especially in iPad Safari.
     applyLiveRotation(item);
   }
 
@@ -206,7 +230,9 @@
     const session = rotating;
     rotating = null;
     state.rotate = null;
+    window.__figureLoomRotationActive = false;
     document.documentElement.classList.remove('figureloom-object-rotating');
+    removeRotationShield();
     try {
       if (session.captureTarget?.hasPointerCapture?.(session.pointerId)) {
         session.captureTarget.releasePointerCapture(session.pointerId);
@@ -216,19 +242,22 @@
     scheduleSave();
   }
 
-  document.addEventListener('pointermove', rotateFromPointer, { capture:true, passive:false });
-  document.addEventListener('pointerup', finishRotate, true);
-  document.addEventListener('pointercancel', finishRotate, true);
+  // Capture on window before marquee selection, drag, resize, or text editing
+  // can claim the same press. This makes the rotate handle authoritative.
+  window.addEventListener('pointerdown', captureRotationStart, { capture:true, passive:false });
+  window.addEventListener('pointermove', rotateFromPointer, { capture:true, passive:false });
+  window.addEventListener('pointerup', finishRotate, true);
+  window.addEventListener('pointercancel', finishRotate, true);
   window.addEventListener('blur', () => finishRotate());
 
   const style = document.createElement('style');
   style.textContent = `
     .object-rotate-stem{stroke:#2563eb;stroke-width:2;vector-effect:non-scaling-stroke;pointer-events:none}
     .object-rotate-hit{fill:transparent;stroke:transparent;pointer-events:all;touch-action:none;cursor:grab}
-    .object-rotate-hit:active{cursor:grabbing}
     .object-rotate-grip{fill:#fff;stroke:#2563eb;stroke-width:3;vector-effect:non-scaling-stroke;pointer-events:none}
     .object-rotate-icon{fill:#2563eb;font:700 16px Inter,ui-sans-serif,sans-serif;pointer-events:none;user-select:none}
     .object-rotate-hit:hover + .object-rotate-grip{fill:#dbeafe}
+    .figureloom-rotation-shield{position:fixed;z-index:2147483646;inset:0;background:transparent;cursor:grabbing;touch-action:none;overscroll-behavior:none;-webkit-user-select:none;user-select:none}
     .figureloom-object-rotating,.figureloom-object-rotating *{cursor:grabbing!important;touch-action:none!important;-webkit-user-select:none!important;user-select:none!important;overscroll-behavior:none!important}
     .figureloom-object-rotating .resize-handle,.figureloom-object-rotating .resize-grip,.figureloom-object-rotating .text-box-resize-hit,.figureloom-object-rotating .text-box-resize-grip{pointer-events:none!important;opacity:.35}
     html[data-figureloom-theme="dark"] .object-rotate-grip{fill:#172033;stroke:#8bb2ff}
