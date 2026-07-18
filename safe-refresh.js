@@ -1,8 +1,8 @@
 (() => {
-  if (window.__figureLoomStableRuntime71d36dfV15) return;
-  window.__figureLoomStableRuntime71d36dfV15 = true;
+  if (window.__figureLoomStableRuntime71d36dfV16) return;
+  window.__figureLoomStableRuntime71d36dfV16 = true;
 
-  const STABLE_BUILD = "stable-71d36df-locked-20260718-v15";
+  const STABLE_BUILD = "stable-71d36df-locked-20260718-v16";
   const GENERAL_ADDONS = [
     "library-more-illustrations.js",
     "library-more-templates.js",
@@ -24,6 +24,7 @@
     "global-pptx-export-fix.js",
     "pptx-safe-jpeg-export.js",
     "code-window-tools.js",
+    "code-language-pack.js",
     "code-window-startup-render.js",
     "pro-code-tools.js",
     "object-rotate-handle.js",
