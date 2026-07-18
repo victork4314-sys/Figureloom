@@ -51,6 +51,7 @@ test('a long paste renders every wrapped line and restores after reload', async 
       fontSize:item.fontSize,
       lineCount:lines.length,
       lastLineY:Number(lastLine?.getAttribute('y')),
+      lastLineText:lastLine?.textContent || '',
       clipHeight:Number(group.querySelector('clipPath rect')?.getAttribute('height'))
     };
   }, original.id);
@@ -63,7 +64,8 @@ test('a long paste renders every wrapped line and restores after reload', async 
   expect(result.lineCount).toBeGreaterThan(20);
   expect(result.height).toBe(result.expectedHeight);
   expect(result.clipHeight).toBe(result.height);
-  expect(result.lastLineY + result.fontSize).toBeLessThanOrEqual(result.height);
+  expect(result.lastLineText).toContain('method220');
+  expect(result.lastLineY + result.fontSize * .35).toBeLessThanOrEqual(result.height);
 
   await page.evaluate(async () => {
     syncPage?.();
@@ -79,6 +81,7 @@ test('a long paste renders every wrapped line and restores after reload', async 
 
   const restored = await page.evaluate(() => {
     const item = state.objects.find(entry => entry.type === 'text');
+    const lines = [...document.querySelectorAll(`#objectLayer .canvas-object[data-id="${item.id}"] text > tspan`)];
     return {
       text:item.text,
       flow:item.textFlow,
@@ -86,7 +89,8 @@ test('a long paste renders every wrapped line and restores after reload', async 
       textBoxWidth:item.textBoxWidth,
       height:item.height,
       expectedHeight:window.FigureLoomFullTextPaste.requiredHeight(item),
-      lineCount:document.querySelectorAll(`#objectLayer .canvas-object[data-id="${item.id}"] text > tspan`).length
+      lineCount:lines.length,
+      lastLineText:lines.at(-1)?.textContent || ''
     };
   });
 
@@ -96,4 +100,5 @@ test('a long paste renders every wrapped line and restores after reload', async 
   expect(restored.textBoxWidth).toBe(original.width);
   expect(restored.height).toBe(restored.expectedHeight);
   expect(restored.lineCount).toBeGreaterThan(20);
+  expect(restored.lastLineText).toContain('method220');
 });
