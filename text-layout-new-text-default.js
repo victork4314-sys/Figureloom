@@ -9,8 +9,9 @@
     item.textAlign ??= 'left';
     item.textVerticalAlign ??= 'top';
     item.textPadding ??= 9;
-    item.lineHeight ??= 1.25;
-    item.width = 320;
+    item.lineHeight = 1.15;
+    item.width = 480;
+    item.textBoxWidth = 480;
     item.height = 62;
     render();
     scheduleSave();
