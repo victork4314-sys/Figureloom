@@ -1,4 +1,4 @@
-const FIGURELOOM_BUILD_ID = "chunk-34-normal-pasted-text-blocks-20260718-v1";
+const FIGURELOOM_BUILD_ID = "chunk-35-authoritative-live-rotation-20260718-v1";
 const FIGURELOOM_CACHE_PREFIX = "figureloom-app-";
 const FIGURELOOM_CACHE_NAME = `${FIGURELOOM_CACHE_PREFIX}${FIGURELOOM_BUILD_ID}`;
 const LEGACY_CACHE_PREFIXES = ["figureloom-shell", "scicanvas-shell"];
