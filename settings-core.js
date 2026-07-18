@@ -1,6 +1,6 @@
 (() => {
-  if (window.__figureLoomSettingsCoreV1) return;
-  window.__figureLoomSettingsCoreV1 = true;
+  if (window.__figureLoomSettingsCoreV2) return;
+  window.__figureLoomSettingsCoreV2 = true;
 
   const KEY = 'figureloom-settings-v1';
   const root = document.documentElement;
@@ -34,6 +34,7 @@
   let ready = false;
 
   const packs = () => window.FigureLoomLanguagePacks;
+  const phrases = () => window.FigureLoomInterfacePhrases;
   const t = key => packs()?.translate(state.language, key) || key;
 
   function read() {
@@ -108,6 +109,7 @@
     const value = String(source ?? '');
     const clean = value.trim();
     if (!clean) return value;
+    if (phrases()?.has(clean)) return spaced(value, phrases().translate(state.language, clean));
     const key = englishMap().get(clean);
     if (key) return spaced(value, t(key));
     const punctuated = clean.match(/^(.*?)([.…:])$/);
@@ -238,6 +240,7 @@
     apply:translateTree
   });
 
+  addEventListener('figureloom-interface-phrases-ready', () => translateTree(document, true));
   if (packs()) init();
   else addEventListener('figureloom-language-packs-ready', init, { once:true });
 })();
