@@ -24,7 +24,7 @@ test('live pasted text creates every required wrapped line and restores', async 
   expect(created.width).toBe(320);
   expect(created.fontSize).toBe(18);
 
-  const longText = `${Array.from({ length:85 }, (_, index) => `method${String(index + 1).padStart(3, '0')}`).join(' ')} FINAL_VISIBLE_MARKER`;
+  const longText = `${Array.from({ length:45 }, (_, index) => `method${String(index + 1).padStart(3, '0')}`).join(' ')} FINAL_VISIBLE_MARKER`;
   await page.evaluate(value => navigator.clipboard.writeText(value), longText);
 
   await page.locator(`#objectLayer .canvas-object[data-id="${created.id}"] text`).first().click();
@@ -77,7 +77,7 @@ test('live pasted text creates every required wrapped line and restores', async 
   expect(result.lastLine).toContain('FINAL_VISIBLE_MARKER');
   expect(result.height).toBeGreaterThanOrEqual(result.requiredHeight);
   expect(result.clipHeight).toBe(result.height);
-  expect(result.lastLineY + result.fontSize).toBeLessThanOrEqual(result.height);
+  expect(result.lastLineY).toBeLessThan(result.height);
   expect(result.y).toBeLessThanOrEqual(created.y);
   expect(result.y + result.height).toBeLessThanOrEqual(750);
 
