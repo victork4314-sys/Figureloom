@@ -219,7 +219,8 @@
     controls.instructionInputs = [controls.instructionTitle,controls.purpose,controls.prerequisites,controls.steps,controls.warnings,controls.expected,controls.notes,controls.instructionTheme,controls.accent,controls.instructionCopy,controls.instructionRadius,controls.instructionFontSize];
     setDisabled(controls.codeInputs, true);
     setDisabled(controls.instructionInputs, true);
-    (api()?.languages || []).forEach(([value,label]) => controls.language.add(new Option(label,value)));
+    const languageOptions = api()?.languages || [['plain','Plain text'],['python','Python'],['r','R'],['bash','Bash'],['javascript','JavaScript'],['html','HTML'],['css','CSS'],['sql','SQL'],['json','JSON'],['yaml','YAML'],['matlab','MATLAB'],['julia','Julia'],['cpp','C / C++'],['java','Java']];
+    languageOptions.forEach(([value,label]) => controls.language.add(new Option(label,value)));
     body.querySelectorAll('[data-add]').forEach(button => button.addEventListener('click', () => addAndSelect(button.dataset.add)));
 
     controls.mode.addEventListener('change', event => mutate(item => { item.codeMode = event.target.value; if (item.codeMode === 'terminal') { item.codeLineNumbers = false; item.language = item.language === 'plain' ? 'bash' : item.language; } }));
