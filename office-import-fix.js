@@ -1,8 +1,8 @@
 (() => {
-  if (window.__figureLoomImporterCoreLoaderV3) return;
-  window.__figureLoomImporterCoreLoaderV3 = true;
+  if (window.__figureLoomImporterCoreLoaderV4) return;
+  window.__figureLoomImporterCoreLoaderV4 = true;
 
-  const CORE_URL = 'office-import-core.js?v=import-layer-lock-v3';
+  const CORE_URL = 'office-import-core.js?v=import-text-unlocked-v4';
 
   function setImportBusy(busy) {
     const input = document.getElementById('officePptxFile');
@@ -44,19 +44,30 @@
   }
 
   function addImportedLayerLockRules(source) {
-    source = replaceExactly(
+    return replaceExactly(
       source,
       `  function installPages(pages, file) {\n    pushHistory();`,
-      `  function installPages(pages, file) {\n    pages.forEach(page => {\n      (page.objects || []).forEach(item => {\n        item.locked = true;\n        item.metadata = {\n          ...(item.metadata || {}),\n          importedPresentationLayer:true,\n          unlockOnlyFromLayers:true\n        };\n      });\n    });\n    pushHistory();`,
-      'lock every imported layer'
+      `  function installPages(pages, file) {\n    pages.forEach(page => {\n      (page.objects || []).forEach(item => {\n        const isText = item.type === 'text';\n        item.locked = !isText;\n        if (isText) item.groupId = null;\n        item.metadata = {\n          ...(item.metadata || {}),\n          importedPresentationLayer:true,\n          unlockOnlyFromLayers:!isText\n        };\n      });\n    });\n    pushHistory();`,
+      'lock imported non-text layers'
     );
-
-    return source;
   }
 
   function installImportedLayerLockUi() {
-    if (window.__figureLoomImportedLayerLockUiV2) return;
-    window.__figureLoomImportedLayerLockUiV2 = true;
+    if (window.__figureLoomImportedLayerLockUiV3) return;
+    window.__figureLoomImportedLayerLockUiV3 = true;
+
+    const allImportedObjects = () => {
+      const pages = Array.isArray(state.pages) ? state.pages : [];
+      const pageObjects = pages.flatMap(page => page?.objects || []);
+      return [...new Set([...(state.objects || []), ...pageObjects])];
+    };
+
+    allImportedObjects().forEach(item => {
+      if (!item?.metadata?.importedPresentationLayer || item.type !== 'text') return;
+      item.locked = false;
+      item.groupId = null;
+      item.metadata.unlockOnlyFromLayers = false;
+    });
 
     const isRestrictedImport = item => Boolean(item?.metadata?.unlockOnlyFromLayers);
     const isCanvasBlocked = item => Boolean(item?.locked && isRestrictedImport(item));
@@ -71,8 +82,7 @@
     }
 
     function closeQuickMenu() {
-      const menu = document.getElementById('objectQuickMenu');
-      if (menu) menu.classList.remove('open');
+      document.getElementById('objectQuickMenu')?.classList.remove('open');
     }
 
     function clearBlockedSelection(item = null) {
@@ -128,14 +138,9 @@
       };
     }
 
-    const objectHost = typeof objectLayer !== 'undefined'
-      ? objectLayer
-      : document.getElementById('objectLayer');
+    const objectHost = typeof objectLayer !== 'undefined' ? objectLayer : document.getElementById('objectLayer');
     if (objectHost) {
-      new MutationObserver(() => applyCanvasBlockers()).observe(objectHost, {
-        childList:true,
-        subtree:true
-      });
+      new MutationObserver(applyCanvasBlockers).observe(objectHost, { childList:true, subtree:true });
     }
 
     const menu = document.getElementById('objectQuickMenu');
@@ -144,20 +149,6 @@
         const selected = typeof selectedObject === 'function' ? selectedObject() : null;
         if (menu.classList.contains('open') && isCanvasBlocked(selected)) closeQuickMenu();
       }).observe(menu, { attributes:true, attributeFilter:['class'] });
-    }
-
-    if (typeof updateInspector === 'function') {
-      const baseUpdateInspector = updateInspector;
-      updateInspector = function updateImportedLockAwareInspector() {
-        baseUpdateInspector();
-        const item = typeof selectedObject === 'function' ? selectedObject() : null;
-        if (!isCanvasBlocked(item)) return;
-        if (typeof controls === 'object' && controls) {
-          Object.values(controls).forEach(control => {
-            if (control) control.disabled = true;
-          });
-        }
-      };
     }
 
     if (typeof renderLayers === 'function' && typeof layersList !== 'undefined') {
@@ -183,9 +174,6 @@
           mark.title = item.locked ? 'Unlock this imported layer' : 'Lock this imported layer';
           mark.classList.add('import-layer-lock-control');
           row.classList.toggle('locked-layer', Boolean(item.locked));
-          row.title = item.locked
-            ? `${item.name} · locked · unlock from Layers`
-            : `${item.name} · imported layer`;
 
           const toggleFromLayers = event => {
             event.preventDefault();
@@ -219,12 +207,9 @@
       const directItem = itemFromTarget(event.target);
       const selected = typeof selectedObject === 'function' ? selectedObject() : null;
       const item = directItem || (
-        event.target?.closest?.('#objectQuickMenu') && isCanvasBlocked(selected)
-          ? selected
-          : null
+        event.target?.closest?.('#objectQuickMenu') && isCanvasBlocked(selected) ? selected : null
       );
       if (!isCanvasBlocked(item)) return;
-
       event.preventDefault();
       event.stopPropagation();
       event.stopImmediatePropagation?.();
@@ -236,10 +221,7 @@
       'mousedown','mouseup','click','dblclick',
       'touchstart','touchend','contextmenu'
     ].forEach(type => {
-      document.addEventListener(type, blockImportedCanvasInteraction, {
-        capture:true,
-        passive:false
-      });
+      document.addEventListener(type, blockImportedCanvasInteraction, { capture:true, passive:false });
     });
 
     document.addEventListener('keydown', event => {
