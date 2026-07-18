@@ -1,6 +1,6 @@
 (() => {
-  if (window.__figureLoomSettingsPageV1) return;
-  window.__figureLoomSettingsPageV1 = true;
+  if (window.__figureLoomSettingsPageV2) return;
+  window.__figureLoomSettingsPageV2 = true;
 
   let page = null;
   let button = null;
@@ -16,7 +16,7 @@
     const link = document.createElement('link');
     link.id = 'figureloomSettingsAccessibilityStylesheet';
     link.rel = 'stylesheet';
-    link.href = 'settings-accessibility.css?v=20260719-v1';
+    link.href = 'settings-accessibility.css?v=20260719-v2';
     document.head.appendChild(link);
   }
 
@@ -43,6 +43,27 @@
     return packs().available.map(code => `<option value="${code}">${packs().languages[code]}</option>`).join('');
   }
 
+  function currentTheme() {
+    try {
+      return document.documentElement.dataset.figureloomTheme === 'dark' || localStorage.getItem('figureloom-interface-theme-v1') === 'dark' ? 'dark' : 'light';
+    } catch {
+      return document.documentElement.dataset.figureloomTheme === 'dark' ? 'dark' : 'light';
+    }
+  }
+
+  function setTheme(theme) {
+    const next = theme === 'dark' ? 'dark' : 'light';
+    if (currentTheme() === next) return;
+    const toggle = document.getElementById('interfaceThemeToggle');
+    if (toggle) {
+      toggle.click();
+      return;
+    }
+    document.documentElement.dataset.figureloomTheme = next;
+    try { localStorage.setItem('figureloom-interface-theme-v1', next); } catch {}
+    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', next === 'dark' ? '#24282f' : '#f7f9fc');
+  }
+
   function buildPage() {
     if (page) return;
     page = document.createElement('section');
@@ -65,7 +86,9 @@
         </nav>
         <main class="settings-content">
           <section class="settings-panel" data-settings-panel="general">
-            <div class="settings-section-heading"><h2 data-i18n-key="interfaceMode">Interface mode</h2><p data-i18n-key="interfaceModeHelp">Choose how FigureLoom decides which interface to use.</p></div>
+            <div class="settings-section-heading"><h2>Appearance</h2></div>
+            <label class="settings-select-row"><span><strong>Appearance</strong></span><select data-interface-theme><option value="light">Light</option><option value="dark">Dark</option></select></label>
+            <div class="settings-section-heading settings-subheading"><h2 data-i18n-key="interfaceMode">Interface mode</h2><p data-i18n-key="interfaceModeHelp">Choose how FigureLoom decides which interface to use.</p></div>
             <div class="settings-choice-grid" role="radiogroup">
               <label class="settings-choice"><input type="radio" name="figureloom-interface-mode" value="auto" data-setting="interfaceMode"><span><strong data-i18n-key="automatic">Automatic</strong><small data-i18n-key="automaticDesc">Use phone mode on phones and the full interface on tablets and computers.</small></span></label>
               <label class="settings-choice"><input type="radio" name="figureloom-interface-mode" value="desktop" data-setting="interfaceMode"><span><strong data-i18n-key="desktopTablet">Desktop & tablet</strong><small data-i18n-key="desktopTabletDesc">Always use the current full interface.</small></span></label>
@@ -97,6 +120,12 @@
     page.querySelector('[data-settings-close]').addEventListener('click', close);
     page.querySelectorAll('[data-settings-section]').forEach(item => item.addEventListener('click', () => show(item.dataset.settingsSection)));
     page.addEventListener('change', event => {
+      const themeControl = event.target.closest('[data-interface-theme]');
+      if (themeControl) {
+        setTheme(themeControl.value);
+        sync();
+        return;
+      }
       const control = event.target.closest('[data-setting]');
       if (!control) return;
       const key = control.dataset.setting;
@@ -107,6 +136,7 @@
     page.querySelector('[data-settings-reset]').addEventListener('click', () => {
       if (!confirm(`${i18n().t('restoreDefaults')}?`)) return;
       api().reset();
+      setTheme('light');
       sync();
     });
     page.addEventListener('keydown', event => {
@@ -137,6 +167,7 @@
   function sync() {
     if (!page) return;
     const state = api().get();
+    page.querySelector('[data-interface-theme]').value = currentTheme();
     page.querySelectorAll('[data-setting="interfaceMode"]').forEach(input => { input.checked = input.value === state.interfaceMode; });
     page.querySelector('[data-setting="textSize"]').value = state.textSize;
     page.querySelector('[data-setting="language"]').value = state.language;
