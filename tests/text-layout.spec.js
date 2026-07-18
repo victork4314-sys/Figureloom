@@ -1,18 +1,43 @@
 const { test, expect } = require('@playwright/test');
 
-test('text boxes wrap, align, resize, and restore', async ({ page }) => {
+test('pasted text wraps by default, aligns, resizes, and restores', async ({ page }) => {
   await page.goto('/');
   await page.waitForFunction(() => Boolean(window.__figureLoomTextLayoutTools && document.getElementById('textBoxFlow')));
   await page.evaluate(() => document.getElementById('scWelcome')?.classList.remove('open'));
 
-  await page.click('#addTextButton');
+  const legacyId = await page.evaluate(() => {
+    const item = {
+      id:uid(),
+      type:'text',
+      name:'Text label',
+      x:240,
+      y:160,
+      width:280,
+      height:55,
+      fill:'#172033',
+      stroke:'#26324a',
+      opacity:1,
+      rotation:0,
+      visible:true,
+      text:'Scientific label',
+      fontSize:30,
+      fontWeight:650,
+      fontStyle:'normal',
+      fontFamily:'Segoe UI, sans-serif'
+    };
+    state.objects = [item];
+    state.selectedId = item.id;
+    render();
+    return item.id;
+  });
+
   const longText = 'A long scientific explanation should wrap naturally inside its text box instead of stretching into one enormous line across the figure. This second sentence gives the paragraph enough words to test justified alignment as well.';
   const content = page.locator('#textContent');
   await content.fill(longText);
   await content.blur();
 
-  const created = await page.evaluate(() => {
-    const item = state.objects.find(entry => entry.type === 'text');
+  const created = await page.evaluate(id => {
+    const item = state.objects.find(entry => entry.id === id);
     return item && {
       id:item.id,
       flow:item.textFlow,
@@ -21,12 +46,12 @@ test('text boxes wrap, align, resize, and restore', async ({ page }) => {
       fontSize:item.fontSize,
       text:item.text
     };
-  });
+  }, legacyId);
   expect(created).toBeTruthy();
   expect(created.flow).toBe('auto-height');
-  expect(created.width).toBeGreaterThanOrEqual(280);
+  expect(created.width).toBe(280);
   expect(created.text).toBe(longText);
-  expect(created.height).toBeGreaterThan(62);
+  expect(created.height).toBeGreaterThan(55);
 
   const group = page.locator(`#objectLayer .canvas-object[data-id="${created.id}"]`);
   await expect(group).toBeVisible();
