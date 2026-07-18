@@ -175,7 +175,7 @@
     if (document.getElementById(MODULE_ID)) return;
     const host = document.getElementById('styleObjectArrangement')
       || document.querySelector('#arrangeProDrawer .utility-body');
-    if (!host || !window.SciCanvasSelection || !window.state) {
+    if (!host || !window.SciCanvasSelection || typeof state === 'undefined') {
       setTimeout(install, 80);
       return;
     }
