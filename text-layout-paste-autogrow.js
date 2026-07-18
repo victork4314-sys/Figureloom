@@ -21,7 +21,11 @@
       nextY = 0;
     }
 
+    item.textBoxWidth = Math.max(20, Number(item.width) || Number(item.textBoxWidth) || 320);
+    item.textBoxHeight = requiredHeight;
+
     if (Math.abs(Number(item.height) - requiredHeight) < 0.5 && Math.abs(Number(item.y) - nextY) < 0.5) {
+      item.height = requiredHeight;
       return group;
     }
 
@@ -35,6 +39,8 @@
     } finally {
       item.textFlow = flow;
     }
+    item.height = requiredHeight;
+    item.textBoxHeight = requiredHeight;
     return group;
   };
 
