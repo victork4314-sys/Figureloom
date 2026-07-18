@@ -1,11 +1,19 @@
 (() => {
-  if (window.__figureLoomTextEditingStabilityFixV3) return;
-  window.__figureLoomTextEditingStabilityFixV3 = true;
+  if (window.__figureLoomTextEditingStabilityFixV4) return;
+  window.__figureLoomTextEditingStabilityFixV4 = true;
 
+  const ALLOWED_TAGS = new Set(['A','B','BR','DIV','EM','I','LI','MARK','OL','P','S','SMALL','SPAN','STRONG','SUB','SUP','U','UL']);
+  const ALLOWED_STYLES = new Set([
+    'background-color','color','font-family','font-size','font-style','font-variant','font-weight',
+    'line-height','margin-bottom','margin-left','text-align','text-decoration','text-transform'
+  ]);
+
+  let overlay = null;
   let editor = null;
+  let activeItemId = '';
   let lastRange = null;
   let lastExpandedRange = null;
-  let normalEditHistoryItem = '';
+  let historyItemId = '';
 
   const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, character => ({
     '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'
@@ -15,10 +23,6 @@
     .split(/\r?\n/)
     .map(line => `<p>${escapeHtml(line) || '<br>'}</p>`)
     .join('');
-
-  function isRichTextItem(item) {
-    return item?.type === 'text' && Boolean(item.richTextHtml || item.textFlow === 'fit' || item.textOverflow === 'scroll');
-  }
 
   function normalizePlain(value) {
     return String(value || '')
@@ -34,7 +38,7 @@
     root.innerHTML = String(html || '');
     const output = [];
 
-    function walk(node) {
+    const walk = node => {
       if (node.nodeType === Node.TEXT_NODE) {
         output.push(node.nodeValue || '');
         return;
@@ -45,13 +49,100 @@
         output.push('\n');
         return;
       }
-      const block = ['P','DIV','LI','UL','OL'].includes(tag);
+      const block = ['P','DIV','LI'].includes(tag);
       [...node.childNodes].forEach(walk);
       if (block) output.push('\n');
-    }
+    };
 
     [...root.childNodes].forEach(walk);
     return normalizePlain(output.join(''));
+  }
+
+  function safeHref(value) {
+    const href = String(value || '').trim();
+    if (!href) return '';
+    if (href.startsWith('#')) return href;
+    try {
+      const url = new URL(href, location.href);
+      return ['http:','https:','mailto:'].includes(url.protocol) ? href : '';
+    } catch {
+      return '';
+    }
+  }
+
+  function cleanStyle(value) {
+    const source = document.createElement('span');
+    source.setAttribute('style', String(value || ''));
+    const target = document.createElement('span');
+    [...source.style].forEach(property => {
+      if (!ALLOWED_STYLES.has(property)) return;
+      const content = source.style.getPropertyValue(property);
+      if (/url\s*\(|expression\s*\(|javascript:/i.test(content)) return;
+      target.style.setProperty(property, content);
+    });
+    return target.getAttribute('style') || '';
+  }
+
+  function normalizeFontTags(root) {
+    root.querySelectorAll('font').forEach(font => {
+      const span = document.createElement('span');
+      const color = font.getAttribute('color');
+      const face = font.getAttribute('face');
+      const size = Number(font.getAttribute('size'));
+      if (color) span.style.color = color;
+      if (face) span.style.fontFamily = face;
+      if (size) span.style.fontSize = ({1:'.65em',2:'.8em',3:'1em',4:'1.15em',5:'1.35em',6:'1.65em',7:'2em'})[size] || '1em';
+      while (font.firstChild) span.appendChild(font.firstChild);
+      font.replaceWith(span);
+    });
+  }
+
+  function sanitizeHtml(value) {
+    const template = document.createElement('template');
+    template.innerHTML = String(value || '');
+    normalizeFontTags(template.content);
+
+    const walk = node => {
+      [...node.childNodes].forEach(child => {
+        if (child.nodeType === Node.COMMENT_NODE) {
+          child.remove();
+          return;
+        }
+        if (child.nodeType !== Node.ELEMENT_NODE) return;
+        if (!ALLOWED_TAGS.has(child.tagName)) {
+          walk(child);
+          child.replaceWith(...child.childNodes);
+          return;
+        }
+
+        [...child.attributes].forEach(attribute => {
+          const name = attribute.name.toLowerCase();
+          if (name === 'style') {
+            const style = cleanStyle(attribute.value);
+            if (style) child.setAttribute('style', style);
+            else child.removeAttribute('style');
+            return;
+          }
+          if (name === 'href' && child.tagName === 'A') {
+            const href = safeHref(attribute.value);
+            if (href) child.setAttribute('href', href);
+            else child.removeAttribute('href');
+            return;
+          }
+          if (['data-figure-label','data-figure-ref','data-scientific-style'].includes(name)) return;
+          child.removeAttribute(attribute.name);
+        });
+
+        if (child.tagName === 'A') {
+          child.setAttribute('target', '_blank');
+          child.setAttribute('rel', 'noopener noreferrer');
+        }
+        walk(child);
+      });
+    };
+
+    walk(template.content);
+    return template.innerHTML;
   }
 
   function meaningfulNodes(element) {
@@ -61,12 +152,8 @@
     });
   }
 
-  function htmlForNodes(nodes) {
+  function nodesHtml(nodes) {
     return nodes.map(node => node.nodeType === Node.TEXT_NODE ? escapeHtml(node.nodeValue) : node.outerHTML).join('');
-  }
-
-  function textForNodes(nodes) {
-    return plainFromHtml(htmlForNodes(nodes));
   }
 
   function markupScore(nodes) {
@@ -79,16 +166,16 @@
     }, 0);
   }
 
-  function collapseDuplicateChildren(element) {
-    [...element.children].forEach(collapseDuplicateChildren);
+  function collapseExactDuplicateSiblings(element) {
+    [...element.children].forEach(collapseExactDuplicateSiblings);
     const nodes = meaningfulNodes(element);
     if (nodes.length < 2) return;
 
     for (let split = 1; split < nodes.length; split += 1) {
       const left = nodes.slice(0, split);
       const right = nodes.slice(split);
-      const leftText = textForNodes(left);
-      const rightText = textForNodes(right);
+      const leftText = plainFromHtml(nodesHtml(left));
+      const rightText = plainFromHtml(nodesHtml(right));
       if (!leftText || leftText !== rightText) continue;
 
       const keep = markupScore(right) >= markupScore(left) ? right : left;
@@ -96,30 +183,64 @@
       nodes.forEach(node => {
         if (!keepSet.has(node)) node.remove();
       });
-      break;
+      return;
     }
   }
 
-  function canonicalHtml(html) {
+  function canonicalHtml(value) {
     const root = document.createElement('div');
-    root.innerHTML = String(html || '');
-    collapseDuplicateChildren(root);
-    return root.innerHTML;
+    root.innerHTML = sanitizeHtml(value);
+    collapseExactDuplicateSiblings(root);
+    return sanitizeHtml(root.innerHTML);
   }
 
-  function healItem(item) {
-    if (!item?.richTextHtml) return item;
-    const nextHtml = canonicalHtml(item.richTextHtml);
-    const nextText = plainFromHtml(nextHtml);
-    if (nextHtml !== item.richTextHtml) item.richTextHtml = nextHtml;
-    if (item.text !== nextText) item.text = nextText;
-    if (nextText) item.name = nextText.slice(0, 40);
-    return item;
+  function currentTextItem() {
+    try {
+      const selected = typeof selectedObject === 'function' ? selectedObject() : null;
+      if (selected?.type === 'text') return selected;
+    } catch {}
+    return null;
   }
 
-  function removeDuplicateTextLayers(group, item) {
-    if (!group || !isRichTextItem(item)) return group;
-    healItem(item);
+  function itemById(id) {
+    if (!id) return null;
+    return (state.objects || []).find(item => item.id === id && item.type === 'text') ||
+      (state.pages || []).flatMap(page => page.objects || []).find(item => item.id === id && item.type === 'text') || null;
+  }
+
+  function activeItem() {
+    return itemById(activeItemId) || currentTextItem();
+  }
+
+  function syncTextArea(item) {
+    const textarea = document.getElementById('textContent');
+    if (textarea && item && currentTextItem()?.id === item.id && document.activeElement !== textarea) {
+      textarea.value = item.text || '';
+    }
+  }
+
+  function repairStoredItem(item) {
+    if (!item?.richTextHtml) return false;
+    const html = canonicalHtml(item.richTextHtml);
+    const text = plainFromHtml(html);
+    const changed = html !== item.richTextHtml || text !== normalizePlain(item.text);
+    if (!changed) return false;
+    item.richTextHtml = html;
+    item.text = text;
+    item.name = text.slice(0, 40) || 'Text label';
+    return true;
+  }
+
+  function repairExistingItems() {
+    let changed = false;
+    (state.pages || []).forEach(page => (page.objects || []).forEach(item => {
+      if (repairStoredItem(item)) changed = true;
+    }));
+    if (changed && typeof scheduleSave === 'function') scheduleSave();
+  }
+
+  function removeDuplicateRenderLayers(group, item) {
+    if (!group || item?.type !== 'text' || !item.richTextHtml) return group;
     group.querySelectorAll('text').forEach(node => {
       if (!node.closest('foreignObject')) node.remove();
     });
@@ -129,35 +250,25 @@
     return group;
   }
 
-  if (typeof renderObject === 'function') {
+  function installRenderCleanup() {
+    if (window.__figureLoomRichTextRenderCleanupV4 || typeof renderObject !== 'function') return true;
+    window.__figureLoomRichTextRenderCleanupV4 = true;
     const baseRenderObject = renderObject;
-    renderObject = item => {
-      healItem(item);
-      return removeDuplicateTextLayers(baseRenderObject(item), item);
-    };
+    renderObject = item => removeDuplicateRenderLayers(baseRenderObject(item), item);
+    return true;
   }
 
-  function currentTextItem() {
-    try {
-      const item = typeof selectedObject === 'function' ? selectedObject() : null;
-      return item?.type === 'text' ? item : null;
-    } catch {
-      return null;
-    }
-  }
-
-  function selectionInside() {
+  function selectionInsideEditor() {
     const selection = window.getSelection();
-    if (!editor || !selection?.rangeCount) return false;
-    return editor.contains(selection.getRangeAt(0).commonAncestorContainer);
+    return Boolean(editor && selection?.rangeCount && editor.contains(selection.getRangeAt(0).commonAncestorContainer));
   }
 
-  function rememberRange(clearCollapsed = false) {
-    if (!selectionInside()) return;
+  function rememberRange(clearExpanded = false) {
+    if (!selectionInsideEditor()) return;
     const range = window.getSelection().getRangeAt(0).cloneRange();
     lastRange = range;
     if (!range.collapsed && normalizePlain(range.toString())) lastExpandedRange = range.cloneRange();
-    else if (clearCollapsed) lastExpandedRange = null;
+    else if (clearExpanded) lastExpandedRange = null;
   }
 
   function restoreRange(preferExpanded = false) {
@@ -171,23 +282,20 @@
   }
 
   function selectedText() {
-    const live = selectionInside() ? window.getSelection() : null;
-    if (live?.rangeCount && !live.getRangeAt(0).collapsed) return live.toString();
-    return restoreRange(true)?.toString() || '';
+    const selection = selectionInsideEditor() ? window.getSelection() : restoreRange(true);
+    return selection?.toString() || '';
   }
 
   function replaceSelection(html) {
-    const live = selectionInside() ? window.getSelection() : null;
-    const useLive = live?.rangeCount && !live.getRangeAt(0).collapsed;
-    const selection = useLive ? live : restoreRange(true);
+    const live = selectionInsideEditor() ? window.getSelection() : null;
+    const selection = live?.rangeCount && !live.getRangeAt(0).collapsed ? live : restoreRange(true);
     if (!selection?.rangeCount || !editor) return;
-
     const range = selection.getRangeAt(0);
     if (!editor.contains(range.commonAncestorContainer)) return;
-    range.deleteContents();
 
+    range.deleteContents();
     const template = document.createElement('template');
-    template.innerHTML = html;
+    template.innerHTML = sanitizeHtml(html);
     const fragment = template.content;
     const last = fragment.lastChild;
     range.insertNode(fragment);
@@ -225,16 +333,58 @@
     replaceSelection(html);
   }
 
-  function installRichEditor() {
-    const overlay = document.getElementById('figureloomRichTextOverlay');
-    const nextEditor = overlay?.querySelector('[data-rich-editor]');
-    if (!overlay || !nextEditor) return false;
-    if (overlay.dataset.stableSelectionV3 === '1') return true;
+  function saveRichText(event) {
+    event.preventDefault();
+    event.stopPropagation();
+    event.stopImmediatePropagation();
 
-    overlay.dataset.stableSelectionV3 = '1';
-    editor = nextEditor;
+    const item = activeItem();
+    if (!item || !editor) return;
+    if (typeof pushHistory === 'function') pushHistory();
 
-    ['keyup','mouseup','pointerup','input','focus'].forEach(type => editor.addEventListener(type, () => rememberRange(true), true));
+    const html = canonicalHtml(editor.innerHTML);
+    const text = plainFromHtml(html);
+    item.richTextHtml = html;
+    item.text = text;
+    item.name = text.slice(0, 40) || 'Text label';
+
+    syncTextArea(item);
+    if (typeof render === 'function') render();
+    if (typeof renderPages === 'function') renderPages();
+    if (typeof scheduleSave === 'function') scheduleSave();
+
+    overlay.hidden = true;
+    activeItemId = '';
+    lastRange = null;
+    lastExpandedRange = null;
+  }
+
+  function prepareEditorForItem() {
+    const item = currentTextItem();
+    if (!item || !editor) return;
+    activeItemId = item.id;
+    repairStoredItem(item);
+    editor.innerHTML = item.richTextHtml ? canonicalHtml(item.richTextHtml) : plainHtml(item.text);
+    syncTextArea(item);
+    lastRange = null;
+    lastExpandedRange = null;
+  }
+
+  function installRichEditorOwnership() {
+    overlay = document.getElementById('figureloomRichTextOverlay');
+    editor = overlay?.querySelector('[data-rich-editor]') || null;
+    if (!overlay || !editor) return false;
+    if (overlay.dataset.atomicSaveV4 === '1') return true;
+    overlay.dataset.atomicSaveV4 = '1';
+
+    const observer = new MutationObserver(() => {
+      if (!overlay.hidden) requestAnimationFrame(prepareEditorForItem);
+    });
+    observer.observe(overlay, { attributes:true, attributeFilter:['hidden'] });
+
+    ['keyup','mouseup','pointerup','input','focus'].forEach(type => {
+      editor.addEventListener(type, () => rememberRange(type !== 'mouseup' && type !== 'pointerup'), true);
+    });
     document.addEventListener('selectionchange', () => {
       if (!overlay.hidden) rememberRange(false);
     });
@@ -242,8 +392,12 @@
     overlay.addEventListener('pointerdown', event => {
       const control = event.target.closest?.('.rich-toolbar button,.rich-science-toolbar button,.rich-symbols button');
       if (!control) return;
-      rememberRange();
+      rememberRange(false);
       event.preventDefault();
+    }, true);
+
+    overlay.addEventListener('change', event => {
+      if (event.target.matches?.('.rich-toolbar select,.rich-science-toolbar select,input[type="color"]')) restoreRange(true);
     }, true);
 
     overlay.addEventListener('click', event => {
@@ -252,35 +406,22 @@
         handleReplacement(event, replacement);
         return;
       }
-
-      const save = event.target.closest?.('[data-rich-save]');
-      if (!save) return;
-      const item = currentTextItem();
-      editor.innerHTML = canonicalHtml(editor.innerHTML);
-      queueMicrotask(() => {
-        if (!item?.richTextHtml) return;
-        healItem(item);
-        const textarea = document.getElementById('textContent');
-        if (textarea && currentTextItem()?.id === item.id) textarea.value = item.text;
-        if (typeof render === 'function') render();
-        if (typeof renderPages === 'function') renderPages();
-        if (typeof scheduleSave === 'function') scheduleSave();
-      });
+      if (event.target.closest?.('[data-rich-save]')) saveRichText(event);
     }, true);
 
     return true;
   }
 
-  function installNormalEditorHandoff() {
+  function installNormalEditorOwnership() {
     const textarea = document.getElementById('textContent');
     if (!textarea) return false;
-    if (textarea.dataset.richTextHandoffV3 === '1') return true;
-    textarea.dataset.richTextHandoffV3 = '1';
+    if (textarea.dataset.atomicRichTextV4 === '1') return true;
+    textarea.dataset.atomicRichTextV4 = '1';
 
     textarea.addEventListener('focus', () => {
       const item = currentTextItem();
-      if (!item?.richTextHtml || normalEditHistoryItem === item.id) return;
-      normalEditHistoryItem = item.id;
+      if (!item?.richTextHtml || historyItemId === item.id) return;
+      historyItemId = item.id;
       if (typeof pushHistory === 'function') pushHistory();
     }, true);
 
@@ -296,134 +437,67 @@
 
     textarea.addEventListener('input', event => {
       if (!sync(event)) return;
-      requestAnimationFrame(() => {
-        if (typeof render === 'function') render();
-        if (typeof renderPages === 'function') renderPages();
-        if (typeof scheduleSave === 'function') scheduleSave();
-      });
-    }, true);
-
-    textarea.addEventListener('change', event => {
-      if (!sync(event)) return;
-      normalEditHistoryItem = '';
       if (typeof render === 'function') render();
       if (typeof renderPages === 'function') renderPages();
       if (typeof scheduleSave === 'function') scheduleSave();
     }, true);
 
-    textarea.addEventListener('blur', () => {
-      normalEditHistoryItem = '';
+    textarea.addEventListener('change', event => {
+      if (!sync(event)) return;
+      historyItemId = '';
+      if (typeof render === 'function') render();
+      if (typeof renderPages === 'function') renderPages();
+      if (typeof scheduleSave === 'function') scheduleSave();
     }, true);
 
+    textarea.addEventListener('blur', () => { historyItemId = ''; }, true);
     return true;
   }
 
-  function installInspectorCanonicalView() {
-    if (window.__figureLoomRichTextInspectorCanonicalV3 || typeof updateInspector !== 'function') return true;
-    window.__figureLoomRichTextInspectorCanonicalV3 = true;
+  function installInspectorSync() {
+    if (window.__figureLoomRichTextInspectorSyncV4 || typeof updateInspector !== 'function') return true;
+    window.__figureLoomRichTextInspectorSyncV4 = true;
     const baseUpdateInspector = updateInspector;
-
-    updateInspector = function updateInspectorWithCanonicalRichText() {
+    updateInspector = function updateInspectorWithAtomicRichText() {
       baseUpdateInspector();
       const item = currentTextItem();
-      if (!item?.richTextHtml) return;
-      healItem(item);
-      const textarea = document.getElementById('textContent');
-      if (textarea && document.activeElement !== textarea) textarea.value = item.text;
+      if (item?.richTextHtml) syncTextArea(item);
     };
     return true;
   }
 
   document.getElementById('figureloomRichTextThemeFix')?.remove();
   document.getElementById('figureloomRichTextThemeFixV2')?.remove();
+  document.getElementById('figureloomRichTextThemeFixV3')?.remove();
 
   const style = document.createElement('style');
-  style.id = 'figureloomRichTextThemeFixV3';
+  style.id = 'figureloomRichTextThemeFixV4';
   style.textContent = `
-    html[data-figureloom-theme="dark"] #figureloomRichTextOverlay{
-      background:rgba(8,10,14,.64)!important;
-      color:#e9ecf0!important
-    }
-    html[data-figureloom-theme="dark"] #figureloomRichTextOverlay .figureloom-rich-editor{
-      background:#292e35!important;
-      color:#e9ecf0!important;
-      border-color:#454c57!important;
-      box-shadow:0 22px 58px rgba(0,0,0,.42)!important
-    }
+    html[data-figureloom-theme="dark"] #figureloomRichTextOverlay{background:rgba(8,10,14,.64)!important;color:#e9ecf0!important}
+    html[data-figureloom-theme="dark"] #figureloomRichTextOverlay .figureloom-rich-editor{background:#292e35!important;color:#e9ecf0!important;border-color:#454c57!important;box-shadow:0 22px 58px rgba(0,0,0,.42)!important}
     html[data-figureloom-theme="dark"] #figureloomRichTextOverlay .figureloom-rich-editor>header,
-    html[data-figureloom-theme="dark"] #figureloomRichTextOverlay .figureloom-rich-editor>footer{
-      background:#30353d!important;
-      color:#f1f3f6!important;
-      border-color:#474e59!important
-    }
-    html[data-figureloom-theme="dark"] #figureloomRichTextOverlay .figureloom-rich-editor header small{
-      color:#aab2bd!important
-    }
-    html[data-figureloom-theme="dark"] #figureloomRichTextOverlay .rich-toolbar{
-      background:#2b3037!important;
-      border-color:#3d434d!important
-    }
-    html[data-figureloom-theme="dark"] #figureloomRichTextOverlay .rich-science-toolbar{
-      background:#30353d!important;
-      border-color:#454c57!important
-    }
-    html[data-figureloom-theme="dark"] #figureloomRichTextOverlay .rich-symbols{
-      background:#292e35!important;
-      border-color:#434a55!important
-    }
-    html[data-figureloom-theme="dark"] #figureloomRichTextOverlay :where(
-      .rich-toolbar button,.rich-science-toolbar button,.rich-symbols button,
-      .rich-toolbar select,.rich-science-toolbar select,
-      .rich-toolbar label,.rich-science-toolbar label,
-      .figureloom-rich-editor footer button
-    ){
-      background:#373d46!important;
-      color:#e9ecf0!important;
-      border-color:#505864!important
-    }
-    html[data-figureloom-theme="dark"] #figureloomRichTextOverlay :where(
-      .rich-toolbar button,.rich-science-toolbar button,.rich-symbols button,
-      .figureloom-rich-editor footer button
-    ):hover{
-      background:#414852!important
-    }
-    html[data-figureloom-theme="dark"] #figureloomRichTextOverlay option{
-      background:#343a43!important;
-      color:#eef1f4!important
-    }
-    html[data-figureloom-theme="dark"] #figureloomRichTextOverlay input[type="color"]{
-      background:#343a43!important
-    }
-    html[data-figureloom-theme="dark"] #figureloomRichTextOverlay .rich-editable{
-      background:#343a43!important;
-      color:#eef1f4!important;
-      border-color:#505864!important;
-      caret-color:#eef1f4!important
-    }
-    html[data-figureloom-theme="dark"] #figureloomRichTextOverlay .rich-editable:focus{
-      border-color:#7f9bd3!important;
-      box-shadow:0 0 0 3px rgba(127,155,211,.18)!important
-    }
-    html[data-figureloom-theme="dark"] #figureloomRichTextOverlay .rich-editable a{
-      color:#b9cef8!important
-    }
-    html[data-figureloom-theme="dark"] #figureloomRichTextOverlay [data-rich-save]{
-      background:#586fb9!important;
-      color:#fff!important;
-      border-color:#7188d0!important
-    }
-    html[data-figureloom-theme="dark"] #figureloomRichTextOverlay [data-rich-close]{
-      color:#aab2bd!important;
-      background:transparent!important;
-      border-color:transparent!important
-    }
+    html[data-figureloom-theme="dark"] #figureloomRichTextOverlay .figureloom-rich-editor>footer{background:#30353d!important;color:#f1f3f6!important;border-color:#474e59!important}
+    html[data-figureloom-theme="dark"] #figureloomRichTextOverlay .figureloom-rich-editor header small{color:#aab2bd!important}
+    html[data-figureloom-theme="dark"] #figureloomRichTextOverlay .rich-toolbar{background:#2b3037!important;border-color:#3d434d!important}
+    html[data-figureloom-theme="dark"] #figureloomRichTextOverlay .rich-science-toolbar{background:#30353d!important;border-color:#454c57!important}
+    html[data-figureloom-theme="dark"] #figureloomRichTextOverlay .rich-symbols{background:#292e35!important;border-color:#434a55!important}
+    html[data-figureloom-theme="dark"] #figureloomRichTextOverlay :where(.rich-toolbar button,.rich-science-toolbar button,.rich-symbols button,.rich-toolbar select,.rich-science-toolbar select,.rich-toolbar label,.rich-science-toolbar label,.figureloom-rich-editor footer button){background:#373d46!important;color:#e9ecf0!important;border-color:#505864!important}
+    html[data-figureloom-theme="dark"] #figureloomRichTextOverlay :where(.rich-toolbar button,.rich-science-toolbar button,.rich-symbols button,.figureloom-rich-editor footer button):hover{background:#414852!important}
+    html[data-figureloom-theme="dark"] #figureloomRichTextOverlay option{background:#343a43!important;color:#eef1f4!important}
+    html[data-figureloom-theme="dark"] #figureloomRichTextOverlay input[type="color"]{background:#343a43!important}
+    html[data-figureloom-theme="dark"] #figureloomRichTextOverlay .rich-editable{background:#343a43!important;color:#eef1f4!important;border-color:#505864!important;caret-color:#eef1f4!important}
+    html[data-figureloom-theme="dark"] #figureloomRichTextOverlay .rich-editable:focus{border-color:#7f9bd3!important;box-shadow:0 0 0 3px rgba(127,155,211,.18)!important}
+    html[data-figureloom-theme="dark"] #figureloomRichTextOverlay .rich-editable a{color:#b9cef8!important}
+    html[data-figureloom-theme="dark"] #figureloomRichTextOverlay [data-rich-save]{background:#586fb9!important;color:#fff!important;border-color:#7188d0!important}
+    html[data-figureloom-theme="dark"] #figureloomRichTextOverlay [data-rich-close]{color:#aab2bd!important;background:transparent!important;border-color:transparent!important}
   `;
   document.head.appendChild(style);
 
   function install() {
-    const ready = installRichEditor() && installNormalEditorHandoff() && installInspectorCanonicalView();
+    const ready = installRenderCleanup() && installRichEditorOwnership() && installNormalEditorOwnership() && installInspectorSync();
     if (!ready) setTimeout(install, 80);
   }
 
+  repairExistingItems();
   install();
 })();
