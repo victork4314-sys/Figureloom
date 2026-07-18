@@ -38,7 +38,7 @@ test('live pasted text creates every required wrapped line and restores', async 
     return item?.text === text && item.textFlow === 'auto-height';
   }, { id:created.id, text:longText });
 
-  await page.locator('#canvasBackground').click({ position:{ x:10, y:10 } });
+  await editor.press('Enter');
   await expect(editor).toBeHidden();
   await page.waitForFunction(id => {
     const group = document.querySelector(`#objectLayer .canvas-object[data-id="${id}"]`);
