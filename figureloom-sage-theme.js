@@ -289,6 +289,10 @@
       color:var(--figureloom-ui-accent-strong)!important;
       background:var(--figureloom-ui-accent-soft)!important;
     }
+    html[data-figureloom-theme] body #scicanvasTour .tour-actions{
+      background:var(--figureloom-ui-soft)!important;
+      border-top-color:var(--figureloom-ui-line)!important;
+    }
     html[data-figureloom-theme] body #scicanvasTour .tour-highlight{
       border-color:var(--figureloom-ui-accent)!important;
       box-shadow:0 0 0 5px color-mix(in srgb,var(--figureloom-ui-accent) 18%,transparent)!important;
