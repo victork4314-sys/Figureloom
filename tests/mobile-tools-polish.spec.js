@@ -22,12 +22,18 @@ async function prepare(page, theme = 'light') {
   }, theme);
   await page.goto('/');
   await expect(page.locator('#canvas')).toBeVisible();
-  await page.waitForFunction(() => Boolean(window.FigureLoomPhoneMode && window.FigureLoomMobileToolsPolish));
+  await page.waitForFunction(() => Boolean(
+    window.FigureLoomPhoneMode
+    && window.FigureLoomMobileToolsPolish
+    && window.FigureLoomMobileToolsScrollFix
+    && document.documentElement.dataset.figureloomReady === '1'
+  ));
   await expect(page.locator('html')).toHaveAttribute('data-figureloom-resolved-mode', 'phone');
 }
 
-test('mobile Tools is vertically scrollable, sectioned and uses the sage theme', async ({ page }, testInfo) => {
+test('mobile Tools responds to a real vertical touch drag and uses the sage theme', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'mobile', 'phone tools check');
+  await page.setViewportSize({ width:390, height:640 });
   await prepare(page);
 
   await page.locator('[data-phone-action="tools"]').click();
@@ -36,6 +42,7 @@ test('mobile Tools is vertically scrollable, sectioned and uses the sage theme',
   await expect(page.locator('#figureloomPhoneToolSections')).toBeVisible();
   await expect(page.locator('#figureloomPhoneToolSections [data-phone-tool-tab="insert"]')).toContainText('Add');
   await expect(page.locator('#figureloomPhoneToolSections [data-phone-tool-tab="layout"]')).toContainText('Arrange');
+  await page.waitForFunction(() => document.querySelectorAll('.ribbon .tool-group').length >= 3);
 
   const result = await ribbon.evaluate(node => {
     const nodeStyle = getComputedStyle(node);
@@ -46,24 +53,31 @@ test('mobile Tools is vertically scrollable, sectioned and uses the sage theme',
     probe.style.color = 'var(--figureloom-ui-accent)';
     const uiAccent = getComputedStyle(probe).color;
     probe.remove();
-    const before = node.scrollTop;
-    node.scrollTop = node.scrollHeight;
+    node.scrollTop = 0;
     return {
+      display:nodeStyle.display,
       overflowY:nodeStyle.overflowY,
       touchAction:nodeStyle.touchAction,
       scrollHeight:node.scrollHeight,
       clientHeight:node.clientHeight,
-      before,
-      after:node.scrollTop,
       phoneAccent,
       uiAccent
     };
   });
 
-  expect(['auto','scroll']).toContain(result.overflowY);
-  expect(result.touchAction).toContain('pan-y');
+  expect(result.display).toBe('block');
+  expect(result.overflowY).toBe('scroll');
+  expect(result.touchAction).toBe('none');
+  expect(result.scrollHeight).toBeGreaterThan(result.clientHeight + 1);
   expect(result.phoneAccent).toBe(result.uiAccent);
-  if (result.scrollHeight > result.clientHeight + 1) expect(result.after).toBeGreaterThan(result.before);
+
+  const target = ribbon.locator('.tool-group').nth(1);
+  const base = { pointerId:71, pointerType:'touch', isPrimary:true, button:0, buttons:1, clientX:300 };
+  await target.dispatchEvent('pointerdown', { ...base, clientY:560 });
+  await target.dispatchEvent('pointermove', { ...base, clientY:360 });
+  await target.dispatchEvent('pointermove', { ...base, clientY:180 });
+  await ribbon.dispatchEvent('pointerup', { ...base, buttons:0, clientY:180 });
+  await expect.poll(() => ribbon.evaluate(node => node.scrollTop)).toBeGreaterThan(100);
 });
 
 test('mobile More uses one vector icon family and equal action heights', async ({ page }, testInfo) => {
