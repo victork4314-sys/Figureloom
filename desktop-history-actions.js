@@ -1,10 +1,12 @@
 (() => {
-  if (window.__figureLoomDesktopHistoryActionsV2) return;
+  if (window.__figureLoomDesktopHistoryActionsV3) return;
+  window.__figureLoomDesktopHistoryActionsV3 = true;
   window.__figureLoomDesktopHistoryActionsV2 = true;
   window.__figureLoomDesktopHistoryActionsV1 = true;
 
   const root = document.documentElement;
   let scheduled = false;
+  let desktopViewOrderApplied = false;
 
   function desktopInterfaceMode() {
     return root.dataset.figureloomResolvedMode === 'desktop';
@@ -42,13 +44,55 @@
     return true;
   }
 
+  function viewControls() {
+    const fitButton = document.getElementById('fitButton');
+    const gridLabel = document.getElementById('gridToggle')?.closest('label');
+    const snapLabel = document.getElementById('snapToggle')?.closest('label');
+    const group = fitButton?.closest('.tool-group');
+    if (!group || gridLabel?.parentElement !== group || snapLabel?.parentElement !== group) return null;
+    return { group, fitButton, gridLabel, snapLabel };
+  }
+
+  function placeDesktopViewOrder() {
+    const controls = viewControls();
+    if (!controls) return;
+    const { group, fitButton, gridLabel, snapLabel } = controls;
+    if (fitButton.nextElementSibling !== gridLabel || gridLabel.nextElementSibling !== snapLabel) {
+      group.insertBefore(fitButton, gridLabel);
+      group.insertBefore(gridLabel, snapLabel);
+    }
+    desktopViewOrderApplied = true;
+    root.dataset.figureloomDesktopViewOrder = '1';
+  }
+
+  function restorePhoneViewOrder() {
+    if (!desktopViewOrderApplied) return;
+    const controls = viewControls();
+    if (controls) {
+      const { group, fitButton, gridLabel, snapLabel } = controls;
+      if (gridLabel.nextElementSibling !== snapLabel || snapLabel.nextElementSibling !== fitButton) {
+        group.insertBefore(gridLabel, fitButton);
+        group.insertBefore(snapLabel, fitButton);
+      }
+    }
+    desktopViewOrderApplied = false;
+    delete root.dataset.figureloomDesktopViewOrder;
+  }
+
   function sync() {
     const undoButton = document.getElementById('undoButton');
     const redoButton = document.getElementById('redoButton');
     const deleteButton = document.getElementById('deleteButton');
     if (!undoButton || !redoButton) return;
-    if (desktopInterfaceMode() && deleteButton && placeBesideDelete(undoButton, redoButton, deleteButton)) return;
+
+    if (desktopInterfaceMode()) {
+      if (deleteButton) placeBesideDelete(undoButton, redoButton, deleteButton);
+      placeDesktopViewOrder();
+      return;
+    }
+
     restoreHeader(undoButton, redoButton);
+    restorePhoneViewOrder();
   }
 
   function scheduleSync() {
@@ -63,14 +107,81 @@
   const style = document.createElement('style');
   style.id = 'figureloomDesktopHistoryActionsStyle';
   style.textContent = `
-    html[data-figureloom-desktop-history-actions="1"] :where(#undoButton,#redoButton,#deleteButton){
-      display:inline-flex!important;align-items:center;justify-content:center;min-width:68px;height:34px;min-height:34px;
-      padding:0 11px!important;border-radius:8px!important;font-size:12px;font-weight:720;line-height:1;white-space:nowrap;
+    html[data-figureloom-resolved-mode="desktop"] .ribbon .tool-group > button:not(.figureloom-legacy-shape-action){
+      display:inline-flex!important;
+      align-items:center!important;
+      justify-content:center!important;
+      box-sizing:border-box!important;
+      min-width:72px;
+      height:36px!important;
+      min-height:36px!important;
+      padding:0 12px!important;
+      border:1px solid var(--figureloom-ui-line,#cddbd7)!important;
+      border-radius:8px!important;
+      color:var(--figureloom-ui-text,#172321)!important;
+      background:var(--figureloom-ui-surface,#fff)!important;
+      box-shadow:none!important;
+      font-family:inherit!important;
+      font-size:13px!important;
+      font-weight:600!important;
+      font-style:normal!important;
+      line-height:1.2!important;
+      letter-spacing:normal!important;
+      text-transform:none!important;
+      white-space:nowrap;
+      touch-action:manipulation;
+      transform:none;
+      transition:background-color .12s ease,border-color .12s ease,color .12s ease,opacity .12s ease;
     }
-    html[data-figureloom-desktop-history-actions="1"] #undoButton{margin-left:1px}
-    html[data-figureloom-desktop-history-actions="1"] #deleteButton{margin-left:1px}
-    html[data-figureloom-desktop-history-actions="1"] :where(#undoButton,#redoButton):focus-visible{
-      outline:2px solid color-mix(in srgb,var(--figureloom-ui-accent,#2f7468) 55%,transparent);outline-offset:2px;
+    html[data-figureloom-resolved-mode="desktop"] .ribbon .tool-group > :where(#undoButton,#redoButton,#deleteButton){
+      width:78px!important;
+      min-width:78px!important;
+      max-width:78px!important;
+      margin:0!important;
+    }
+    html[data-figureloom-resolved-mode="desktop"] .ribbon .tool-group > label{
+      display:inline-flex!important;
+      align-items:center!important;
+      justify-content:center!important;
+      box-sizing:border-box;
+      min-height:36px;
+      gap:6px!important;
+      padding:0 7px;
+      color:var(--figureloom-ui-text,#172321)!important;
+      font-family:inherit!important;
+      font-size:13px!important;
+      font-weight:600!important;
+      line-height:1.2!important;
+      white-space:nowrap;
+    }
+    @media (hover:hover) and (pointer:fine){
+      html[data-figureloom-resolved-mode="desktop"] .ribbon .tool-group > button:not(.figureloom-legacy-shape-action):hover:not(:disabled){
+        color:var(--figureloom-ui-accent-strong,#195c51)!important;
+        background:var(--figureloom-ui-accent-soft,#dff1ec)!important;
+        border-color:var(--figureloom-ui-accent,#2f7468)!important;
+      }
+    }
+    html[data-figureloom-resolved-mode="desktop"] .ribbon .tool-group > button:not(.figureloom-legacy-shape-action):active:not(:disabled){
+      color:var(--figureloom-ui-accent-strong,#195c51)!important;
+      background:var(--figureloom-ui-accent-soft,#dff1ec)!important;
+      border-color:var(--figureloom-ui-accent,#2f7468)!important;
+      transform:none!important;
+    }
+    html[data-figureloom-resolved-mode="desktop"] .ribbon .tool-group > button:not(.figureloom-legacy-shape-action):focus:not(:focus-visible):not(.active):not([aria-pressed="true"]){
+      color:var(--figureloom-ui-text,#172321)!important;
+      background:var(--figureloom-ui-surface,#fff)!important;
+      border-color:var(--figureloom-ui-line,#cddbd7)!important;
+      outline:none!important;
+    }
+    html[data-figureloom-resolved-mode="desktop"] .ribbon .tool-group > button:not(.figureloom-legacy-shape-action):focus-visible{
+      outline:2px solid color-mix(in srgb,var(--figureloom-ui-accent,#2f7468) 58%,transparent)!important;
+      outline-offset:2px!important;
+    }
+    html[data-figureloom-resolved-mode="desktop"] .ribbon .tool-group > button:not(.figureloom-legacy-shape-action):disabled{
+      color:var(--figureloom-ui-muted,#60706c)!important;
+      background:var(--figureloom-ui-soft,#edf3f1)!important;
+      border-color:var(--figureloom-ui-line,#cddbd7)!important;
+      opacity:.5!important;
     }
   `;
   document.getElementById(style.id)?.remove();
