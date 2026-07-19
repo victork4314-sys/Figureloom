@@ -7,6 +7,7 @@ on:
       - 'mobile-mode.css'
       - 'mobile-mode-canvas-fit.js'
       - 'mobile-tools-polish.js'
+      - 'mobile-toast-theme.js'
       - 'mobile-touch-drag-fix.js'
       - 'drawing-pad-fix.js'
       - 'adriana-polish.js'
@@ -45,6 +46,7 @@ jobs:
           node --check mobile-mode.js
           node --check mobile-mode-canvas-fit.js
           node --check mobile-tools-polish.js
+          node --check mobile-toast-theme.js
           node --check mobile-touch-drag-fix.js
           node --check drawing-pad-fix.js
           node --check adriana-polish.js
