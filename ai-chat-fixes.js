@@ -15,7 +15,6 @@
 
   loadCompanion('interface-dark-mode.js?v=3', 'figureloom-dark-mode');
   loadCompanion('dark-mode-windows.js?v=2', 'figureloom-dark-windows');
-  loadCompanion('platform-icons.js?v=3', 'figureloom-platform-icons');
   loadCompanion('interaction-stability-fixes.js?v=1', 'figureloom-interaction-stability');
   loadCompanion('page-thumbnail-previews.js?v=1', 'figureloom-page-previews');
   loadCompanion('illustrations-ui-polish.js?v=1', 'figureloom-illustrations-polish');
