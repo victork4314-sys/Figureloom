@@ -128,6 +128,7 @@
     html[data-figureloom-theme] body .ribbon-tab.active,
     html[data-figureloom-theme] body .inspector-tab.active{color:var(--figureloom-ui-accent-strong)!important;border-bottom-color:var(--figureloom-ui-accent)!important;background:var(--figureloom-ui-accent-soft)!important}
     html[data-figureloom-theme] body .ribbon-tab.active::after{background:var(--figureloom-ui-accent)!important}
+    html[data-figureloom-resolved-mode="phone"][data-figureloom-theme] body .ribbon-tab.active{border-bottom-color:transparent!important}
     html[data-figureloom-theme] body .tool-group,
     html[data-figureloom-theme] body .inspector-tabs,
     html[data-figureloom-theme] body .inspector-section{border-color:var(--figureloom-ui-line)!important}
