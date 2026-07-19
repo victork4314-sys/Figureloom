@@ -1,0 +1,1 @@
+FigureLoom is free and open source under AGPL-3.0-only. Open the editor at [figureloom.org](https://figureloom.org/) or return to the [repository](https://github.com/victork4314-sys/Figureloom).

@@ -12,6 +12,8 @@ The interface should feel familiar to anyone who has used PowerPoint, Keynote, o
 
 Try it at [figureloom.org](https://figureloom.org/).
 
+Read the [complete manual and tutorials](https://github.com/victork4314-sys/Figureloom/wiki).
+
 ## What it can do
 
 - Multi-page, layer-based vector editing
@@ -125,6 +127,7 @@ Outside asset packs keep their own licenses and attribution requirements. Read [
 
 ## More documentation
 
+- [Complete manual and tutorials](https://github.com/victork4314-sys/Figureloom/wiki)
 - [`docs/PRO_TOOLS.md`](docs/PRO_TOOLS.md)
 - [`docs/POWERPOINT_EXPORT.md`](docs/POWERPOINT_EXPORT.md)
 - [`docs/FEATURE_AUDIT.md`](docs/FEATURE_AUDIT.md)
