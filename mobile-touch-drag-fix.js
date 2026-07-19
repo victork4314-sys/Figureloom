@@ -72,7 +72,6 @@
     if (!frame) {
       frame = document.createElement('div');
       frame.id = 'figureloomPhoneCanvasFrame';
-      frame.setAttribute('aria-hidden', 'true');
     }
     if (node.parentElement !== frame) {
       host.insertBefore(frame, node);
