@@ -1,8 +1,8 @@
 (() => {
-  if (window.__figureLoomStableRuntime71d36dfV28) return;
-  window.__figureLoomStableRuntime71d36dfV28 = true;
+  if (window.__figureLoomStableRuntime71d36dfV29) return;
+  window.__figureLoomStableRuntime71d36dfV29 = true;
 
-  const STABLE_BUILD = "stable-71d36df-locked-20260719-v28";
+  const STABLE_BUILD = "stable-71d36df-locked-20260719-v29";
   const GENERAL_ADDONS = [
     "library-more-illustrations.js",
     "library-more-templates.js",
@@ -14,9 +14,6 @@
     "collaboration-guest-links.js",
     "shared-content-state-bridge.js",
     "shared-content-safety.js",
-    "language-packs.js",
-    "language-interface-phrases.js",
-    "language-interface-extra.js",
     "settings-core.js",
     "settings-page.js",
     "settings-gentle-fixes.js",
