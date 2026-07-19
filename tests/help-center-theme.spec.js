@@ -53,7 +53,7 @@ for (const theme of ['light', 'dark']) {
   });
 }
 
-test('editor and Help use the same single SVG favicon', async ({ page }, testInfo) => {
+test('editor and Help use the same fresh SVG favicon', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'desktop', 'desktop icon audit');
   await prepare(page);
 
@@ -61,7 +61,8 @@ test('editor and Help use the same single SVG favicon', async ({ page }, testInf
     href:link.getAttribute('href'),
     type:link.getAttribute('type')
   })));
-  expect(editorIcons).toEqual([{ href:'./figureloom-mark.svg?v=1', type:'image/svg+xml' }]);
+  expect(editorIcons).toEqual([{ href:'./figureloom-favicon.svg', type:'image/svg+xml' }]);
+  expect(await page.locator('link[rel="manifest"]').count()).toBe(0);
   expect(await page.locator('link[rel="apple-touch-icon"]').count()).toBe(0);
   expect(await page.locator('link[rel="apple-touch-icon-precomposed"]').count()).toBe(0);
   expect(await page.locator('link[rel="mask-icon"]').count()).toBe(0);
@@ -82,7 +83,7 @@ test('editor and Help use the same single SVG favicon', async ({ page }, testInf
     href:link.getAttribute('href'),
     type:link.getAttribute('type')
   })));
-  expect(helpIcons).toEqual([{ href:'../figureloom-mark.svg?v=1', type:'image/svg+xml' }]);
+  expect(helpIcons).toEqual([{ href:'../figureloom-favicon.svg', type:'image/svg+xml' }]);
 });
 
 test('native Safari trackpad pinch zooms the page', async ({ page }, testInfo) => {

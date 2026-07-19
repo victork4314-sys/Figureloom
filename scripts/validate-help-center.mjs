@@ -12,7 +12,7 @@ const rejectText = (source, marker, label) => { if (source.includes(marker)) err
 const requiredFiles = [
   'help-center.js','figureloom-sage-theme.js','interface-dark-mode.js','dark-mode-windows.js',
   'ai-chat-fixes.js','interaction-stability-fixes.js','safe-refresh.js',
-  'text-editing-gentle-polish.js','manifest.webmanifest','figureloom-mark.svg','tour-mobile-safe.js',
+  'text-editing-gentle-polish.js','manifest.webmanifest','figureloom-mark.svg','figureloom-favicon.svg','tour-mobile-safe.js',
   'tests/help-center-theme.spec.js','legal.html','wiki/index.html','wiki/wiki.css','wiki/wiki.js'
 ];
 requiredFiles.forEach(requireFile);
@@ -37,21 +37,18 @@ if (!errors.length) {
 
   requireText(appHtml, 'help-center.js', 'index.html');
   requireText(appHtml, 'figureloom-sage-theme.js', 'index.html');
-  requireText(appHtml, '<link rel="icon" href="./figureloom-mark.svg?v=1" type="image/svg+xml" />', 'index.html favicon');
-  requireText(helpHtml, '<link rel="icon" href="../figureloom-mark.svg?v=1" type="image/svg+xml">', 'Help favicon');
+  requireText(helpHtml, '<link rel="icon" href="../figureloom-favicon.svg" type="image/svg+xml">', 'Help favicon');
   rejectText(appHtml, 'Stable version', 'index.html loading copy');
 
-  const appIconLinks = appHtml.match(/<link\s+rel=["']icon["'][^>]*>/g) || [];
-  if (appIconLinks.length !== 1) errors.push(`index.html must declare exactly one favicon, found ${appIconLinks.length}`);
+  for (const marker of [
+    'figureloom-favicon.svg','link[rel="manifest"]','favicon.rel = \'icon\'',
+    "interaction-stability-fixes.js?v=1","interface-dark-mode.js?v=3","dark-mode-windows.js?v=2"
+  ]) requireText(loader, marker, 'ai-chat-fixes.js');
 
   for (const marker of [
     'platform-icons.js','favicon.ico','apple-touch-icon','figureloom-tab-',
     'figureloom-pinned','browserconfig.xml','mstile-'
   ]) rejectText(appHtml + loader + worker, marker, 'app icon wiring');
-
-  for (const marker of [
-    "interaction-stability-fixes.js?v=1","interface-dark-mode.js?v=3","dark-mode-windows.js?v=2"
-  ]) requireText(loader, marker, 'ai-chat-fixes.js companion loader');
 
   for (const marker of [
     "addEventListener('gesturestart'","addEventListener('gesturechange'",'state.drag = null',
@@ -60,8 +57,8 @@ if (!errors.length) {
   ]) requireText(stability, marker, 'interaction-stability-fixes.js');
 
   for (const marker of [
-    'stable-71d36df-locked-20260719-v51','./interaction-stability-fixes.js?v=1',
-    './figureloom-mark.svg?v=1','./manifest.webmanifest?v=10'
+    'stable-71d36df-locked-20260719-v52','./interaction-stability-fixes.js?v=1',
+    './figureloom-favicon.svg'
   ]) requireText(worker, marker, 'service-worker.js');
 
   for (const marker of [
@@ -72,7 +69,7 @@ if (!errors.length) {
 
   for (const marker of [
     'native Safari trackpad pinch zooms the page','stale drag state cannot flood errors',
-    'welcome overlay stays translucent','editor and Help use the same single SVG favicon'
+    'welcome overlay stays translucent','editor and Help use the same fresh SVG favicon'
   ]) requireText(test, marker, 'tests/help-center-theme.spec.js');
 }
 
@@ -81,4 +78,4 @@ if (errors.length) {
   errors.forEach(error => console.error(`- ${error}`));
   process.exit(1);
 }
-console.log('FigureLoom polish validation passed: one SVG favicon, native trackpad pinch, stale-drag recovery, toast flood control, translucent welcome screen, Help, and shared sage UI are present.');
+console.log('FigureLoom polish validation passed: fresh copied SVG favicon, native trackpad pinch, stale-drag recovery, toast flood control, translucent welcome screen, Help, and shared sage UI are present.');
