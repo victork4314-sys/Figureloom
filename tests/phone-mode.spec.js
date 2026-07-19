@@ -18,11 +18,12 @@ async function prepare(page, interfaceMode = 'auto', theme = 'light') {
       underlineLinks:false,
       readableFont:false
     }));
+    sessionStorage.setItem('figureloom-quick-start-dismissed', '1');
   }, { interfaceMode, theme });
   await page.goto('/');
   await expect(page.locator('#canvas')).toBeVisible();
   await page.waitForFunction(() => Boolean(window.FigureLoomSettings && window.FigureLoomPhoneMode && window.FigureLoomPhoneCanvasFit));
-  await page.waitForTimeout(250);
+  await page.waitForTimeout(350);
 }
 
 async function expectPhone(page) {
@@ -30,7 +31,7 @@ async function expectPhone(page) {
   await expect(page.locator('#figureloomPhoneDock')).toBeVisible();
 }
 
-async function closeSheet(page) {
+async function closePhoneSheet(page) {
   const close = page.locator('.phone-sheet-close');
   if (await close.isVisible()) await close.click();
 }
@@ -56,12 +57,14 @@ test('forced phone works on desktop and forced desktop disables phone immediatel
   await expect(page.locator('.right-panel')).not.toHaveAttribute('aria-hidden');
 });
 
-test('forced desktop keeps the normal layout on a phone viewport', async ({ page }, testInfo) => {
+test('forced desktop keeps the normal interface and removes all phone-only state on a phone viewport', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'mobile', 'mobile override check');
   await prepare(page, 'desktop');
   await expect(page.locator('html')).toHaveAttribute('data-figureloom-resolved-mode', 'desktop');
   await expect(page.locator('#figureloomPhoneDock')).toBeHidden();
-  expect(await page.locator('body').evaluate(node => getComputedStyle(node).minWidth)).toBe('980px');
+  await expect(page.locator('.left-panel')).not.toHaveAttribute('aria-hidden');
+  await expect(page.locator('.right-panel')).not.toHaveAttribute('aria-hidden');
+  await expect(page.locator('.ribbon')).not.toHaveClass(/figureloom-phone-sheet-open/);
 });
 
 test('portrait phone geometry, touch targets, colors and canvas fit stay inside the viewport', async ({ page }, testInfo) => {
@@ -71,10 +74,17 @@ test('portrait phone geometry, touch targets, colors and canvas fit stay inside 
   const result = await page.evaluate(() => {
     const viewport = { width:innerWidth, height:innerHeight };
     const selectors = ['#accountProfileButton','#undoButton','#redoButton','#exportButton','.ribbon-tabs .ribbon-tab','#figureloomPhoneDock button','.canvas-toolbar button'];
-    const targets = selectors.flatMap(selector => [...document.querySelectorAll(selector)]).filter(node => getComputedStyle(node).display !== 'none').map(node => {
-      const rect = node.getBoundingClientRect();
-      return { selector:node.id || node.textContent.trim(), width:rect.width, height:rect.height, left:rect.left, right:rect.right, top:rect.top, bottom:rect.bottom };
-    });
+    const targets = selectors
+      .flatMap(selector => [...document.querySelectorAll(selector)])
+      .filter(node => {
+        if (getComputedStyle(node).display === 'none') return false;
+        const rect = node.getBoundingClientRect();
+        return rect.right > 0 && rect.left < innerWidth && rect.bottom > 0 && rect.top < innerHeight;
+      })
+      .map(node => {
+        const rect = node.getBoundingClientRect();
+        return { selector:node.id || node.textContent.trim(), width:rect.width, height:rect.height, left:rect.left, right:rect.right, top:rect.top, bottom:rect.bottom };
+      });
     const shell = document.querySelector('.app-shell').getBoundingClientRect();
     const canvas = document.querySelector('#canvas').getBoundingClientRect();
     const stage = document.querySelector('#canvasStage').getBoundingClientRect();
@@ -108,26 +118,36 @@ test('portrait phone geometry, touch targets, colors and canvas fit stay inside 
   }
 });
 
-test('tools, projects, pages, edit and more use reversible phone sheets', async ({ page }, testInfo) => {
+test('ordinary tools and project controls use sheets while Insert stays full-screen', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'mobile', 'phone sheets check');
   await prepare(page, 'phone');
-  await page.locator('.ribbon-tab[data-tab="insert"]').click();
+
+  await page.locator('.ribbon-tab[data-tab="home"]').click();
   await expect(page.locator('.ribbon')).toHaveClass(/figureloom-phone-sheet-open/);
-  await expect(page.locator('#figureloomPhoneSheetTitle')).toContainText('Add');
+  await expect(page.locator('#figureloomPhoneSheetTitle')).toContainText('Home');
   await expect(page.locator('#addTextButton')).toBeVisible();
-  await closeSheet(page);
+  await closePhoneSheet(page);
+
+  await page.locator('.ribbon-tab[data-tab="insert"]').click();
+  await expect(page.locator('#insertDrawer')).toHaveClass(/open/);
+  await expect(page.locator('#insertDrawer')).toBeVisible();
+  const insertRect = await page.locator('#insertDrawer').boundingBox();
+  expect(insertRect.width).toBeGreaterThanOrEqual(389);
+  expect(insertRect.height).toBeGreaterThanOrEqual(843);
+  await page.locator('#insertDrawer [data-close]').click();
+  await expect(page.locator('#insertDrawer')).not.toHaveClass(/open/);
 
   await page.locator('[data-phone-action="pages"]').click();
   await expect(page.locator('.left-panel')).toHaveClass(/figureloom-phone-sheet-open/);
   const thumb = page.locator('.left-panel .page-thumbnail').first();
   await expect(thumb).toBeVisible();
   expect((await thumb.boundingBox()).width).toBeGreaterThanOrEqual(100);
-  await closeSheet(page);
+  await closePhoneSheet(page);
 
   await page.locator('[data-phone-action="edit"]').click();
   await expect(page.locator('.right-panel')).toHaveClass(/figureloom-phone-sheet-open/);
   await expect(page.locator('#fillColor')).toBeVisible();
-  await closeSheet(page);
+  await closePhoneSheet(page);
 
   await page.locator('[data-phone-action="more"]').click();
   await expect(page.locator('#figureloomPhoneMoreSheet')).toHaveClass(/figureloom-phone-sheet-open/);
@@ -193,9 +213,9 @@ test('dark phone mode uses the existing dark palette rather than transparent mob
 test('long press forwards to the existing context-menu path', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'mobile', 'phone long press check');
   await prepare(page, 'phone');
-  await page.locator('.ribbon-tab[data-tab="insert"]').click();
+  await page.locator('[data-phone-action="tools"]').click();
   await page.locator('#addShapeButton').click();
-  await closeSheet(page);
+  await closePhoneSheet(page);
   const object = page.locator('#objectLayer .canvas-object').first();
   await expect(object).toBeVisible();
   await page.evaluate(() => {
