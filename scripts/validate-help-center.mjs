@@ -43,8 +43,9 @@ if (!errors.length) {
   const wikiJs = read('wiki/wiki.js');
   const worker = read('service-worker.js');
 
-  requireText(appHtml, '<script src="help-center.js?v=2"></script>', 'index.html');
-  requireText(appHtml, '<script src="figureloom-sage-theme.js?v=1"></script>', 'index.html');
+  requireText(appHtml, '<script src="help-center.js?v=3"></script>', 'index.html');
+  requireText(appHtml, '<script src="figureloom-sage-theme.js?v=2"></script>', 'index.html');
+  if (appHtml.includes('phone-sage-theme-fix')) errors.push('index.html must load only the shared sage theme');
   const finishingIndex = appHtml.indexOf('finishing-touches.js');
   const helpIndex = appHtml.indexOf('help-center.js');
   const themeIndex = appHtml.indexOf('figureloom-sage-theme.js');
@@ -108,7 +109,9 @@ if (!errors.length) {
 
   const cached = [
     './help-center.js',
+    './help-center.js?v=3',
     './figureloom-sage-theme.js',
+    './figureloom-sage-theme.js?v=2',
     './wiki/',
     './wiki/index.html',
     './wiki/wiki.css',
