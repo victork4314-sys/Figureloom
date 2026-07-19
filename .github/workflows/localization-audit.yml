@@ -27,6 +27,7 @@ jobs:
           LOCALIZATION_MODEL: openai/gpt-4.1-mini
         run: node scripts/generate-localizations.mjs
       - name: Upload localization work
+        if: always()
         uses: actions/upload-artifact@v6
         with:
           name: complete-interface-localization
@@ -34,4 +35,4 @@ jobs:
             interface-string-inventory.json
             complete-interface-translations.json
             complete-interface-translations.partial.json
-          if-no-files-found: error
+          if-no-files-found: warn
