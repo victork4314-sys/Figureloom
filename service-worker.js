@@ -1,4 +1,4 @@
-const FIGURELOOM_BUILD_ID = "stable-71d36df-locked-20260719-v37";
+const FIGURELOOM_BUILD_ID = "stable-71d36df-locked-20260719-v38";
 const FIGURELOOM_CACHE_PREFIX = "figureloom-app-";
 const FIGURELOOM_CACHE_NAME = `${FIGURELOOM_CACHE_PREFIX}${FIGURELOOM_BUILD_ID}`;
 const LEGACY_CACHE_PREFIXES = ["figureloom-shell", "scicanvas-shell"];
@@ -22,7 +22,20 @@ self.addEventListener("install", event => {
       cache.add(new Request("./mobile-mode-canvas-fit.js", { cache:"reload" })),
       cache.add(new Request("./mobile-touch-drag-fix.js", { cache:"reload" })),
       cache.add(new Request("./tour-mobile-safe.js", { cache:"reload" })),
-      cache.add(new Request("./visible-brand-finalizer.js", { cache:"reload" }))
+      cache.add(new Request("./visible-brand-finalizer.js", { cache:"reload" })),
+      cache.add(new Request("./help-center.js", { cache:"reload" })),
+      cache.add(new Request("./wiki/", { cache:"reload" })),
+      cache.add(new Request("./wiki/index.html", { cache:"reload" })),
+      cache.add(new Request("./wiki/wiki.css", { cache:"reload" })),
+      cache.add(new Request("./wiki/wiki.js", { cache:"reload" })),
+      cache.add(new Request("./wiki/Home.md", { cache:"reload" })),
+      cache.add(new Request("./wiki/Start-Here.md", { cache:"reload" })),
+      cache.add(new Request("./wiki/Visual-Interface-Guide.md", { cache:"reload" })),
+      cache.add(new Request("./wiki/Quick-Task-Guides.md", { cache:"reload" })),
+      cache.add(new Request("./wiki/Troubleshooting-and-Recovery.md", { cache:"reload" })),
+      cache.add(new Request("./wiki-assets/editor-overview.svg", { cache:"reload" })),
+      cache.add(new Request("./wiki-assets/phone-overview.svg", { cache:"reload" })),
+      cache.add(new Request("./wiki-assets/help-menu.svg", { cache:"reload" }))
     ]);
     await self.skipWaiting();
   })());

@@ -1,4 +1,4 @@
-name: Validate SciCanvas
+name: Validate FigureLoom
 
 on:
   push:
@@ -22,7 +22,9 @@ jobs:
             echo "Checking $file"
             node --check "$file"
           done
-          node --check scripts/validate-app.mjs
+          node --check wiki/wiki.js
+          node --check scripts/validate-help-center.mjs
+          node --check scripts/validate-wiki.mjs
           node --check tests/smoke.spec.js
 
       - name: Check required application files
@@ -94,20 +96,25 @@ jobs:
           test -f svg-path-editor.js
           test -f tex-typesetting.js
           test -f pathway-exchange.js
-          test -f local-prompt-assistant.js
+          test -f help-center.js
+          test -f wiki/index.html
+          test -f wiki/wiki.css
+          test -f wiki/wiki.js
+          test -f scripts/validate-help-center.mjs
           test -f supabase/schema.sql
           test -f supabase/share-links.sql
           test -f docs/CLOUD_SETUP.md
           test -f app-bootstrap.js
           test -f manifest.webmanifest
           test -f service-worker.js
-          test -f scripts/validate-app.mjs
           test -f package.json
           test -f playwright.config.js
           test -f tests/smoke.spec.js
 
-      - name: Audit app wiring and offline shell
-        run: node scripts/validate-app.mjs
+      - name: Validate Help center and manual
+        run: |
+          node scripts/validate-wiki.mjs
+          node scripts/validate-help-center.mjs
 
   browser:
     if: github.event_name == 'workflow_dispatch'
