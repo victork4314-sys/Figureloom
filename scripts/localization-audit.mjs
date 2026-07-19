@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
+// Complete localization audit trigger v2.
 const root = process.cwd();
 const skip = new Set([
   'language-packs.js','language-interface-phrases.js','language-interface-extra.js',
