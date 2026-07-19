@@ -205,18 +205,26 @@ test('landscape phone layout keeps chrome, dock and canvas controls on-screen', 
   }
 });
 
-test('dark phone mode uses the existing dark palette rather than transparent mobile chrome', async ({ page }, testInfo) => {
+test('dark phone mode uses the shared FigureLoom sage palette', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'mobile', 'phone dark mode check');
   await prepare(page, 'phone', 'dark');
   await expectPhone(page);
   await expect(page.locator('html')).toHaveAttribute('data-figureloom-theme', 'dark');
-  const colors = await page.evaluate(() => ({
-    surface:getComputedStyle(document.documentElement).getPropertyValue('--figureloom-phone-surface').trim(),
-    text:getComputedStyle(document.documentElement).getPropertyValue('--figureloom-phone-text').trim(),
-    dock:getComputedStyle(document.querySelector('#figureloomPhoneDock')).backgroundColor
-  }));
-  expect(colors.surface).toContain('36');
-  expect(colors.text.toLowerCase()).toBe('#eef1f4');
+  const colors = await page.evaluate(() => {
+    const rootStyle = getComputedStyle(document.documentElement);
+    return {
+      surface:rootStyle.getPropertyValue('--figureloom-phone-surface').trim().toLowerCase(),
+      text:rootStyle.getPropertyValue('--figureloom-phone-text').trim().toLowerCase(),
+      accent:rootStyle.getPropertyValue('--figureloom-phone-accent').trim().toLowerCase(),
+      expectedSurface:rootStyle.getPropertyValue('--figureloom-ui-surface').trim().toLowerCase(),
+      expectedText:rootStyle.getPropertyValue('--figureloom-ui-text').trim().toLowerCase(),
+      expectedAccent:rootStyle.getPropertyValue('--figureloom-ui-accent').trim().toLowerCase(),
+      dock:getComputedStyle(document.querySelector('#figureloomPhoneDock')).backgroundColor
+    };
+  });
+  expect(colors.surface).toBe(colors.expectedSurface);
+  expect(colors.text).toBe(colors.expectedText);
+  expect(colors.accent).toBe(colors.expectedAccent);
   expect(colors.dock).not.toBe('rgba(0, 0, 0, 0)');
 });
 

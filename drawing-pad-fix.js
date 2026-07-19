@@ -1,6 +1,6 @@
 (() => {
-  if (window.__figureLoomTouchDrawingPadV1) return;
-  window.__figureLoomTouchDrawingPadV1 = true;
+  if (window.__figureLoomTouchDrawingPadV2) return;
+  window.__figureLoomTouchDrawingPadV2 = true;
 
   function installTouchDrawingPad() {
     if (window.__figureLoomTouchDrawingPadInstalled) return;
@@ -14,11 +14,23 @@
     const PAD_HEIGHT = 520;
     const SVG_NS = 'http://www.w3.org/2000/svg';
     const baseRenderObject = renderObject;
+    const baseUpdateInspector = updateInspector;
     let pad = null;
     let strokes = [];
     let activeStroke = null;
     let activePointerId = null;
     let previousBodyOverflow = '';
+    let editingId = null;
+    let previousFocus = null;
+
+    const cloneStrokes = input => (Array.isArray(input) ? input : []).map(stroke => ({
+      color:stroke.color || '#26324a',
+      width:Math.max(1, Number(stroke.width) || 4),
+      points:(Array.isArray(stroke.points) ? stroke.points : []).map(point => ({
+        x:Number(point.x) || 0,
+        y:Number(point.y) || 0
+      }))
+    }));
 
     renderObject = function renderTouchDrawingPadObject(item) {
       if (item.type !== 'drawingPad') return baseRenderObject(item);
@@ -40,6 +52,17 @@
         });
       }
 
+      group.classList.add('drawing-pad-object');
+      group.appendChild(createSvg('rect', {
+        class:'drawing-pad-hitbox',
+        x:0,
+        y:0,
+        width:Math.max(1, Number(item.width) || 1),
+        height:Math.max(1, Number(item.height) || 1),
+        fill:'transparent',
+        'pointer-events':'all'
+      }));
+
       const sourceWidth = Math.max(1, Number(item.sourceWidth) || Number(item.width) || 1);
       const sourceHeight = Math.max(1, Number(item.sourceHeight) || Number(item.height) || 1);
       const scaleX = Math.max(1, Number(item.width) || 1) / sourceWidth;
@@ -57,12 +80,44 @@
           'stroke-linecap':'round',
           'stroke-linejoin':'round',
           'vector-effect':'non-scaling-stroke',
+          'pointer-events':'none',
           transform:`scale(${scaleX} ${scaleY})`
         }));
+      });
+
+      group.addEventListener('dblclick', event => {
+        event.preventDefault();
+        event.stopPropagation();
+        openPad(item.id);
       });
       return group;
     };
     window.renderObject = renderObject;
+
+    const editSection = document.createElement('section');
+    editSection.id = 'figureloomDrawingEditSection';
+    editSection.className = 'inspector-section drawing-edit-section';
+    editSection.hidden = true;
+    editSection.innerHTML = `
+      <h2>Drawing</h2>
+      <p>Edit the ink, color, or stroke size without creating a second object.</p>
+      <button id="figureloomEditDrawingButton" type="button">Edit drawing</button>`;
+    document.querySelector('.right-panel')?.appendChild(editSection);
+
+    updateInspector = function updateDrawingPadInspector() {
+      baseUpdateInspector();
+      const item = selectedObject();
+      const isDrawing = item?.type === 'drawingPad';
+      editSection.hidden = !isDrawing;
+      const editButton = editSection.querySelector('#figureloomEditDrawingButton');
+      if (editButton) editButton.disabled = !isDrawing;
+    };
+    window.updateInspector = updateInspector;
+
+    editSection.querySelector('#figureloomEditDrawingButton')?.addEventListener('click', () => {
+      const item = selectedObject();
+      if (item?.type === 'drawingPad') openPad(item.id);
+    });
 
     function ensurePad() {
       if (pad) return pad;
@@ -109,6 +164,7 @@
       const undoButton = overlay.querySelector('[data-draw-undo]');
       const clearButton = overlay.querySelector('[data-draw-clear]');
       const insertButton = overlay.querySelector('[data-draw-insert]');
+      const title = overlay.querySelector('#figureloomDrawPadTitle');
 
       function pointFromEvent(event) {
         const rect = surface.getBoundingClientRect();
@@ -127,6 +183,8 @@
         undoButton.disabled = !hasStrokes;
         clearButton.disabled = !hasStrokes;
         insertButton.disabled = !hasStrokes;
+        insertButton.textContent = editingId ? 'Save drawing' : 'Insert drawing';
+        title.textContent = editingId ? 'Edit drawing' : 'Draw';
       }
 
       function redrawStrokes() {
@@ -216,17 +274,39 @@
         redrawStrokes();
       });
       overlay.querySelectorAll('[data-draw-close],[data-draw-cancel],.figureloom-draw-pad-scrim').forEach(button => button.addEventListener('click', closePad));
-      insertButton.addEventListener('click', insertPadDrawing);
+      insertButton.addEventListener('click', savePadDrawing);
 
-      pad = { overlay, redrawStrokes };
+      pad = { overlay, redrawStrokes, colorInput, sizeInput };
       return pad;
     }
 
-    function openPad() {
+    function loadDrawingForEdit(item) {
+      const sourceWidth = Math.max(1, Number(item.sourceWidth) || Number(item.width) || 1);
+      const sourceHeight = Math.max(1, Number(item.sourceHeight) || Number(item.height) || 1);
+      const fit = Math.min((PAD_WIDTH - 80) / sourceWidth, (PAD_HEIGHT - 80) / sourceHeight, 1);
+      const offsetX = (PAD_WIDTH - sourceWidth * fit) / 2;
+      const offsetY = (PAD_HEIGHT - sourceHeight * fit) / 2;
+      strokes = cloneStrokes(item.strokes).map(stroke => ({
+        color:stroke.color,
+        width:Math.max(1, stroke.width * fit),
+        points:stroke.points.map(point => ({
+          x:point.x * fit + offsetX,
+          y:point.y * fit + offsetY
+        }))
+      }));
+    }
+
+    function openPad(itemId = null) {
       const currentPad = ensurePad();
-      strokes = [];
+      const item = itemId ? state.objects.find(candidate => candidate.id === itemId && candidate.type === 'drawingPad') : null;
+      editingId = item?.id || null;
+      previousFocus = document.activeElement;
+      if (item) loadDrawingForEdit(item);
+      else strokes = [];
       activeStroke = null;
       activePointerId = null;
+      currentPad.colorInput.value = strokes[0]?.color || '#26324a';
+      currentPad.sizeInput.value = String(Math.max(1, Math.min(18, Math.round(strokes[0]?.width || 4))));
       currentPad.redrawStrokes();
       previousBodyOverflow = document.body.style.overflow;
       document.body.style.overflow = 'hidden';
@@ -241,13 +321,15 @@
       pad.overlay.querySelector('[data-draw-preview]')?.setAttribute('d', '');
       pad.overlay.hidden = true;
       document.body.style.overflow = previousBodyOverflow;
-      drawButton.focus({ preventScroll:true });
+      editingId = null;
+      const focusTarget = previousFocus?.isConnected ? previousFocus : drawButton;
+      previousFocus = null;
+      focusTarget?.focus?.({ preventScroll:true });
     }
 
-    function insertPadDrawing() {
-      if (!strokes.length) return;
+    function normalizedDrawing() {
       const allPoints = strokes.flatMap(stroke => stroke.points);
-      if (!allPoints.length) return;
+      if (!allPoints.length) return null;
 
       let minX = allPoints[0].x;
       let minY = allPoints[0].y;
@@ -262,37 +344,61 @@
 
       const sourceWidth = Math.max(1, maxX - minX);
       const sourceHeight = Math.max(1, maxY - minY);
-      const scale = Math.min(420 / sourceWidth, 300 / sourceHeight, 1.25);
-      const width = Math.max(24, sourceWidth * scale);
-      const height = Math.max(24, sourceHeight * scale);
-      const normalizedStrokes = strokes.map(stroke => ({
-        color:stroke.color,
-        width:stroke.width,
-        points:stroke.points.map(point => ({ x:point.x - minX, y:point.y - minY }))
-      }));
-
-      pushHistory?.();
-      const item = {
-        id:typeof uid === 'function' ? uid() : `obj-${Date.now()}-${Math.random().toString(16).slice(2)}`,
-        type:'drawingPad',
-        name:'Drawing',
-        x:Math.max(20, (1200 - width) / 2),
-        y:Math.max(20, (750 - height) / 2),
-        width,
-        height,
+      return {
         sourceWidth,
         sourceHeight,
-        strokes:normalizedStrokes,
-        fill:normalizedStrokes[0]?.color || '#26324a',
-        stroke:normalizedStrokes[0]?.color || '#26324a',
-        strokeWidth:normalizedStrokes[0]?.width || 4,
-        opacity:1,
-        rotation:0,
-        visible:true
+        strokes:strokes.map(stroke => ({
+          color:stroke.color,
+          width:stroke.width,
+          points:stroke.points.map(point => ({ x:point.x - minX, y:point.y - minY }))
+        }))
       };
-      state.objects.push(item);
-      state.selectedId = item.id;
-      if (Array.isArray(state.selectedIds)) state.selectedIds = [item.id];
+    }
+
+    function savePadDrawing() {
+      if (!strokes.length) return;
+      const normalized = normalizedDrawing();
+      if (!normalized) return;
+
+      const existing = editingId ? state.objects.find(item => item.id === editingId && item.type === 'drawingPad') : null;
+      pushHistory?.();
+
+      if (existing) {
+        existing.sourceWidth = normalized.sourceWidth;
+        existing.sourceHeight = normalized.sourceHeight;
+        existing.strokes = normalized.strokes;
+        existing.fill = normalized.strokes[0]?.color || existing.fill || '#26324a';
+        existing.stroke = existing.fill;
+        existing.strokeWidth = normalized.strokes[0]?.width || existing.strokeWidth || 4;
+        state.selectedId = existing.id;
+        if (Array.isArray(state.selectedIds)) state.selectedIds = [existing.id];
+      } else {
+        const scale = Math.min(420 / normalized.sourceWidth, 300 / normalized.sourceHeight, 1.25);
+        const width = Math.max(24, normalized.sourceWidth * scale);
+        const height = Math.max(24, normalized.sourceHeight * scale);
+        const item = {
+          id:typeof uid === 'function' ? uid() : `obj-${Date.now()}-${Math.random().toString(16).slice(2)}`,
+          type:'drawingPad',
+          name:'Drawing',
+          x:Math.max(20, (1200 - width) / 2),
+          y:Math.max(20, (750 - height) / 2),
+          width,
+          height,
+          sourceWidth:normalized.sourceWidth,
+          sourceHeight:normalized.sourceHeight,
+          strokes:normalized.strokes,
+          fill:normalized.strokes[0]?.color || '#26324a',
+          stroke:normalized.strokes[0]?.color || '#26324a',
+          strokeWidth:normalized.strokes[0]?.width || 4,
+          opacity:1,
+          rotation:0,
+          visible:true
+        };
+        state.objects.push(item);
+        state.selectedId = item.id;
+        if (Array.isArray(state.selectedIds)) state.selectedIds = [item.id];
+      }
+
       render();
       scheduleSave?.();
       closePad();
@@ -317,6 +423,9 @@
     const style = document.createElement('style');
     style.id = 'figureloomTouchDrawingPadStyle';
     style.textContent = `
+      .drawing-pad-hitbox{cursor:move}
+      .drawing-edit-section p{margin:0 0 10px;color:var(--figureloom-ui-muted,#60706c);font-size:11px;line-height:1.45}
+      #figureloomEditDrawingButton{width:100%;min-height:40px}
       .figureloom-draw-pad{position:fixed;inset:0;z-index:2147483600;display:grid;place-items:center;padding:max(10px,env(safe-area-inset-top)) max(10px,env(safe-area-inset-right)) max(10px,env(safe-area-inset-bottom)) max(10px,env(safe-area-inset-left))}
       .figureloom-draw-pad[hidden]{display:none!important}
       .figureloom-draw-pad-scrim{position:absolute;inset:0;width:100%;height:100%;border:0!important;border-radius:0!important;background:rgba(7,18,16,.58)!important;box-shadow:none!important}
@@ -347,6 +456,7 @@
       }
     `;
     document.head.appendChild(style);
+    render();
   }
 
   if (document.documentElement.dataset.figureloomReady === '1') {
