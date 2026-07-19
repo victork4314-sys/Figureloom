@@ -63,7 +63,7 @@
       #figureloomStableBoot>div{display:grid;justify-items:center;gap:10px;padding:20px}
       #figureloomStableBoot i{width:24px;height:24px;border:3px solid #b8c9c5;border-top-color:#39786d;border-radius:50%;animation:figureloomStableSpin .75s linear infinite}
       #figureloomStableBoot small{color:#70817e;font-size:10px;font-weight:500}
-      @keyframes figureloomStableSpin{to{transform:rotate(360deg)}
+      @keyframes figureloomStableSpin{to{transform:rotate(360deg)}}
       html[data-figureloom-theme="dark"] #figureloomStableBoot{background:#24282f;color:#eef1f4}
       html[data-figureloom-theme="dark"] #figureloomStableBoot small{color:#aab2bd}
     `;
