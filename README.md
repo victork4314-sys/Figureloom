@@ -133,3 +133,7 @@ Outside asset packs keep their own licenses and attribution requirements. Read [
 - [`docs/FEATURE_AUDIT.md`](docs/FEATURE_AUDIT.md)
 - [`docs/CLOUD_SETUP.md`](docs/CLOUD_SETUP.md)
 - [`docs/ASSET_PACKS.md`](docs/ASSET_PACKS.md)
+
+---
+
+*Dedicated to Adriana M. K.*
