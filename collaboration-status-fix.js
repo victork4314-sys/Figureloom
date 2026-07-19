@@ -1,6 +1,6 @@
 (() => {
-  if (window.__figureLoomCollaborationStatusFixV1) return;
-  window.__figureLoomCollaborationStatusFixV1 = true;
+  if (window.__figureLoomCollaborationStatusFixV2) return;
+  window.__figureLoomCollaborationStatusFixV2 = true;
 
   let timer = 0;
   let lastInteractionAt = 0;
@@ -17,10 +17,8 @@
   }
 
   function busy() {
-    const active = document.activeElement;
     return Boolean(
       window.state?.drag || window.state?.resize || window.state?.multiDrag || window.state?.multiResize ||
-      active?.matches?.('input,textarea,select,[contenteditable="true"]') ||
       Date.now() - lastInteractionAt < 1100
     );
   }
@@ -41,7 +39,9 @@
     clearTimer();
     const { banner } = nodes();
     if (!banner || banner.hidden) return;
-    banner.querySelector('span')?.replaceChildren(document.createTextNode('A collaborator update is waiting. It will apply when you finish editing.'));
+    const copy = 'A collaborator update is waiting. It will apply when you finish editing.';
+    const label = banner.querySelector('span');
+    if (label && label.textContent !== copy) label.textContent = copy;
     timer = setTimeout(() => {
       const { banner:current, apply, dismiss, toggle } = nodes();
       if (!current || current.hidden) return;
@@ -62,10 +62,10 @@
 
   function install() {
     const { banner } = nodes();
-    if (!banner || banner.dataset.figureloomStatusFixed === '1') return false;
-    banner.dataset.figureloomStatusFixed = '1';
+    if (!banner || banner.dataset.figureloomStatusFixed === '2') return false;
+    banner.dataset.figureloomStatusFixed = '2';
     const observer = new MutationObserver(schedule);
-    observer.observe(banner, { attributes:true, attributeFilter:['hidden'], childList:true, subtree:true });
+    observer.observe(banner, { attributes:true, attributeFilter:['hidden'] });
     if (!banner.hidden) schedule();
     return true;
   }
