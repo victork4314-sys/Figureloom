@@ -44,7 +44,7 @@ if (!errors.length) {
   const worker = read('service-worker.js');
 
   requireText(appHtml, '<script src="help-center.js?v=3"></script>', 'index.html');
-  requireText(appHtml, '<script src="figureloom-sage-theme.js?v=2"></script>', 'index.html');
+  requireText(appHtml, '<script src="figureloom-sage-theme.js?v=3"></script>', 'index.html');
   if (appHtml.includes('phone-sage-theme-fix')) errors.push('index.html must load only the shared sage theme');
   const finishingIndex = appHtml.indexOf('finishing-touches.js');
   const helpIndex = appHtml.indexOf('help-center.js');
@@ -81,7 +81,8 @@ if (!errors.length) {
     'meta[name="theme-color"]',
     ':not(.ribbon-tab)',
     'data-figureloom-resolved-mode="phone"',
-    'border-bottom-color:transparent!important'
+    'border-bottom-color:transparent!important',
+    '#scicanvasTour .tour-actions'
   ];
   paletteMarkers.forEach(marker => requireText(theme, marker, 'figureloom-sage-theme.js'));
   for (const oldAccent of ['#2563eb', '#7c3aed', '#5c72bf']) {
@@ -111,7 +112,7 @@ if (!errors.length) {
     './help-center.js',
     './help-center.js?v=3',
     './figureloom-sage-theme.js',
-    './figureloom-sage-theme.js?v=2',
+    './figureloom-sage-theme.js?v=3',
     './wiki/',
     './wiki/index.html',
     './wiki/wiki.css',
