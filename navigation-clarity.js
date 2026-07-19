@@ -28,6 +28,15 @@
       settings.title = 'App appearance, accessibility, and interface settings';
       settings.setAttribute('aria-label', 'Settings: app appearance, accessibility, and interface settings');
     }
+
+    const profileHeading = document.querySelector('.sc-profile-picker-heading span');
+    const profileNote = document.querySelector('.sc-profile-picker-heading small');
+    if (profileHeading) profileHeading.textContent = 'Choose your profile picture';
+    if (profileNote) profileNote.textContent = 'Pick a symbol or upload a photo. It never appears in figures or exports.';
+    const welcomeHeading = document.querySelector('.welcome-avatar-chooser strong');
+    const welcomeNote = document.querySelector('.welcome-avatar-chooser small');
+    if (welcomeHeading) welcomeHeading.textContent = 'Pick a profile picture';
+    if (welcomeNote) welcomeNote.textContent = 'Use initials, a scientific symbol, or your own photo.';
   }
 
   const observer = new MutationObserver(() => requestAnimationFrame(apply));
