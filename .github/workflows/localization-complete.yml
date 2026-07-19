@@ -1,0 +1,113 @@
+name: Complete interface localization
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - scripts/localization-audit.mjs
+      - scripts/generate-localizations-shard.mjs
+      - scripts/merge-localization-shards.mjs
+      - scripts/build-language-pack.mjs
+      - .github/workflows/localization-complete.yml
+  workflow_dispatch:
+
+concurrency:
+  group: complete-interface-localization-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  models: read
+
+jobs:
+  inventory:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.head_ref || github.ref_name }}
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+      - name: Extract interface strings
+        run: node scripts/localization-audit.mjs
+      - name: Upload interface inventory
+        uses: actions/upload-artifact@v6
+        with:
+          name: localization-inventory
+          path: interface-string-inventory.json
+          if-no-files-found: error
+
+  translate:
+    needs: inventory
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      max-parallel: 4
+      matrix:
+        shard: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.head_ref || github.ref_name }}
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+      - name: Download interface inventory
+        uses: actions/download-artifact@v7
+        with:
+          name: localization-inventory
+          path: .
+      - name: Translate shard ${{ matrix.shard }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          LOCALIZATION_MODEL: openai/gpt-4.1-mini
+          SHARD_INDEX: ${{ matrix.shard }}
+          SHARD_TOTAL: 16
+          BATCH_SIZE: 16
+        run: node scripts/generate-localizations-shard.mjs
+      - name: Upload shard ${{ matrix.shard }}
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: localization-shard-${{ matrix.shard }}
+          path: localization-shard-${{ matrix.shard }}.json
+          if-no-files-found: error
+
+  merge:
+    needs: translate
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.head_ref || github.ref_name }}
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+      - name: Download all translation shards
+        uses: actions/download-artifact@v7
+        with:
+          pattern: localization-shard-*
+          path: localization-shards
+          merge-multiple: true
+      - name: Merge and validate all languages
+        env:
+          SHARD_TOTAL: 16
+          SHARD_DIRECTORY: localization-shards
+        run: node scripts/merge-localization-shards.mjs
+      - name: Build exact language pack
+        run: |
+          node scripts/build-language-pack.mjs
+          node --check language-complete-pack.js
+      - name: Upload complete localization pack
+        uses: actions/upload-artifact@v6
+        with:
+          name: complete-interface-language-pack
+          path: |
+            complete-interface-translations.json
+            localization-quality-report.json
+            localization-unresolved.json
+            localization-conflicts.json
+            language-complete-pack.js
+          if-no-files-found: warn
