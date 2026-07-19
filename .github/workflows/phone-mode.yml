@@ -6,12 +6,14 @@ on:
       - 'mobile-mode.js'
       - 'mobile-mode.css'
       - 'mobile-mode-canvas-fit.js'
+      - 'mobile-touch-drag-fix.js'
       - 'settings-core.js'
       - 'settings-page.js'
       - 'safe-refresh.js'
       - 'service-worker.js'
       - 'tests/phone-mode.spec.js'
       - 'tests/phone-polish.spec.js'
+      - 'tests/phone-zoom-frame.spec.js'
       - 'playwright.config.js'
       - '.github/workflows/phone-mode.yml'
   workflow_dispatch:
@@ -33,16 +35,18 @@ jobs:
         run: |
           node --check mobile-mode.js
           node --check mobile-mode-canvas-fit.js
+          node --check mobile-touch-drag-fix.js
           node --check safe-refresh.js
           node --check service-worker.js
           node --check tests/phone-mode.spec.js
           node --check tests/phone-polish.spec.js
+          node --check tests/phone-zoom-frame.spec.js
       - name: Install test dependencies
         run: npm install --no-audit --no-fund
       - name: Install Chromium
         run: npx playwright install --with-deps chromium
       - name: Run phone mode regressions
-        run: npx playwright test tests/phone-mode.spec.js tests/phone-polish.spec.js
+        run: npx playwright test tests/phone-mode.spec.js tests/phone-polish.spec.js tests/phone-zoom-frame.spec.js
       - name: Upload phone test results
         if: always()
         uses: actions/upload-artifact@v6
