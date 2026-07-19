@@ -9,14 +9,6 @@
     return document.getElementById('tourHelpButton');
   }
 
-  function loadPhoneThemeFix() {
-    if (document.querySelector('script[data-figureloom-phone-sage-theme-fix]')) return;
-    const script = document.createElement('script');
-    script.src = './phone-sage-theme-fix.js?v=1';
-    script.dataset.figureloomPhoneSageThemeFix = '1';
-    document.head.appendChild(script);
-  }
-
   function makeMenu() {
     if (menu?.isConnected) return menu;
     document.getElementById('figureloomHelpMenu')?.remove();
@@ -95,7 +87,6 @@
     document.head.appendChild(style);
   }
 
-  loadPhoneThemeFix();
   installStyle();
   makeMenu();
   prepareButton();
