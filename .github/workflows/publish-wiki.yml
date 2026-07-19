@@ -1,0 +1,73 @@
+name: Validate and publish wiki
+
+on:
+  pull_request:
+    paths:
+      - 'wiki/**'
+      - 'scripts/validate-wiki.mjs'
+      - '.github/workflows/publish-wiki.yml'
+      - 'README.md'
+  push:
+    branches:
+      - main
+    paths:
+      - 'wiki/**'
+      - 'scripts/validate-wiki.mjs'
+      - '.github/workflows/publish-wiki.yml'
+      - 'README.md'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+      - name: Set up Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+      - name: Validate wiki pages and links
+        run: node scripts/validate-wiki.mjs
+
+  publish:
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    needs: validate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+      - name: Publish Markdown pages to the GitHub wiki
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          remote="https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.wiki.git"
+          work="$(mktemp -d)"
+
+          if git clone "$remote" "$work/wiki-repo"; then
+            cd "$work/wiki-repo"
+            find . -maxdepth 1 -type f -name '*.md' -delete
+          else
+            mkdir -p "$work/wiki-repo"
+            cd "$work/wiki-repo"
+            git init
+            git checkout -b master
+            git remote add origin "$remote"
+          fi
+
+          cp "$GITHUB_WORKSPACE"/wiki/*.md .
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+
+          if git diff --cached --quiet; then
+            echo "Wiki is already current."
+            exit 0
+          fi
+
+          git commit -m "Publish FigureLoom manual from ${GITHUB_SHA}"
+          git push origin HEAD:master
