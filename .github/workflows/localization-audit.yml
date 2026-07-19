@@ -9,6 +9,7 @@ on:
 
 permissions:
   contents: read
+  models: read
 
 jobs:
   inventory:
@@ -20,9 +21,17 @@ jobs:
           node-version: 24
       - name: Extract interface strings
         run: node scripts/localization-audit.mjs
-      - name: Upload inventory
+      - name: Generate contextual translations
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          LOCALIZATION_MODEL: openai/gpt-4.1-mini
+        run: node scripts/generate-localizations.mjs
+      - name: Upload localization work
         uses: actions/upload-artifact@v6
         with:
-          name: interface-string-inventory
-          path: interface-string-inventory.json
+          name: complete-interface-localization
+          path: |
+            interface-string-inventory.json
+            complete-interface-translations.json
+            complete-interface-translations.partial.json
           if-no-files-found: error
