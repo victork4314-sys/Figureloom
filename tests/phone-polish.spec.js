@@ -137,7 +137,7 @@ test('passive guide controls remain reachable in phone landscape', async ({ page
   await expect(page.locator('#scicanvasTour .tour-counter')).toContainText('2 of 12');
 });
 
-test('passive guide footer matches dark mode instead of turning white', async ({ page }, testInfo) => {
+test('passive guide footer uses the shared sage dark palette', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'mobile', 'phone-only dark guide check');
   await preparePhone(page, 'dark');
   await expect(page.locator('html')).toHaveAttribute('data-figureloom-theme', 'dark');
@@ -149,7 +149,7 @@ test('passive guide footer matches dark mode instead of turning white', async ({
     const back = getComputedStyle(document.querySelector('#scicanvasTour [data-tour="back"]'));
     const next = getComputedStyle(document.querySelector('#scicanvasTour [data-tour="next"]'));
     return {
-      footerGradient:actions.backgroundImage,
+      footerBackground:actions.backgroundColor,
       footerBorder:actions.borderTopColor,
       closeBackground:close.backgroundColor,
       backBackground:back.backgroundColor,
@@ -158,10 +158,10 @@ test('passive guide footer matches dark mode instead of turning white', async ({
     };
   });
 
-  expect(colors.footerGradient).toContain('36, 40, 47');
-  expect(colors.footerBorder).not.toBe('rgb(181, 202, 212)');
-  expect(colors.closeBackground).toBe('rgb(43, 49, 57)');
-  expect(colors.backBackground).toBe('rgb(43, 49, 57)');
-  expect(colors.closeText).toBe('rgb(238, 241, 244)');
-  expect(colors.nextBackground).toBe('rgb(37, 99, 235)');
+  expect(colors.footerBackground).toBe('rgb(42, 52, 49)');
+  expect(colors.footerBorder).toBe('rgb(67, 81, 77)');
+  expect(colors.closeBackground).toBe('rgb(34, 41, 39)');
+  expect(colors.backBackground).toBe('rgb(34, 41, 39)');
+  expect(colors.closeText).toBe('rgb(238, 247, 244)');
+  expect(colors.nextBackground).toBe('rgb(120, 196, 181)');
 });
