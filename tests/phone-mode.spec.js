@@ -158,10 +158,10 @@ test('ordinary tools and project controls use sheets while Insert stays full-scr
 
   await page.locator('[data-phone-action="more"]').click();
   await expect(page.locator('#figureloomPhoneMoreSheet')).toHaveClass(/figureloom-phone-sheet-open/);
-  await expect(page.locator('[data-phone-action="desktop"]').toBeVisible();
-  await expect(page.locator('[data-phone-action="protools"]').toBeVisible();
-  await expect(page.locator('[data-phone-action="loomy"]').toBeVisible();
-  await expect(page.locator('[data-phone-action="guide"]').toBeVisible();
+  await expect(page.locator('[data-phone-action="desktop"]')).toBeVisible();
+  await expect(page.locator('[data-phone-action="protools"]')).toBeVisible();
+  await expect(page.locator('[data-phone-action="loomy"]')).toBeVisible();
+  await expect(page.locator('[data-phone-action="guide"]')).toBeVisible();
   await page.locator('[data-phone-action="projects"]').click();
   await expect(page.locator('.ribbon')).toHaveClass(/figureloom-phone-sheet-open/);
   await expect(page.locator('#projectsRibbonHost')).toBeVisible();
