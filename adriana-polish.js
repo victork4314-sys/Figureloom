@@ -14,6 +14,7 @@
       note.className = 'pro-adriana-closing-note';
       note.textContent = NOTE;
     }
+    note.style.setProperty('color', 'var(--figureloom-ui-text,#172321)', 'important');
     if (body.lastElementChild !== note) body.appendChild(note);
     return true;
   }
