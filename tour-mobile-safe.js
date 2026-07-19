@@ -101,8 +101,10 @@
 
     html[data-figureloom-theme="dark"] #scicanvasTour.open .tour-actions button:disabled,
     html[data-theme="dark"] #scicanvasTour.open .tour-actions button:disabled {
+      border-color: var(--figureloom-ui-line, #43514d) !important;
+      background: var(--figureloom-ui-surface, #222927) !important;
       color: var(--figureloom-ui-muted, #aebdb8) !important;
-      opacity: .56 !important;
+      opacity: .72 !important;
     }
 
     html.figureloom-tour-open,
