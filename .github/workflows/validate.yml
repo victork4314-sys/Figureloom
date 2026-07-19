@@ -26,6 +26,7 @@ jobs:
           node --check scripts/validate-help-center.mjs
           node --check scripts/validate-wiki.mjs
           node --check tests/smoke.spec.js
+          node --check tests/help-center-theme.spec.js
 
       - name: Check required application files
         run: |
@@ -97,10 +98,12 @@ jobs:
           test -f tex-typesetting.js
           test -f pathway-exchange.js
           test -f help-center.js
+          test -f figureloom-sage-theme.js
           test -f wiki/index.html
           test -f wiki/wiki.css
           test -f wiki/wiki.js
           test -f scripts/validate-help-center.mjs
+          test -f tests/help-center-theme.spec.js
           test -f supabase/schema.sql
           test -f supabase/share-links.sql
           test -f docs/CLOUD_SETUP.md

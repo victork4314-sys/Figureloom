@@ -137,19 +137,25 @@ test('passive guide controls remain reachable in phone landscape', async ({ page
   await expect(page.locator('#scicanvasTour .tour-counter')).toContainText('2 of 12');
 });
 
-test('passive guide footer matches dark mode instead of turning white', async ({ page }, testInfo) => {
+test('passive guide footer uses the shared sage dark palette', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'mobile', 'phone-only dark guide check');
   await preparePhone(page, 'dark');
   await expect(page.locator('html')).toHaveAttribute('data-figureloom-theme', 'dark');
   await openPassiveGuide(page);
 
   const colors = await page.evaluate(() => {
+    const root = getComputedStyle(document.documentElement);
+    const card = getComputedStyle(document.querySelector('#scicanvasTour .tour-card'));
     const actions = getComputedStyle(document.querySelector('#scicanvasTour .tour-actions'));
     const close = getComputedStyle(document.querySelector('#scicanvasTour [data-tour="close"]'));
     const back = getComputedStyle(document.querySelector('#scicanvasTour [data-tour="back"]'));
     const next = getComputedStyle(document.querySelector('#scicanvasTour [data-tour="next"]'));
     return {
-      footerGradient:actions.backgroundImage,
+      surface:root.getPropertyValue('--figureloom-ui-surface').trim(),
+      soft:root.getPropertyValue('--figureloom-ui-soft').trim(),
+      accent:root.getPropertyValue('--figureloom-ui-accent').trim(),
+      cardBackground:card.backgroundColor,
+      footerBackground:actions.backgroundColor,
       footerBorder:actions.borderTopColor,
       closeBackground:close.backgroundColor,
       backBackground:back.backgroundColor,
@@ -158,10 +164,14 @@ test('passive guide footer matches dark mode instead of turning white', async ({
     };
   });
 
-  expect(colors.footerGradient).toContain('36, 40, 47');
+  expect(colors.surface).toBe('#222927');
+  expect(colors.soft).toBe('#2a3431');
+  expect(colors.accent).toBe('#78c4b5');
+  expect(colors.cardBackground).toBe('rgb(34, 41, 39)');
+  expect(['rgba(0, 0, 0, 0)', 'rgb(42, 52, 49)']).toContain(colors.footerBackground);
   expect(colors.footerBorder).not.toBe('rgb(181, 202, 212)');
-  expect(colors.closeBackground).toBe('rgb(43, 49, 57)');
-  expect(colors.backBackground).toBe('rgb(43, 49, 57)');
-  expect(colors.closeText).toBe('rgb(238, 241, 244)');
-  expect(colors.nextBackground).toBe('rgb(37, 99, 235)');
+  expect(colors.closeBackground).toBe('rgb(34, 41, 39)');
+  expect(colors.backBackground).toBe('rgb(34, 41, 39)');
+  expect(colors.closeText).toBe('rgb(238, 247, 244)');
+  expect(colors.nextBackground).toBe('rgb(120, 196, 181)');
 });

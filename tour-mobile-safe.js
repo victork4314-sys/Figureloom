@@ -63,10 +63,11 @@
       gap: 8px !important;
       margin: 16px -18px 0 !important;
       padding: 12px 18px max(14px, env(safe-area-inset-bottom)) !important;
-      border-top: 1px solid rgba(181, 202, 212, .72) !important;
-      background: linear-gradient(180deg, rgba(250, 253, 254, .94), rgba(247, 251, 252, 1) 28%) !important;
-      box-shadow: 0 -10px 22px rgba(31, 48, 67, .08) !important;
+      border-top: 1px solid var(--figureloom-ui-line, #cddbd7) !important;
+      background: var(--figureloom-ui-soft, #edf3f1) !important;
+      box-shadow: 0 -10px 22px var(--figureloom-ui-shadow-soft, rgba(12,46,40,.10)) !important;
       backdrop-filter: blur(14px) saturate(1.08) !important;
+      color: var(--figureloom-ui-text, #172321) !important;
     }
 
     #scicanvasTour.open .tour-actions button {
@@ -79,28 +80,28 @@
 
     html[data-figureloom-theme="dark"] #scicanvasTour.open .tour-actions,
     html[data-theme="dark"] #scicanvasTour.open .tour-actions {
-      border-top-color: rgba(80, 92, 108, .82) !important;
-      background: linear-gradient(180deg, rgba(36, 40, 47, .90), rgba(36, 40, 47, 1) 28%) !important;
-      box-shadow: 0 -10px 24px rgba(0, 0, 0, .28) !important;
-      color: #eef1f4 !important;
+      border-top-color: var(--figureloom-ui-line, #43514d) !important;
+      background: var(--figureloom-ui-soft, #2a3431) !important;
+      box-shadow: 0 -10px 24px var(--figureloom-ui-shadow-soft, rgba(0,0,0,.24)) !important;
+      color: var(--figureloom-ui-text, #eef7f4) !important;
     }
 
     html[data-figureloom-theme="dark"] #scicanvasTour.open .tour-actions button:not(.primary):not([data-tour="next"]),
     html[data-theme="dark"] #scicanvasTour.open .tour-actions button:not(.primary):not([data-tour="next"]) {
-      border-color: #46505d !important;
-      background: #2b3139 !important;
-      color: #eef1f4 !important;
+      border-color: var(--figureloom-ui-line, #43514d) !important;
+      background: var(--figureloom-ui-surface, #222927) !important;
+      color: var(--figureloom-ui-text, #eef7f4) !important;
     }
 
     #scicanvasTour.open .tour-actions [data-tour="next"] {
-      border-color: #2563eb !important;
-      background: #2563eb !important;
-      color: #fff !important;
+      border-color: var(--figureloom-ui-accent, #2f7468) !important;
+      background: var(--figureloom-ui-accent, #2f7468) !important;
+      color: var(--figureloom-ui-accent-ink, #fff) !important;
     }
 
     html[data-figureloom-theme="dark"] #scicanvasTour.open .tour-actions button:disabled,
     html[data-theme="dark"] #scicanvasTour.open .tour-actions button:disabled {
-      color: #aab2bd !important;
+      color: var(--figureloom-ui-muted, #aebdb8) !important;
       opacity: .56 !important;
     }
 
