@@ -99,7 +99,6 @@ jobs:
           test -f pathway-exchange.js
           test -f help-center.js
           test -f figureloom-sage-theme.js
-          test -f phone-sage-theme-fix.js
           test -f wiki/index.html
           test -f wiki/wiki.css
           test -f wiki/wiki.js
