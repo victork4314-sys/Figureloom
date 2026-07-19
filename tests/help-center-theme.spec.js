@@ -53,24 +53,33 @@ for (const theme of ['light', 'dark']) {
   });
 }
 
-test('editor and Help use the same fresh SVG favicon', async ({ page }, testInfo) => {
+test('editor, Help and Legal use the same canonical ICO favicon', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'desktop', 'desktop icon audit');
   await prepare(page);
 
+  const expected = [{ href:'/favicon.ico?v=20260719-final', type:'image/x-icon' }];
   const editorIcons = await page.evaluate(() => [...document.querySelectorAll('link[rel="icon"]')].map(link => ({
     href:link.getAttribute('href'),
     type:link.getAttribute('type')
   })));
-  expect(editorIcons).toEqual([{ href:'./figureloom-favicon.svg', type:'image/svg+xml' }]);
+  expect(editorIcons).toEqual(expected);
   expect(await page.locator('link[rel="manifest"]').count()).toBe(0);
   expect(await page.locator('link[rel="apple-touch-icon"]').count()).toBe(0);
   expect(await page.locator('link[rel="apple-touch-icon-precomposed"]').count()).toBe(0);
   expect(await page.locator('link[rel="mask-icon"]').count()).toBe(0);
   expect(await page.locator('meta[name="msapplication-config"]').count()).toBe(0);
 
+  const favicon = await page.evaluate(async () => {
+    const response = await fetch('/favicon.ico?v=20260719-final', { cache:'no-store' });
+    const bytes = [...new Uint8Array(await response.arrayBuffer()).slice(0, 4)];
+    return { status:response.status, bytes };
+  });
+  expect(favicon).toEqual({ status:200, bytes:[0, 0, 1, 0] });
+
   const retired = await page.evaluate(async () => {
     const paths = [
-      '/platform-icons.js','/favicon.ico','/figureloom-tab-16.png','/figureloom-tab-32.png',
+      '/favicon.ICO','/figureloom-favicon.svg','/platform-icons.js',
+      '/figureloom-tab-16.png','/figureloom-tab-32.png',
       '/apple-touch-icon.png','/apple-touch-icon-precomposed.png','/figureloom-app-192.png',
       '/figureloom-pinned.svg','/browserconfig.xml','/mstile-150x150.png','/mstile-310x310.png'
     ];
@@ -83,7 +92,14 @@ test('editor and Help use the same fresh SVG favicon', async ({ page }, testInfo
     href:link.getAttribute('href'),
     type:link.getAttribute('type')
   })));
-  expect(helpIcons).toEqual([{ href:'../figureloom-favicon.svg', type:'image/svg+xml' }]);
+  expect(helpIcons).toEqual(expected);
+
+  await page.goto('/legal.html');
+  const legalIcons = await page.evaluate(() => [...document.querySelectorAll('link[rel="icon"]')].map(link => ({
+    href:link.getAttribute('href'),
+    type:link.getAttribute('type')
+  })));
+  expect(legalIcons).toEqual(expected);
 });
 
 test('native Safari trackpad pinch zooms the page', async ({ page }, testInfo) => {

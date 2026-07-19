@@ -1,9 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="FigureLoom">
-  <rect x="24" y="24" width="464" height="464" rx="108" fill="#0c2e28"/>
-  <rect x="108" y="90" width="296" height="330" rx="40" fill="none" stroke="#f7fbfa" stroke-width="36"/>
-  <path d="M135 335C190 335 185 190 252 190S315 335 377 335" fill="none" stroke="#79d6c3" stroke-width="32" stroke-linecap="round" stroke-linejoin="round"/>
-  <circle cx="135" cy="335" r="16" fill="#79d6c3"/>
-  <circle cx="252" cy="190" r="17" fill="#a6e8da"/>
-  <circle cx="377" cy="335" r="16" fill="#79d6c3"/>
-  <rect x="333" y="125" width="40" height="40" rx="12" fill="#f7fbfa"/>
-</svg>
