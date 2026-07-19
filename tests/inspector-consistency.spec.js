@@ -8,7 +8,10 @@ async function prepare(page) {
     localStorage.setItem('scicanvas-user-name-v1', 'Inspector Test');
     localStorage.setItem('scicanvas-motion-v1', 'off');
     localStorage.setItem('figureloom-interface-theme-v1', 'dark');
-    localStorage.removeItem('figureloom-inspector-order-v1');
+    if (!sessionStorage.getItem('figureloom-inspector-test-initialized')) {
+      localStorage.removeItem('figureloom-inspector-order-v1');
+      sessionStorage.setItem('figureloom-inspector-test-initialized', '1');
+    }
     localStorage.setItem('figureloom-settings-v1', JSON.stringify({
       interfaceMode:'desktop', textSize:'standard', largerControls:false,
       strongFocus:false, reduceMotion:false, highContrast:false,
