@@ -57,8 +57,10 @@
     const controls = viewControls();
     if (!controls) return;
     const { group, fitButton, gridLabel, snapLabel } = controls;
-    group.insertBefore(fitButton, gridLabel);
-    group.insertBefore(gridLabel, snapLabel);
+    if (fitButton.nextElementSibling !== gridLabel || gridLabel.nextElementSibling !== snapLabel) {
+      group.insertBefore(fitButton, gridLabel);
+      group.insertBefore(gridLabel, snapLabel);
+    }
     desktopViewOrderApplied = true;
     root.dataset.figureloomDesktopViewOrder = '1';
   }
@@ -68,8 +70,10 @@
     const controls = viewControls();
     if (controls) {
       const { group, fitButton, gridLabel, snapLabel } = controls;
-      group.insertBefore(gridLabel, fitButton);
-      group.insertBefore(snapLabel, fitButton);
+      if (gridLabel.nextElementSibling !== snapLabel || snapLabel.nextElementSibling !== fitButton) {
+        group.insertBefore(gridLabel, fitButton);
+        group.insertBefore(snapLabel, fitButton);
+      }
     }
     desktopViewOrderApplied = false;
     delete root.dataset.figureloomDesktopViewOrder;
