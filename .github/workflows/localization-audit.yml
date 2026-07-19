@@ -1,0 +1,26 @@
+name: Localization audit
+
+on:
+  push:
+    branches: [complete-interface-localization]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  inventory:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+      - name: Extract interface strings
+        run: node scripts/localization-audit.mjs
+      - name: Upload inventory
+        uses: actions/upload-artifact@v6
+        with:
+          name: interface-string-inventory
+          path: interface-string-inventory.json
+          if-no-files-found: error
