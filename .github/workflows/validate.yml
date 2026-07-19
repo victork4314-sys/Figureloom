@@ -32,7 +32,7 @@ jobs:
         run: |
           test -f index.html
           test -f styles.css
-          test -f favicon.svg
+          test -f figureloom-mark.svg
           test -f app.js
           test -f science-library.js
           test -f water-icons.js
