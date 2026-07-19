@@ -8,12 +8,16 @@ You can use the editor without an account. Local projects are saved in the brows
 
 Start with [Start here](Start-Here). It walks through creating a project, adding objects, saving a backup, and exporting the result.
 
+Use the [Visual interface guide](Visual-Interface-Guide) to learn where everything is, or jump to [Quick task guides](Quick-Task-Guides) when you need short instructions for one specific action.
+
 The sidebar keeps the full manual organized by editing, scientific tools, files, sharing, tutorials, and troubleshooting.
 
 ## Find a topic
 
 ### Core editing
 
+- [Visual interface guide](Visual-Interface-Guide)
+- [Quick task guides](Quick-Task-Guides)
 - [Interface and navigation](Interface-and-Navigation)
 - [Phone and tablet use](Phone-and-Tablet)
 - [Projects, saving, and recovery](Projects-Saving-and-Recovery)
