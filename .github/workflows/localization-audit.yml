@@ -3,6 +3,11 @@ name: Localization audit
 on:
   pull_request:
     branches: [main]
+    paths:
+      - scripts/localization-audit.mjs
+      - scripts/generate-localizations.mjs
+      - scripts/build-language-pack.mjs
+      - .github/workflows/localization-audit.yml
   workflow_dispatch:
 
 concurrency:
@@ -10,7 +15,7 @@ concurrency:
   cancel-in-progress: true
 
 permissions:
-  contents: read
+  contents: write
   models: read
 
 jobs:
@@ -18,6 +23,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.head_ref || github.ref_name }}
       - uses: actions/setup-node@v6
         with:
           node-version: 24
@@ -44,3 +51,12 @@ jobs:
             complete-interface-translations.partial.json
             language-complete-pack.js
           if-no-files-found: warn
+      - name: Commit validated language pack to audit branch
+        if: success() && github.event_name == 'pull_request'
+        run: |
+          git config user.name "FigureLoom localization audit"
+          git config user.email "actions@users.noreply.github.com"
+          git add language-complete-pack.js
+          git diff --cached --quiet && exit 0
+          git commit -m "Add audited complete interface language pack"
+          git push origin HEAD:${{ github.head_ref }}
