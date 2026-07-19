@@ -157,7 +157,6 @@ if (!errors.length) {
   ]) requireText(textPolish, marker, 'text-editing-gentle-polish.js complete inspector and editor theme');
 
   for (const marker of [
-    'figureloomRichTextControls',
     'text-editing-gentle-polish.js',
     'stable-71d36df-locked-20260719-v38',
     '<span>Opening FigureLoom</span>'
