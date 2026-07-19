@@ -11,10 +11,16 @@
   "orientation": "any",
   "icons": [
     {
-      "src": "/figureloom-mark.svg?v=1",
-      "sizes": "any",
-      "type": "image/svg+xml",
-      "purpose": "any"
+      "src": "/figureloom-app-192-v1.png?v=20260719-v1",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/figureloom-app-512-v1.png?v=20260719-v1",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
     }
   ]
 }
