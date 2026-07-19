@@ -72,4 +72,64 @@ for (const theme of ['light', 'dark']) {
     expect(colors.brandBackground).not.toContain('37, 99, 235');
     expect(colors.brandBackground).not.toContain('124, 58, 237');
   });
+
+  test(`the ${theme} inspector and rich text editor use the complete sage polish`, async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== 'desktop', 'desktop inspector and editor check');
+    await prepare(page, theme);
+
+    await page.locator('#addTextButton').click();
+    await expect(page.locator('#openFigureLoomRichText')).toBeEnabled();
+
+    const inspector = await page.evaluate(() => {
+      const root = getComputedStyle(document.documentElement);
+      const section = getComputedStyle(document.querySelector('.right-panel .inspector-section'));
+      const advanced = getComputedStyle(document.querySelector('#figureloomRichTextControls'));
+      const disabled = getComputedStyle(document.querySelector('#downloadSelectedSvg'));
+      return {
+        surface:root.getPropertyValue('--figureloom-ui-surface').trim(),
+        soft:root.getPropertyValue('--figureloom-ui-soft').trim(),
+        line:root.getPropertyValue('--figureloom-ui-line').trim(),
+        sectionBackground:section.backgroundColor,
+        advancedBackground:advanced.backgroundColor,
+        advancedBorder:advanced.borderTopColor,
+        disabledBackground:disabled.backgroundColor,
+        disabledOpacity:disabled.opacity
+      };
+    });
+
+    await page.locator('#openFigureLoomRichText').click();
+    await expect(page.locator('#figureloomRichTextOverlay')).toBeVisible();
+
+    const editor = await page.evaluate(() => {
+      const frame = getComputedStyle(document.querySelector('.figureloom-rich-editor'));
+      const toolbar = getComputedStyle(document.querySelector('.rich-toolbar'));
+      const editable = getComputedStyle(document.querySelector('.rich-editable'));
+      const favicon = document.querySelector('link[rel="icon"]')?.getAttribute('href') || '';
+      return {
+        frameBackground:frame.backgroundColor,
+        toolbarBackground:toolbar.backgroundColor,
+        editableBackground:editable.backgroundColor,
+        favicon,
+        hasInternalBootCopy:document.documentElement.innerHTML.includes('Stable version')
+      };
+    });
+
+    if (theme === 'light') {
+      expect(inspector.sectionBackground).toBe('rgb(255, 255, 255)');
+      expect(inspector.advancedBackground).toBe('rgb(237, 243, 241)');
+      expect(editor.frameBackground).toBe('rgb(255, 255, 255)');
+      expect(editor.toolbarBackground).toBe('rgb(237, 243, 241)');
+    } else {
+      expect(inspector.sectionBackground).toBe('rgb(34, 41, 39)');
+      expect(inspector.advancedBackground).toBe('rgb(42, 52, 49)');
+      expect(editor.frameBackground).toBe('rgb(34, 41, 39)');
+      expect(editor.toolbarBackground).toBe('rgb(42, 52, 49)');
+    }
+    expect(inspector.advancedBorder).not.toBe('rgb(48, 53, 61)');
+    expect(inspector.disabledBackground).toBe(inspector.advancedBackground);
+    expect(Number(inspector.disabledOpacity)).toBeLessThan(0.8);
+    expect(editor.editableBackground).toBe('rgb(255, 255, 255)');
+    expect(editor.favicon).toContain('favicon.svg?v=8');
+    expect(editor.hasInternalBootCopy).toBe(false);
+  });
 }
