@@ -1,4 +1,4 @@
-const FIGURELOOM_BUILD_ID = "stable-71d36df-locked-20260719-v50";
+const FIGURELOOM_BUILD_ID = "stable-71d36df-locked-20260719-v51";
 const FIGURELOOM_CACHE_PREFIX = "figureloom-app-";
 const FIGURELOOM_CACHE_NAME = `${FIGURELOOM_CACHE_PREFIX}${FIGURELOOM_BUILD_ID}`;
 const LEGACY_CACHE_PREFIXES = ["figureloom-shell", "scicanvas-shell"];
@@ -27,13 +27,11 @@ self.addEventListener("install", event => {
       cache.add(new Request("./tour-mobile-safe.js", { cache:"reload" })),
       cache.add(new Request("./visible-brand-finalizer.js", { cache:"reload" })),
       cache.add(new Request("./ai-chat-fixes.js", { cache:"reload" })),
-      cache.add(new Request("./ai-chat-fixes.js?v=9", { cache:"reload" })),
+      cache.add(new Request("./ai-chat-fixes.js?v=10", { cache:"reload" })),
       cache.add(new Request("./interface-dark-mode.js", { cache:"reload" })),
       cache.add(new Request("./interface-dark-mode.js?v=3", { cache:"reload" })),
       cache.add(new Request("./dark-mode-windows.js", { cache:"reload" })),
       cache.add(new Request("./dark-mode-windows.js?v=2", { cache:"reload" })),
-      cache.add(new Request("./platform-icons.js", { cache:"reload" })),
-      cache.add(new Request("./platform-icons.js?v=2", { cache:"reload" })),
       cache.add(new Request("./interaction-stability-fixes.js", { cache:"reload" })),
       cache.add(new Request("./interaction-stability-fixes.js?v=1", { cache:"reload" })),
       cache.add(new Request("./help-center.js", { cache:"reload" })),
@@ -42,18 +40,8 @@ self.addEventListener("install", event => {
       cache.add(new Request("./figureloom-sage-theme.js?v=3", { cache:"reload" })),
       cache.add(new Request("./figureloom-mark.svg", { cache:"reload" })),
       cache.add(new Request("./figureloom-mark.svg?v=1", { cache:"reload" })),
-      cache.add(new Request("./figureloom-tab-16.png", { cache:"reload" })),
-      cache.add(new Request("./figureloom-tab-32.png", { cache:"reload" })),
-      cache.add(new Request("./favicon.ico", { cache:"reload" })),
-      cache.add(new Request("./apple-touch-icon.png", { cache:"reload" })),
-      cache.add(new Request("./apple-touch-icon-precomposed.png", { cache:"reload" })),
-      cache.add(new Request("./figureloom-app-192.png", { cache:"reload" })),
-      cache.add(new Request("./figureloom-pinned.svg", { cache:"reload" })),
-      cache.add(new Request("./browserconfig.xml", { cache:"reload" })),
-      cache.add(new Request("./mstile-150x150.png", { cache:"reload" })),
-      cache.add(new Request("./mstile-310x310.png", { cache:"reload" })),
       cache.add(new Request("./manifest.webmanifest", { cache:"reload" })),
-      cache.add(new Request("./manifest.webmanifest?v=11", { cache:"reload" })),
+      cache.add(new Request("./manifest.webmanifest?v=10", { cache:"reload" })),
       cache.add(new Request("./wiki/", { cache:"reload" })),
       cache.add(new Request("./wiki/index.html", { cache:"reload" })),
       cache.add(new Request("./wiki/wiki.css", { cache:"reload" })),

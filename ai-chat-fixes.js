@@ -1,5 +1,6 @@
 (() => {
-  if (window.__figureLoomUnifiedAiChatFixesV10) return;
+  if (window.__figureLoomUnifiedAiChatFixesV11) return;
+  window.__figureLoomUnifiedAiChatFixesV11 = true;
   window.__figureLoomUnifiedAiChatFixesV10 = true;
   window.__figureLoomUnifiedAiChatFixesV9 = true;
   window.__figureLoomUnifiedAiChatFixes = true;
@@ -14,7 +15,6 @@
 
   loadCompanion('interface-dark-mode.js?v=3', 'figureloom-dark-mode');
   loadCompanion('dark-mode-windows.js?v=2', 'figureloom-dark-windows');
-  loadCompanion('platform-icons.js?v=2', 'figureloom-platform-icons');
   loadCompanion('interaction-stability-fixes.js?v=1', 'figureloom-interaction-stability');
   loadCompanion('page-thumbnail-previews.js?v=1', 'figureloom-page-previews');
   loadCompanion('illustrations-ui-polish.js?v=1', 'figureloom-illustrations-polish');
@@ -28,8 +28,6 @@
     body.style.minHeight = '0';
   }
 
-  // Puter is independent. Do not let the older shared-Gemini reliability
-  // wrapper duplicate a quota-counted Edge Function request.
   const cloud = window.SciCanvasCloud;
   if (cloud && !cloud.__loomyReliableGetClient) {
     Object.defineProperty(cloud, '__loomyReliableGetClient', { value:true, configurable:true });
@@ -72,7 +70,6 @@
     document.head.appendChild(script);
   }
 
-  // The fitter and non-AI-first wording do not depend on any AI provider.
   loadHelperFit();
 
   const existingReliability = document.querySelector('script[data-loomy-reliability]');
