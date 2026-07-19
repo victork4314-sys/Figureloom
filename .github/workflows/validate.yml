@@ -19,11 +19,25 @@ jobs:
       - name: Audit interface strings
         run: node scripts/audit-interface-strings.mjs
 
+      - name: Collect localization source snapshot
+        run: |
+          mkdir -p artifacts/source
+          find . -type f \( -name '*.js' -o -name '*.mjs' -o -name '*.html' -o -name '*.css' -o -name '*.json' \) \
+            ! -path './.git/*' ! -path './node_modules/*' ! -path './artifacts/*' \
+            -exec cp --parents '{}' artifacts/source/ \;
+
       - name: Upload interface string audit
         uses: actions/upload-artifact@v6
         with:
           name: interface-string-audit
           path: artifacts/interface-string-audit.json
+          if-no-files-found: error
+
+      - name: Upload localization source snapshot
+        uses: actions/upload-artifact@v6
+        with:
+          name: localization-source-snapshot
+          path: artifacts/source
           if-no-files-found: error
 
       - name: Check JavaScript syntax
