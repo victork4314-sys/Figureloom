@@ -1,22 +1,109 @@
-name: Localization stopped
+name: Durable interface localization
 
 on:
-  pull_request:
-    branches: [localization-workflow-base]
+  push:
+    branches: [localization-push-run]
     paths:
-      - scripts/localization-audit.mjs
-      - .github/workflows/localization-model-smoke.yml
+      - localization-run.marker
+  workflow_dispatch:
 
 concurrency:
-  group: complete-interface-localization-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
+  group: durable-interface-localization
+  cancel-in-progress: false
 
 permissions:
-  contents: read
+  contents: write
+  models: read
 
 jobs:
-  stop:
+  inventory:
     runs-on: ubuntu-latest
     steps:
-      - name: Confirm localization stopped
-        run: echo "Localization stopped by user request."
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+      - name: Extract interface strings
+        run: node scripts/localization-audit.mjs
+      - name: Upload interface inventory
+        uses: actions/upload-artifact@v6
+        with:
+          name: durable-localization-inventory
+          path: interface-string-inventory.json
+          if-no-files-found: error
+
+  translate:
+    needs: inventory
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      max-parallel: 4
+      matrix:
+        shard: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+      - name: Download interface inventory
+        uses: actions/download-artifact@v7
+        with:
+          name: durable-localization-inventory
+          path: .
+      - name: Translate shard ${{ matrix.shard }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          LOCALIZATION_MODEL: openai/gpt-4.1-mini
+          SHARD_INDEX: ${{ matrix.shard }}
+          SHARD_TOTAL: 16
+          BATCH_SIZE: 16
+        run: node scripts/generate-localizations-shard.mjs
+      - name: Upload shard ${{ matrix.shard }}
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: durable-localization-shard-${{ matrix.shard }}
+          path: localization-shard-${{ matrix.shard }}.json
+          if-no-files-found: error
+
+  finalize:
+    needs: translate
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+      - name: Download all available shards
+        continue-on-error: true
+        uses: actions/download-artifact@v7
+        with:
+          pattern: durable-localization-shard-*
+          path: localization-shards
+          merge-multiple: true
+      - name: Validate and build final pack
+        if: always()
+        env:
+          SHARD_TOTAL: 16
+          SHARD_DIRECTORY: localization-shards
+        run: node scripts/finalize-localization-run.mjs
+      - name: Publish durable output branch
+        if: always()
+        run: |
+          mkdir -p /tmp/localization-output
+          cp localization-run-status.json /tmp/localization-output/ 2>/dev/null || true
+          cp complete-interface-translations.json /tmp/localization-output/ 2>/dev/null || true
+          cp localization-quality-report.json /tmp/localization-output/ 2>/dev/null || true
+          cp localization-unresolved.json /tmp/localization-output/ 2>/dev/null || true
+          cp localization-conflicts.json /tmp/localization-output/ 2>/dev/null || true
+          cp language-complete-pack.js /tmp/localization-output/ 2>/dev/null || true
+          cp -R localization-shards /tmp/localization-output/ 2>/dev/null || true
+          git config user.name "FigureLoom localization runner"
+          git config user.email "actions@users.noreply.github.com"
+          git switch --orphan localization-output-work
+          git rm -rf .
+          cp -R /tmp/localization-output/. .
+          git add .
+          git commit -m "Publish durable localization run output"
+          git push --force origin HEAD:localization-final-output
