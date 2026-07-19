@@ -1,0 +1,29 @@
+name: Localization model smoke
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - scripts/localization-model-smoke.mjs
+      - .github/workflows/localization-model-smoke.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  models: read
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.head_ref || github.ref_name }}
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+      - name: Test multilingual model response
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          LOCALIZATION_MODEL: openai/gpt-4.1-mini
+        run: node scripts/localization-model-smoke.mjs
