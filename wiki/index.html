@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0c2e28">
+  <meta name="description" content="The complete FigureLoom manual, visual guides, tutorials, and troubleshooting help.">
+  <link rel="icon" href="../favicon.svg?v=7" type="image/svg+xml">
+  <link rel="stylesheet" href="./wiki.css?v=1">
+  <title>FigureLoom Help</title>
+</head>
+<body>
+  <a class="skip-link" href="#wikiContent">Skip to the article</a>
+  <header class="wiki-header">
+    <a class="wiki-brand" href="#Home" aria-label="FigureLoom Help home">
+      <img src="../favicon.svg?v=7" alt="">
+      <span><strong>FigureLoom</strong><small>Help center</small></span>
+    </a>
+    <label class="wiki-search">
+      <span class="sr-only">Search the manual</span>
+      <input id="wikiSearch" type="search" placeholder="Search tools, exports, recovery…" autocomplete="off">
+      <kbd>/</kbd>
+    </label>
+    <div class="wiki-header-actions">
+      <button id="wikiNavToggle" class="icon-button nav-toggle" type="button" aria-label="Open manual navigation" aria-expanded="false">☰</button>
+      <button id="wikiThemeButton" class="icon-button" type="button" aria-label="Switch appearance">◐</button>
+      <a class="editor-link" href="../">Open editor</a>
+    </div>
+  </header>
+
+  <div id="wikiSearchResults" class="search-results" hidden></div>
+
+  <div class="wiki-layout">
+    <aside id="wikiNavigation" class="wiki-navigation" aria-label="Manual navigation">
+      <div class="nav-intro">
+        <strong>Complete manual</strong>
+        <span>Guides for desktop, tablet, and phone.</span>
+      </div>
+      <nav id="wikiNav"></nav>
+      <div class="nav-footer">
+        <a href="#Troubleshooting-and-Recovery">Something broken?</a>
+        <a href="https://github.com/victork4314-sys/Figureloom/issues" target="_blank" rel="noreferrer">Report a bug</a>
+      </div>
+    </aside>
+
+    <main id="wikiContent" class="wiki-content" tabindex="-1" aria-live="polite">
+      <div class="article-loading" role="status"><i></i><span>Opening the manual…</span></div>
+    </main>
+
+    <aside class="wiki-on-this-page" aria-label="On this page">
+      <strong>On this page</strong>
+      <nav id="wikiToc"></nav>
+    </aside>
+  </div>
+
+  <div id="wikiError" class="wiki-error" hidden>
+    <strong>This page could not be opened.</strong>
+    <p>The manual may still be updating. Return to the help home or try again.</p>
+    <a href="#Home">Open help home</a>
+  </div>
+
+  <script src="./wiki.js?v=1"></script>
+</body>
+</html>
