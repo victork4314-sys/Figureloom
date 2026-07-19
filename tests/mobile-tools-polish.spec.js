@@ -33,6 +33,7 @@ async function prepare(page, theme = 'light') {
 
 test('mobile Tools responds to a real vertical touch drag and uses the sage theme', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'mobile', 'phone tools check');
+  await page.setViewportSize({ width:390, height:640 });
   await prepare(page);
 
   await page.locator('[data-phone-action="tools"]').click();
@@ -72,10 +73,10 @@ test('mobile Tools responds to a real vertical touch drag and uses the sage them
 
   const target = ribbon.locator('.tool-group').nth(1);
   const base = { pointerId:71, pointerType:'touch', isPrimary:true, button:0, buttons:1, clientX:300 };
-  await target.dispatchEvent('pointerdown', { ...base, clientY:700 });
-  await target.dispatchEvent('pointermove', { ...base, clientY:420 });
-  await target.dispatchEvent('pointermove', { ...base, clientY:260 });
-  await ribbon.dispatchEvent('pointerup', { ...base, buttons:0, clientY:260 });
+  await target.dispatchEvent('pointerdown', { ...base, clientY:560 });
+  await target.dispatchEvent('pointermove', { ...base, clientY:360 });
+  await target.dispatchEvent('pointermove', { ...base, clientY:180 });
+  await ribbon.dispatchEvent('pointerup', { ...base, buttons:0, clientY:180 });
   await expect.poll(() => ribbon.evaluate(node => node.scrollTop)).toBeGreaterThan(100);
 });
 
