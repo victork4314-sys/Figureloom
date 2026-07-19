@@ -17,6 +17,7 @@ function requireText(source, marker, label) {
 const requiredFiles = [
   'help-center.js',
   'figureloom-sage-theme.js',
+  'tour-mobile-safe.js',
   'tests/help-center-theme.spec.js',
   'wiki/index.html',
   'wiki/wiki.css',
@@ -40,6 +41,7 @@ if (!errors.length) {
   const appHtml = read('index.html');
   const help = read('help-center.js');
   const theme = read('figureloom-sage-theme.js');
+  const tourMobile = read('tour-mobile-safe.js');
   const browserTest = read('tests/help-center-theme.spec.js');
   const wikiHtml = read('wiki/index.html');
   const wikiJs = read('wiki/wiki.js');
@@ -97,6 +99,18 @@ if (!errors.length) {
   }
 
   for (const marker of [
+    'var(--figureloom-ui-soft, #edf3f1)',
+    'var(--figureloom-ui-surface, #222927)',
+    'var(--figureloom-ui-accent, #2f7468)',
+    'var(--figureloom-ui-text, #eef7f4)',
+    'var(--figureloom-ui-line, #43514d)'
+  ]) requireText(tourMobile, marker, 'tour-mobile-safe.js shared sage palette');
+
+  for (const oldTourColor of ['background: #2563eb', 'background: #2b3139', 'rgba(36, 40, 47']) {
+    if (tourMobile.includes(oldTourColor)) errors.push(`tour-mobile-safe.js still contains old passive-guide color: ${oldTourColor}`);
+  }
+
+  for (const marker of [
     'opens Help rather than starting the passive guide',
     'FigureLoomSageTheme',
     '#figureloomHelpMenu',
@@ -121,6 +135,7 @@ if (!errors.length) {
   }
 
   for (const file of [
+    './tour-mobile-safe.js',
     './help-center.js',
     './figureloom-sage-theme.js',
     './wiki/',
@@ -153,4 +168,4 @@ if (errors.length) {
   process.exit(1);
 }
 
-console.log('Help center validation passed: the question-mark Help menu, one shared sage theme, wiki, phone safety, and offline cache are present.');
+console.log('Help center validation passed: the question-mark Help menu, one shared sage theme, passive guide, wiki, phone safety, and offline cache are present.');
