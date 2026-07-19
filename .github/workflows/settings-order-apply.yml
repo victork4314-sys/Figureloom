@@ -1,0 +1,33 @@
+name: Apply Settings order
+
+on:
+  push:
+    branches: [complete-interface-localization-active]
+    paths:
+      - scripts/apply-settings-order.mjs
+      - .github/workflows/settings-order-apply.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+      - name: Update Settings placement source
+        run: |
+          node scripts/apply-settings-order.mjs
+          node --check settings-gentle-fixes.js
+      - name: Commit Settings order
+        run: |
+          git config user.name "FigureLoom interface repair"
+          git config user.email "actions@users.noreply.github.com"
+          git add settings-gentle-fixes.js
+          git diff --cached --quiet && exit 0
+          git commit -m "Place Settings before Projects"
+          git push origin HEAD:complete-interface-localization-active
