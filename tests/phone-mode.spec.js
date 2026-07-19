@@ -224,7 +224,8 @@ test('long press forwards to the existing context-menu path', async ({ page }, t
   test.skip(testInfo.project.name !== 'mobile', 'phone long press check');
   await prepare(page, 'phone');
   await page.locator('[data-phone-action="tools"]').click();
-  await page.locator('#addShapeButton').click();
+  await page.locator('#figureloomShapesButton').click();
+  await page.getByRole('menuitem', { name:'Rectangle', exact:true }).click();
   await closePhoneSheet(page);
   const object = page.locator('#objectLayer .canvas-object').first();
   await expect(object).toBeVisible();

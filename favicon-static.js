@@ -1,0 +1,12 @@
+(() => {
+  if (window.__figureLoomStaticFaviconV1) return;
+  window.__figureLoomStaticFaviconV1 = true;
+
+  const inlineIcon = document.createElement('link');
+  inlineIcon.rel = 'icon';
+  inlineIcon.type = 'image/svg+xml';
+  inlineIcon.sizes = 'any';
+  inlineIcon.dataset.figureloomInlineIcon = '1';
+  inlineIcon.href = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgNTEyIj4KPHJlY3QgeD0iMjQiIHk9IjI0IiB3aWR0aD0iNDY0IiBoZWlnaHQ9IjQ2NCIgcng9IjEwOCIgZmlsbD0iIzBjMmUyOCIvPgo8cmVjdCB4PSIxMDgiIHk9IjkwIiB3aWR0aD0iMjk2IiBoZWlnaHQ9IjMzMCIgcng9IjQwIiBmaWxsPSJub25lIiBzdHJva2U9IiNmN2ZiZmEiIHN0cm9rZS13aWR0aD0iMzYiLz4KPHBhdGggZD0iTTEzNSAzMzVDMTkwIDMzNSAxODUgMTkwIDI1MiAxOTBTMzE1IDMzNSAzNzcgMzM1IiBmaWxsPSJub25lIiBzdHJva2U9IiM3OWQ2YzMiIHN0cm9rZS13aWR0aD0iMzIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPgo8Y2lyY2xlIGN4PSIxMzUiIGN5PSIzMzUiIHI9IjE2IiBmaWxsPSIjNzlkNmMzIi8+CjxjaXJjbGUgY3g9IjI1MiIgY3k9IjE5MCIgcj0iMTciIGZpbGw9IiNhNmU4ZGEiLz4KPGNpcmNsZSBjeD0iMzc3IiBjeT0iMzM1IiByPSIxNiIgZmlsbD0iIzc5ZDZjMyIvPgo8cmVjdCB4PSIzMzMiIHk9IjEyNSIgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiByeD0iMTIiIGZpbGw9IiNmN2ZiZmEiLz4KPC9zdmc+';
+  document.head.appendChild(inlineIcon);
+})();
