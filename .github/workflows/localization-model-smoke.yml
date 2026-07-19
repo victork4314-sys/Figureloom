@@ -27,3 +27,10 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           LOCALIZATION_MODEL: openai/gpt-4.1-mini
         run: node scripts/localization-model-smoke.mjs
+      - name: Upload smoke response
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: localization-model-smoke-result
+          path: localization-model-smoke-result.txt
+          if-no-files-found: error
