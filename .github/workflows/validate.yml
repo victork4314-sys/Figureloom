@@ -16,6 +16,16 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
 
+      - name: Audit interface strings
+        run: node scripts/audit-interface-strings.mjs
+
+      - name: Upload interface string audit
+        uses: actions/upload-artifact@v6
+        with:
+          name: interface-string-audit
+          path: artifacts/interface-string-audit.json
+          if-no-files-found: error
+
       - name: Check JavaScript syntax
         run: |
           for file in *.js; do
