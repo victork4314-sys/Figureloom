@@ -1,5 +1,6 @@
 (() => {
-  if (window.__figureLoomStableRuntime71d36dfV48) return;
+  if (window.__figureLoomStableRuntime71d36dfV49) return;
+  window.__figureLoomStableRuntime71d36dfV49 = true;
   window.__figureLoomStableRuntime71d36dfV48 = true;
   window.__figureLoomStableRuntime71d36dfV47 = true;
   window.__figureLoomStableRuntime71d36dfV46 = true;
@@ -12,7 +13,7 @@
   window.__figureLoomStableRuntime71d36dfV39 = true;
   window.__figureLoomStableRuntime71d36dfV38 = true;
 
-  const STABLE_BUILD = "stable-71d36df-locked-20260719-v48";
+  const STABLE_BUILD = "stable-71d36df-locked-20260719-v49";
   const GENERAL_ADDONS = [
     "library-more-illustrations.js",
     "library-more-templates.js",
@@ -34,6 +35,7 @@
     "manual-collaboration-projects-ui.js",
     "projects-home-button-match.js",
     "navigation-clarity.js",
+    "desktop-history-actions.js",
     "project-tab-close-export.js",
     "global-pptx-export-fix.js",
     "pptx-safe-jpeg-export.js",
