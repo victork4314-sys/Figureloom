@@ -147,7 +147,8 @@
 
       function appendPoint(event) {
         if (!activeStroke || event.pointerId !== activePointerId) return;
-        const samples = typeof event.getCoalescedEvents === 'function' ? event.getCoalescedEvents() : [event];
+        const coalesced = typeof event.getCoalescedEvents === 'function' ? event.getCoalescedEvents() : null;
+        const samples = coalesced && coalesced.length ? coalesced : [event];
         for (const sample of samples) {
           const point = pointFromEvent(sample);
           const previous = activeStroke.points[activeStroke.points.length - 1];
