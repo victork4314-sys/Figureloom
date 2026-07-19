@@ -1,72 +1,85 @@
-# Figureloom
+# FigureLoom
 
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-663399.svg)](LICENSE)
-[![Use Figureloom](https://img.shields.io/badge/open-figureloom.org-0c2e28.svg)](https://figureloom.org/)
+[![Open FigureLoom](https://img.shields.io/badge/open-figureloom.org-0c2e28.svg)](https://figureloom.org/)
 [![Free and open source](https://img.shields.io/badge/free%20%26%20open%20source-yes-2ea44f.svg)](LICENSE)
 
-**A free, local-first scientific figure editor for people who need their diagrams editable, not held hostage by a watermark.**
+**A free, local-first editor for scientific figures, diagrams, posters, and presentations.**
 
-Figureloom runs directly in the browser. You can open it, make a figure, save locally, and export without creating an account. No paywall. No “contact sales.” No mysterious university pricing ritual.
+FigureLoom runs in the browser. You can open it, make something, save it locally, and export it without creating an account. There is no paywall, watermark, or institutional pricing maze.
 
-It feels familiar if you have used PowerPoint, Keynote, or another office-style editor, but it is built around scientific work: pathways, plots, equations, maps, microscopy layouts, annotations, references, and all the gloriously specific nonsense research eventually demands.
+The interface should feel familiar to anyone who has used PowerPoint, Keynote, or another office-style editor. The difference is that FigureLoom is built around scientific work, so pathways, equations, plots, maps, microscopy layouts, references, annotations, and publication checks are part of the editor rather than an afterthought.
 
-## The useful bits
+Try it at [figureloom.org](https://figureloom.org/).
 
-- Multi-page, layer-based vector editor
-- Local autosave, recovery snapshots, and downloadable `.scicanvas` backups
-- Text, shapes, arrows, connectors, groups, smart guides, grids, alignment, and distribution
+## What it can do
+
+- Multi-page, layer-based vector editing
+- Local autosave, recovery snapshots, and downloadable `.figureloom` project backups
+- Text, shapes, arrows, connectors, groups, grids, smart guides, alignment, and distribution
 - Poster, print, screen, presentation, square, and custom physical page sizes
-- Editable charts and tables from pasted spreadsheet data
-- Bar, line, scatter, box, violin, volcano, heatmap, PCA-style, Kaplan–Meier, forest, radar, bubble, Gantt, timeline, and flow-cytometry-style plots
+- Editable charts and tables made from pasted spreadsheet data
+- Bar, line, scatter, box, violin, volcano, heatmap, PCA-style, Kaplan-Meier, forest, radar, bubble, Gantt, timeline, and flow-cytometry-style plots
 - TeX equations rendered as editable SVG artwork
 - SVG path editing and break-apart tools
 - World maps, country maps, study-site locators, and GeoJSON import
-- PowerPoint and spreadsheet import/export tools
-- Publication checks for contrast, tiny text, grayscale, color-vision previews, alt text, references, attribution, and journal sizing
+- Code windows for instructions, methods, examples, and technical notes
+- PowerPoint and spreadsheet import and export tools
+- Contrast checks, tiny-text warnings, grayscale and color-vision previews, alt text, references, attribution, and journal sizing checks
 - Fullscreen multi-page presentation mode
 
-## Scientific artwork without the warehouse
+Older project backups are still accepted, so updating FigureLoom does not strand files made with earlier versions.
 
-Figureloom includes original programmatic artwork and can load outside libraries such as Bioicons, Healthicons, and other compatible packs on demand.
+## Desktop, tablet, and phone
 
-That is why the repository is suspiciously tiny: much of the artwork is either drawn from compact vector instructions or fetched only when someone actually asks for it. Tiny art factory, not giant image warehouse.
+The desktop and tablet interface keeps the full editor visible. Phone mode rearranges the same tools into touch-friendly panels so the canvas still has room to breathe.
 
-Imported SVGs are sanitized before being added. Available creator, source, licence, and attribution information stays attached to the artwork.
+Automatic mode chooses the phone interface on phone-sized touch devices. You can also force Phone or Desktop and tablet mode in Settings. Switching the interface does not create a second project format or change the contents of a figure.
 
-## Figure Assistant
+## Scientific artwork
 
-Describe a pathway, cycle, workflow, comparison, environmental system, or laboratory process and Figure Assistant assembles an **editable** starting figure.
+FigureLoom includes original programmatic artwork and can load outside libraries such as Bioicons, Healthicons, and other compatible packs when they are needed.
 
-It does not hand you one flattened AI picture and flee the scene. The result is made from normal Figureloom objects that can be moved, resized, recolored, relabeled, and rearranged.
+A lot of the artwork is drawn from compact vector instructions or fetched on demand. That keeps the repository smaller and avoids shipping a giant pile of images with every page load.
 
-A compatible browser may optionally use an on-device language model to clean up vague prompts. The deterministic assistant still works without it.
+Imported SVG files are sanitized before they are added. When creator, source, license, or attribution information is available, FigureLoom keeps it attached to the artwork.
 
-## Accounts, cloud projects, and collaboration
+## Loomy is optional
+
+Loomy is a small helper for getting a first draft onto the canvas. You can describe a pathway, cycle, workflow, comparison, environmental system, or laboratory process, and it can assemble a starting layout from normal FigureLoom objects.
+
+The result is editable. Objects can be moved, resized, recolored, relabeled, deleted, or rearranged like anything else in the editor.
+
+You can also ignore Loomy completely. The editor, drawing tools, templates, imports, and exports do not depend on it.
+
+## Projects and collaboration
 
 An account is optional.
 
-Without signing in, projects can stay entirely in browser storage. With an account, Figureloom can provide:
+Without signing in, projects can remain in browser storage. With an account, FigureLoom can provide:
 
 - An encrypted cloud project gallery
 - Owned and shared projects
 - Owner, editor, reviewer, and viewer roles
 - Named live presence and remote cursors
 - Encrypted project broadcasts and review comments
-- Explicit conflict controls instead of silently overwriting active work
+- Conflict controls that avoid silently overwriting active work
 
 Project contents are encrypted in the browser before cloud storage. Titles, ownership, timestamps, roles, and revision metadata remain visible so the gallery can function. This is application-layer encryption, not a zero-knowledge system.
 
-Deployment details live in [`docs/CLOUD_SETUP.md`](docs/CLOUD_SETUP.md).
+Deployment details are in [`docs/CLOUD_SETUP.md`](docs/CLOUD_SETUP.md).
 
-## Privacy, in normal-person language
+## Privacy
 
-Local projects, uploads, fonts, embedded workbooks, comments, references, components, checkpoints, recovery copies, gallery copies, and preferences stay in browser storage unless the user deliberately saves a cloud copy.
+Local projects, uploads, fonts, embedded workbooks, comments, references, components, checkpoints, recovery copies, gallery copies, and preferences stay in browser storage unless the user deliberately saves a cloud copy or shares something.
 
 The browser receives the public Supabase URL and publishable key only. Service-role keys, database passwords, SMTP credentials, and other server secrets do not belong in client code.
 
+For important work, keep a downloaded project backup. Browser storage is useful, but it should not be the only copy of something that took three weeks to make.
+
 ## Run it locally
 
-There is no build ritual.
+There is no build step for the basic app.
 
 ```bash
 python3 -m http.server 8080
@@ -82,33 +95,33 @@ Most editor features work locally. Cloud authentication redirects need the local
 
 ## Testing
 
-Normal pushes and pull requests run fast checks for things such as:
+Pull requests run syntax and browser checks for the parts of the app they touch. The current test coverage includes:
 
-- JavaScript syntax
-- Required files and script order
-- Duplicate IDs
-- Offline-shell completeness
-- SVG and asset trust markers
-- Refresh-safe restoration
-- Account, gallery, collaboration, TeX, pathway, and local-model wiring
+- JavaScript syntax and script wiring
+- Duplicate IDs and required assets
+- Offline cache behavior
+- Desktop and phone interface regressions
+- Phone safe areas, touch targets, zoom, panels, and guide controls
+- Visible FigureLoom branding
+- Account, gallery, collaboration, TeX, pathway, and export wiring
 
-Longer desktop and iPhone-sized browser tests remain available through manual workflow dispatch.
+The repository still has an older validation workflow with a few legacy assumptions. New focused browser tests are used for the current phone interface and other recently rebuilt areas.
 
 ## Contributing
 
-Bug fixes, scientific asset improvements, accessibility work, import/export fixes, and aggressively niche research-tool ideas are welcome.
+Bug fixes, scientific artwork, accessibility work, import and export improvements, and very specific research-tool ideas are welcome.
 
-Please keep contributions understandable, preserve source and licence metadata for external artwork, and avoid turning the interface into a cockpit unless the cockpit is genuinely necessary.
+Please keep changes focused and readable. Preserve source and license metadata for outside artwork. Avoid turning the interface into a cockpit unless the cockpit is genuinely necessary.
 
-## Licence
+## License
 
-Figureloom's original code and project-authored artwork are released under the **GNU Affero General Public License v3.0 only** (`AGPL-3.0-only`).
+FigureLoom's original code and project-authored artwork are released under the **GNU Affero General Public License v3.0 only** (`AGPL-3.0-only`).
 
-[Read the full licence](LICENSE).
+[Read the full license](LICENSE).
 
-In practical terms: people may use, study, modify, and share Figureloom. When someone operates a modified version over a network, the AGPL requires that version's corresponding source code to be made available to its users.
+People may use, study, modify, and share FigureLoom. When someone operates a modified version over a network, the AGPL requires that version's corresponding source code to be made available to its users.
 
-External asset packs keep their own licences and attribution requirements. Review [`docs/ASSET_PACKS.md`](docs/ASSET_PACKS.md) before publishing work that uses them.
+Outside asset packs keep their own licenses and attribution requirements. Read [`docs/ASSET_PACKS.md`](docs/ASSET_PACKS.md) before publishing work that uses them.
 
 ## More documentation
 
