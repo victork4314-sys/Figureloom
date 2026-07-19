@@ -68,9 +68,10 @@ test('inserted drawing has a full drag surface and moves like every other object
   await expect(hitArea).toBeVisible();
   const before = await page.evaluate(() => ({ x:state.objects[0].x, y:state.objects[0].y }));
   const box = await hitArea.boundingBox();
-  await page.mouse.move(box.x + Math.max(2, box.width * .08), box.y + Math.max(2, box.height * .08));
+  const start = { x:box.x + box.width * .5, y:box.y + box.height * .5 };
+  await page.mouse.move(start.x, start.y);
   await page.mouse.down();
-  await page.mouse.move(box.x + box.width * .08 + 42, box.y + box.height * .08 + 28, { steps:5 });
+  await page.mouse.move(start.x + 42, start.y + 28, { steps:5 });
   await page.mouse.up();
 
   await expect.poll(() => page.evaluate(({ x, y }) => {
