@@ -53,3 +53,7 @@ The sidebar keeps the full manual organized by editing, scientific tools, files,
 ## A useful rule
 
 For work you care about, keep a downloaded `.figureloom` backup. Browser autosave is convenient, but a separate file is the safest way to move or archive a project.
+
+---
+
+*Dedicated to Adriana M. K.*
