@@ -1,6 +1,6 @@
 (() => {
-  if (window.__figureLoomPhoneModeV1) return;
-  window.__figureLoomPhoneModeV1 = true;
+  if (window.__figureLoomPhoneModeV4) return;
+  window.__figureLoomPhoneModeV4 = true;
 
   const root = document.documentElement;
   const SHEETS = ['tools', 'pages', 'edit', 'more'];
@@ -18,12 +18,22 @@
   const $ = selector => document.querySelector(selector);
 
   function stylesheet() {
-    if ($('#figureloomPhoneModeStylesheet')) return;
-    const link = document.createElement('link');
-    link.id = 'figureloomPhoneModeStylesheet';
-    link.rel = 'stylesheet';
-    link.href = 'mobile-mode.css?v=20260719-v1';
-    document.head.appendChild(link);
+    if (!$('#figureloomPhoneModeStylesheet')) {
+      const link = document.createElement('link');
+      link.id = 'figureloomPhoneModeStylesheet';
+      link.rel = 'stylesheet';
+      link.href = 'mobile-mode.css?v=20260719-v2';
+      document.head.appendChild(link);
+    }
+    if (!$('#figureloomPhoneHiddenFix')) {
+      const style = document.createElement('style');
+      style.id = 'figureloomPhoneHiddenFix';
+      style.textContent = `
+        html[data-figureloom-resolved-mode="phone"] #figureloomPhoneSheetBar[hidden],
+        html[data-figureloom-resolved-mode="phone"] #figureloomPhoneScrim[hidden]{display:none!important}
+      `;
+      document.head.appendChild(style);
+    }
   }
 
   function makeButton(action, icon, label, extra = '') {
@@ -166,8 +176,9 @@
       return;
     }
     if (action === 'templates') {
+      closeSheet({ restoreFocus:false });
       $('.ribbon-tab[data-tab="insert"]')?.click();
-      requestAnimationFrame(() => openSheet('tools'));
+      setTimeout(() => closeSheet({ restoreFocus:false }), 0);
       return;
     }
     if (action === 'settings') {
@@ -253,13 +264,22 @@
     longPress = null;
   }
 
+  function settleRibbonTab(tab) {
+    if (tab?.dataset.tab === 'insert') {
+      closeSheet({ restoreFocus:false });
+      setTimeout(() => closeSheet({ restoreFocus:false }), 0);
+      return;
+    }
+    requestAnimationFrame(() => openSheet('tools'));
+  }
+
   function bindGlobalEvents() {
     if (document.documentElement.dataset.figureloomPhoneEvents === '1') return;
     document.documentElement.dataset.figureloomPhoneEvents = '1';
     document.addEventListener('click', event => {
       if (!active) return;
       const tab = event.target.closest?.('.ribbon-tabs .ribbon-tab');
-      if (tab) requestAnimationFrame(() => openSheet('tools'));
+      if (tab && event.isTrusted) settleRibbonTab(tab);
       if (openName && event.target.closest?.('#canvasStage') && !event.target.closest?.('.canvas-toolbar')) closeSheet({ restoreFocus:false });
     }, true);
     document.addEventListener('pointerdown', beginLongPress, true);
