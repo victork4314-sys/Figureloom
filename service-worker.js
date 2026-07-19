@@ -1,4 +1,4 @@
-const FIGURELOOM_BUILD_ID = "stable-71d36df-locked-20260719-v41";
+const FIGURELOOM_BUILD_ID = "stable-71d36df-locked-20260719-v42";
 const FIGURELOOM_CACHE_PREFIX = "figureloom-app-";
 const FIGURELOOM_CACHE_NAME = `${FIGURELOOM_CACHE_PREFIX}${FIGURELOOM_BUILD_ID}`;
 const LEGACY_CACHE_PREFIXES = ["figureloom-shell", "scicanvas-shell"];
@@ -27,8 +27,6 @@ self.addEventListener("install", event => {
       cache.add(new Request("./help-center.js?v=2", { cache:"reload" })),
       cache.add(new Request("./figureloom-sage-theme.js", { cache:"reload" })),
       cache.add(new Request("./figureloom-sage-theme.js?v=1", { cache:"reload" })),
-      cache.add(new Request("./phone-sage-theme-fix.js", { cache:"reload" })),
-      cache.add(new Request("./phone-sage-theme-fix.js?v=1", { cache:"reload" })),
       cache.add(new Request("./wiki/", { cache:"reload" })),
       cache.add(new Request("./wiki/index.html", { cache:"reload" })),
       cache.add(new Request("./wiki/wiki.css", { cache:"reload" })),
