@@ -1,4 +1,4 @@
-const FIGURELOOM_BUILD_ID = "stable-71d36df-locked-20260719-v34";
+const FIGURELOOM_BUILD_ID = "stable-71d36df-locked-20260719-v35";
 const FIGURELOOM_CACHE_PREFIX = "figureloom-app-";
 const FIGURELOOM_CACHE_NAME = `${FIGURELOOM_CACHE_PREFIX}${FIGURELOOM_BUILD_ID}`;
 const LEGACY_CACHE_PREFIXES = ["figureloom-shell", "scicanvas-shell"];
@@ -20,7 +20,8 @@ self.addEventListener("install", event => {
       cache.add(new Request("./mobile-mode.js", { cache:"reload" })),
       cache.add(new Request("./mobile-mode.css", { cache:"reload" })),
       cache.add(new Request("./mobile-mode-canvas-fit.js", { cache:"reload" })),
-      cache.add(new Request("./mobile-touch-drag-fix.js", { cache:"reload" }))
+      cache.add(new Request("./mobile-touch-drag-fix.js", { cache:"reload" })),
+      cache.add(new Request("./tour-mobile-safe.js", { cache:"reload" }))
     ]);
     await self.skipWaiting();
   })());
