@@ -73,7 +73,7 @@ test('portrait phone geometry, touch targets, colors and canvas fit stay inside 
   await expectPhone(page);
   const result = await page.evaluate(() => {
     const viewport = { width:innerWidth, height:innerHeight };
-    const selectors = ['#accountProfileButton','#undoButton','#redoButton','#exportButton','.ribbon-tabs .ribbon-tab','#figureloomPhoneDock button','.canvas-toolbar button'];
+    const selectors = ['#undoButton','#redoButton','#exportButton','.ribbon-tabs .ribbon-tab','#figureloomPhoneDock button','.canvas-toolbar button'];
     const targets = selectors
       .flatMap(selector => [...document.querySelectorAll(selector)])
       .filter(node => {
@@ -102,7 +102,10 @@ test('portrait phone geometry, touch targets, colors and canvas fit stay inside 
       horizontalOverflow:document.documentElement.scrollWidth - innerWidth,
       ribbonScrollWidth:document.querySelector('.ribbon-tabs').scrollWidth,
       ribbonClientWidth:document.querySelector('.ribbon-tabs').clientWidth,
-      ribbonOverflowX:getComputedStyle(document.querySelector('.ribbon-tabs')).overflowX
+      ribbonOverflowX:getComputedStyle(document.querySelector('.ribbon-tabs')).overflowX,
+      visibleHeaderActions:[...document.querySelectorAll('.title-actions>*')]
+        .filter(node => getComputedStyle(node).display !== 'none')
+        .map(node => node.id || node.className)
     };
   });
   expect(result.bodyMinWidth).toBe('0px');
@@ -115,6 +118,7 @@ test('portrait phone geometry, touch targets, colors and canvas fit stay inside 
   expect(result.canvas.left).toBeGreaterThanOrEqual(result.stage.left - 1);
   expect(result.dockBackground).not.toBe('rgba(0, 0, 0, 0)');
   expect(result.titleBackground).not.toBe('rgba(0, 0, 0, 0)');
+  expect(result.visibleHeaderActions).toEqual(['undoButton','redoButton','exportButton']);
   for (const target of result.targets) {
     expect(target.width, `${target.selector} width`).toBeGreaterThanOrEqual(40);
     expect(target.height, `${target.selector} height`).toBeGreaterThanOrEqual(44);
@@ -155,6 +159,9 @@ test('ordinary tools and project controls use sheets while Insert stays full-scr
   await page.locator('[data-phone-action="more"]').click();
   await expect(page.locator('#figureloomPhoneMoreSheet')).toHaveClass(/figureloom-phone-sheet-open/);
   await expect(page.locator('[data-phone-action="desktop"]')).toBeVisible();
+  await expect(page.locator('[data-phone-action="protools"]')).toBeVisible();
+  await expect(page.locator('[data-phone-action="loomy"]')).toBeVisible();
+  await expect(page.locator('[data-phone-action="guide"]')).toBeVisible();
   await page.locator('[data-phone-action="projects"]').click();
   await expect(page.locator('.ribbon')).toHaveClass(/figureloom-phone-sheet-open/);
   await expect(page.locator('#projectsRibbonHost')).toBeVisible();
