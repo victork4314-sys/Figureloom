@@ -1,6 +1,6 @@
 (() => {
-  if (window.__figureLoomPhoneCanvasFitV2) return;
-  window.__figureLoomPhoneCanvasFitV2 = true;
+  if (window.__figureLoomPhoneCanvasFitV3) return;
+  window.__figureLoomPhoneCanvasFitV3 = true;
 
   const root = document.documentElement;
   const phoneMode = () => root.dataset.figureloomResolvedMode === 'phone';
@@ -23,6 +23,15 @@
     html[data-figureloom-resolved-mode="phone"] #insertDrawer.open{
       padding-top:env(safe-area-inset-top)!important;
       padding-bottom:env(safe-area-inset-bottom)!important;
+    }
+    html[data-figureloom-resolved-mode="phone"] #figureloomPhoneDock{
+      z-index:10004!important;
+    }
+    html[data-figureloom-resolved-mode="phone"] .ribbon,
+    html[data-figureloom-resolved-mode="phone"] .left-panel,
+    html[data-figureloom-resolved-mode="phone"] .right-panel,
+    html[data-figureloom-resolved-mode="phone"] #figureloomPhoneMoreSheet{
+      padding-bottom:calc(80px + env(safe-area-inset-bottom))!important;
     }
     @media (orientation:landscape){
       html[data-figureloom-resolved-mode="phone"] #figureloomPhoneScrim{
