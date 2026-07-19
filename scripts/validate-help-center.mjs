@@ -24,6 +24,7 @@ const requiredFiles = [
   'text-editing-gentle-polish.js',
   'manifest.webmanifest',
   'favicon.svg',
+  'favicon.ico',
   'tour-mobile-safe.js',
   'tests/help-center-theme.spec.js',
   'wiki/index.html',
@@ -59,14 +60,27 @@ if (!errors.length) {
   const wikiHtml = read('wiki/index.html');
   const wikiJs = read('wiki/wiki.js');
   const worker = read('service-worker.js');
+  const ico = fs.readFileSync(path.join(root, 'favicon.ico'));
 
   requireText(appHtml, 'help-center.js', 'index.html');
   requireText(appHtml, 'figureloom-sage-theme.js', 'index.html');
-  requireText(appHtml, './favicon.svg?v=8', 'index.html current favicon');
-  requireText(appHtml, './manifest.webmanifest?v=8', 'index.html current manifest');
+  requireText(appHtml, './favicon.svg?v=9', 'index.html current SVG favicon');
+  requireText(appHtml, './favicon.ico?v=9', 'index.html replaced ICO favicon');
+  requireText(appHtml, './manifest.webmanifest?v=9', 'index.html current manifest');
+  requireText(appHtml, 'id="figureloomNativeControlTheme"', 'index.html native control theme');
+  requireText(appHtml, 'input[type="checkbox"]', 'index.html themed checkboxes');
+  requireText(appHtml, 'input[type="range"]::-webkit-slider-thumb', 'index.html themed range control');
+  requireText(appHtml, '#figureloomLayerManager', 'index.html themed layer manager');
   requireText(appHtml, 'safe-refresh.js?v=safe-refresh-20260719-v16', 'index.html current loader');
   if (appHtml.includes('Stable version')) errors.push('The loading screen must not expose the internal stable-version label');
   if (appHtml.includes('phone-sage-theme-fix')) errors.push('index.html must not load a separate phone theme patch');
+  if (appHtml.includes('favicon.svg?v=8') || appHtml.includes('favicon.ico?v=8') || appHtml.includes('manifest.webmanifest?v=8')) {
+    errors.push('index.html still contains stale v8 icon or manifest references');
+  }
+
+  if (ico.length < 1000 || ico[0] !== 0 || ico[1] !== 0 || ico[2] !== 1 || ico[3] !== 0) {
+    errors.push('favicon.ico is not the replaced FigureLoom ICO file');
+  }
 
   const finishingIndex = appHtml.indexOf('finishing-touches.js');
   const helpIndex = appHtml.indexOf('help-center.js');
@@ -190,8 +204,12 @@ if (!errors.length) {
   for (const marker of [
     '"name": "FigureLoom"',
     '"short_name": "FigureLoom"',
-    '"src": "/favicon.svg?v=8"'
+    '"src": "/favicon.svg?v=9"',
+    '"src": "/favicon.ico?v=9"'
   ]) requireText(manifest, marker, 'manifest.webmanifest FigureLoom identity');
+  if (manifest.includes('favicon.svg?v=8') || manifest.includes('favicon.ico?v=8')) {
+    errors.push('manifest.webmanifest still contains stale v8 icon references');
+  }
 
   for (const marker of [
     'var(--figureloom-ui-soft, #edf3f1)',
@@ -209,7 +227,12 @@ if (!errors.length) {
     'opens Help rather than starting the passive guide',
     'FigureLoomSageTheme',
     '#figureloomHelpMenu',
-    '#tourHelpButton'
+    '#tourHelpButton',
+    '#figureloomLayerManager',
+    'gridAccent',
+    'snapAccent',
+    'opacityAccent',
+    'favicon.ico?v=9'
   ]) requireText(browserTest, marker, 'tests/help-center-theme.spec.js');
 
   for (const marker of [
@@ -235,9 +258,12 @@ if (!errors.length) {
     './text-editing-gentle-polish.js',
     './text-editing-gentle-polish.js?v=stable-71d36df-locked-20260719-v38',
     './favicon.svg',
-    './favicon.svg?v=8',
+    './favicon.svg?v=9',
+    './favicon.ico',
+    './favicon.ico?v=9',
+    './safari-pinned-tab.svg?v=9',
     './manifest.webmanifest',
-    './manifest.webmanifest?v=8',
+    './manifest.webmanifest?v=9',
     './tour-mobile-safe.js',
     './ai-chat-fixes.js',
     './ai-chat-fixes.js?v=9',
@@ -261,6 +287,9 @@ if (!errors.length) {
     './wiki-assets/help-menu.svg'
   ]) requireText(worker, file, 'service-worker.js offline cache');
 
+  if (worker.includes('favicon.svg?v=8') || worker.includes('manifest.webmanifest?v=8')) {
+    errors.push('service-worker.js still caches stale v8 icon or manifest files');
+  }
   if (worker.includes('phone-sage-theme-fix')) errors.push('service-worker.js must not cache a separate phone theme patch');
 
   for (const file of ['wiki-assets/editor-overview.svg', 'wiki-assets/phone-overview.svg', 'wiki-assets/help-menu.svg']) {
@@ -277,4 +306,4 @@ if (errors.length) {
   process.exit(1);
 }
 
-console.log('Help center validation passed: the question-mark Help menu, one shared sage theme, complete text UI, themed dynamic windows, polished loading copy, current favicon, wiki, phone safety, and offline cache are present.');
+console.log('Help center validation passed: the question-mark Help menu, one shared sage theme, complete text UI, themed native controls and layers, replaced favicon binary, themed dynamic windows, polished loading copy, wiki, phone safety, and offline cache are present.');
