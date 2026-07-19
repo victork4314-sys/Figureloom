@@ -1,8 +1,8 @@
 (() => {
-  if (window.__figureLoomStableRuntime71d36dfV37) return;
-  window.__figureLoomStableRuntime71d36dfV37 = true;
+  if (window.__figureLoomStableRuntime71d36dfV38) return;
+  window.__figureLoomStableRuntime71d36dfV38 = true;
 
-  const STABLE_BUILD = "stable-71d36df-locked-20260719-v37";
+  const STABLE_BUILD = "stable-71d36df-locked-20260719-v38";
   const GENERAL_ADDONS = [
     "library-more-illustrations.js",
     "library-more-templates.js",
@@ -62,13 +62,12 @@
     bootStyle.id = "figureloomStableBootStyle";
     bootStyle.textContent = `
       html[data-figureloom-stable-loading="1"] .app-shell{visibility:hidden!important}
-      #figureloomStableBoot{position:fixed;inset:0;z-index:2147483647;display:grid;place-items:center;background:#f4f7f8;color:#29413d;font:600 13px/1.4 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+      #figureloomStableBoot{position:fixed;inset:0;z-index:2147483647;display:grid;place-items:center;background:#f4f7f6;color:#172321;font:600 13px/1.4 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
       #figureloomStableBoot>div{display:grid;justify-items:center;gap:10px;padding:20px}
-      #figureloomStableBoot i{width:24px;height:24px;border:3px solid #b8c9c5;border-top-color:#39786d;border-radius:50%;animation:figureloomStableSpin .75s linear infinite}
-      #figureloomStableBoot small{color:#70817e;font-size:10px;font-weight:500}
+      #figureloomStableBoot i{width:24px;height:24px;border:3px solid #cddbd7;border-top-color:#2f7468;border-radius:50%;animation:figureloomStableSpin .75s linear infinite}
       @keyframes figureloomStableSpin{to{transform:rotate(360deg)}}
-      html[data-figureloom-theme="dark"] #figureloomStableBoot{background:#24282f;color:#eef1f4}
-      html[data-figureloom-theme="dark"] #figureloomStableBoot small{color:#aab2bd}
+      html[data-figureloom-theme="dark"] #figureloomStableBoot{background:#181d1c;color:#eef7f4}
+      html[data-figureloom-theme="dark"] #figureloomStableBoot i{border-color:#43514d;border-top-color:#78c4b5}
     `;
     document.head.appendChild(bootStyle);
   }
@@ -79,7 +78,7 @@
     bootScreen.id = "figureloomStableBoot";
     bootScreen.setAttribute("role", "status");
     bootScreen.setAttribute("aria-live", "polite");
-    bootScreen.innerHTML = `<div><i aria-hidden="true"></i><span>Opening FigureLoom</span><small>Stable version</small></div>`;
+    bootScreen.innerHTML = `<div><i aria-hidden="true"></i><span>Opening FigureLoom</span></div>`;
     document.body.appendChild(bootScreen);
   }
 
@@ -105,7 +104,7 @@
         resolve();
       }, { once:true });
       script.addEventListener("error", () => {
-        console.warn(`FigureLoom stable add-on could not load: ${path}`);
+        console.warn(`FigureLoom add-on could not load: ${path}`);
         resolve();
       }, { once:true });
       document.head.appendChild(script);
