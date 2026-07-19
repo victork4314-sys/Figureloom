@@ -1,8 +1,8 @@
 (() => {
-  if (window.__figureLoomAdrianaPolishV1) return;
-  window.__figureLoomAdrianaPolishV1 = true;
+  if (window.__figureLoomAdrianaPolishV2) return;
+  window.__figureLoomAdrianaPolishV2 = true;
 
-  const NOTE = 'Still scrolling? Okay. Made for Adriana M. K., who has been drafting me into unpaid lab work since I was small enough to fit under the bench. This is the figure tool now. We’re even. (We are not even.)';
+  const NOTE = 'Made for Adriana M. K., who has been drafting me into unpaid lab work since I was small enough to fit under the bench.';
 
   function installClosingNote() {
     const body = document.querySelector('#proToolsDrawer .utility-body');
@@ -14,7 +14,7 @@
       note.className = 'pro-adriana-closing-note';
       note.textContent = NOTE;
     }
-    note.style.setProperty('color', 'var(--figureloom-ui-text,#172321)', 'important');
+    note.style.setProperty('color', 'var(--figureloom-ui-accent,#2f7468)', 'important');
     if (body.lastElementChild !== note) body.appendChild(note);
     return true;
   }
@@ -78,7 +78,7 @@
       margin:24px 2px 2px!important;
       padding:16px 2px 2px!important;
       border-top:1px solid var(--figureloom-ui-line,#cddbd7)!important;
-      color:var(--figureloom-ui-text,#172321)!important;
+      color:var(--figureloom-ui-accent,#2f7468)!important;
       background:transparent!important;
       font-size:11px!important;
       font-weight:500!important;

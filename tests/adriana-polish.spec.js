@@ -22,7 +22,7 @@ async function prepare(page) {
   });
   await page.goto('/');
   await expect(page.locator('#canvas')).toBeVisible();
-  await page.waitForFunction(() => Boolean(window.__figureLoomAdrianaPolishV1));
+  await page.waitForFunction(() => Boolean(window.__figureLoomAdrianaPolishV2));
 }
 
 test('startup choice card uses the active FigureLoom theme', async ({ page }, testInfo) => {
@@ -68,37 +68,37 @@ test('startup choice card uses the active FigureLoom theme', async ({ page }, te
   expect(colors.accent).toBe(colors.expectedAccent);
 });
 
-test('Adriana note is the final Pro tools item and uses normal panel text color', async ({ page }, testInfo) => {
+test('Adriana note is the final Pro tools item and uses the system sage accent', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'desktop', 'desktop panel check');
   await prepare(page);
 
   await page.locator('#proToolsButton').click();
   const note = page.locator('#proToolsDrawer .pro-adriana-closing-note');
   await expect(note).toBeVisible();
-  await expect(note).toHaveText('Still scrolling? Okay. Made for Adriana M. K., who has been drafting me into unpaid lab work since I was small enough to fit under the bench. This is the figure tool now. We’re even. (We are not even.)');
+  await expect(note).toHaveText('Made for Adriana M. K., who has been drafting me into unpaid lab work since I was small enough to fit under the bench.');
 
   const details = await note.evaluate(element => {
     const body = element.closest('.utility-body');
     const rootStyle = getComputedStyle(document.documentElement);
     const noteStyle = getComputedStyle(element);
     const probe = document.createElement('span');
-    probe.style.color = rootStyle.getPropertyValue('--figureloom-ui-text');
+    probe.style.color = rootStyle.getPropertyValue('--figureloom-ui-accent');
     document.body.appendChild(probe);
-    const expectedText = getComputedStyle(probe).color;
+    const expectedAccent = getComputedStyle(probe).color;
     probe.style.color = rootStyle.getPropertyValue('--figureloom-ui-muted');
     const mutedText = getComputedStyle(probe).color;
     probe.remove();
     return {
       isLast:body?.lastElementChild === element,
       color:noteStyle.color,
-      expectedText,
+      expectedAccent,
       mutedText,
       marginTop:parseFloat(noteStyle.marginTop)
     };
   });
 
   expect(details.isLast).toBe(true);
-  expect(details.color).toBe(details.expectedText);
+  expect(details.color).toBe(details.expectedAccent);
   expect(details.color).not.toBe(details.mutedText);
   expect(details.marginTop).toBeGreaterThanOrEqual(20);
 });
