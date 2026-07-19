@@ -1,6 +1,6 @@
 (() => {
-  if (window.__figureLoomPhoneCanvasFitV4) return;
-  window.__figureLoomPhoneCanvasFitV4 = true;
+  if (window.__figureLoomPhoneCanvasFitV5) return;
+  window.__figureLoomPhoneCanvasFitV5 = true;
 
   const root = document.documentElement;
   const phoneMode = () => root.dataset.figureloomResolvedMode === 'phone';
@@ -134,12 +134,8 @@
 
   function settleRibbonClick(event) {
     const tab = event.target.closest?.('.ribbon-tabs .ribbon-tab');
-    if (!phoneMode() || !tab) return;
+    if (!phoneMode() || !tab || !event.isTrusted) return;
     setTimeout(() => {
-      if (!event.isTrusted) {
-        window.FigureLoomPhoneMode?.close?.();
-        return;
-      }
       const utilityDrawer = document.querySelector('.utility-drawer.open,[id$="Drawer"].open');
       if (utilityDrawer) window.FigureLoomPhoneMode?.close?.();
     }, 0);
