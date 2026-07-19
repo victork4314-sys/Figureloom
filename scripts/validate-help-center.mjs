@@ -20,6 +20,9 @@ const requiredFiles = [
   'interface-dark-mode.js',
   'dark-mode-windows.js',
   'ai-chat-fixes.js',
+  'safe-refresh.js',
+  'text-editing-gentle-polish.js',
+  'manifest.webmanifest',
   'tour-mobile-safe.js',
   'tests/help-center-theme.spec.js',
   'wiki/index.html',
@@ -47,6 +50,9 @@ if (!errors.length) {
   const interfaceTheme = read('interface-dark-mode.js');
   const themedWindows = read('dark-mode-windows.js');
   const companionLoader = read('ai-chat-fixes.js');
+  const safeRefresh = read('safe-refresh.js');
+  const textPolish = read('text-editing-gentle-polish.js');
+  const manifest = read('manifest.webmanifest');
   const tourMobile = read('tour-mobile-safe.js');
   const browserTest = read('tests/help-center-theme.spec.js');
   const wikiHtml = read('wiki/index.html');
@@ -55,6 +61,11 @@ if (!errors.length) {
 
   requireText(appHtml, 'help-center.js', 'index.html');
   requireText(appHtml, 'figureloom-sage-theme.js', 'index.html');
+  requireText(appHtml, './favicon.svg?v=8', 'index.html refreshed favicon');
+  requireText(appHtml, './manifest.webmanifest?v=8', 'index.html refreshed manifest');
+  requireText(appHtml, 'safe-refresh.js?v=safe-refresh-20260719-v16', 'index.html current add-on loader');
+  requireText(appHtml, 'ai-chat-fixes.js?v=10', 'index.html current companion loader');
+  if (appHtml.includes('Stable version')) errors.push('index.html must not show internal stability copy to users');
   if (appHtml.includes('phone-sage-theme-fix')) errors.push('index.html must not load a separate phone theme patch');
 
   const finishingIndex = appHtml.indexOf('finishing-touches.js');
@@ -131,6 +142,35 @@ if (!errors.length) {
   ]) requireText(themedWindows, marker, 'dark-mode-windows.js shared window palette');
 
   for (const marker of [
+    'html[data-figureloom-theme] .right-panel .inspector-section',
+    '#figureloomRichTextControls',
+    '#figureloomRichTextOverlay',
+    '.figureloom-rich-editor',
+    'var(--figureloom-ui-surface',
+    'var(--figureloom-ui-soft',
+    'var(--figureloom-ui-text',
+    'var(--figureloom-ui-muted',
+    'var(--figureloom-ui-line',
+    'var(--figureloom-ui-accent',
+    ':where(button,input,select,textarea):disabled',
+    'color-scheme:light!important'
+  ]) requireText(textPolish, marker, 'text-editing-gentle-polish.js complete inspector and editor theme');
+
+  for (const marker of [
+    'figureloomRichTextControls',
+    'text-editing-gentle-polish.js',
+    'stable-71d36df-locked-20260719-v38',
+    '<span>Opening FigureLoom</span>'
+  ]) requireText(safeRefresh, marker, 'safe-refresh.js current polished add-ons');
+  if (safeRefresh.includes('Stable version')) errors.push('safe-refresh.js must not recreate internal stability copy');
+
+  for (const marker of [
+    '"name": "FigureLoom Open Scientific Figure Workspace"',
+    '"short_name": "FigureLoom"',
+    '"src": "./favicon.svg?v=8"'
+  ]) requireText(manifest, marker, 'manifest.webmanifest branding');
+
+  for (const marker of [
     "interface-dark-mode.js?v=3",
     "dark-mode-windows.js?v=2"
   ]) requireText(companionLoader, marker, 'ai-chat-fixes.js current theme helpers');
@@ -142,6 +182,10 @@ if (!errors.length) {
   for (const oldColor of retiredWindowColors) {
     if (interfaceTheme.includes(oldColor)) errors.push(`interface-dark-mode.js still contains retired window color ${oldColor}`);
     if (themedWindows.includes(oldColor)) errors.push(`dark-mode-windows.js still contains retired window color ${oldColor}`);
+    if (textPolish.includes(oldColor)) errors.push(`text-editing-gentle-polish.js still contains retired UI color ${oldColor}`);
+  }
+  for (const oldAccent of ['#2563eb', '#6690df', 'rgba(59,130,246']) {
+    if (textPolish.includes(oldAccent)) errors.push(`text-editing-gentle-polish.js still contains retired editor accent ${oldAccent}`);
   }
 
   for (const marker of [
@@ -181,15 +225,22 @@ if (!errors.length) {
   }
 
   for (const file of [
+    './safe-refresh.js',
+    './safe-refresh.js?v=safe-refresh-20260719-v16',
+    './text-editing-gentle-polish.js',
     './tour-mobile-safe.js',
     './ai-chat-fixes.js',
-    './ai-chat-fixes.js?v=9',
+    './ai-chat-fixes.js?v=10',
     './interface-dark-mode.js',
     './interface-dark-mode.js?v=3',
     './dark-mode-windows.js',
     './dark-mode-windows.js?v=2',
     './help-center.js',
     './figureloom-sage-theme.js',
+    './favicon.svg',
+    './favicon.svg?v=8',
+    './manifest.webmanifest',
+    './manifest.webmanifest?v=8',
     './wiki/',
     './wiki/index.html',
     './wiki/wiki.css',
@@ -220,4 +271,4 @@ if (errors.length) {
   process.exit(1);
 }
 
-console.log('Help center validation passed: the question-mark Help menu, one shared sage theme, themed dynamic windows, passive guide, wiki, phone safety, and offline cache are present.');
+console.log('Help center validation passed: the question-mark Help menu, one shared sage theme, complete inspector and rich-text polish, themed dynamic windows, refreshed favicon, clean opening copy, wiki, phone safety, and offline cache are present.');
