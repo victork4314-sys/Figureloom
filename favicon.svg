@@ -1,52 +1,9 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-label="Figureloom">
-  <defs>
-    <linearGradient id="bg" x1="30" y1="24" x2="226" y2="232" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#153a32"/>
-      <stop offset="1" stop-color="#091f1b"/>
-    </linearGradient>
-    <linearGradient id="mint" x1="52" y1="42" x2="208" y2="92" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#d9f2eb"/>
-      <stop offset="1" stop-color="#a8d8c5"/>
-    </linearGradient>
-    <linearGradient id="stem" x1="58" y1="58" x2="104" y2="218" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#cfe8e1"/>
-      <stop offset="1" stop-color="#b9d8cf"/>
-    </linearGradient>
-    <linearGradient id="sage" x1="92" y1="76" x2="122" y2="216" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#dcebc9"/>
-      <stop offset="1" stop-color="#bfd5aa"/>
-    </linearGradient>
-    <linearGradient id="ivory" x1="54" y1="108" x2="214" y2="150" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#f1eadc"/>
-      <stop offset="1" stop-color="#dcebe5"/>
-    </linearGradient>
-    <filter id="soft" x="-20%" y="-20%" width="140%" height="140%">
-      <feDropShadow dx="0" dy="3" stdDeviation="4" flood-color="#001611" flood-opacity=".28"/>
-    </filter>
-  </defs>
-
-  <rect x="4" y="4" width="248" height="248" rx="52" fill="url(#bg)"/>
-
-  <g opacity=".48" stroke="#91a99f" stroke-width="4" stroke-linecap="round">
-    <path d="M102 92H194"/>
-    <path d="M92 154H196"/>
-    <path d="M92 204H172"/>
-    <path d="M128 72V220"/>
-    <path d="M176 112V220"/>
-  </g>
-
-  <g filter="url(#soft)">
-    <path d="M58 214V78c0-23 18-41 41-41h98c13 0 23 10 23 23s-10 23-23 23h-91v131c0 8-6 14-14 14H72c-8 0-14-6-14-14Z" fill="url(#stem)"/>
-    <path d="M58 78c0-23 18-41 41-41h98c13 0 23 10 23 23s-10 23-23 23H58V78Z" fill="url(#mint)"/>
-    <path d="M58 108h132c15 0 27 12 27 27s-12 27-27 27H58v-54Z" fill="url(#ivory)"/>
-    <rect x="91" y="78" width="31" height="150" rx="10" fill="url(#sage)"/>
-  </g>
-
-  <g stroke="#e9f3ef" stroke-width="2">
-    <circle cx="128" cy="92" r="10" fill="#8fd8ba"/>
-    <circle cx="96" cy="154" r="10" fill="#eee5d5"/>
-    <circle cx="144" cy="154" r="10" fill="#d6efea"/>
-    <circle cx="184" cy="154" r="10" fill="#eee5d5"/>
-    <circle cx="144" cy="204" r="10" fill="#84cdae"/>
-  </g>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="FigureLoom">
+  <rect x="24" y="24" width="464" height="464" rx="108" fill="#0c2e28"/>
+  <rect x="108" y="90" width="296" height="330" rx="40" fill="none" stroke="#f7fbfa" stroke-width="36"/>
+  <path d="M135 335C190 335 185 190 252 190S315 335 377 335" fill="none" stroke="#79d6c3" stroke-width="32" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="135" cy="335" r="16" fill="#79d6c3"/>
+  <circle cx="252" cy="190" r="17" fill="#a6e8da"/>
+  <circle cx="377" cy="335" r="16" fill="#79d6c3"/>
+  <rect x="333" y="125" width="40" height="40" rx="12" fill="#f7fbfa"/>
 </svg>
