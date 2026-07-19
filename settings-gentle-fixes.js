@@ -1,6 +1,6 @@
 (() => {
-  if (window.__figureLoomSettingsGentleFixV1) return;
-  window.__figureLoomSettingsGentleFixV1 = true;
+  if (window.__figureLoomSettingsGentleFixV2) return;
+  window.__figureLoomSettingsGentleFixV2 = true;
 
   function placeSettingsBesideCheck() {
     const tabs = document.querySelector('.ribbon-tabs');
@@ -8,17 +8,17 @@
     const settings = document.getElementById('settingsRibbonButton');
     if (!tabs || !check || !settings) return false;
 
-    settings.classList.remove('ribbon-command-tab');
-    settings.classList.add('ribbon-tab', 'settings-ribbon-button');
+    settings.classList.add('settings-ribbon-button');
     if (check.nextElementSibling !== settings) check.insertAdjacentElement('afterend', settings);
     return true;
   }
 
-  function installReadableFontStyle() {
-    if (document.getElementById('figureloomReadableFontGentleStyle')) return;
+  function installGentleStyles() {
+    if (document.getElementById('figureloomSettingsGentleStyle')) return;
     const style = document.createElement('style');
-    style.id = 'figureloomReadableFontGentleStyle';
+    style.id = 'figureloomSettingsGentleStyle';
     style.textContent = `
+      #settingsRibbonButton{margin-left:0!important;flex:0 0 auto}
       html[data-figureloom-readable-font="1"] :where(
         .titlebar,.ribbon-tabs,.ribbon,.left-panel,.right-panel,.statusbar,.canvas-toolbar,
         .utility-drawer,.drawer,dialog,.modal,.figureloom-settings-page,.figureloom-chat-shell
@@ -37,7 +37,7 @@
   }
 
   function init() {
-    installReadableFontStyle();
+    installGentleStyles();
     placeSoon();
 
     const tabs = document.querySelector('.ribbon-tabs');
