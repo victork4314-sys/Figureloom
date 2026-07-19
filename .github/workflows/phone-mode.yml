@@ -7,6 +7,7 @@ on:
       - 'mobile-mode.css'
       - 'mobile-mode-canvas-fit.js'
       - 'mobile-touch-drag-fix.js'
+      - 'mobile-ui-polish.js'
       - 'drawing-pad-fix.js'
       - 'adriana-polish.js'
       - 'tour-mobile-safe.js'
@@ -18,6 +19,7 @@ on:
       - 'wiki/Home.md'
       - 'tests/adriana-polish.spec.js'
       - 'tests/drawing-pad.spec.js'
+      - 'tests/mobile-ui-polish.spec.js'
       - 'tests/phone-mode.spec.js'
       - 'tests/phone-polish.spec.js'
       - 'tests/phone-zoom-frame.spec.js'
@@ -43,6 +45,7 @@ jobs:
           node --check mobile-mode.js
           node --check mobile-mode-canvas-fit.js
           node --check mobile-touch-drag-fix.js
+          node --check mobile-ui-polish.js
           node --check drawing-pad-fix.js
           node --check adriana-polish.js
           node --check tour-mobile-safe.js
@@ -50,6 +53,7 @@ jobs:
           node --check service-worker.js
           node --check tests/adriana-polish.spec.js
           node --check tests/drawing-pad.spec.js
+          node --check tests/mobile-ui-polish.spec.js
           node --check tests/phone-mode.spec.js
           node --check tests/phone-polish.spec.js
           node --check tests/phone-zoom-frame.spec.js
@@ -58,7 +62,7 @@ jobs:
       - name: Install Chromium
         run: npx playwright install --with-deps chromium
       - name: Run phone mode regressions
-        run: npx playwright test tests/adriana-polish.spec.js tests/drawing-pad.spec.js tests/phone-mode.spec.js tests/phone-polish.spec.js tests/phone-zoom-frame.spec.js
+        run: npx playwright test tests/adriana-polish.spec.js tests/drawing-pad.spec.js tests/mobile-ui-polish.spec.js tests/phone-mode.spec.js tests/phone-polish.spec.js tests/phone-zoom-frame.spec.js
       - name: Upload phone test results
         if: always()
         uses: actions/upload-artifact@v6
