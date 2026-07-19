@@ -1,6 +1,6 @@
 (() => {
-  if (window.__figureLoomTourMobileSafeV1) return;
-  window.__figureLoomTourMobileSafeV1 = true;
+  if (window.__figureLoomTourMobileSafeV3) return;
+  window.__figureLoomTourMobileSafeV3 = true;
 
   const root = document.documentElement;
 
@@ -75,6 +75,33 @@
       min-height: 44px !important;
       padding: 9px 10px !important;
       touch-action: manipulation !important;
+    }
+
+    html[data-figureloom-theme="dark"] #scicanvasTour.open .tour-actions,
+    html[data-theme="dark"] #scicanvasTour.open .tour-actions {
+      border-top-color: rgba(80, 92, 108, .82) !important;
+      background: linear-gradient(180deg, rgba(36, 40, 47, .90), rgba(36, 40, 47, 1) 28%) !important;
+      box-shadow: 0 -10px 24px rgba(0, 0, 0, .28) !important;
+      color: #eef1f4 !important;
+    }
+
+    html[data-figureloom-theme="dark"] #scicanvasTour.open .tour-actions button:not(.primary):not([data-tour="next"]),
+    html[data-theme="dark"] #scicanvasTour.open .tour-actions button:not(.primary):not([data-tour="next"]) {
+      border-color: #46505d !important;
+      background: #2b3139 !important;
+      color: #eef1f4 !important;
+    }
+
+    #scicanvasTour.open .tour-actions [data-tour="next"] {
+      border-color: #2563eb !important;
+      background: #2563eb !important;
+      color: #fff !important;
+    }
+
+    html[data-figureloom-theme="dark"] #scicanvasTour.open .tour-actions button:disabled,
+    html[data-theme="dark"] #scicanvasTour.open .tour-actions button:disabled {
+      color: #aab2bd !important;
+      opacity: .56 !important;
     }
 
     html.figureloom-tour-open,

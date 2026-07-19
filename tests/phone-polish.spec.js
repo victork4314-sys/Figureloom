@@ -1,12 +1,13 @@
 const { test, expect } = require('@playwright/test');
 
-async function preparePhone(page) {
-  await page.addInitScript(() => {
+async function preparePhone(page, theme = null) {
+  await page.addInitScript(selectedTheme => {
     localStorage.setItem('scicanvas-guided-tour-v2', 'complete');
     localStorage.setItem('scicanvas-guided-tour-v3', 'complete');
     localStorage.setItem('scicanvas-welcome-v1', 'complete');
     localStorage.setItem('scicanvas-user-name-v1', 'Phone Polish Test');
     sessionStorage.setItem('figureloom-quick-start-dismissed', '1');
+    if (selectedTheme) localStorage.setItem('figureloom-interface-theme-v1', selectedTheme);
     localStorage.setItem('figureloom-settings-v1', JSON.stringify({
       interfaceMode:'phone',
       textSize:'standard',
@@ -17,7 +18,7 @@ async function preparePhone(page) {
       underlineLinks:false,
       readableFont:false
     }));
-  });
+  }, theme);
   await page.goto('/');
   await expect(page.locator('#canvas')).toBeVisible();
   await page.waitForFunction(() => Boolean(window.FigureLoomPhoneMode && window.FigureLoomPhoneCanvasFit));
@@ -134,4 +135,33 @@ test('passive guide controls remain reachable in phone landscape', async ({ page
   expect(result.bottom).toBeLessThanOrEqual(result.viewportBottom + 1);
   await next.click();
   await expect(page.locator('#scicanvasTour .tour-counter')).toContainText('2 of 12');
+});
+
+test('passive guide footer matches dark mode instead of turning white', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'mobile', 'phone-only dark guide check');
+  await preparePhone(page, 'dark');
+  await expect(page.locator('html')).toHaveAttribute('data-figureloom-theme', 'dark');
+  await openPassiveGuide(page);
+
+  const colors = await page.evaluate(() => {
+    const actions = getComputedStyle(document.querySelector('#scicanvasTour .tour-actions'));
+    const close = getComputedStyle(document.querySelector('#scicanvasTour [data-tour="close"]'));
+    const back = getComputedStyle(document.querySelector('#scicanvasTour [data-tour="back"]'));
+    const next = getComputedStyle(document.querySelector('#scicanvasTour [data-tour="next"]'));
+    return {
+      footerGradient:actions.backgroundImage,
+      footerBorder:actions.borderTopColor,
+      closeBackground:close.backgroundColor,
+      backBackground:back.backgroundColor,
+      closeText:close.color,
+      nextBackground:next.backgroundColor
+    };
+  });
+
+  expect(colors.footerGradient).toContain('36, 40, 47');
+  expect(colors.footerBorder).not.toBe('rgb(181, 202, 212)');
+  expect(colors.closeBackground).toBe('rgb(43, 49, 57)');
+  expect(colors.backBackground).toBe('rgb(43, 49, 57)');
+  expect(colors.closeText).toBe('rgb(238, 241, 244)');
+  expect(colors.nextBackground).toBe('rgb(37, 99, 235)');
 });
