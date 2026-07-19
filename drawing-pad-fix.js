@@ -1,5 +1,6 @@
 (() => {
-  if (window.__figureLoomTouchDrawingPadV1) return;
+  if (window.__figureLoomTouchDrawingPadV2) return;
+  window.__figureLoomTouchDrawingPadV2 = true;
   window.__figureLoomTouchDrawingPadV1 = true;
 
   function installTouchDrawingPad() {
@@ -19,6 +20,13 @@
     let activeStroke = null;
     let activePointerId = null;
     let previousBodyOverflow = '';
+    let previousFocus = null;
+    let editingId = null;
+    let editTransform = { scale:1, offsetX:0, offsetY:0 };
+
+    function drawingById(id) {
+      return state.objects.find(item => item.id === id && item.type === 'drawingPad') || null;
+    }
 
     renderObject = function renderTouchDrawingPadObject(item) {
       if (item.type !== 'drawingPad') return baseRenderObject(item);
@@ -40,6 +48,17 @@
         });
       }
 
+      group.classList.add('drawing-pad-object');
+      group.appendChild(createSvg('rect', {
+        class:'drawing-pad-hit-area',
+        x:0,
+        y:0,
+        width:Math.max(1, Number(item.width) || 1),
+        height:Math.max(1, Number(item.height) || 1),
+        fill:'transparent',
+        'pointer-events':'all'
+      }));
+
       const sourceWidth = Math.max(1, Number(item.sourceWidth) || Number(item.width) || 1);
       const sourceHeight = Math.max(1, Number(item.sourceHeight) || Number(item.height) || 1);
       const scaleX = Math.max(1, Number(item.width) || 1) / sourceWidth;
@@ -57,8 +76,15 @@
           'stroke-linecap':'round',
           'stroke-linejoin':'round',
           'vector-effect':'non-scaling-stroke',
+          'pointer-events':'none',
           transform:`scale(${scaleX} ${scaleY})`
         }));
+      });
+
+      group.addEventListener('dblclick', event => {
+        event.preventDefault();
+        event.stopPropagation();
+        openPad(item);
       });
       return group;
     };
@@ -78,7 +104,7 @@
         <button class="figureloom-draw-pad-scrim" type="button" aria-label="Close drawing pad"></button>
         <section class="figureloom-draw-pad-card">
           <header>
-            <div><strong id="figureloomDrawPadTitle">Draw</strong><span>Use a finger, Apple Pencil, stylus, or mouse.</span></div>
+            <div><strong id="figureloomDrawPadTitle">Draw</strong><span data-draw-subtitle>Use a finger, Apple Pencil, stylus, or mouse.</span></div>
             <button type="button" data-draw-close aria-label="Close drawing pad">×</button>
           </header>
           <div class="figureloom-draw-pad-controls">
@@ -216,19 +242,49 @@
         redrawStrokes();
       });
       overlay.querySelectorAll('[data-draw-close],[data-draw-cancel],.figureloom-draw-pad-scrim').forEach(button => button.addEventListener('click', closePad));
-      insertButton.addEventListener('click', insertPadDrawing);
+      insertButton.addEventListener('click', savePadDrawing);
 
-      pad = { overlay, redrawStrokes };
+      pad = { overlay, redrawStrokes, colorInput, sizeInput, insertButton };
       return pad;
     }
 
-    function openPad() {
+    function loadExistingDrawing(item) {
+      const sourceWidth = Math.max(1, Number(item.sourceWidth) || Number(item.width) || 1);
+      const sourceHeight = Math.max(1, Number(item.sourceHeight) || Number(item.height) || 1);
+      const margin = 42;
+      const scale = Math.max(.1, Math.min((PAD_WIDTH - margin * 2) / sourceWidth, (PAD_HEIGHT - margin * 2) / sourceHeight, 4));
+      const offsetX = (PAD_WIDTH - sourceWidth * scale) / 2;
+      const offsetY = (PAD_HEIGHT - sourceHeight * scale) / 2;
+      editTransform = { scale, offsetX, offsetY };
+      strokes = (Array.isArray(item.strokes) ? item.strokes : []).map(stroke => ({
+        color:stroke.color || item.fill || '#26324a',
+        width:Math.max(1, Number(stroke.width) || Number(item.strokeWidth) || 4),
+        points:(Array.isArray(stroke.points) ? stroke.points : []).map(point => ({
+          x:Number(point.x || 0) * scale + offsetX,
+          y:Number(point.y || 0) * scale + offsetY
+        }))
+      }));
+    }
+
+    function openPad(item = null) {
       const currentPad = ensurePad();
-      strokes = [];
+      const drawing = item?.type === 'drawingPad' ? item : null;
+      editingId = drawing?.id || null;
       activeStroke = null;
       activePointerId = null;
+      editTransform = { scale:1, offsetX:0, offsetY:0 };
+      if (drawing) loadExistingDrawing(drawing);
+      else strokes = [];
+      currentPad.overlay.querySelector('#figureloomDrawPadTitle').textContent = drawing ? 'Edit drawing' : 'Draw';
+      currentPad.overlay.querySelector('[data-draw-subtitle]').textContent = drawing
+        ? 'Add, remove, or redraw strokes. The object stays editable.'
+        : 'Use a finger, Apple Pencil, stylus, or mouse.';
+      currentPad.insertButton.textContent = drawing ? 'Save drawing' : 'Insert drawing';
+      currentPad.colorInput.value = drawing?.strokes?.[0]?.color || drawing?.fill || '#26324a';
+      currentPad.sizeInput.value = String(Math.max(1, Math.min(18, Number(drawing?.strokes?.[0]?.width) || Number(drawing?.strokeWidth) || 4)));
       currentPad.redrawStrokes();
       previousBodyOverflow = document.body.style.overflow;
+      previousFocus = document.activeElement;
       document.body.style.overflow = 'hidden';
       currentPad.overlay.hidden = false;
       requestAnimationFrame(() => currentPad.overlay.querySelector('[data-draw-color]')?.focus({ preventScroll:true }));
@@ -241,13 +297,26 @@
       pad.overlay.querySelector('[data-draw-preview]')?.setAttribute('d', '');
       pad.overlay.hidden = true;
       document.body.style.overflow = previousBodyOverflow;
-      drawButton.focus({ preventScroll:true });
+      const focusTarget = previousFocus?.isConnected ? previousFocus : drawButton;
+      focusTarget?.focus?.({ preventScroll:true });
+      previousFocus = null;
+      editingId = null;
+      editTransform = { scale:1, offsetX:0, offsetY:0 };
     }
 
-    function insertPadDrawing() {
-      if (!strokes.length) return;
-      const allPoints = strokes.flatMap(stroke => stroke.points);
-      if (!allPoints.length) return;
+    function normalizedPadData() {
+      const current = editingId ? drawingById(editingId) : null;
+      const inverse = current ? editTransform : { scale:1, offsetX:0, offsetY:0 };
+      const sourceStrokes = strokes.map(stroke => ({
+        color:stroke.color,
+        width:stroke.width,
+        points:stroke.points.map(point => ({
+          x:(point.x - inverse.offsetX) / inverse.scale,
+          y:(point.y - inverse.offsetY) / inverse.scale
+        }))
+      }));
+      const allPoints = sourceStrokes.flatMap(stroke => stroke.points);
+      if (!allPoints.length) return null;
 
       let minX = allPoints[0].x;
       let minY = allPoints[0].y;
@@ -259,43 +328,104 @@
         maxX = Math.max(maxX, point.x);
         maxY = Math.max(maxY, point.y);
       });
-
       const sourceWidth = Math.max(1, maxX - minX);
       const sourceHeight = Math.max(1, maxY - minY);
-      const scale = Math.min(420 / sourceWidth, 300 / sourceHeight, 1.25);
-      const width = Math.max(24, sourceWidth * scale);
-      const height = Math.max(24, sourceHeight * scale);
-      const normalizedStrokes = strokes.map(stroke => ({
-        color:stroke.color,
-        width:stroke.width,
-        points:stroke.points.map(point => ({ x:point.x - minX, y:point.y - minY }))
-      }));
-
-      pushHistory?.();
-      const item = {
-        id:typeof uid === 'function' ? uid() : `obj-${Date.now()}-${Math.random().toString(16).slice(2)}`,
-        type:'drawingPad',
-        name:'Drawing',
-        x:Math.max(20, (1200 - width) / 2),
-        y:Math.max(20, (750 - height) / 2),
-        width,
-        height,
+      return {
+        minX,
+        minY,
         sourceWidth,
         sourceHeight,
-        strokes:normalizedStrokes,
-        fill:normalizedStrokes[0]?.color || '#26324a',
-        stroke:normalizedStrokes[0]?.color || '#26324a',
-        strokeWidth:normalizedStrokes[0]?.width || 4,
-        opacity:1,
-        rotation:0,
-        visible:true
+        strokes:sourceStrokes.map(stroke => ({
+          color:stroke.color,
+          width:stroke.width,
+          points:stroke.points.map(point => ({ x:point.x - minX, y:point.y - minY }))
+        }))
       };
-      state.objects.push(item);
-      state.selectedId = item.id;
-      if (Array.isArray(state.selectedIds)) state.selectedIds = [item.id];
+    }
+
+    function savePadDrawing() {
+      if (!strokes.length) return;
+      const data = normalizedPadData();
+      if (!data) return;
+      const existing = editingId ? drawingById(editingId) : null;
+      pushHistory?.();
+
+      if (existing) {
+        const oldSourceWidth = Math.max(1, Number(existing.sourceWidth) || Number(existing.width) || 1);
+        const oldSourceHeight = Math.max(1, Number(existing.sourceHeight) || Number(existing.height) || 1);
+        const scaleX = Math.max(.01, Number(existing.width) || 1) / oldSourceWidth;
+        const scaleY = Math.max(.01, Number(existing.height) || 1) / oldSourceHeight;
+        existing.x = Number(existing.x || 0) + data.minX * scaleX;
+        existing.y = Number(existing.y || 0) + data.minY * scaleY;
+        existing.width = Math.max(24, data.sourceWidth * scaleX);
+        existing.height = Math.max(24, data.sourceHeight * scaleY);
+        existing.sourceWidth = data.sourceWidth;
+        existing.sourceHeight = data.sourceHeight;
+        existing.strokes = data.strokes;
+        existing.fill = data.strokes[0]?.color || existing.fill || '#26324a';
+        existing.stroke = existing.fill;
+        existing.strokeWidth = data.strokes[0]?.width || existing.strokeWidth || 4;
+        state.selectedId = existing.id;
+        if (Array.isArray(state.selectedIds)) state.selectedIds = [existing.id];
+      } else {
+        const scale = Math.min(420 / data.sourceWidth, 300 / data.sourceHeight, 1.25);
+        const width = Math.max(24, data.sourceWidth * scale);
+        const height = Math.max(24, data.sourceHeight * scale);
+        const item = {
+          id:typeof uid === 'function' ? uid() : `obj-${Date.now()}-${Math.random().toString(16).slice(2)}`,
+          type:'drawingPad',
+          name:'Drawing',
+          x:Math.max(20, (1200 - width) / 2),
+          y:Math.max(20, (750 - height) / 2),
+          width,
+          height,
+          sourceWidth:data.sourceWidth,
+          sourceHeight:data.sourceHeight,
+          strokes:data.strokes,
+          fill:data.strokes[0]?.color || '#26324a',
+          stroke:data.strokes[0]?.color || '#26324a',
+          strokeWidth:data.strokes[0]?.width || 4,
+          opacity:1,
+          rotation:0,
+          visible:true
+        };
+        state.objects.push(item);
+        state.selectedId = item.id;
+        if (Array.isArray(state.selectedIds)) state.selectedIds = [item.id];
+      }
+
       render();
       scheduleSave?.();
       closePad();
+    }
+
+    function editSelectedDrawing() {
+      const item = typeof selectedObject === 'function' ? selectedObject() : drawingById(state.selectedId);
+      if (item?.type === 'drawingPad') openPad(item);
+    }
+
+    const editSection = document.createElement('section');
+    editSection.id = 'figureloomDrawingInspector';
+    editSection.className = 'inspector-section figureloom-drawing-inspector';
+    editSection.hidden = true;
+    editSection.innerHTML = `
+      <h2>Drawing</h2>
+      <p>Keep editing the original strokes at any time.</p>
+      <button id="figureloomEditDrawingButton" type="button">Edit drawing</button>`;
+    document.querySelector('.right-panel')?.appendChild(editSection);
+    editSection.querySelector('#figureloomEditDrawingButton')?.addEventListener('click', editSelectedDrawing);
+
+    const baseUpdateInspector = typeof updateInspector === 'function' ? updateInspector : null;
+    if (baseUpdateInspector) {
+      updateInspector = function updateDrawingInspector() {
+        baseUpdateInspector();
+        const item = typeof selectedObject === 'function' ? selectedObject() : drawingById(state.selectedId);
+        const editable = item?.type === 'drawingPad';
+        editSection.hidden = !editable;
+        const button = editSection.querySelector('#figureloomEditDrawingButton');
+        if (button) button.disabled = !editable;
+      };
+      window.updateInspector = updateInspector;
     }
 
     drawButton.title = 'Open a touch-friendly drawing pad';
@@ -317,6 +447,11 @@
     const style = document.createElement('style');
     style.id = 'figureloomTouchDrawingPadStyle';
     style.textContent = `
+      .drawing-pad-object{cursor:move}
+      .drawing-pad-object .drawing-pad-hit-area{pointer-events:all}
+      .figureloom-drawing-inspector p{margin:0 0 10px;color:var(--figureloom-ui-muted,#60706c);font-size:10px;line-height:1.45}
+      #figureloomEditDrawingButton{width:100%;min-height:38px;border:1px solid var(--figureloom-ui-line,#cddbd7);border-radius:9px;color:var(--figureloom-ui-text,#172321);background:var(--figureloom-ui-soft,#edf3f1);font-weight:700}
+      #figureloomEditDrawingButton:hover{border-color:var(--figureloom-ui-accent,#2f7468);color:var(--figureloom-ui-accent-strong,#195c51);background:var(--figureloom-ui-accent-soft,#dff1ec)}
       .figureloom-draw-pad{position:fixed;inset:0;z-index:2147483600;display:grid;place-items:center;padding:max(10px,env(safe-area-inset-top)) max(10px,env(safe-area-inset-right)) max(10px,env(safe-area-inset-bottom)) max(10px,env(safe-area-inset-left))}
       .figureloom-draw-pad[hidden]{display:none!important}
       .figureloom-draw-pad-scrim{position:absolute;inset:0;width:100%;height:100%;border:0!important;border-radius:0!important;background:rgba(7,18,16,.58)!important;box-shadow:none!important}
@@ -344,9 +479,20 @@
         .figureloom-draw-pad-controls button{min-height:40px}
         .figureloom-draw-pad-surface-wrap{padding:7px}
         [data-draw-surface]{min-height:0;height:100%}
+        #figureloomEditDrawingButton{min-height:44px}
       }
     `;
     document.head.appendChild(style);
+
+    window.FigureLoomDrawingPad = Object.freeze({
+      open:() => openPad(),
+      editSelected:editSelectedDrawing,
+      edit:id => {
+        const item = drawingById(id);
+        if (item) openPad(item);
+      }
+    });
+    render();
   }
 
   if (document.documentElement.dataset.figureloomReady === '1') {
