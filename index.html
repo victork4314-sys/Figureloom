@@ -56,18 +56,19 @@
           "@type": "Organization",
           "name": "FigureLoom",
           "url": "https://figureloom.org/",
-          "logo": "https://figureloom.org/favicon.svg?v=8"
+          "logo": "https://figureloom.org/favicon.svg?v=9"
         }
       }
     ]
   }
   </script>
-  <link rel="icon" href="./favicon.svg?v=8" type="image/svg+xml" sizes="any" />
-  <link rel="shortcut icon" href="./favicon.svg?v=8" type="image/svg+xml" />
-  <link rel="apple-touch-icon" href="./favicon.svg?v=8" />
-  <link rel="apple-touch-icon-precomposed" href="./favicon.svg?v=8" />
-  <link rel="mask-icon" href="./safari-pinned-tab.svg?v=8" color="#0c2e28" />
-  <link rel="manifest" href="./manifest.webmanifest?v=8" />
+  <link rel="icon" href="./favicon.svg?v=9" type="image/svg+xml" sizes="any" />
+  <link rel="icon" href="./favicon.ico?v=9" type="image/x-icon" sizes="16x16 32x32 48x48 64x64 128x128 256x256" />
+  <link rel="shortcut icon" href="./favicon.ico?v=9" type="image/x-icon" />
+  <link rel="apple-touch-icon" href="./favicon.svg?v=9" />
+  <link rel="apple-touch-icon-precomposed" href="./favicon.svg?v=9" />
+  <link rel="mask-icon" href="./safari-pinned-tab.svg?v=9" color="#0c2e28" />
+  <link rel="manifest" href="./manifest.webmanifest?v=9" />
   <title>FigureLoom</title>
   <style id="figureloomEarlyBootStyle">
     html[data-figureloom-stable-loading="1"] .app-shell{visibility:hidden!important}
@@ -77,6 +78,26 @@
     @keyframes figureloomStableSpin{to{transform:rotate(360deg)}}
     html[data-figureloom-theme="dark"] #figureloomStableBoot{background:#181d1c;color:#eef7f4}
     html[data-figureloom-theme="dark"] #figureloomStableBoot i{border-color:#43514d;border-top-color:#78c4b5}
+  </style>
+  <style id="figureloomNativeControlTheme">
+    html[data-figureloom-theme] body :where(input[type="checkbox"],input[type="radio"],input[type="range"]){accent-color:var(--figureloom-ui-accent,#2f7468)!important}
+    html[data-figureloom-theme] body input[type="range"]{-webkit-appearance:none;appearance:none;min-height:22px;padding:0;background:transparent!important}
+    html[data-figureloom-theme] body input[type="range"]::-webkit-slider-runnable-track{height:5px;border:1px solid var(--figureloom-ui-line,#cddbd7);border-radius:999px;background:var(--figureloom-ui-strong,#dce9e5)}
+    html[data-figureloom-theme] body input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:15px;height:15px;margin-top:-6px;border:2px solid var(--figureloom-ui-surface,#fff);border-radius:50%;background:var(--figureloom-ui-accent,#2f7468);box-shadow:0 0 0 1px var(--figureloom-ui-line,#cddbd7)}
+    html[data-figureloom-theme] body input[type="range"]::-moz-range-track{height:5px;border:1px solid var(--figureloom-ui-line,#cddbd7);border-radius:999px;background:var(--figureloom-ui-strong,#dce9e5)}
+    html[data-figureloom-theme] body input[type="range"]::-moz-range-progress{height:5px;border-radius:999px;background:var(--figureloom-ui-accent,#2f7468)}
+    html[data-figureloom-theme] body input[type="range"]::-moz-range-thumb{width:13px;height:13px;border:2px solid var(--figureloom-ui-surface,#fff);border-radius:50%;background:var(--figureloom-ui-accent,#2f7468);box-shadow:0 0 0 1px var(--figureloom-ui-line,#cddbd7)}
+    html[data-figureloom-theme] body input[type="range"]:disabled::-webkit-slider-thumb{background:var(--figureloom-ui-muted,#60706c);opacity:.72}
+    html[data-figureloom-theme] body input[type="range"]:disabled::-moz-range-thumb{background:var(--figureloom-ui-muted,#60706c);opacity:.72}
+
+    html[data-figureloom-theme] body #figureloomLayerManager{color:var(--figureloom-ui-text,#172321)!important;background:var(--figureloom-ui-surface,#fff)!important;border-color:var(--figureloom-ui-line,#cddbd7)!important;box-shadow:none!important}
+    html[data-figureloom-theme] body #figureloomLayerManager :where(.layer-search-row input,#layerFilter,#layerTargetPage,.layer-inline-name){color:var(--figureloom-ui-text,#172321)!important;background:var(--figureloom-ui-surface,#fff)!important;border-color:var(--figureloom-ui-line,#cddbd7)!important}
+    html[data-figureloom-theme] body #figureloomLayerManager .layer-search-row input::placeholder{color:var(--figureloom-ui-muted,#60706c)!important}
+    html[data-figureloom-theme] body #figureloomLayerManager :where(.layer-search-row button,.layer-action-grid button,.layer-lock){color:var(--figureloom-ui-text,#172321)!important;background:var(--figureloom-ui-soft,#edf3f1)!important;border-color:var(--figureloom-ui-line,#cddbd7)!important;box-shadow:none!important}
+    html[data-figureloom-theme] body #figureloomLayerManager :where(.layer-search-row button,.layer-action-grid button,.layer-lock):hover:not(:disabled){color:var(--figureloom-ui-accent-strong,#195c51)!important;background:var(--figureloom-ui-accent-soft,#dff1ec)!important;border-color:var(--figureloom-ui-accent,#2f7468)!important}
+    html[data-figureloom-theme] body #figureloomLayerManager :where(.layer-manager-status,.layer-manager-actions summary,.layer-page-target,.layer-type){color:var(--figureloom-ui-muted,#60706c)!important}
+    html[data-figureloom-theme] body #figureloomLayerManager .layer-manager-actions{border-color:var(--figureloom-ui-line,#cddbd7)!important}
+    html[data-figureloom-theme] body #figureloomLayerManager .layer-group-mark{color:var(--figureloom-ui-accent-strong,#195c51)!important;background:var(--figureloom-ui-accent-soft,#dff1ec)!important;border-color:var(--figureloom-ui-accent,#2f7468)!important}
   </style>
   <script>try{if(localStorage.getItem('figureloom-interface-theme-v1')==='dark')document.documentElement.dataset.figureloomTheme='dark'}catch{}</script>
   <link rel="stylesheet" href="styles.css?v=20260718-v10" />
