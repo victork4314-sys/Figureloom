@@ -2,7 +2,7 @@ name: Complete interface localization
 
 on:
   pull_request:
-    branches: [main]
+    branches: [localization-workflow-base]
     paths:
       - scripts/localization-audit.mjs
       - scripts/generate-localizations-shard.mjs
