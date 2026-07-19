@@ -1,0 +1,754 @@
+html[data-figureloom-resolved-mode="phone"] {
+  --figureloom-phone-touch: 44px;
+  --figureloom-phone-sheet-height: min(72dvh, 640px);
+  --figureloom-phone-bg: #eef2f7;
+  --figureloom-phone-surface: rgba(255,255,255,.98);
+  --figureloom-phone-surface-soft: #f7f9fc;
+  --figureloom-phone-border: #d7e0e8;
+  --figureloom-phone-text: #253044;
+  --figureloom-phone-muted: #687487;
+  --figureloom-phone-accent: #2563eb;
+  --figureloom-phone-shadow: 0 -16px 40px rgba(31,45,66,.22);
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: var(--figureloom-phone-bg);
+  overscroll-behavior: none;
+}
+
+html[data-figureloom-resolved-mode="phone"][data-figureloom-theme="dark"] {
+  --figureloom-phone-bg: #20252c;
+  --figureloom-phone-surface: rgba(36,40,47,.985);
+  --figureloom-phone-surface-soft: #2b3139;
+  --figureloom-phone-border: #46505d;
+  --figureloom-phone-text: #eef1f4;
+  --figureloom-phone-muted: #aab2bd;
+  --figureloom-phone-accent: #8aa8ff;
+  --figureloom-phone-shadow: 0 -16px 42px rgba(0,0,0,.42);
+}
+
+html[data-figureloom-resolved-mode="phone"] body {
+  width: 100%;
+  min-width: 0 !important;
+  max-width: 100%;
+  height: 100%;
+  min-height: 100dvh;
+  overflow: hidden;
+  background: var(--figureloom-phone-bg);
+  color: var(--figureloom-phone-text);
+  overscroll-behavior: none;
+  -webkit-text-size-adjust: 100%;
+}
+
+html[data-figureloom-resolved-mode="phone"] .app-shell {
+  grid-template-rows: calc(52px + env(safe-area-inset-top)) 46px minmax(0,1fr) !important;
+  width: 100%;
+  min-width: 0;
+  height: 100dvh !important;
+  min-height: 100dvh;
+  overflow: hidden;
+  background: var(--figureloom-phone-bg);
+}
+
+html[data-figureloom-resolved-mode="phone"] .titlebar {
+  position: relative;
+  z-index: 75;
+  grid-template-columns: var(--figureloom-phone-touch) minmax(0,1fr) auto;
+  gap: 6px;
+  min-width: 0;
+  height: auto;
+  padding: env(safe-area-inset-top) 7px 0;
+  background: var(--figureloom-phone-surface);
+  border-bottom-color: var(--figureloom-phone-border);
+  box-shadow: 0 1px 8px rgba(31,45,66,.07);
+}
+
+html[data-figureloom-resolved-mode="phone"] .brand {
+  min-width: 0;
+  gap: 0;
+}
+
+html[data-figureloom-resolved-mode="phone"] .brand > div {
+  display: none !important;
+}
+
+html[data-figureloom-resolved-mode="phone"] .brand-mark {
+  width: var(--figureloom-phone-touch) !important;
+  height: var(--figureloom-phone-touch) !important;
+  min-width: var(--figureloom-phone-touch);
+  border-radius: 12px;
+}
+
+html[data-figureloom-resolved-mode="phone"] .document-title {
+  min-width: 0;
+  text-align: left;
+}
+
+html[data-figureloom-resolved-mode="phone"] .document-title input {
+  width: 100% !important;
+  min-width: 0;
+  height: 34px;
+  padding: 4px 7px;
+  text-align: left;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--figureloom-phone-text);
+  font-size: 13px;
+  background: transparent;
+}
+
+html[data-figureloom-resolved-mode="phone"] .document-title input:focus {
+  background: var(--figureloom-phone-surface-soft);
+  border-color: #9db4e7;
+}
+
+html[data-figureloom-resolved-mode="phone"] .document-title span {
+  margin: -1px 7px 0;
+  overflow: hidden;
+  color: var(--figureloom-phone-muted);
+  font-size: 9px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+html[data-figureloom-resolved-mode="phone"] .title-actions {
+  gap: 3px;
+}
+
+html[data-figureloom-resolved-mode="phone"] .title-actions button {
+  width: var(--figureloom-phone-touch);
+  min-width: var(--figureloom-phone-touch);
+  height: var(--figureloom-phone-touch);
+  padding: 0 !important;
+  border-color: var(--figureloom-phone-border);
+  border-radius: 11px;
+  color: var(--figureloom-phone-text);
+  background: var(--figureloom-phone-surface-soft);
+  font-size: 0;
+}
+
+html[data-figureloom-resolved-mode="phone"] #undoButton::before,
+html[data-figureloom-resolved-mode="phone"] #redoButton::before,
+html[data-figureloom-resolved-mode="phone"] #exportButton::before {
+  display: block;
+  font-size: 19px;
+  line-height: 1;
+}
+html[data-figureloom-resolved-mode="phone"] #undoButton::before { content: "↶"; }
+html[data-figureloom-resolved-mode="phone"] #redoButton::before { content: "↷"; }
+html[data-figureloom-resolved-mode="phone"] #exportButton::before { content: "⇩"; }
+html[data-figureloom-resolved-mode="phone"] #exportButton {
+  color: white;
+  background: var(--figureloom-phone-accent);
+  border-color: var(--figureloom-phone-accent);
+}
+
+html[data-figureloom-resolved-mode="phone"] .ribbon-tabs {
+  position: relative;
+  z-index: 72;
+  align-items: stretch;
+  min-width: 0;
+  height: 46px;
+  padding: 0 5px;
+  gap: 2px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  background: var(--figureloom-phone-surface-soft);
+  border-bottom-color: var(--figureloom-phone-border);
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+html[data-figureloom-resolved-mode="phone"] .ribbon-tabs::-webkit-scrollbar { display: none; }
+html[data-figureloom-resolved-mode="phone"] .ribbon-tab,
+html[data-figureloom-resolved-mode="phone"] .ribbon-command-tab {
+  flex: 0 0 auto;
+  min-width: 66px;
+  height: 46px !important;
+  min-height: 46px;
+  padding: 0 12px !important;
+  border: 0 !important;
+  border-bottom: 3px solid transparent !important;
+  border-radius: 0 !important;
+  color: var(--figureloom-phone-muted) !important;
+  background: transparent !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  white-space: nowrap;
+}
+html[data-figureloom-resolved-mode="phone"] .ribbon-tab.active {
+  color: var(--figureloom-phone-accent) !important;
+  border-bottom-color: var(--figureloom-phone-accent) !important;
+  font-weight: 700 !important;
+}
+
+html[data-figureloom-resolved-mode="phone"] .workspace {
+  display: grid !important;
+  grid-template-columns: minmax(0,1fr) !important;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--figureloom-phone-bg);
+}
+
+html[data-figureloom-resolved-mode="phone"] .canvas-area {
+  grid-column: 1;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--figureloom-phone-bg);
+}
+
+html[data-figureloom-resolved-mode="phone"] .canvas-stage {
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  padding: 10px 8px calc(126px + env(safe-area-inset-bottom));
+  place-items: start center;
+  overflow: auto;
+  overscroll-behavior: contain;
+  scroll-padding: 12px;
+  -webkit-overflow-scrolling: touch;
+}
+
+html[data-figureloom-resolved-mode="phone"] #canvas {
+  width: calc(var(--figureloom-phone-canvas-base, 360px) * var(--figureloom-phone-canvas-zoom, 1)) !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  flex: 0 0 auto;
+  box-shadow: 0 12px 30px rgba(31,45,66,.2), 0 0 0 1px var(--figureloom-phone-border);
+  transform-origin: top center;
+}
+
+html[data-figureloom-resolved-mode="phone"] .canvas-toolbar,
+html[data-figureloom-resolved-mode="phone"] .movable-toolbar-bubble {
+  position: fixed !important;
+  z-index: 86 !important;
+  top: auto !important;
+  right: auto !important;
+  bottom: calc(66px + env(safe-area-inset-bottom)) !important;
+  left: 50% !important;
+  width: max-content !important;
+  max-width: calc(100vw - 12px) !important;
+  min-height: var(--figureloom-phone-touch) !important;
+  padding: 4px !important;
+  gap: 4px !important;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  transform: translateX(-50%) !important;
+  touch-action: pan-x !important;
+  border-color: var(--figureloom-phone-border) !important;
+  border-radius: 14px !important;
+  background: var(--figureloom-phone-surface) !important;
+  box-shadow: 0 8px 24px rgba(31,45,66,.22) !important;
+  scrollbar-width: none;
+}
+html[data-figureloom-resolved-mode="phone"] .canvas-toolbar::-webkit-scrollbar { display: none; }
+html[data-figureloom-resolved-mode="phone"] .canvas-toolbar button,
+html[data-figureloom-resolved-mode="phone"] .canvas-toolbar #zoomValue {
+  flex: 0 0 auto !important;
+  min-width: var(--figureloom-phone-touch) !important;
+  height: var(--figureloom-phone-touch) !important;
+  min-height: var(--figureloom-phone-touch) !important;
+  padding: 0 8px !important;
+  border-radius: 10px !important;
+  color: var(--figureloom-phone-text) !important;
+  background: var(--figureloom-phone-surface-soft) !important;
+}
+html[data-figureloom-resolved-mode="phone"] .canvas-toolbar #zoomValue {
+  display: grid;
+  place-items: center;
+  min-width: 58px !important;
+  font-size: 12px;
+}
+html[data-figureloom-resolved-mode="phone"] .toolbar-grip,
+html[data-figureloom-resolved-mode="phone"] .toolbar-collapse {
+  display: none !important;
+}
+
+html[data-figureloom-resolved-mode="phone"] .statusbar {
+  display: none !important;
+}
+
+html[data-figureloom-resolved-mode="phone"] .ribbon,
+html[data-figureloom-resolved-mode="phone"] .left-panel,
+html[data-figureloom-resolved-mode="phone"] .right-panel,
+html[data-figureloom-resolved-mode="phone"] #figureloomPhoneMoreSheet {
+  position: fixed !important;
+  z-index: 10001 !important;
+  inset: auto 0 0 !important;
+  display: block !important;
+  width: 100% !important;
+  max-width: none !important;
+  height: var(--figureloom-phone-sheet-height) !important;
+  min-height: 280px;
+  max-height: calc(100dvh - 98px - env(safe-area-inset-top)) !important;
+  margin: 0 !important;
+  padding: 58px 12px calc(18px + env(safe-area-inset-bottom)) !important;
+  overflow: auto !important;
+  overscroll-behavior: contain;
+  color: var(--figureloom-phone-text) !important;
+  background: var(--figureloom-phone-surface) !important;
+  border: 1px solid var(--figureloom-phone-border) !important;
+  border-width: 1px 0 0 !important;
+  border-radius: 20px 20px 0 0 !important;
+  box-shadow: var(--figureloom-phone-shadow) !important;
+  transform: translateY(105%) !important;
+  transition: transform .2s ease !important;
+  pointer-events: none !important;
+  visibility: hidden !important;
+}
+
+html[data-figureloom-resolved-mode="phone"][data-figureloom-reduce-motion="1"] .ribbon,
+html[data-figureloom-resolved-mode="phone"][data-figureloom-reduce-motion="1"] .left-panel,
+html[data-figureloom-resolved-mode="phone"][data-figureloom-reduce-motion="1"] .right-panel,
+html[data-figureloom-resolved-mode="phone"][data-figureloom-reduce-motion="1"] #figureloomPhoneMoreSheet {
+  transition: none !important;
+}
+
+html[data-figureloom-resolved-mode="phone"] .ribbon.figureloom-phone-sheet-open,
+html[data-figureloom-resolved-mode="phone"] .left-panel.figureloom-phone-sheet-open,
+html[data-figureloom-resolved-mode="phone"] .right-panel.figureloom-phone-sheet-open,
+html[data-figureloom-resolved-mode="phone"] #figureloomPhoneMoreSheet.figureloom-phone-sheet-open {
+  transform: translateY(0) !important;
+  pointer-events: auto !important;
+  visibility: visible !important;
+}
+
+html[data-figureloom-resolved-mode="phone"] .ribbon {
+  display: flex !important;
+  align-content: flex-start;
+  align-items: stretch;
+  flex-wrap: wrap;
+  gap: 9px !important;
+}
+html[data-figureloom-resolved-mode="phone"] .ribbon .tool-group {
+  flex: 1 1 150px;
+  min-width: 138px;
+  min-height: 78px;
+  align-content: flex-start;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 7px;
+  padding: 9px 8px 24px !important;
+  border: 1px solid var(--figureloom-phone-border) !important;
+  border-radius: 13px;
+  background: var(--figureloom-phone-surface-soft);
+}
+html[data-figureloom-resolved-mode="phone"] .ribbon .tool-group-label {
+  bottom: 6px;
+  left: 9px;
+  color: var(--figureloom-phone-muted);
+  font-size: 10px;
+}
+html[data-figureloom-resolved-mode="phone"] .ribbon button,
+html[data-figureloom-resolved-mode="phone"] .ribbon label,
+html[data-figureloom-resolved-mode="phone"] .left-panel button,
+html[data-figureloom-resolved-mode="phone"] .right-panel button,
+html[data-figureloom-resolved-mode="phone"] .right-panel input,
+html[data-figureloom-resolved-mode="phone"] .right-panel select {
+  min-height: var(--figureloom-phone-touch) !important;
+}
+html[data-figureloom-resolved-mode="phone"] .ribbon button {
+  padding: 8px 11px !important;
+  border-color: var(--figureloom-phone-border) !important;
+  color: var(--figureloom-phone-text) !important;
+  background: var(--figureloom-phone-surface) !important;
+}
+
+html[data-figureloom-resolved-mode="phone"] #projectsRibbonHost {
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+  align-content: start;
+  gap: 10px !important;
+  width: 100% !important;
+}
+html[data-figureloom-resolved-mode="phone"] #projectsRibbonHost .tool-group {
+  width: 100%;
+  max-width: none;
+}
+html[data-figureloom-resolved-mode="phone"] .projects-main-actions {
+  display: grid !important;
+  grid-template-columns: repeat(3,1fr);
+}
+html[data-figureloom-resolved-mode="phone"] .projects-main-actions button {
+  display: flex !important;
+  min-width: 0 !important;
+  height: var(--figureloom-phone-touch) !important;
+  justify-content: center;
+}
+html[data-figureloom-resolved-mode="phone"] .projects-main-actions button span {
+  display: inline !important;
+}
+html[data-figureloom-resolved-mode="phone"] .projects-open-list {
+  min-height: 48px;
+  padding-bottom: 3px;
+}
+html[data-figureloom-resolved-mode="phone"] .projects-open-chip {
+  flex-basis: 150px !important;
+  min-width: 120px !important;
+  max-width: 170px !important;
+  height: var(--figureloom-phone-touch) !important;
+}
+html[data-figureloom-resolved-mode="phone"] .projects-current-copy {
+  display: block !important;
+  min-width: 0;
+  max-width: none;
+  flex: 1;
+}
+html[data-figureloom-resolved-mode="phone"] .projects-current-group {
+  max-width: none !important;
+}
+
+html[data-figureloom-resolved-mode="phone"] .left-panel {
+  border-right: 0 !important;
+}
+html[data-figureloom-resolved-mode="phone"] .left-panel .panel-heading {
+  margin: 0 0 10px;
+}
+html[data-figureloom-resolved-mode="phone"] .left-panel .panel-heading button {
+  width: var(--figureloom-phone-touch) !important;
+  height: var(--figureloom-phone-touch) !important;
+}
+html[data-figureloom-resolved-mode="phone"] #pagesList,
+html[data-figureloom-resolved-mode="phone"] .left-panel .pages-list {
+  display: flex !important;
+  align-items: stretch;
+  gap: 10px;
+  width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 2px 2px 8px;
+  scroll-snap-type: x proximity;
+  scrollbar-width: none;
+}
+html[data-figureloom-resolved-mode="phone"] #pagesList::-webkit-scrollbar,
+html[data-figureloom-resolved-mode="phone"] .left-panel .pages-list::-webkit-scrollbar { display: none; }
+html[data-figureloom-resolved-mode="phone"] .left-panel > .page-thumbnail,
+html[data-figureloom-resolved-mode="phone"] #pagesList .page-thumbnail,
+html[data-figureloom-resolved-mode="phone"] .left-panel .pages-list .page-thumbnail {
+  flex: 0 0 132px !important;
+  width: 132px !important;
+  min-width: 132px;
+  min-height: 116px;
+  scroll-snap-align: start;
+}
+html[data-figureloom-resolved-mode="phone"] .left-panel .mini-page {
+  height: 72px;
+}
+html[data-figureloom-resolved-mode="phone"] .layers-heading {
+  margin-top: 18px;
+}
+html[data-figureloom-resolved-mode="phone"] .layers-list {
+  grid-template-columns: 1fr;
+}
+html[data-figureloom-resolved-mode="phone"] .layer-item {
+  min-height: var(--figureloom-phone-touch);
+  color: var(--figureloom-phone-text);
+  background: var(--figureloom-phone-surface-soft);
+  border-color: var(--figureloom-phone-border);
+}
+
+html[data-figureloom-resolved-mode="phone"] .right-panel {
+  border-left: 0 !important;
+}
+html[data-figureloom-resolved-mode="phone"] .inspector-tabs {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: var(--figureloom-phone-surface);
+  border-color: var(--figureloom-phone-border);
+}
+html[data-figureloom-resolved-mode="phone"] .inspector-tab {
+  min-height: var(--figureloom-phone-touch);
+  color: var(--figureloom-phone-muted);
+  background: var(--figureloom-phone-surface);
+}
+html[data-figureloom-resolved-mode="phone"] .inspector-section {
+  padding: 14px 4px;
+  border-color: var(--figureloom-phone-border);
+}
+html[data-figureloom-resolved-mode="phone"] .field-grid {
+  gap: 10px;
+}
+html[data-figureloom-resolved-mode="phone"] .field-grid input,
+html[data-figureloom-resolved-mode="phone"] .full-field input {
+  min-height: var(--figureloom-phone-touch);
+}
+
+#figureloomPhoneChrome {
+  display: none;
+}
+html[data-figureloom-resolved-mode="phone"] #figureloomPhoneChrome {
+  display: block;
+}
+html[data-figureloom-resolved-mode="phone"] #figureloomPhoneScrim {
+  position: fixed;
+  z-index: 10000;
+  inset: calc(98px + env(safe-area-inset-top)) 0 0;
+  width: 100%;
+  height: auto;
+  padding: 0;
+  border: 0;
+  background: rgba(24,32,44,.34);
+  backdrop-filter: blur(1px);
+}
+html[data-figureloom-resolved-mode="phone"] #figureloomPhoneSheetBar {
+  position: fixed;
+  z-index: 10003;
+  right: 0;
+  bottom: calc(var(--figureloom-phone-sheet-height) - 52px);
+  left: 0;
+  display: grid;
+  grid-template-columns: 52px minmax(0,1fr) 52px;
+  align-items: center;
+  height: 52px;
+  padding: 0 5px;
+  color: var(--figureloom-phone-text);
+  background: var(--figureloom-phone-surface);
+  border: 1px solid var(--figureloom-phone-border);
+  border-width: 1px 0 0;
+  border-radius: 20px 20px 0 0;
+}
+html[data-figureloom-resolved-mode="phone"] #figureloomPhoneSheetBar strong {
+  overflow: hidden;
+  text-align: center;
+  font-size: 14px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+html[data-figureloom-resolved-mode="phone"] .phone-sheet-handle,
+html[data-figureloom-resolved-mode="phone"] .phone-sheet-close {
+  display: grid;
+  place-items: center;
+  width: var(--figureloom-phone-touch);
+  height: var(--figureloom-phone-touch);
+  padding: 0;
+  border: 0;
+  border-radius: 11px;
+  color: var(--figureloom-phone-text);
+  background: transparent;
+}
+html[data-figureloom-resolved-mode="phone"] .phone-sheet-handle i {
+  width: 25px;
+  height: 4px;
+  border-radius: 999px;
+  background: var(--figureloom-phone-border);
+}
+html[data-figureloom-resolved-mode="phone"] .phone-sheet-close {
+  font-size: 25px;
+}
+
+html[data-figureloom-resolved-mode="phone"] #figureloomPhoneDock {
+  position: fixed;
+  z-index: 90;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  display: grid;
+  grid-template-columns: repeat(4,1fr);
+  align-items: start;
+  height: calc(62px + env(safe-area-inset-bottom));
+  padding: 4px 6px env(safe-area-inset-bottom);
+  background: var(--figureloom-phone-surface);
+  border-top: 1px solid var(--figureloom-phone-border);
+  box-shadow: 0 -6px 18px rgba(31,45,66,.1);
+}
+html[data-figureloom-resolved-mode="phone"] #figureloomPhoneDock button {
+  display: grid;
+  grid-template-rows: 26px 14px;
+  place-items: center;
+  min-width: 0;
+  height: 54px;
+  padding: 2px 4px;
+  border: 0;
+  border-radius: 12px;
+  color: var(--figureloom-phone-muted);
+  background: transparent;
+}
+html[data-figureloom-resolved-mode="phone"] #figureloomPhoneDock button[aria-pressed="true"] {
+  color: var(--figureloom-phone-accent);
+  background: color-mix(in srgb, var(--figureloom-phone-accent) 11%, transparent);
+}
+html[data-figureloom-resolved-mode="phone"] #figureloomPhoneDock button > span {
+  font-size: 20px;
+  font-weight: 750;
+  line-height: 1;
+}
+html[data-figureloom-resolved-mode="phone"] #figureloomPhoneDock button > small {
+  font-size: 10px;
+  font-weight: 700;
+}
+
+html[data-figureloom-resolved-mode="phone"] #figureloomPhoneMoreSheet {
+  display: block !important;
+}
+html[data-figureloom-resolved-mode="phone"] .phone-more-grid {
+  display: grid;
+  grid-template-columns: repeat(2,minmax(0,1fr));
+  gap: 10px;
+}
+html[data-figureloom-resolved-mode="phone"] .phone-more-grid button {
+  display: grid;
+  grid-template-columns: 28px minmax(0,1fr);
+  align-items: center;
+  min-height: 54px;
+  padding: 8px 11px;
+  text-align: left;
+  border: 1px solid var(--figureloom-phone-border);
+  border-radius: 13px;
+  color: var(--figureloom-phone-text);
+  background: var(--figureloom-phone-surface-soft);
+}
+html[data-figureloom-resolved-mode="phone"] .phone-more-grid button span {
+  font-size: 19px;
+}
+html[data-figureloom-resolved-mode="phone"] .phone-more-grid button small {
+  font-size: 11px;
+  font-weight: 700;
+}
+html[data-figureloom-resolved-mode="phone"] .phone-use-desktop {
+  display: grid;
+  grid-template-columns: 34px minmax(0,1fr);
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 66px;
+  margin-top: 16px;
+  padding: 10px 12px;
+  text-align: left;
+  border: 1px solid #9db4e7;
+  border-radius: 14px;
+  color: var(--figureloom-phone-text);
+  background: color-mix(in srgb, var(--figureloom-phone-accent) 8%, var(--figureloom-phone-surface));
+}
+html[data-figureloom-resolved-mode="phone"] .phone-use-desktop > span:first-child {
+  font-size: 24px;
+}
+html[data-figureloom-resolved-mode="phone"] .phone-use-desktop strong,
+html[data-figureloom-resolved-mode="phone"] .phone-use-desktop small {
+  display: block;
+}
+html[data-figureloom-resolved-mode="phone"] .phone-use-desktop strong { font-size: 13px; }
+html[data-figureloom-resolved-mode="phone"] .phone-use-desktop small {
+  margin-top: 3px;
+  color: var(--figureloom-phone-muted);
+  font-size: 10px;
+  line-height: 1.35;
+}
+
+html[data-figureloom-resolved-mode="phone"] .resize-handle,
+html[data-figureloom-resolved-mode="phone"] .selection-handle,
+html[data-figureloom-resolved-mode="phone"] [data-resize-handle],
+html[data-figureloom-resolved-mode="phone"] [data-rotate-handle] {
+  stroke-width: 4px !important;
+  touch-action: none !important;
+}
+html[data-figureloom-resolved-mode="phone"] circle.resize-handle,
+html[data-figureloom-resolved-mode="phone"] circle.selection-handle,
+html[data-figureloom-resolved-mode="phone"] circle[data-resize-handle],
+html[data-figureloom-resolved-mode="phone"] circle[data-rotate-handle] {
+  r: 10px;
+}
+
+html[data-figureloom-resolved-mode="phone"] #figureloomSettingsPage:not([hidden]),
+html[data-figureloom-resolved-mode="phone"] body > [role="dialog"]:not([hidden]):not(#figureloomPhoneMoreSheet),
+html[data-figureloom-resolved-mode="phone"] #exportMenu.open,
+html[data-figureloom-resolved-mode="phone"] [id$="Drawer"].open,
+html[data-figureloom-resolved-mode="phone"] [id$="Modal"].open,
+html[data-figureloom-resolved-mode="phone"] [id*="Gallery"].open {
+  position: fixed !important;
+  z-index: 12000 !important;
+  inset: 0 !important;
+  width: 100dvw !important;
+  max-width: none !important;
+  height: 100dvh !important;
+  max-height: none !important;
+  margin: 0 !important;
+  padding-top: env(safe-area-inset-top) !important;
+  padding-bottom: env(safe-area-inset-bottom) !important;
+  border-radius: 0 !important;
+}
+
+html[data-figureloom-resolved-mode="phone"] .figureloom-settings-page .settings-topbar {
+  min-height: calc(58px + env(safe-area-inset-top));
+  padding-top: env(safe-area-inset-top);
+}
+html[data-figureloom-resolved-mode="phone"] .figureloom-settings-page .settings-layout {
+  grid-template-columns: 1fr !important;
+}
+html[data-figureloom-resolved-mode="phone"] .figureloom-settings-page .settings-navigation {
+  display: grid;
+  grid-template-columns: repeat(2,1fr);
+  padding: 8px;
+  border-right: 0;
+  border-bottom: 1px solid var(--figureloom-phone-border);
+}
+html[data-figureloom-resolved-mode="phone"] .figureloom-settings-page .settings-navigation button,
+html[data-figureloom-resolved-mode="phone"] .figureloom-settings-page button,
+html[data-figureloom-resolved-mode="phone"] .figureloom-settings-page select,
+html[data-figureloom-resolved-mode="phone"] .figureloom-settings-page input {
+  min-height: var(--figureloom-phone-touch);
+}
+html[data-figureloom-resolved-mode="phone"] .figureloom-settings-page .settings-content {
+  padding: 14px 10px calc(86px + env(safe-area-inset-bottom));
+}
+html[data-figureloom-resolved-mode="phone"] .figureloom-settings-page .settings-footer {
+  padding-bottom: calc(10px + env(safe-area-inset-bottom));
+}
+
+html[data-figureloom-resolved-mode="phone"][data-figureloom-larger-controls="1"] {
+  --figureloom-phone-touch: 50px;
+}
+
+@media (orientation: landscape) {
+  html[data-figureloom-resolved-mode="phone"] {
+    --figureloom-phone-sheet-height: min(76dvh, 430px);
+  }
+  html[data-figureloom-resolved-mode="phone"] .app-shell {
+    grid-template-rows: calc(48px + env(safe-area-inset-top)) 44px minmax(0,1fr) !important;
+  }
+  html[data-figureloom-resolved-mode="phone"] .titlebar {
+    padding-right: max(7px, env(safe-area-inset-right));
+    padding-left: max(7px, env(safe-area-inset-left));
+  }
+  html[data-figureloom-resolved-mode="phone"] .brand-mark,
+  html[data-figureloom-resolved-mode="phone"] .title-actions button {
+    height: 40px !important;
+    min-height: 40px;
+  }
+  html[data-figureloom-resolved-mode="phone"] .ribbon-tabs,
+  html[data-figureloom-resolved-mode="phone"] .ribbon-tab,
+  html[data-figureloom-resolved-mode="phone"] .ribbon-command-tab {
+    height: 44px !important;
+    min-height: 44px;
+  }
+  html[data-figureloom-resolved-mode="phone"] .document-title span { display: none; }
+  html[data-figureloom-resolved-mode="phone"] .canvas-stage {
+    padding-bottom: calc(112px + env(safe-area-inset-bottom));
+  }
+  html[data-figureloom-resolved-mode="phone"] #figureloomPhoneDock {
+    padding-right: max(6px, env(safe-area-inset-right));
+    padding-left: max(6px, env(safe-area-inset-left));
+  }
+  html[data-figureloom-resolved-mode="phone"] #figureloomPhoneScrim {
+    inset-top: calc(92px + env(safe-area-inset-top));
+  }
+}
+
+@media (max-width: 350px) {
+  html[data-figureloom-resolved-mode="phone"] .document-title span { display: none; }
+  html[data-figureloom-resolved-mode="phone"] .title-actions { gap: 1px; }
+  html[data-figureloom-resolved-mode="phone"] .title-actions button {
+    width: 40px;
+    min-width: 40px;
+  }
+  html[data-figureloom-resolved-mode="phone"] .ribbon-tab,
+  html[data-figureloom-resolved-mode="phone"] .ribbon-command-tab {
+    min-width: 60px;
+    padding-inline: 9px !important;
+  }
+  html[data-figureloom-resolved-mode="phone"] .phone-more-grid {
+    grid-template-columns: 1fr;
+  }
+}
