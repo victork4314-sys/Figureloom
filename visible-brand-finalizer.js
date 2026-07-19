@@ -1,5 +1,6 @@
 (() => {
-  if (window.__figureLoomVisibleBrandFinalizerV1) return;
+  if (window.__figureLoomVisibleBrandFinalizerV2) return;
+  window.__figureLoomVisibleBrandFinalizerV2 = true;
   window.__figureLoomVisibleBrandFinalizerV1 = true;
 
   const BRAND_PATTERN = /SciCanvas/gi;
@@ -24,6 +25,24 @@
   let observer = null;
   let scheduled = false;
   const pending = new Set();
+
+  async function forceFreshEditorFavicon() {
+    try {
+      const response = await fetch(`/favicon.ico?editor-live=${Date.now()}`, { cache:'no-store' });
+      if (!response.ok) return;
+      const blob = await response.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      document.head.querySelectorAll('link[rel="icon"],link[rel="shortcut icon"]').forEach(node => node.remove());
+      const icon = document.createElement('link');
+      icon.rel = 'icon';
+      icon.type = 'image/x-icon';
+      icon.href = blobUrl;
+      document.head.appendChild(icon);
+      window.__figureLoomLiveFaviconUrl = blobUrl;
+    } catch (error) {
+      console.warn('FigureLoom favicon refresh could not run.', error);
+    }
+  }
 
   function replaceVisibleBrand(value) {
     return String(value ?? '')
@@ -179,17 +198,22 @@
   }
 
   function init() {
+    void forceFreshEditorFavicon();
     wrapBrowserDialogs();
     installDownloadCompatibility();
     installObserver();
     refresh();
     requestAnimationFrame(refresh);
     setTimeout(refresh, 250);
-    setTimeout(refresh, 1000);
+    setTimeout(() => {
+      refresh();
+      void forceFreshEditorFavicon();
+    }, 1000);
     window.FigureLoomVisibleBranding = Object.freeze({
       refresh,
       replace:replaceVisibleBrand,
-      isUserContent
+      isUserContent,
+      refreshFavicon:forceFreshEditorFavicon
     });
   }
 
