@@ -1,8 +1,8 @@
 (() => {
-  if (window.__figureLoomStableRuntime71d36dfV33) return;
-  window.__figureLoomStableRuntime71d36dfV33 = true;
+  if (window.__figureLoomStableRuntime71d36dfV34) return;
+  window.__figureLoomStableRuntime71d36dfV34 = true;
 
-  const STABLE_BUILD = "stable-71d36df-locked-20260719-v33";
+  const STABLE_BUILD = "stable-71d36df-locked-20260719-v34";
   const GENERAL_ADDONS = [
     "library-more-illustrations.js",
     "library-more-templates.js",
@@ -40,7 +40,8 @@
     "data-grid-unlimited.js",
     "stable-gentle-fixes.js",
     "mobile-mode.js",
-    "mobile-mode-canvas-fit.js"
+    "mobile-mode-canvas-fit.js",
+    "mobile-touch-drag-fix.js"
   ];
   const TEXT_ADDONS = [
     "text-layout-bundle.js",
