@@ -2,6 +2,8 @@
 
 - [Home](Home)
 - [Start here](Start-Here)
+- [Visual interface guide](Visual-Interface-Guide)
+- [Quick task guides](Quick-Task-Guides)
 
 ### Editor basics
 
