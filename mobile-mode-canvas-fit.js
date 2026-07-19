@@ -1,6 +1,6 @@
 (() => {
-  if (window.__figureLoomPhoneCanvasFitV3) return;
-  window.__figureLoomPhoneCanvasFitV3 = true;
+  if (window.__figureLoomPhoneCanvasFitV4) return;
+  window.__figureLoomPhoneCanvasFitV4 = true;
 
   const root = document.documentElement;
   const phoneMode = () => root.dataset.figureloomResolvedMode === 'phone';
@@ -12,8 +12,35 @@
       width:var(--figureloom-phone-canvas-width,360px)!important;
     }
     html[data-figureloom-resolved-mode="phone"] .titlebar{
+      grid-template-columns:minmax(0,1fr) auto!important;
+      gap:5px!important;
       background-color:var(--figureloom-phone-surface)!important;
       background-image:none!important;
+    }
+    html[data-figureloom-resolved-mode="phone"] .titlebar .brand{
+      display:none!important;
+    }
+    html[data-figureloom-resolved-mode="phone"] .titlebar .document-title{
+      grid-column:1!important;
+      grid-row:1!important;
+      min-width:0!important;
+    }
+    html[data-figureloom-resolved-mode="phone"] .titlebar .title-actions{
+      grid-column:2!important;
+      grid-row:1!important;
+      display:flex!important;
+      align-items:center!important;
+      gap:3px!important;
+      min-width:0!important;
+    }
+    html[data-figureloom-resolved-mode="phone"] .titlebar .title-actions>*{
+      display:none!important;
+    }
+    html[data-figureloom-resolved-mode="phone"] .titlebar .title-actions>#undoButton,
+    html[data-figureloom-resolved-mode="phone"] .titlebar .title-actions>#redoButton,
+    html[data-figureloom-resolved-mode="phone"] .titlebar .title-actions>#exportButton{
+      display:grid!important;
+      place-items:center!important;
     }
     html[data-figureloom-resolved-mode="phone"] #figureloomQuickStartLite{
       bottom:calc(128px + env(safe-area-inset-bottom))!important;
@@ -61,32 +88,83 @@
     root.style.setProperty('--figureloom-phone-canvas-width', `${Math.round(base * zoomFactor)}px`);
   }
 
+  function addMoreButton(action, icon, label) {
+    const grid = document.querySelector('#figureloomPhoneMoreSheet .phone-more-grid');
+    if (!grid || grid.querySelector(`[data-phone-action="${action}"]`)) return;
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.dataset.phoneAction = action;
+    button.innerHTML = `<span aria-hidden="true">${icon}</span><small>${label}</small>`;
+    grid.appendChild(button);
+  }
+
+  function prepareMoreActions() {
+    addMoreButton('protools', '⌘', 'Pro tools');
+    addMoreButton('loomy', '✦', 'Loomy');
+    addMoreButton('guide', '?', 'Guide');
+  }
+
+  function clickAfterClose(selector) {
+    window.FigureLoomPhoneMode?.close?.();
+    requestAnimationFrame(() => document.querySelector(selector)?.click());
+  }
+
+  function interceptPhoneActions(event) {
+    if (!phoneMode()) return;
+    const button = event.target.closest?.('[data-phone-action]');
+    const action = button?.dataset.phoneAction;
+    if (!action || !['projects','templates','protools','loomy','guide'].includes(action)) return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+
+    if (action === 'projects') {
+      document.querySelector('.ribbon-tab[data-tab="projects"]')?.click();
+      setTimeout(() => window.FigureLoomPhoneMode?.open?.('tools'), 0);
+      return;
+    }
+    if (action === 'templates') {
+      window.FigureLoomPhoneMode?.close?.();
+      document.querySelector('.ribbon-tab[data-tab="insert"]')?.click();
+      return;
+    }
+    if (action === 'protools') return clickAfterClose('#proToolsButton');
+    if (action === 'loomy') return clickAfterClose('.figure-assistant-button');
+    if (action === 'guide') return clickAfterClose('#helpButton,#tourButton,[aria-label="Open the FigureLoom guide"]');
+  }
+
   function settleRibbonClick(event) {
     const tab = event.target.closest?.('.ribbon-tabs .ribbon-tab');
     if (!phoneMode() || !tab) return;
-    requestAnimationFrame(() => {
+    setTimeout(() => {
       if (!event.isTrusted) {
         window.FigureLoomPhoneMode?.close?.();
         return;
       }
       const utilityDrawer = document.querySelector('.utility-drawer.open,[id$="Drawer"].open');
       if (utilityDrawer) window.FigureLoomPhoneMode?.close?.();
-    });
+    }, 0);
+  }
+
+  function settleStartup() {
+    setTimeout(() => {
+      if (phoneMode()) window.FigureLoomPhoneMode?.close?.();
+      prepareMoreActions();
+      sync();
+    }, 80);
   }
 
   function init() {
     const canvas = document.getElementById('canvas');
     if (canvas) new MutationObserver(sync).observe(canvas, { attributes:true, attributeFilter:['style'] });
+    document.addEventListener('click', interceptPhoneActions, true);
     document.addEventListener('click', settleRibbonClick, true);
     addEventListener('resize', () => requestAnimationFrame(sync));
     addEventListener('orientationchange', () => setTimeout(sync, 140));
     addEventListener('figureloom-settings-change', () => requestAnimationFrame(sync));
-    addEventListener('figureloom-stable-ready', () => {
-      requestAnimationFrame(() => {
-        sync();
-        window.FigureLoomPhoneMode?.close?.();
-      });
-    });
+    addEventListener('figureloom-stable-ready', settleStartup);
+    new MutationObserver(prepareMoreActions).observe(document.body, { childList:true, subtree:true });
+    prepareMoreActions();
+    settleStartup();
     requestAnimationFrame(sync);
     window.FigureLoomPhoneCanvasFit = Object.freeze({ sync });
   }
