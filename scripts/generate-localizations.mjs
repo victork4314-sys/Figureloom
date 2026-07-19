@@ -31,7 +31,7 @@ For every included phrase, provide natural, context-correct translations in ALL 
 - nl: Dutch
 
 Rules:
-1. Preserve placeholders such as {value} exactly, with each occurrence retained.
+1. Preserve placeholders such as {value} exactly, with every occurrence retained.
 2. Preserve product and technical names when appropriate: FigureLoom, Loomy, Gemini, Puter, GitHub, PubChem, SVG, TeX, LaTeX, Office, IndexedDB, JSON, CSV, PNG, JPEG, WebP, PPTX, PDF, DOI, ORCID, URL.
 3. Translate UI terminology consistently and idiomatically. Do not translate literally when a standard software term is better.
 4. Use sentence case matching the English source unless the language convention requires otherwise.
@@ -44,55 +44,84 @@ function payloadFor(items) {
     phrase:item.phrase,
     files:item.files.slice(0, 6),
     kinds:item.kinds,
-    samples:item.samples
+    samples:item.samples.map(sample => String(sample).slice(0, 260))
   }));
 }
 
 function parseJson(content) {
   const text = String(content || '').trim().replace(/^```json\s*/i, '').replace(/\s*```$/, '');
-  return JSON.parse(text);
+  const first = text.indexOf('{');
+  const last = text.lastIndexOf('}');
+  if (first < 0 || last < first) throw new Error('No JSON object in model response.');
+  return JSON.parse(text.slice(first, last + 1));
 }
 
-async function request(items, attempt = 1) {
-  const response = await fetch(endpoint, {
-    method:'POST',
-    headers:{
-      'Accept':'application/vnd.github+json',
-      'Authorization':`Bearer ${token}`,
-      'Content-Type':'application/json',
-      'X-GitHub-Api-Version':'2026-03-10'
-    },
-    body:JSON.stringify({
-      model,
-      temperature:0.1,
-      max_tokens:16000,
-      response_format:{ type:'json_object' },
-      messages:[
-        { role:'system', content:system },
-        { role:'user', content:JSON.stringify({ items:payloadFor(items) }) }
-      ]
-    })
-  });
+const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 
-  if (!response.ok) {
-    const body = await response.text();
-    if (attempt < 6 && (response.status === 429 || response.status >= 500)) {
-      const wait = Math.min(60000, 4000 * 2 ** (attempt - 1));
-      console.warn(`Model request ${response.status}; retrying in ${wait} ms.`);
-      await new Promise(resolve => setTimeout(resolve, wait));
-      return request(items, attempt + 1);
+async function request(items, attempt = 1, repair = false) {
+  try {
+    const response = await fetch(endpoint, {
+      method:'POST',
+      signal:AbortSignal.timeout(120000),
+      headers:{
+        'Accept':'application/vnd.github+json',
+        'Authorization':`Bearer ${token}`,
+        'Content-Type':'application/json',
+        'X-GitHub-Api-Version':'2026-03-10'
+      },
+      body:JSON.stringify({
+        model,
+        temperature:0.05,
+        max_tokens:20000,
+        response_format:{ type:'json_object' },
+        messages:[
+          { role:'system', content:system },
+          { role:'user', content:`${repair ? 'This is a repair request. Be especially strict about exact phrase matching, all eight languages, and placeholder counts. ' : ''}${JSON.stringify({ items:payloadFor(items) })}` }
+        ]
+      })
+    });
+
+    if (!response.ok) {
+      const body = await response.text();
+      throw new Error(`HTTP ${response.status}: ${body.slice(0, 800)}`);
     }
-    throw new Error(`GitHub Models request failed (${response.status}): ${body.slice(0, 1000)}`);
-  }
 
-  const data = await response.json();
-  const content = data.choices?.[0]?.message?.content;
-  const parsed = parseJson(content);
-  if (!Array.isArray(parsed.items)) throw new Error('Model response did not contain an items array.');
-  return parsed.items;
+    const data = await response.json();
+    const parsed = parseJson(data.choices?.[0]?.message?.content);
+    if (!Array.isArray(parsed.items)) throw new Error('Model response did not contain an items array.');
+    return parsed.items;
+  } catch (error) {
+    if (attempt >= 6) throw error;
+    const wait = Math.min(60000, 3500 * 2 ** (attempt - 1));
+    console.warn(`Model batch attempt ${attempt} failed: ${error.message}. Retrying in ${wait} ms.`);
+    await sleep(wait);
+    return request(items, attempt + 1, true);
+  }
+}
+
+function validItem(source, item) {
+  if (!item || item.phrase !== source.phrase || typeof item.include !== 'boolean') return false;
+  if (!item.include) return true;
+  const sourceCount = (source.phrase.match(/\{value\}/g) || []).length;
+  return languages.every(language => {
+    if (typeof item[language] !== 'string' || !item[language].trim()) return false;
+    return (item[language].match(/\{value\}/g) || []).length === sourceCount;
+  });
+}
+
+async function repairSource(source) {
+  for (let attempt = 1; attempt <= 5; attempt++) {
+    const output = await request([source], 1, true);
+    const item = output.find(candidate => candidate.phrase === source.phrase);
+    if (validItem(source, item)) return item;
+    console.warn(`Invalid repair result for ${source.phrase}; retry ${attempt}.`);
+    await sleep(2500 * attempt);
+  }
+  throw new Error(`Could not obtain a complete translation result for: ${source.phrase}`);
 }
 
 const translated = [];
+const excluded = [];
 for (let start = 0; start < phrases.length; start += batchSize) {
   const batch = phrases.slice(start, start + batchSize);
   console.log(`Translating ${start + 1}-${Math.min(start + batch.length, phrases.length)} of ${phrases.length}`);
@@ -100,32 +129,36 @@ for (let start = 0; start < phrases.length; start += batchSize) {
   const byPhrase = new Map(output.map(item => [item.phrase, item]));
 
   for (const source of batch) {
-    const item = byPhrase.get(source.phrase);
-    if (!item) throw new Error(`Missing model result for: ${source.phrase}`);
-    if (!item.include) continue;
-    for (const language of languages) {
-      if (typeof item[language] !== 'string' || !item[language].trim()) {
-        throw new Error(`Missing ${language} translation for: ${source.phrase}`);
-      }
-      const sourceCount = (source.phrase.match(/\{value\}/g) || []).length;
-      const targetCount = (item[language].match(/\{value\}/g) || []).length;
-      if (sourceCount !== targetCount) throw new Error(`Placeholder mismatch in ${language}: ${source.phrase}`);
+    let item = byPhrase.get(source.phrase);
+    if (!validItem(source, item)) item = await repairSource(source);
+    if (!item.include) {
+      excluded.push({ phrase:source.phrase, files:source.files, kinds:source.kinds });
+      continue;
     }
-    translated.push({ phrase:source.phrase, files:source.files, kinds:source.kinds, samples:source.samples, ...Object.fromEntries(languages.map(language => [language,item[language].trim()])) });
+    translated.push({
+      phrase:source.phrase,
+      files:source.files,
+      kinds:source.kinds,
+      samples:source.samples,
+      ...Object.fromEntries(languages.map(language => [language,item[language].trim()]))
+    });
   }
 
-  fs.writeFileSync('complete-interface-translations.partial.json', JSON.stringify({ model, translated }, null, 2));
-  await new Promise(resolve => setTimeout(resolve, 3500));
+  fs.writeFileSync('complete-interface-translations.partial.json', JSON.stringify({ model, translated, excluded }, null, 2));
+  await sleep(3500);
 }
 
 translated.sort((a,b) => a.phrase.localeCompare(b.phrase));
+excluded.sort((a,b) => a.phrase.localeCompare(b.phrase));
 fs.writeFileSync('complete-interface-translations.json', JSON.stringify({
   generatedAt:new Date().toISOString(),
   model,
   inventoryPhraseCount:inventory.phraseCount,
   reviewedPhraseCount:phrases.length,
   translatedPhraseCount:translated.length,
+  excludedPhraseCount:excluded.length,
   languages,
-  translations:translated
+  translations:translated,
+  excluded
 }, null, 2));
-console.log(`Generated complete translations for ${translated.length} interface phrases.`);
+console.log(`Generated complete translations for ${translated.length} interface phrases; excluded ${excluded.length} non-interface phrases.`);
