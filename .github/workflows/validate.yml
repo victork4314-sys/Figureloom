@@ -94,6 +94,7 @@ jobs:
           test -f svg-path-editor.js
           test -f tex-typesetting.js
           test -f pathway-exchange.js
+          test -f local-prompt-assistant.js
           test -f supabase/schema.sql
           test -f supabase/share-links.sql
           test -f docs/CLOUD_SETUP.md
