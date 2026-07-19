@@ -20,6 +20,10 @@ const requiredFiles = [
   'interface-dark-mode.js',
   'dark-mode-windows.js',
   'ai-chat-fixes.js',
+  'safe-refresh.js',
+  'text-editing-gentle-polish.js',
+  'manifest.webmanifest',
+  'favicon.svg',
   'tour-mobile-safe.js',
   'tests/help-center-theme.spec.js',
   'wiki/index.html',
@@ -47,6 +51,9 @@ if (!errors.length) {
   const interfaceTheme = read('interface-dark-mode.js');
   const themedWindows = read('dark-mode-windows.js');
   const companionLoader = read('ai-chat-fixes.js');
+  const safeRefresh = read('safe-refresh.js');
+  const richPolish = read('text-editing-gentle-polish.js');
+  const manifest = read('manifest.webmanifest');
   const tourMobile = read('tour-mobile-safe.js');
   const browserTest = read('tests/help-center-theme.spec.js');
   const wikiHtml = read('wiki/index.html');
@@ -55,6 +62,10 @@ if (!errors.length) {
 
   requireText(appHtml, 'help-center.js', 'index.html');
   requireText(appHtml, 'figureloom-sage-theme.js', 'index.html');
+  requireText(appHtml, './favicon.svg?v=8', 'index.html current favicon');
+  requireText(appHtml, './manifest.webmanifest?v=8', 'index.html current manifest');
+  requireText(appHtml, 'safe-refresh.js?v=safe-refresh-20260719-v16', 'index.html current loader');
+  if (appHtml.includes('Stable version')) errors.push('The loading screen must not expose the internal stable-version label');
   if (appHtml.includes('phone-sage-theme-fix')) errors.push('index.html must not load a separate phone theme patch');
 
   const finishingIndex = appHtml.indexOf('finishing-touches.js');
@@ -145,6 +156,44 @@ if (!errors.length) {
   }
 
   for (const marker of [
+    '__figureLoomStableRuntime71d36dfV38',
+    'stable-71d36df-locked-20260719-v38',
+    '<span>Opening FigureLoom</span>',
+    'background:#f4f7f6',
+    'background:#181d1c',
+    'border-top-color:#78c4b5'
+  ]) requireText(safeRefresh, marker, 'safe-refresh.js polished loading screen');
+  if (safeRefresh.includes('Stable version')) errors.push('safe-refresh.js must not recreate the internal stable-version label');
+
+  for (const marker of [
+    '__figureLoomGentleRichTextPolishV2',
+    '#figureloomRichTextControls',
+    '#figureloomRichTextOverlay',
+    '.figureloom-rich-editor',
+    '.rich-editable',
+    '.right-panel :where(button,input,select,textarea):disabled',
+    'var(--figureloom-ui-surface',
+    'var(--figureloom-ui-soft',
+    'var(--figureloom-ui-text',
+    'var(--figureloom-ui-muted',
+    'var(--figureloom-ui-line',
+    'var(--figureloom-ui-accent'
+  ]) requireText(richPolish, marker, 'text-editing-gentle-polish.js shared sage text UI');
+
+  for (const oldColor of [
+    '#30353d', '#343a43', '#373d46', '#505864', '#586fb9', '#2563eb',
+    '#edf4ff', '#cfd7e3', '#596579', '#66758b'
+  ]) {
+    if (richPolish.includes(oldColor)) errors.push(`text-editing-gentle-polish.js still contains retired UI color ${oldColor}`);
+  }
+
+  for (const marker of [
+    '"name": "FigureLoom"',
+    '"short_name": "FigureLoom"',
+    '"src": "/favicon.svg?v=8"'
+  ]) requireText(manifest, marker, 'manifest.webmanifest FigureLoom identity');
+
+  for (const marker of [
     'var(--figureloom-ui-soft, #edf3f1)',
     'var(--figureloom-ui-surface, #222927)',
     'var(--figureloom-ui-accent, #2f7468)',
@@ -181,6 +230,14 @@ if (!errors.length) {
   }
 
   for (const file of [
+    './safe-refresh.js',
+    './safe-refresh.js?v=safe-refresh-20260719-v16',
+    './text-editing-gentle-polish.js',
+    './text-editing-gentle-polish.js?v=stable-71d36df-locked-20260719-v38',
+    './favicon.svg',
+    './favicon.svg?v=8',
+    './manifest.webmanifest',
+    './manifest.webmanifest?v=8',
     './tour-mobile-safe.js',
     './ai-chat-fixes.js',
     './ai-chat-fixes.js?v=9',
@@ -220,4 +277,4 @@ if (errors.length) {
   process.exit(1);
 }
 
-console.log('Help center validation passed: the question-mark Help menu, one shared sage theme, themed dynamic windows, passive guide, wiki, phone safety, and offline cache are present.');
+console.log('Help center validation passed: the question-mark Help menu, one shared sage theme, complete text UI, themed dynamic windows, polished loading copy, current favicon, wiki, phone safety, and offline cache are present.');

@@ -1,17 +1,17 @@
 {
   "id": "/",
-  "name": "Figureloom Open Scientific Figure Workspace",
-  "short_name": "Figureloom",
+  "name": "FigureLoom",
+  "short_name": "FigureLoom",
   "description": "Free, open-source scientific figure editor. Works offline, no account needed.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
-  "background_color": "#0c2e28",
+  "background_color": "#181d1c",
   "theme_color": "#0c2e28",
   "orientation": "any",
   "icons": [
     {
-      "src": "/favicon.svg?v=7",
+      "src": "/favicon.svg?v=8",
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any maskable"
