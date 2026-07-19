@@ -24,6 +24,7 @@
   let activeUser = window.SciCanvasCloud?.getUser?.() || null;
   let authSubscription = null;
   let applying = false;
+  let scheduled = false;
 
   function cleanName(value) {
     return String(value || '').replace(/\s+/g, ' ').trim().slice(0, 40);
@@ -213,10 +214,14 @@
 
   function updateButtons() {
     const choice = currentChoice();
+    const initialValue = initials(displayName());
     document.querySelectorAll('[data-sc-avatar-option],[data-sc-avatar-plus]').forEach(button => {
       const id = button.dataset.scAvatarOption || button.dataset.scAvatarPlus;
       button.setAttribute('aria-pressed', String(id === choice));
-      if (id === 'initial') button.querySelector('span')?.replaceChildren(document.createTextNode(initials(displayName())));
+      if (id === 'initial') {
+        const span = button.querySelector('span');
+        if (span && span.textContent !== initialValue) span.textContent = initialValue;
+      }
     });
     document.querySelectorAll('[data-sc-avatar-upload]').forEach(button => button.setAttribute('aria-pressed', String(choice === 'custom')));
   }
@@ -234,7 +239,9 @@
       session.insertAdjacentElement('beforebegin', row);
     }
     renderInto(row.querySelector('.figureloom-share-avatar'));
-    row.querySelector('strong').textContent = `Sharing as ${displayName()}`;
+    const strong = row.querySelector('strong');
+    const label = `Sharing as ${displayName()}`;
+    if (strong && strong.textContent !== label) strong.textContent = label;
   }
 
   function apply() {
@@ -256,6 +263,15 @@
     }
   }
 
+  function scheduleApply() {
+    if (scheduled) return;
+    scheduled = true;
+    requestAnimationFrame(() => {
+      scheduled = false;
+      apply();
+    });
+  }
+
   const style = document.createElement('style');
   style.id = 'figureloomProfilePicturePlusStyle';
   style.textContent = `
@@ -275,13 +291,13 @@
   `;
   document.head.appendChild(style);
 
-  const observer = new MutationObserver(() => requestAnimationFrame(apply));
+  const observer = new MutationObserver(scheduleApply);
   observer.observe(document.body, { childList:true, subtree:true });
-  addEventListener('scicanvas-avatar-changed', () => requestAnimationFrame(apply));
-  addEventListener('scicanvas-collaboration-opened', () => requestAnimationFrame(apply));
-  addEventListener('scicanvas-cloud-opened', () => requestAnimationFrame(apply));
+  addEventListener('scicanvas-avatar-changed', scheduleApply);
+  addEventListener('scicanvas-collaboration-opened', scheduleApply);
+  addEventListener('scicanvas-cloud-opened', scheduleApply);
   addEventListener('storage', event => {
-    if ([NAME_KEY,AVATAR_KEY,IMAGE_KEY].includes(event.key)) requestAnimationFrame(apply);
+    if ([NAME_KEY,AVATAR_KEY,IMAGE_KEY].includes(event.key)) scheduleApply();
   });
 
   Promise.resolve().then(async () => {
