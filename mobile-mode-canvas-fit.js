@@ -1,6 +1,6 @@
 (() => {
-  if (window.__figureLoomPhoneCanvasFitV1) return;
-  window.__figureLoomPhoneCanvasFitV1 = true;
+  if (window.__figureLoomPhoneCanvasFitV2) return;
+  window.__figureLoomPhoneCanvasFitV2 = true;
 
   const root = document.documentElement;
   const phoneMode = () => root.dataset.figureloomResolvedMode === 'phone';
@@ -11,9 +11,26 @@
     html[data-figureloom-resolved-mode="phone"] #canvas{
       width:var(--figureloom-phone-canvas-width,360px)!important;
     }
+    html[data-figureloom-resolved-mode="phone"] .titlebar{
+      background-color:var(--figureloom-phone-surface)!important;
+      background-image:none!important;
+    }
+    html[data-figureloom-resolved-mode="phone"] #figureloomQuickStartLite{
+      bottom:calc(128px + env(safe-area-inset-bottom))!important;
+      max-height:calc(100dvh - 250px)!important;
+      overflow:auto!important;
+    }
+    html[data-figureloom-resolved-mode="phone"] #insertDrawer.open{
+      padding-top:env(safe-area-inset-top)!important;
+      padding-bottom:env(safe-area-inset-bottom)!important;
+    }
     @media (orientation:landscape){
       html[data-figureloom-resolved-mode="phone"] #figureloomPhoneScrim{
         top:calc(92px + env(safe-area-inset-top))!important;
+      }
+      html[data-figureloom-resolved-mode="phone"] #figureloomQuickStartLite{
+        bottom:calc(116px + env(safe-area-inset-bottom))!important;
+        max-height:calc(100dvh - 205px)!important;
       }
     }
   `;
@@ -35,13 +52,32 @@
     root.style.setProperty('--figureloom-phone-canvas-width', `${Math.round(base * zoomFactor)}px`);
   }
 
+  function settleRibbonClick(event) {
+    const tab = event.target.closest?.('.ribbon-tabs .ribbon-tab');
+    if (!phoneMode() || !tab) return;
+    requestAnimationFrame(() => {
+      if (!event.isTrusted) {
+        window.FigureLoomPhoneMode?.close?.();
+        return;
+      }
+      const utilityDrawer = document.querySelector('.utility-drawer.open,[id$="Drawer"].open');
+      if (utilityDrawer) window.FigureLoomPhoneMode?.close?.();
+    });
+  }
+
   function init() {
     const canvas = document.getElementById('canvas');
     if (canvas) new MutationObserver(sync).observe(canvas, { attributes:true, attributeFilter:['style'] });
+    document.addEventListener('click', settleRibbonClick, true);
     addEventListener('resize', () => requestAnimationFrame(sync));
     addEventListener('orientationchange', () => setTimeout(sync, 140));
     addEventListener('figureloom-settings-change', () => requestAnimationFrame(sync));
-    addEventListener('figureloom-stable-ready', () => requestAnimationFrame(sync));
+    addEventListener('figureloom-stable-ready', () => {
+      requestAnimationFrame(() => {
+        sync();
+        window.FigureLoomPhoneMode?.close?.();
+      });
+    });
     requestAnimationFrame(sync);
     window.FigureLoomPhoneCanvasFit = Object.freeze({ sync });
   }
