@@ -8,6 +8,8 @@ You can use the editor without an account. Local projects are saved in the brows
 
 Start with [Start here](Start-Here). It walks through creating a project, adding objects, saving a backup, and exporting the result.
 
+The sidebar keeps the full manual organized by editing, scientific tools, files, sharing, tutorials, and troubleshooting.
+
 ## Find a topic
 
 ### Core editing
