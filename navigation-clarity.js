@@ -13,11 +13,15 @@
     review:{ label:'Review', description:'Check accessibility, labels, and figure quality' }
   };
 
+  function setText(node, value) {
+    if (node && node.textContent !== value) node.textContent = value;
+  }
+
   function apply() {
     document.querySelectorAll('.ribbon-tabs [data-tab]').forEach(button => {
       const details = tabs[button.dataset.tab];
       if (!details) return;
-      if (button.textContent.trim() !== details.label) button.textContent = details.label;
+      setText(button, details.label);
       button.title = details.description;
       button.setAttribute('aria-label', `${details.label}: ${details.description}`);
       button.dataset.figureloomClearLabel = '1';
@@ -29,17 +33,23 @@
       settings.setAttribute('aria-label', 'Settings: app appearance, accessibility, and interface settings');
     }
 
-    const profileHeading = document.querySelector('.sc-profile-picker-heading span');
-    const profileNote = document.querySelector('.sc-profile-picker-heading small');
-    if (profileHeading) profileHeading.textContent = 'Choose your profile picture';
-    if (profileNote) profileNote.textContent = 'Pick a symbol or upload a photo. It never appears in figures or exports.';
-    const welcomeHeading = document.querySelector('.welcome-avatar-chooser strong');
-    const welcomeNote = document.querySelector('.welcome-avatar-chooser small');
-    if (welcomeHeading) welcomeHeading.textContent = 'Pick a profile picture';
-    if (welcomeNote) welcomeNote.textContent = 'Use initials, a scientific symbol, or your own photo.';
+    setText(document.querySelector('.sc-profile-picker-heading span'), 'Choose your profile picture');
+    setText(document.querySelector('.sc-profile-picker-heading small'), 'Pick a symbol or upload a photo. It never appears in figures or exports.');
+    setText(document.querySelector('.welcome-avatar-chooser strong'), 'Pick a profile picture');
+    setText(document.querySelector('.welcome-avatar-chooser small'), 'Use initials, a scientific symbol, or your own photo.');
   }
 
-  const observer = new MutationObserver(() => requestAnimationFrame(apply));
+  let scheduled = false;
+  function scheduleApply() {
+    if (scheduled) return;
+    scheduled = true;
+    requestAnimationFrame(() => {
+      scheduled = false;
+      apply();
+    });
+  }
+
+  const observer = new MutationObserver(scheduleApply);
   observer.observe(document.body, { childList:true, subtree:true });
   addEventListener('figureloom-stable-ready', apply);
   apply();
