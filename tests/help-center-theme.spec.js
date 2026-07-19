@@ -53,6 +53,8 @@ for (const theme of ['light', 'dark']) {
       const grid = getComputedStyle(document.querySelector('#gridToggle'));
       const snap = getComputedStyle(document.querySelector('#snapToggle'));
       const opacity = getComputedStyle(document.querySelector('#opacity'));
+      const iconLinks = [...document.querySelectorAll('link[rel="icon"]')];
+      const legacyLinks = document.querySelectorAll('link[rel="shortcut icon"],link[rel="apple-touch-icon"],link[rel="apple-touch-icon-precomposed"],link[rel="mask-icon"]');
       return {
         accent:root.getPropertyValue('--figureloom-ui-accent').trim(),
         surface:root.getPropertyValue('--figureloom-ui-surface').trim(),
@@ -66,7 +68,9 @@ for (const theme of ['light', 'dark']) {
         snapAccent:snap.accentColor,
         opacityAccent:opacity.accentColor,
         nativeThemePresent:Boolean(document.getElementById('figureloomNativeControlTheme')),
-        iconHref:document.querySelector('link[rel="shortcut icon"]')?.getAttribute('href') || ''
+        iconCount:iconLinks.length,
+        iconHref:iconLinks[0]?.getAttribute('href') || '',
+        legacyLinkCount:legacyLinks.length
       };
     });
 
@@ -93,15 +97,36 @@ for (const theme of ['light', 'dark']) {
     expect(colors.snapAccent).toBe(expectedAccent);
     expect(colors.opacityAccent).toBe(expectedAccent);
     expect(colors.nativeThemePresent).toBe(true);
-    expect(colors.iconHref).toBe('./favicon.ico?v=9');
+    expect(colors.iconCount).toBe(1);
+    expect(colors.iconHref).toBe('./figureloom-mark.svg?v=1');
+    expect(colors.legacyLinkCount).toBe(0);
 
-    const ico = await page.evaluate(async () => {
-      const response = await fetch('./favicon.ico?v=9', { cache:'no-store' });
-      const bytes = new Uint8Array(await response.arrayBuffer());
-      return { ok:response.ok, length:bytes.length, header:[...bytes.slice(0, 4)] };
+    const mark = await page.evaluate(async () => {
+      const response = await fetch('./figureloom-mark.svg?v=1', { cache:'no-store' });
+      const text = await response.text();
+      return { ok:response.ok, type:response.headers.get('content-type') || '', text };
     });
-    expect(ico.ok).toBe(true);
-    expect(ico.length).toBeGreaterThan(1000);
-    expect(ico.header).toEqual([0, 0, 1, 0]);
+    expect(mark.ok).toBe(true);
+    expect(mark.type).toContain('image/svg+xml');
+    expect(mark.text).toContain('fill="#0c2e28"');
+    expect(mark.text).toContain('stroke="#79d6c3"');
   });
 }
+
+test('legacy icon paths are gone', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop', 'desktop icon cleanup');
+  await prepare(page);
+
+  const statuses = await page.evaluate(async () => {
+    const paths = ['./favicon.svg','./favicon.ico','./safari-pinned-tab.svg'];
+    const results = {};
+    for (const iconPath of paths) {
+      const response = await fetch(iconPath, { cache:'no-store' });
+      results[iconPath] = response.status;
+    }
+    return results;
+  });
+  expect(statuses['./favicon.svg']).toBe(404);
+  expect(statuses['./favicon.ico']).toBe(410);
+  expect(statuses['./safari-pinned-tab.svg']).toBe(404);
+});
