@@ -1,9 +1,17 @@
 (() => {
-  if (window.__figureLoomUnifiedAiChatFixesV11) return;
+  if (window.__figureLoomUnifiedAiChatFixesV12) return;
+  window.__figureLoomUnifiedAiChatFixesV12 = true;
   window.__figureLoomUnifiedAiChatFixesV11 = true;
   window.__figureLoomUnifiedAiChatFixesV10 = true;
   window.__figureLoomUnifiedAiChatFixesV9 = true;
   window.__figureLoomUnifiedAiChatFixes = true;
+
+  document.head.querySelectorAll('link[rel="icon"],link[rel="shortcut icon"],link[rel="manifest"]').forEach(node => node.remove());
+  const favicon = document.createElement('link');
+  favicon.rel = 'icon';
+  favicon.type = 'image/svg+xml';
+  favicon.href = './figureloom-favicon.svg';
+  document.head.appendChild(favicon);
 
   function loadCompanion(src, marker) {
     if (document.querySelector(`script[data-${marker}]`)) return;
