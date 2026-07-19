@@ -5,6 +5,7 @@ async function prepare(page, interfaceMode) {
     localStorage.setItem('scicanvas-guided-tour-v2', 'complete');
     localStorage.setItem('scicanvas-guided-tour-v3', 'complete');
     localStorage.setItem('scicanvas-welcome-v1', 'complete');
+    localStorage.setItem('scicanvas-user-name-v1', 'History Test');
     localStorage.setItem('scicanvas-motion-v1', 'off');
     localStorage.removeItem('scicanvas-document');
     localStorage.setItem('figureloom-settings-v1', JSON.stringify({
@@ -58,7 +59,7 @@ test('mouse desktop places Undo and Redo directly beside Delete', async ({ page 
   expect(Math.abs(boxes[0].width - boxes[1].width)).toBeLessThanOrEqual(1);
 
   const before = await page.evaluate(() => state.objects.length);
-  await page.locator('#addShapeButton').click();
+  await page.locator('#addTextButton:visible').click();
   await expect(page.locator('#undoButton')).toBeEnabled();
   expect(await page.evaluate(() => state.objects.length)).toBe(before + 1);
   await page.locator('#undoButton').click();
