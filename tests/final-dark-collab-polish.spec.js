@@ -20,7 +20,7 @@ async function prepare(page) {
   await page.waitForFunction(() => Boolean(
     document.documentElement.dataset.figureloomReady === '1' &&
     window.__figureLoomFinalSurfacePolishV1 &&
-    window.__figureLoomCollaborationStatusFixV1 &&
+    window.__figureLoomCollaborationStatusFixV2 &&
     window.__figureLoomEditableSvgOriginalColorFixV1
   ));
 }
