@@ -1,5 +1,6 @@
 (() => {
-  if (window.__figureLoomUnifiedAiChatFixesV12) return;
+  if (window.__figureLoomUnifiedAiChatFixesV13) return;
+  window.__figureLoomUnifiedAiChatFixesV13 = true;
   window.__figureLoomUnifiedAiChatFixesV12 = true;
   window.__figureLoomUnifiedAiChatFixesV11 = true;
   window.__figureLoomUnifiedAiChatFixesV10 = true;
