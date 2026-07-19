@@ -1,6 +1,6 @@
 (() => {
-  if (window.__figureLoomPhoneModeV3) return;
-  window.__figureLoomPhoneModeV3 = true;
+  if (window.__figureLoomPhoneModeV4) return;
+  window.__figureLoomPhoneModeV4 = true;
 
   const root = document.documentElement;
   const SHEETS = ['tools', 'pages', 'edit', 'more'];
@@ -18,12 +18,22 @@
   const $ = selector => document.querySelector(selector);
 
   function stylesheet() {
-    if ($('#figureloomPhoneModeStylesheet')) return;
-    const link = document.createElement('link');
-    link.id = 'figureloomPhoneModeStylesheet';
-    link.rel = 'stylesheet';
-    link.href = 'mobile-mode.css?v=20260719-v2';
-    document.head.appendChild(link);
+    if (!$('#figureloomPhoneModeStylesheet')) {
+      const link = document.createElement('link');
+      link.id = 'figureloomPhoneModeStylesheet';
+      link.rel = 'stylesheet';
+      link.href = 'mobile-mode.css?v=20260719-v2';
+      document.head.appendChild(link);
+    }
+    if (!$('#figureloomPhoneHiddenFix')) {
+      const style = document.createElement('style');
+      style.id = 'figureloomPhoneHiddenFix';
+      style.textContent = `
+        html[data-figureloom-resolved-mode="phone"] #figureloomPhoneSheetBar[hidden],
+        html[data-figureloom-resolved-mode="phone"] #figureloomPhoneScrim[hidden]{display:none!important}
+      `;
+      document.head.appendChild(style);
+    }
   }
 
   function makeButton(action, icon, label, extra = '') {
