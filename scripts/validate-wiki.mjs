@@ -2,7 +2,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 const wikiDir = path.resolve('wiki');
-const required = ['Home.md', '_Sidebar.md', '_Footer.md', 'Start-Here.md', 'Tutorials.md', 'Troubleshooting-and-Recovery.md'];
+const required = ['Home.md', '_Sidebar.md', '_Footer.md', 'Start-Here.md', 'Visual-Interface-Guide.md', 'Quick-Task-Guides.md', 'Tutorials.md', 'Troubleshooting-and-Recovery.md'];
+const requiredShell = ['index.html', 'wiki.css', 'wiki.js'];
 const errors = [];
 
 if (!fs.existsSync(wikiDir)) {
@@ -17,6 +18,9 @@ const fileSet = new Set(files);
 
 for (const name of required) {
   if (!fileSet.has(name)) errors.push(`Missing required wiki page: ${name}`);
+}
+for (const name of requiredShell) {
+  if (!fs.existsSync(path.join(wikiDir, name))) errors.push(`Missing in-app wiki shell file: ${name}`);
 }
 
 function pageForTarget(rawTarget) {
@@ -66,7 +70,7 @@ for (const name of files) {
   if (!linkedFromSidebar.has(name)) errors.push(`Page is not linked from _Sidebar.md: ${name}`);
 }
 
-if (files.length < 20) {
+if (files.length < 22) {
   errors.push(`Wiki is unexpectedly small: ${files.length} Markdown pages`);
 }
 
@@ -81,4 +85,4 @@ const totalWords = files.reduce((sum, name) => {
   return sum + text.split(/\s+/).filter(Boolean).length;
 }, 0);
 
-console.log(`Wiki validation passed: ${files.length} pages, approximately ${totalWords.toLocaleString('en-US')} words.`);
+console.log(`Wiki validation passed: ${files.length} pages, approximately ${totalWords.toLocaleString('en-US')} words, plus the in-app Help center.`);
