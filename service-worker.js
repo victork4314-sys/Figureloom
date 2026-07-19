@@ -1,4 +1,4 @@
-const FIGURELOOM_BUILD_ID = "stable-71d36df-locked-20260719-v47";
+const FIGURELOOM_BUILD_ID = "stable-71d36df-locked-20260719-v48";
 const FIGURELOOM_CACHE_PREFIX = "figureloom-app-";
 const FIGURELOOM_CACHE_NAME = `${FIGURELOOM_CACHE_PREFIX}${FIGURELOOM_BUILD_ID}`;
 const LEGACY_CACHE_PREFIXES = ["figureloom-shell", "scicanvas-shell"];
@@ -37,10 +37,12 @@ self.addEventListener("install", event => {
       cache.add(new Request("./figureloom-sage-theme.js", { cache:"reload" })),
       cache.add(new Request("./figureloom-sage-theme.js?v=3", { cache:"reload" })),
       cache.add(new Request("./favicon.svg", { cache:"reload" })),
-      cache.add(new Request("./favicon.svg?v=8", { cache:"reload" })),
-      cache.add(new Request("./safari-pinned-tab.svg?v=8", { cache:"reload" })),
+      cache.add(new Request("./favicon.svg?v=9", { cache:"reload" })),
+      cache.add(new Request("./favicon.ico", { cache:"reload" })),
+      cache.add(new Request("./favicon.ico?v=9", { cache:"reload" })),
+      cache.add(new Request("./safari-pinned-tab.svg?v=9", { cache:"reload" })),
       cache.add(new Request("./manifest.webmanifest", { cache:"reload" })),
-      cache.add(new Request("./manifest.webmanifest?v=8", { cache:"reload" })),
+      cache.add(new Request("./manifest.webmanifest?v=9", { cache:"reload" })),
       cache.add(new Request("./wiki/", { cache:"reload" })),
       cache.add(new Request("./wiki/index.html", { cache:"reload" })),
       cache.add(new Request("./wiki/wiki.css", { cache:"reload" })),
