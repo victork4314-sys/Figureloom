@@ -158,10 +158,10 @@ test('ordinary tools and project controls use sheets while Insert stays full-scr
 
   await page.locator('[data-phone-action="more"]').click();
   await expect(page.locator('#figureloomPhoneMoreSheet')).toHaveClass(/figureloom-phone-sheet-open/);
-  await expect(page.locator('[data-phone-action="desktop"]')).toBeVisible();
-  await expect(page.locator('[data-phone-action="protools"]')).toBeVisible();
-  await expect(page.locator('[data-phone-action="loomy"]')).toBeVisible();
-  await expect(page.locator('[data-phone-action="guide"]')).toBeVisible();
+  await expect(page.locator('[data-phone-action="desktop"]').toBeVisible();
+  await expect(page.locator('[data-phone-action="protools"]').toBeVisible();
+  await expect(page.locator('[data-phone-action="loomy"]').toBeVisible();
+  await expect(page.locator('[data-phone-action="guide"]').toBeVisible();
   await page.locator('[data-phone-action="projects"]').click();
   await expect(page.locator('.ribbon')).toHaveClass(/figureloom-phone-sheet-open/);
   await expect(page.locator('#projectsRibbonHost')).toBeVisible();
@@ -224,7 +224,8 @@ test('long press forwards to the existing context-menu path', async ({ page }, t
   test.skip(testInfo.project.name !== 'mobile', 'phone long press check');
   await prepare(page, 'phone');
   await page.locator('[data-phone-action="tools"]').click();
-  await page.locator('#addShapeButton').click();
+  await page.locator('#figureloomShapesButton').click();
+  await page.getByRole('menuitem', { name:'Rectangle', exact:true }).click();
   await closePhoneSheet(page);
   const object = page.locator('#objectLayer .canvas-object').first();
   await expect(object).toBeVisible();
