@@ -1,22 +1,24 @@
 const path = require('path');
 const { test, expect } = require('@playwright/test');
 
-const pptxBundlePath = path.join(path.dirname(require.resolve('pptxgenjs')), 'pptxgen.bundle.js');
+const jsZipBundlePath = path.join(path.dirname(require.resolve('jszip')), '../dist/jszip.min.js');
 
 async function openApp(page) {
   await page.addInitScript(() => {
     localStorage.setItem('scicanvas-guided-tour-v2', 'complete');
     localStorage.setItem('scicanvas-guided-tour-v3', 'complete');
     localStorage.setItem('scicanvas-welcome-v1', 'complete');
-    localStorage.setItem('scicanvas-user-name-v1', 'Real PowerPoint Tester');
+    localStorage.setItem('scicanvas-user-name-v1', 'Direct PowerPoint Tester');
     localStorage.setItem('scicanvas-motion-v1', 'off');
   });
   await page.goto('/');
   await expect(page.locator('#canvas')).toBeVisible();
+  await page.addScriptTag({ path:path.resolve(jsZipBundlePath) });
   await expect.poll(() => page.evaluate(() => Boolean(
     window.FigureLoomAllPagesSvgExport?.captureAllEditableSvgPages &&
     window.FigureLoomAllPagesSvgExport?.buildPowerPoint &&
-    window.FigureLoomReliablePptx?.install
+    window.FigureLoomDirectPowerPoint?.validatePresentationBlob &&
+    typeof window.PptxGenJS === 'function'
   ))).toBe(true);
 }
 
@@ -25,8 +27,8 @@ async function addDistinctPage(page, number) {
     if (index > 1) document.getElementById('addPageButton').click();
     makeObject('text');
     const text = state.objects.at(-1);
-    text.text = `REAL PPTX PAGE ${index}`;
-    text.name = `Real file marker ${index}`;
+    text.text = `DIRECT PPTX PAGE ${index}`;
+    text.name = `Direct file marker ${index}`;
     text.fill = ['#c1121f', '#006d77', '#264653', '#7b2cbf', '#bc6c25'][index - 1];
     text.stroke = text.fill;
     text.x = 60 + index * 75;
@@ -35,7 +37,7 @@ async function addDistinctPage(page, number) {
 
     makeObject('shape');
     const shape = state.objects.at(-1);
-    shape.name = `Real file shape ${index}`;
+    shape.name = `Direct file shape ${index}`;
     shape.fill = text.fill;
     shape.x = 700 - index * 43;
     shape.y = 180 + index * 37;
@@ -47,15 +49,9 @@ async function addDistinctPage(page, number) {
   }, number);
 }
 
-test('five real pages are written into a verified PowerPoint without media reuse', async ({ page }) => {
+test('five real pages are written directly with one unique PNG per PowerPoint slide', async ({ page }) => {
   test.setTimeout(120000);
   await openApp(page);
-  await page.addScriptTag({ path:path.resolve(pptxBundlePath) });
-  await page.evaluate(() => {
-    const ActualPptxGenJS = window.PptxGenJS;
-    if (typeof ActualPptxGenJS !== 'function') throw new Error('The test PowerPoint bundle did not load.');
-    window.FigureLoomReliablePptx.install(ActualPptxGenJS);
-  });
 
   for (let number = 1; number <= 5; number += 1) await addDistinctPage(page, number);
   await page.evaluate(() => {
@@ -74,33 +70,45 @@ test('five real pages are written into a verified PowerPoint without media reuse
     };
     const svgPages = await window.FigureLoomAllPagesSvgExport.captureAllEditableSvgPages({ includeGrid:false });
     const pptx = await window.FigureLoomAllPagesSvgExport.buildPowerPoint(svgPages, { writeFile:false });
-    if (typeof pptx.writeVerifiedBlob !== 'function') throw new Error('The verified PowerPoint writer was not installed.');
-    const blob = await pptx.writeVerifiedBlob({ compression:true });
-    const verification = pptx.__figureLoomLastVerification;
-
+    const blob = await pptx.write({ outputType:'blob' });
     const archive = await window.JSZip.loadAsync(blob);
+
     const relationshipTexts = [];
+    const mediaTargets = [];
+    const mediaMarkers = [];
+    const pageRecords = [];
     for (let slideNumber = 1; slideNumber <= 5; slideNumber += 1) {
-      relationshipTexts.push(await archive.file(`ppt/slides/_rels/slide${slideNumber}.xml.rels`).async('text'));
+      const relationshipPath = `ppt/slides/_rels/slide${slideNumber}.xml.rels`;
+      const relationshipText = await archive.file(relationshipPath).async('text');
+      relationshipTexts.push(relationshipText);
+      const target = new DOMParser()
+        .parseFromString(relationshipText, 'application/xml')
+        .querySelector('Relationship[Type$="/image"]')
+        ?.getAttribute('Target');
+      if (!target) throw new Error(`Slide ${slideNumber} did not contain an image target.`);
+      mediaTargets.push(target);
+      const mediaPath = `ppt/media/${target.split('/').at(-1)}`;
+      const bytes = await archive.file(mediaPath).async('uint8array');
+      const text = new TextDecoder('latin1').decode(bytes);
+      const markerMatch = text.match(/FigureLoomPage\u0000([^\u0000]{1,80})/);
+      if (!markerMatch) throw new Error(`Slide ${slideNumber} did not contain its direct page marker.`);
+      mediaMarkers.push(markerMatch[1]);
+      pageRecords.push({ index:slideNumber, token:markerMatch[1] });
     }
 
-    const fourthTarget = new DOMParser()
-      .parseFromString(relationshipTexts[3], 'application/xml')
-      .querySelector('Relationship[Type$="/image"]')
-      ?.getAttribute('Target');
-    if (!fourthTarget) throw new Error('Slide 4 did not contain an image target.');
-    const fifthXml = relationshipTexts[4].replace(
+    const fourthTarget = mediaTargets[3];
+    const corruptedRelationship = relationshipTexts[4].replace(
       /(<Relationship\b[^>]*\bType="[^"]*\/image"[^>]*\bTarget=")[^"]*(")/,
       `$1${fourthTarget}$2`
     );
-    archive.file('ppt/slides/_rels/slide5.xml.rels', fifthXml);
+    archive.file('ppt/slides/_rels/slide5.xml.rels', corruptedRelationship);
     const corruptedBlob = await archive.generateAsync({
       type:'blob',
       mimeType:'application/vnd.openxmlformats-officedocument.presentationml.presentation'
     });
     let corruptionError = '';
     try {
-      await window.FigureLoomReliablePptx.validatePptxBlob(corruptedBlob, verification.actualHashes);
+      await window.FigureLoomDirectPowerPoint.validatePresentationBlob(corruptedBlob, pageRecords);
     } catch (error) {
       corruptionError = error.message;
     }
@@ -113,9 +121,8 @@ test('five real pages are written into a verified PowerPoint without media reuse
         objectIds:state.pages.map(item => item.objects.map(object => object.id))
       },
       blobSize:blob.size,
-      slideCount:verification.slideCount,
-      actualHashes:verification.actualHashes,
-      mediaTargets:verification.mediaTargets,
+      mediaTargets,
+      mediaMarkers,
       svgSources:svgPages.map(item => item.source),
       corruptionError
     };
@@ -123,18 +130,17 @@ test('five real pages are written into a verified PowerPoint without media reuse
 
   expect(result.after).toEqual(result.before);
   expect(result.blobSize).toBeGreaterThan(10000);
-  expect(result.slideCount).toBe(5);
-  expect(result.actualHashes).toHaveLength(5);
-  expect(new Set(result.actualHashes).size).toBe(5);
   expect(result.mediaTargets).toHaveLength(5);
   expect(new Set(result.mediaTargets).size).toBe(5);
+  expect(result.mediaMarkers).toHaveLength(5);
+  expect(new Set(result.mediaMarkers).size).toBe(5);
   expect(result.corruptionError).toContain('slide 5');
 
   for (let number = 1; number <= 5; number += 1) {
     const source = result.svgSources[number - 1];
-    expect(source).toContain(`REAL PPTX PAGE ${number}`);
+    expect(source).toContain(`DIRECT PPTX PAGE ${number}`);
     for (let other = 1; other <= 5; other += 1) {
-      if (other !== number) expect(source).not.toContain(`REAL PPTX PAGE ${other}`);
+      if (other !== number) expect(source).not.toContain(`DIRECT PPTX PAGE ${other}`);
     }
   }
 });
