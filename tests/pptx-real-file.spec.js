@@ -1,7 +1,7 @@
 const path = require('path');
 const { test, expect } = require('@playwright/test');
 
-const pptxBundlePath = require.resolve('pptxgenjs/dist/pptxgen.bundle.js');
+const pptxBundlePath = path.join(path.dirname(require.resolve('pptxgenjs')), 'pptxgen.bundle.js');
 
 async function openApp(page) {
   await page.addInitScript(() => {
