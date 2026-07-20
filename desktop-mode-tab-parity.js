@@ -1,5 +1,6 @@
 (() => {
-  if (window.__figureLoomDesktopModeTabParityV1) return;
+  if (window.__figureLoomDesktopModeTabParityV2) return;
+  window.__figureLoomDesktopModeTabParityV2 = true;
   window.__figureLoomDesktopModeTabParityV1 = true;
 
   let scheduled = false;
@@ -8,10 +9,15 @@
     scheduled = false;
     const button = document.getElementById('settingsRibbonButton');
     if (!button) return;
+
     const desktop = document.documentElement.dataset.figureloomDeviceClass === 'desktop';
-    button.classList.add('settings-ribbon-button');
+
+    // On desktop this is a real ribbon tab, exactly like Projects. The
+    // Settings-specific class is retained only for the roomier tablet/phone UI.
+    button.classList.toggle('settings-ribbon-button', !desktop);
     button.classList.toggle('ribbon-tab', desktop);
     button.classList.toggle('ribbon-command-tab', !desktop);
+    button.dataset.figureloomDesktopTab = desktop ? '1' : '0';
   }
 
   function schedule() {
