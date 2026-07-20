@@ -242,7 +242,7 @@
 
   const fontBaseProjectData = projectData;
   projectData = function projectDataWithFonts() {
-    return { ...themeBaseProjectData(), defaultFont:state.defaultFont };
+    return { ...fontBaseProjectData(), defaultFont:state.defaultFont };
   };
 
   async function initializeFonts() {
