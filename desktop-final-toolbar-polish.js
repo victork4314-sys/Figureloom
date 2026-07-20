@@ -1,12 +1,13 @@
 (() => {
-  if (window.__figureLoomDesktopFinalToolbarPolishV1) return;
+  if (window.__figureLoomDesktopFinalToolbarPolishV2) return;
+  window.__figureLoomDesktopFinalToolbarPolishV2 = true;
   window.__figureLoomDesktopFinalToolbarPolishV1 = true;
 
   const style = document.createElement('style');
   style.id = 'figureloomDesktopFinalToolbarPolishStyle';
   style.textContent = `
     html[data-figureloom-device-class="desktop"]:not([data-figureloom-larger-controls="1"]) body .app-shell{
-      grid-template-rows:43px 28px 50px minmax(0,1fr) 22px!important;
+      grid-template-rows:43px 28px 47px minmax(0,1fr) 22px!important;
     }
 
     html[data-figureloom-device-class="desktop"]:not([data-figureloom-larger-controls="1"]) body .ribbon-tabs{
@@ -26,8 +27,7 @@
       height:27px!important;
       min-height:27px!important;
       min-width:0!important;
-      margin-top:0!important;
-      margin-bottom:0!important;
+      margin:0!important;
       padding:0 8px!important;
       border-radius:5px!important;
       font-size:8.5px!important;
@@ -40,16 +40,13 @@
     html[data-figureloom-device-class="desktop"]:not([data-figureloom-larger-controls="1"]) body .settings-ribbon-button{
       order:-100!important;
       flex:0 0 auto!important;
-      margin-left:0!important;
-      margin-right:2px!important;
+      margin:0!important;
       position:relative!important;
       top:0!important;
     }
     html[data-figureloom-device-class="desktop"]:not([data-figureloom-larger-controls="1"]) body .settings-ribbon-button::before{
-      display:inline-block!important;
-      margin:0 4px 0 0!important;
-      line-height:1!important;
-      transform:none!important;
+      content:none!important;
+      display:none!important;
     }
     html[data-figureloom-device-class="desktop"]:not([data-figureloom-larger-controls="1"]) body .ribbon-tab.active::after{
       bottom:0!important;
@@ -57,8 +54,8 @@
     }
 
     html[data-figureloom-device-class="desktop"]:not([data-figureloom-larger-controls="1"]) body .ribbon{
-      height:50px!important;
-      min-height:50px!important;
+      height:47px!important;
+      min-height:47px!important;
       gap:4px!important;
       padding:3px 9px!important;
       align-items:stretch!important;
@@ -66,7 +63,7 @@
     }
     html[data-figureloom-device-class="desktop"]:not([data-figureloom-larger-controls="1"]) body .tool-group{
       gap:3px!important;
-      padding:0 7px 8px 0!important;
+      padding:0 7px 7px 0!important;
       align-items:center!important;
       min-height:0!important;
     }
@@ -87,15 +84,15 @@
       width:auto!important;
       min-width:0!important;
       max-width:none!important;
-      height:23px!important;
-      min-height:23px!important;
-      max-height:23px!important;
+      height:21px!important;
+      min-height:21px!important;
+      max-height:21px!important;
       margin:0!important;
-      padding:0 5px!important;
-      border-radius:5px!important;
+      padding:0 4px!important;
+      border-radius:4px!important;
       box-shadow:none!important;
-      font-size:8px!important;
-      font-weight:630!important;
+      font-size:7.5px!important;
+      font-weight:600!important;
       letter-spacing:0!important;
       line-height:1!important;
       white-space:nowrap!important;
@@ -104,17 +101,45 @@
       text-align:center!important;
       vertical-align:middle!important;
     }
-    html[data-figureloom-device-class="desktop"]:not([data-figureloom-larger-controls="1"]) body .ribbon button{
+    html[data-figureloom-device-class="desktop"]:not([data-figureloom-larger-controls="1"]) body .ribbon .figureloom-desktop-compact-action{
       display:inline-flex!important;
       align-items:center!important;
       justify-content:center!important;
       flex:0 0 auto!important;
+      flex-basis:auto!important;
+      width:auto!important;
+      min-width:0!important;
+      max-width:none!important;
+      height:21px!important;
+      min-height:21px!important;
+      max-height:21px!important;
+      margin:0!important;
+      padding:0 4px!important;
+      border-radius:4px!important;
+      box-shadow:none!important;
+      font-size:7.5px!important;
+      font-weight:600!important;
+      line-height:1!important;
+      white-space:nowrap!important;
+      overflow:visible!important;
+      overflow-wrap:normal!important;
+      text-align:center!important;
+    }
+    html[data-figureloom-device-class="desktop"]:not([data-figureloom-larger-controls="1"]) body .ribbon .figureloom-desktop-compact-action > :where(span,small,strong){
+      display:inline!important;
+      min-width:0!important;
+      margin:0!important;
+      padding:0!important;
+      font-size:inherit!important;
+      font-weight:inherit!important;
+      line-height:1!important;
+      vertical-align:middle!important;
     }
     html[data-figureloom-device-class="desktop"]:not([data-figureloom-larger-controls="1"]) body .ribbon :where(input[type="checkbox"],input[type="radio"]){
-      width:13px!important;
-      height:13px!important;
-      min-width:13px!important;
-      min-height:13px!important;
+      width:12px!important;
+      height:12px!important;
+      min-width:12px!important;
+      min-height:12px!important;
       margin:0!important;
     }
 
@@ -188,10 +213,35 @@
   `;
   document.head.appendChild(style);
 
+  let scheduled = false;
+
+  function tagRibbonActions() {
+    document.querySelectorAll('.ribbon .tool-group button').forEach(button => {
+      if (button.closest('#projectsRibbonHost') || button.classList.contains('figureloom-legacy-shape-action')) return;
+      button.classList.add('figureloom-desktop-compact-action');
+    });
+  }
+
   function keepStyleLast() {
     if (style.isConnected && document.head.lastElementChild !== style) document.head.appendChild(style);
   }
 
-  addEventListener('figureloom-stable-ready', () => requestAnimationFrame(keepStyleLast));
-  requestAnimationFrame(keepStyleLast);
+  function refresh() {
+    scheduled = false;
+    tagRibbonActions();
+    keepStyleLast();
+  }
+
+  function scheduleRefresh() {
+    if (scheduled) return;
+    scheduled = true;
+    requestAnimationFrame(refresh);
+  }
+
+  const observer = new MutationObserver(scheduleRefresh);
+  observer.observe(document.documentElement, { childList:true, subtree:true });
+
+  addEventListener('figureloom-stable-ready', scheduleRefresh);
+  addEventListener('figureloom-settings-change', scheduleRefresh);
+  scheduleRefresh();
 })();
