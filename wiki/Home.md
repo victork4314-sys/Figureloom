@@ -14,10 +14,12 @@ The sidebar keeps the full manual organized by editing, scientific tools, files,
 
 ## Current interface notes
 
-- Open project tabs keep the close control beside each project title.
+- Open project tabs keep the close control beside each project title. Closing a tab does not silently delete the project.
 - The desktop Pages, Hand, zoom, Format, and Navigation bar can be moved as one complete bar and still uses its existing collapse control.
-- In Phone mode, open **More → Guide** to reach Help, the manual, quick task guides, the visual guide, and the passive interface tour.
-- The passive tour now covers project tabs, adding content, real page bounds, the movable canvas controls, pages and layers, the inspector, Pro Tools, Help, export, and backups.
+- In Phone mode, open **More**, then choose **Help** to open the Help center, manual links, visual guide, and passive interface tour.
+- The passive guide has 13 steps covering Projects, Settings, main workspaces, tools, the canvas, pages and layers, the canvas control bar, the inspector, Pro Tools, Loomy, sharing, Help, and export.
+- The guide remains passive. It does not open panels, move objects, change selections, or scroll the project.
+- The focused runtime checks cover light and dark desktop and phone layouts, Help opening, project-tab close placement, failed local scripts, page errors, and console errors.
 
 ## Find a topic
 
