@@ -1,9 +1,10 @@
-name: All-pages Editable SVG export
+name: Isolated all-pages exporter
 
 on:
   pull_request:
     paths:
       - 'export-tools.js'
+      - 'pptx-export.js'
       - 'pptx-export-rebuilt.js'
       - 'safe-refresh.js'
       - 'tests/pptx-final-page.spec.js'
@@ -14,7 +15,7 @@ permissions:
   contents: read
 
 jobs:
-  three-page-svg-zip:
+  isolated-multi-page-export:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -26,18 +27,19 @@ jobs:
       - name: Check exporter and test syntax
         run: |
           node --check export-tools.js
+          node --check pptx-export.js
           node --check pptx-export-rebuilt.js
           node --check tests/pptx-final-page.spec.js
       - name: Install test dependencies
         run: npm install --no-audit --no-fund
       - name: Install Chromium
         run: npx playwright install --with-deps chromium
-      - name: Export exactly three pages as three Editable SVG files in one ZIP
+      - name: Verify unique three-page and six-page exports
         run: npx playwright test tests/pptx-final-page.spec.js --project=desktop
       - name: Upload failure evidence
         if: failure()
         uses: actions/upload-artifact@v6
         with:
-          name: all-pages-svg-zip-results
+          name: isolated-all-pages-export-results
           path: test-results
           if-no-files-found: warn
