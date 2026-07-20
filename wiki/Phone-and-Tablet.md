@@ -1,16 +1,23 @@
 # Phone and tablet
 
-FigureLoom uses one project format and one editor. Phone mode changes the layout, not the project data.
+FigureLoom uses one project format and one editor. Interface modes change the layout, not the project data.
 
 ## Choosing an interface mode
 
 Open **Settings** and choose one of these options:
 
-- **Automatic** uses Phone mode on phone-sized touch devices and Desktop and tablet mode elsewhere.
-- **Desktop and tablet** keeps the full multi-panel editor visible.
-- **Phone** forces the touch-friendly layout even on a larger screen.
+- **Automatic** chooses Phone, Tablet, or Desktop from the device size and input type.
+- **Desktop** uses the compact mouse-and-keyboard layout with more canvas space.
+- **Tablet** uses the full editor with roomier touch targets and no phone sheets.
+- **Phone** uses the phone-specific dock and sliding panels.
 
 The setting applies immediately. Switching modes does not duplicate, convert, or flatten the project.
+
+## Desktop and tablet history controls
+
+On Desktop and Tablet, Undo and Redo sit in the selected-object action group directly beside Delete.
+
+This keeps the three related actions together without moving the rest of the toolbar. The Tablet buttons use touch-friendly sizing while keeping the same order as Desktop.
 
 ## Phone layout
 
@@ -82,7 +89,7 @@ Close the panel to return to the canvas.
 3. Change the available properties.
 4. Close the sheet or choose another dock section.
 
-The inspector uses the same object controls as desktop, arranged vertically for a narrow screen.
+The inspector uses the same object controls as Desktop and Tablet, arranged vertically for a narrow screen.
 
 ## Pages and layers on a phone
 
@@ -120,17 +127,17 @@ Phone mode respects the top status area, rounded corners, and the bottom browser
 
 Dialogs, the Help menu, passive guide, export controls, and bottom sheets should keep their important buttons above these areas.
 
-## Turning Phone mode off quickly
+## Switching away from Phone mode
 
-Open **More** and choose **Use desktop and tablet interface**.
+Open **More** and choose the available Desktop or Tablet interface shortcut, or open Settings and choose the exact mode you want.
 
-This switches the layout immediately. You can return to Automatic or Phone later in Settings.
+You can return to Automatic or Phone later in Settings.
 
 ## Tablet use
 
-The normal desktop and tablet layout is designed to work well on larger touch screens. It keeps the left pages panel, center canvas, and right inspector visible together.
+Tablet mode keeps the left pages panel, center canvas, and right inspector visible together, but uses roomier controls than Desktop mode.
 
-Use forced Phone mode on a tablet only when you prefer larger touch targets or want more room for the canvas.
+Use Phone mode on a tablet only when you prefer the phone dock and sliding panels or need more room for the canvas.
 
 ## Browser advice
 
