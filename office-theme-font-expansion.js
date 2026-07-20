@@ -4,19 +4,19 @@
 
   const OFFICE_FONTS = [
     { family:'Carlito', category:'Sans · office' },
-    { family:'Lato', category:'Sans · office' },
-    { family:'Source Sans 3', category:'Sans · editorial' },
-    { family:'Noto Sans', category:'Sans · international' },
-    { family:'Manrope', category:'Sans · modern' },
-    { family:'IBM Plex Sans', category:'Sans · technical' },
+    { family:'Arimo', category:'Sans · office' },
+    { family:'Tinos', category:'Serif · office' },
+    { family:'Cousine', category:'Mono · office' },
+    { family:'Lexend', category:'Sans · accessible' },
+    { family:'Assistant', category:'Sans · readable' },
+    { family:'Karla', category:'Sans · editorial' },
+    { family:'Urbanist', category:'Sans · presentation' },
     { family:'Caladea', category:'Serif · office' },
-    { family:'Merriweather', category:'Serif · readable' },
-    { family:'Libre Baskerville', category:'Serif · editorial' },
-    { family:'IBM Plex Serif', category:'Serif · technical' },
-    { family:'Roboto Slab', category:'Slab serif' },
-    { family:'JetBrains Mono', category:'Mono · code' },
-    { family:'IBM Plex Mono', category:'Mono · technical' },
-    { family:'Source Code Pro', category:'Mono · code' }
+    { family:'Newsreader', category:'Serif · editorial' },
+    { family:'Bitter', category:'Slab serif' },
+    { family:'EB Garamond', category:'Serif · editorial' },
+    { family:'Vollkorn', category:'Serif · publishing' },
+    { family:'Red Hat Mono', category:'Mono · technical' }
   ];
 
   const OFFICE_STYLES = [
@@ -33,6 +33,8 @@
   const loadedFonts = new Set();
   let fontGrid = null;
   let styleGrid = null;
+  let fontOptionScheduled = false;
+  let fontSelectObserver = null;
 
   function familyStack(entry) {
     const fallback = entry.category.startsWith('Serif') || entry.category.startsWith('Slab') ? 'serif' : entry.category.startsWith('Mono') ? 'monospace' : 'sans-serif';
@@ -72,6 +74,21 @@
       group.appendChild(new Option(entry.family, stack));
     });
     return true;
+  }
+
+  function scheduleFontOptions() {
+    if (fontOptionScheduled) return;
+    fontOptionScheduled = true;
+    requestAnimationFrame(() => {
+      fontOptionScheduled = false;
+      ensureFontOptions();
+    });
+  }
+
+  function watchFontSelect() {
+    if (fontSelectObserver || typeof textControls === 'undefined' || !textControls?.family) return;
+    fontSelectObserver = new MutationObserver(scheduleFontOptions);
+    fontSelectObserver.observe(textControls.family, { childList:true, subtree:true });
   }
 
   function applyFont(entry) {
@@ -126,6 +143,7 @@
     }
     fontGrid = panel.querySelector('.office-font-grid');
     ensureFontOptions();
+    watchFontSelect();
     drawFontCards();
     return true;
   }
@@ -284,6 +302,7 @@
     wrapCreationFunctions();
     wrapPersistence();
     ensureFontOptions();
+    watchFontSelect();
     return true;
   }
 
