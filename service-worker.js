@@ -29,6 +29,7 @@ self.addEventListener("install", event => {
       cache.add(new Request("./mcp-feature-bootstrap.js?v=stable-71d36df-locked-20260720-v69", { cache:"reload" })),
       cache.add(new Request("./mcp-feature-adapters.js?v=stable-71d36df-locked-20260720-v69", { cache:"reload" })),
       cache.add(new Request("./mcp-security-overrides.js?v=stable-71d36df-locked-20260720-v69", { cache:"reload" })),
+      cache.add(new Request("./mcp-office-command-adapter.js?v=stable-71d36df-locked-20260720-v69", { cache:"reload" })),
       cache.add(new Request("./pptx-export-rebuilt.js", { cache:"reload" })),
       cache.add(new Request("./pptx-export-rebuilt.js?v=stable-71d36df-locked-20260720-v64", { cache:"reload" })),
       cache.add(new Request("./svg-all-pages-only.js", { cache:"reload" })),
