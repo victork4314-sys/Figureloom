@@ -3,6 +3,7 @@ name: PowerPoint final-page regression
 on:
   pull_request:
     paths:
+      - 'export-tools.js'
       - 'pptx-export-rebuilt.js'
       - 'safe-refresh.js'
       - 'tests/pptx-final-page.spec.js'
@@ -24,13 +25,14 @@ jobs:
           node-version: 24
       - name: Check exporter and test syntax
         run: |
+          node --check export-tools.js
           node --check pptx-export-rebuilt.js
           node --check tests/pptx-final-page.spec.js
       - name: Install test dependencies
         run: npm install --no-audit --no-fund
       - name: Install Chromium
         run: npx playwright install --with-deps chromium
-      - name: Prove the third slide exists in a three-page PowerPoint
+      - name: Run Editable SVG across exactly three pages and convert all three to PowerPoint
         run: npx playwright test tests/pptx-final-page.spec.js --project=desktop
       - name: Upload failure evidence
         if: failure()
