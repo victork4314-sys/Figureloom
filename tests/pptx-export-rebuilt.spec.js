@@ -10,13 +10,16 @@ async function openApp(page) {
   });
   await page.goto('/');
   await expect(page.locator('#canvas')).toBeVisible();
-  await expect.poll(() => page.evaluate(() => Boolean(window.FigureLoomPptxExportRebuilt))).toBe(true);
+  await expect.poll(() => page.evaluate(() => Boolean(
+    window.FigureLoomAllPagesSvgExport?.captureAllEditableSvgPages &&
+    window.FigureLoomAllPagesSvgExport?.buildPowerPoint
+  ))).toBe(true);
 }
 
 async function addNamedPage(page, index) {
-  if (index > 1) await page.locator('#addPageButton').click();
-  await page.locator('#addTextButton').click();
   await page.evaluate(number => {
+    if (number > 1) addPage();
+    makeObject('text');
     const item = state.objects.at(-1);
     item.text = `UNIQUE EXPORT PAGE ${number}`;
     item.name = `Export marker ${number}`;
@@ -24,9 +27,9 @@ async function addNamedPage(page, index) {
     item.stroke = item.fill;
     item.x = 80 + number * 35;
     item.y = 90 + number * 40;
-    if (typeof syncPage === 'function') syncPage();
-    if (typeof render === 'function') render();
-    if (typeof renderPages === 'function') renderPages();
+    syncPage?.();
+    render?.();
+    renderPages?.();
   }, index);
 }
 
@@ -41,23 +44,28 @@ test('all-pages PowerPoint captures and exports every page once in order', async
       activePage:state.activePage,
       objectText:state.objects.at(-1)?.text || ''
     };
-    const snapshots = await window.FigureLoomPptxExportRebuilt.capturePageSnapshots({ includeGrid:false });
+    const snapshots = await window.FigureLoomAllPagesSvgExport.captureAllEditableSvgPages({ includeGrid:false });
     return {
       before,
       after:{ activePage:state.activePage, objectText:state.objects.at(-1)?.text || '' },
-      snapshots:snapshots.map(snapshot => ({ name:snapshot.name, source:snapshot.source }))
+      snapshots:snapshots.map(snapshot => ({
+        name:snapshot.name,
+        source:snapshot.source,
+        captureMethod:snapshot.captureMethod
+      }))
     };
   });
 
   expect(captured.snapshots).toHaveLength(4);
   expect(captured.after).toEqual(captured.before);
+  expect(captured.snapshots.map(snapshot => snapshot.captureMethod)).toEqual(Array(4).fill('isolated'));
   for (let index = 1; index <= 4; index += 1) {
     expect(captured.snapshots[index - 1].source).toContain(`UNIQUE EXPORT PAGE ${index}`);
-    expect(captured.snapshots[index - 1].source).toContain(`\"page\":${index}`);
+    expect(captured.snapshots[index - 1].source).toContain(`&quot;pageIndex&quot;:${index}`);
   }
   expect(new Set(captured.snapshots.map(snapshot => snapshot.source)).size).toBe(4);
 
-  await page.evaluate(() => {
+  const exported = await page.evaluate(async () => {
     window.__figureLoomTestSlides = [];
     window.__figureLoomTestWroteFile = false;
     window.PptxGenJS = class MockPptxGenJS {
@@ -75,16 +83,17 @@ test('all-pages PowerPoint captures and exports every page once in order', async
       }
       async writeFile() { window.__figureLoomTestWroteFile = true; }
     };
-  });
 
-  await page.evaluate(() => window.FigureLoomPptxExportRebuilt.exportAllPages({ includeGrid:false }));
-  const exported = await page.evaluate(() => ({
-    wroteFile:window.__figureLoomTestWroteFile,
-    slides:window.__figureLoomTestSlides.map(slide => slide.data)
-  }));
+    const snapshots = await window.FigureLoomAllPagesSvgExport.captureAllEditableSvgPages({ includeGrid:false });
+    await window.FigureLoomAllPagesSvgExport.buildPowerPoint(snapshots);
+    return {
+      wroteFile:window.__figureLoomTestWroteFile,
+      slides:window.__figureLoomTestSlides.map(slide => slide.data)
+    };
+  });
 
   expect(exported.wroteFile).toBe(true);
   expect(exported.slides).toHaveLength(4);
   expect(new Set(exported.slides).size).toBe(4);
-  expect(exported.slides.every(data => /^data:image\/(jpeg|png);base64,/.test(data))).toBe(true);
+  expect(exported.slides.every(data => /^data:image\/svg\+xml;base64,/.test(data))).toBe(true);
 });
