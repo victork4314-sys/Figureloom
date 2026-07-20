@@ -1,5 +1,9 @@
 (() => {
-  // Legacy exporter intentionally retired. The isolated all-pages exporter is
-  // loaded by safe-refresh.js after the editor and its object renderers are ready.
+  if (window.__figureLoomExportMenuLoaderV1) return;
+  window.__figureLoomExportMenuLoaderV1 = true;
   window.__figureLoomLegacyPptxExporterRetired = true;
+  const script = document.createElement('script');
+  script.src = 'export-menu-final.js?v=20260720-v1';
+  script.async = false;
+  document.head.appendChild(script);
 })();
