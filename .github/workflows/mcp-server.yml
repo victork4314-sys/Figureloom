@@ -43,6 +43,8 @@ jobs:
           node --check mcp-feature-adapters.js
           node --check mcp-security-overrides.js
           node --check mcp-office-command-adapter.js
+          node --check mcp-hosted-only.js
+          node --check mcp-hosted-bridge.js
           node --check safe-refresh.js
           node --check service-worker.js
       - name: Install MCP server dependencies
