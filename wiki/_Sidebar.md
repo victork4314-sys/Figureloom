@@ -4,6 +4,7 @@
 - [Start here](Start-Here)
 - [Visual interface guide](Visual-Interface-Guide)
 - [Quick task guides](Quick-Task-Guides)
+- [20 July 2026 interface update](Updates-2026-07-20)
 
 ### Editor basics
 
