@@ -16,6 +16,7 @@
     ['Scientific work','Pro-Tools-and-Advanced-Science','Pro Tools and advanced science'],
     ['Scientific work','Review-References-and-Accessibility','Review, references, and accessibility'],
     ['Projects and files','Accounts-Cloud-and-Collaboration','Accounts, cloud, and collaboration'],
+    ['Projects and files','MCP-and-AI-Access','MCP and AI access'],
     ['Projects and files','Importing-PowerPoint-and-Spreadsheets','Importing PowerPoint and spreadsheets'],
     ['Projects and files','Export-Backup-and-Presentation','Export, backup, and presentation'],
     ['Projects and files','Privacy-Security-and-Offline-Use','Privacy, security, and offline use'],
@@ -26,7 +27,7 @@
     ['Help and setup','Troubleshooting-and-Recovery','Troubleshooting and recovery'],
     ['Help and setup','Self-Hosting-and-Deployment','Self-hosting and deployment'],
     ['Help and setup','FAQ','FAQ']
-  ].map(([group,slug,title]) => ({ group, slug, title }));
+  ].map(([group, slug, title]) => ({ group, slug, title }));
 
   const pageMap = new Map(pages.map(page => [page.slug.toLowerCase(), page]));
   const content = document.getElementById('wikiContent');
@@ -93,14 +94,14 @@
 
   function escapeHtml(value) {
     return String(value).replace(/[&<>"']/g, character => ({
-      '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+      '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'
     })[character]);
   }
 
   function safeUrl(raw) {
     const value = String(raw || '').trim();
     if (/^(https?:|mailto:|tel:|\/|\.\/|\.\.\/|#)/i.test(value)) return value;
-    return `#${value.replace(/\.md$/i,'')}`;
+    return `#${value.replace(/\.md$/i, '')}`;
   }
 
   function inline(text) {
@@ -125,11 +126,11 @@
   }
 
   function slugify(value) {
-    return value.toLowerCase().replace(/<[^>]+>/g,'').replace(/&[a-z]+;/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'') || 'section';
+    return value.toLowerCase().replace(/<[^>]+>/g, '').replace(/&[a-z]+;/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'section';
   }
 
   function renderMarkdown(markdown) {
-    const lines = String(markdown || '').replace(/\r/g,'').split('\n');
+    const lines = String(markdown || '').replace(/\r/g, '').split('\n');
     const output = [];
     const usedIds = new Map();
     let index = 0;
@@ -164,9 +165,8 @@
       const heading = trimmed.match(/^(#{1,6})\s+(.+)$/);
       if (heading) {
         const level = heading[1].length;
-        const title = heading[2].replace(/\s+#+$/,'').trim();
-        const id = headingId(title);
-        output.push(`<h${level} id="${id}">${inline(title)}</h${level}>`);
+        const title = heading[2].replace(/\s+#+$/, '').trim();
+        output.push(`<h${level} id="${headingId(title)}">${inline(title)}</h${level}>`);
         index += 1;
         continue;
       }
@@ -179,28 +179,28 @@
 
       if (/^>\s?/.test(trimmed)) {
         const quote = [];
-        while (index < lines.length && /^>\s?/.test(lines[index].trim())) quote.push(lines[index++].trim().replace(/^>\s?/,''));
+        while (index < lines.length && /^>\s?/.test(lines[index].trim())) quote.push(lines[index++].trim().replace(/^>\s?/, ''));
         output.push(`<blockquote>${inline(quote.join(' '))}</blockquote>`);
         continue;
       }
 
       if (/^[-*+]\s+/.test(trimmed)) {
         const items = [];
-        while (index < lines.length && /^[-*+]\s+/.test(lines[index].trim())) items.push(lines[index++].trim().replace(/^[-*+]\s+/,''));
+        while (index < lines.length && /^[-*+]\s+/.test(lines[index].trim())) items.push(lines[index++].trim().replace(/^[-*+]\s+/, ''));
         output.push(`<ul>${items.map(item => `<li>${inline(item)}</li>`).join('')}</ul>`);
         continue;
       }
 
       if (/^\d+\.\s+/.test(trimmed)) {
         const items = [];
-        while (index < lines.length && /^\d+\.\s+/.test(lines[index].trim())) items.push(lines[index++].trim().replace(/^\d+\.\s+/,''));
+        while (index < lines.length && /^\d+\.\s+/.test(lines[index].trim())) items.push(lines[index++].trim().replace(/^\d+\.\s+/, ''));
         output.push(`<ol>${items.map(item => `<li>${inline(item)}</li>`).join('')}</ol>`);
         continue;
       }
 
       if (/^\|/.test(trimmed) && index + 1 < lines.length && /^\|?\s*:?-+/.test(lines[index + 1].trim())) {
         const rows = [];
-        const parseRow = row => row.trim().replace(/^\||\|$/g,'').split('|').map(cell => cell.trim());
+        const parseRow = row => row.trim().replace(/^\||\|$/g, '').split('|').map(cell => cell.trim());
         const headers = parseRow(lines[index]);
         index += 2;
         while (index < lines.length && /^\|/.test(lines[index].trim())) rows.push(parseRow(lines[index++]));
@@ -225,42 +225,47 @@
     return text;
   }
 
-  function currentSlug() {
-    const raw = decodeURIComponent(location.hash.replace(/^#/,''));
-    return pageMap.get(raw.toLowerCase())?.slug || 'Home';
+  function hashParts() {
+    const raw = decodeURIComponent(location.hash.replace(/^#/, ''));
+    const [slug, section = ''] = raw.split(':');
+    return { slug, section };
+  }
+
+  function currentPage() {
+    const requested = hashParts().slug.toLowerCase();
+    return pageMap.get(requested) || pages[0];
   }
 
   function markActive(slug) {
     document.querySelectorAll('.wiki-nav-link').forEach(link => link.classList.toggle('active', link.dataset.page === slug));
   }
 
-  function buildToc() {
+  function buildToc(page) {
     toc.replaceChildren();
     content.querySelectorAll('h2,h3').forEach(heading => {
       const link = document.createElement('a');
       link.className = `toc-link level-${heading.tagName.slice(1)}`;
-      link.href = `#${currentSlug()}:${heading.id}`;
+      link.href = `#${page.slug}:${heading.id}`;
       link.textContent = heading.textContent;
       link.addEventListener('click', event => {
         event.preventDefault();
+        history.replaceState(null, '', `#${page.slug}:${heading.id}`);
         heading.scrollIntoView({ behavior:'smooth', block:'start' });
-        history.replaceState(null,'',`#${currentSlug()}`);
       });
       toc.appendChild(link);
     });
   }
 
   async function openPage() {
-    const slug = currentSlug();
-    const page = pageMap.get(slug.toLowerCase()) || pages[0];
-    markActive(slug);
+    const page = currentPage();
+    const section = hashParts().section;
+    markActive(page.slug);
     errorBox.hidden = true;
-    content.innerHTML = '<div class="article-loading" role="status"><i></i><span>Opening the manual…</span></div>';
+    content.innerHTML = '<div class="article-loading" role="status"><i></i><span>Opening the manual...</span></div>';
     try {
-      const markdown = await pageText(slug);
+      const markdown = await pageText(page.slug);
       content.innerHTML = renderMarkdown(markdown);
-      const firstParagraph = content.querySelector('h1 + p');
-      firstParagraph?.classList.add('article-lead');
+      content.querySelector('h1 + p')?.classList.add('article-lead');
       const h1 = content.querySelector('h1');
       if (h1) {
         const meta = document.createElement('div');
@@ -269,11 +274,12 @@
         h1.insertAdjacentElement('afterend', meta);
       }
       document.title = `${page.title} · FigureLoom Help`;
-      buildToc();
+      buildToc(page);
       content.focus({ preventScroll:true });
-      scrollTo({ top:0, behavior:'instant' });
       navigation.classList.remove('open');
-      navToggle.setAttribute('aria-expanded','false');
+      navToggle.setAttribute('aria-expanded', 'false');
+      if (section) requestAnimationFrame(() => document.getElementById(section)?.scrollIntoView({ block:'start' }));
+      else scrollTo({ top:0, behavior:'instant' });
     } catch (error) {
       content.innerHTML = '';
       errorBox.hidden = false;
@@ -285,8 +291,8 @@
     if (searchIndexReady) return;
     await Promise.allSettled(pages.map(async page => {
       const text = await pageText(page.slug);
-      page.searchText = `${page.title} ${text.replace(/[`#*_|>[\]()]/g,' ')}`.toLowerCase();
-      page.preview = text.replace(/[#*`>|\[\]()]/g,' ').replace(/\s+/g,' ').trim().slice(0,180);
+      page.searchText = `${page.title} ${text.replace(/[`#*_|>[\]()]/g, ' ')}`.toLowerCase();
+      page.preview = text.replace(/[#*`>|\[\]()]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 180);
     }));
     searchIndexReady = true;
   }
@@ -294,8 +300,10 @@
   function showResults(query) {
     const term = query.trim().toLowerCase();
     if (!term) { results.hidden = true; results.replaceChildren(); return; }
-    const matches = pages.filter(page => (page.searchText || page.title.toLowerCase()).includes(term)).slice(0,10);
-    results.innerHTML = matches.length ? matches.map(page => `<a class="search-result" href="#${page.slug}"><strong>${escapeHtml(page.title)}</strong><span>${escapeHtml(page.preview || page.group)}</span></a>`).join('') : '<div class="search-empty">No matching manual pages yet.</div>';
+    const matches = pages.filter(page => (page.searchText || page.title.toLowerCase()).includes(term)).slice(0, 10);
+    results.innerHTML = matches.length
+      ? matches.map(page => `<a class="search-result" href="#${page.slug}"><strong>${escapeHtml(page.title)}</strong><span>${escapeHtml(page.preview || page.group)}</span></a>`).join('')
+      : '<div class="search-empty">No matching manual pages yet.</div>';
     results.hidden = false;
   }
 
@@ -319,7 +327,7 @@
     if (!event.target.closest('.wiki-search') && !event.target.closest('.search-results')) results.hidden = true;
     if (innerWidth <= 820 && navigation.classList.contains('open') && !event.target.closest('.wiki-navigation') && !event.target.closest('#wikiNavToggle')) {
       navigation.classList.remove('open');
-      navToggle.setAttribute('aria-expanded','false');
+      navToggle.setAttribute('aria-expanded', 'false');
     }
   });
 
@@ -331,12 +339,12 @@
     if (event.key === 'Escape') {
       results.hidden = true;
       navigation.classList.remove('open');
-      navToggle.setAttribute('aria-expanded','false');
+      navToggle.setAttribute('aria-expanded', 'false');
     }
   });
 
   addEventListener('hashchange', openPage);
-  if (!location.hash) history.replaceState(null,'','#Home');
+  if (!location.hash) history.replaceState(null, '', '#Home');
   void openPage();
   requestIdleCallback?.(() => void buildSearchIndex());
 })();
