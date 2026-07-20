@@ -131,7 +131,7 @@
       white-space:nowrap;
       touch-action:manipulation;
       transform:none;
-      transition:background-color .12s ease,border-color .12s ease,color .12s ease,opacity .12s ease;
+      transition:none!important;
     }
     html[data-figureloom-resolved-mode="desktop"] .ribbon .tool-group > :where(#undoButton,#redoButton,#deleteButton){
       width:78px!important;

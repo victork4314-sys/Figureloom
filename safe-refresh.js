@@ -1,5 +1,7 @@
 (() => {
-  if (window.__figureLoomStableRuntime71d36dfV57) return;
+  if (window.__figureLoomStableRuntime71d36dfV59) return;
+  window.__figureLoomStableRuntime71d36dfV59 = true;
+  window.__figureLoomStableRuntime71d36dfV58 = true;
   window.__figureLoomStableRuntime71d36dfV57 = true;
   window.__figureLoomStableRuntime71d36dfV56 = true;
   window.__figureLoomStableRuntime71d36dfV55 = true;
@@ -21,7 +23,7 @@
   window.__figureLoomStableRuntime71d36dfV39 = true;
   window.__figureLoomStableRuntime71d36dfV38 = true;
 
-  const STABLE_BUILD = "stable-71d36df-locked-20260720-v57";
+  const STABLE_BUILD = "stable-71d36df-locked-20260720-v59";
   const GENERAL_ADDONS = [
     "library-more-illustrations.js",
     "library-more-templates.js",
@@ -44,6 +46,7 @@
     "projects-home-button-match.js",
     "navigation-clarity.js",
     "desktop-history-actions.js",
+    "desktop-ribbon-focus-reset.js",
     "project-tab-close-export.js",
     "global-pptx-export-fix.js",
     "pptx-safe-jpeg-export.js",
@@ -79,7 +82,9 @@
     "inspector-consistency-specificity.js",
     "final-surface-polish.js",
     "collaboration-status-fix.js",
-    "editable-svg-original-color-fix.js"
+    "editable-svg-original-color-fix.js",
+    "office-theme-font-expansion.js",
+    "account-inspector-fit-polish.js"
   ];
   const TEXT_ADDONS = [
     "text-layout-bundle.js",
