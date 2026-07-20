@@ -38,6 +38,10 @@ The desktop and tablet interface keeps the full editor visible. Phone mode rearr
 
 Automatic mode chooses the phone interface on phone-sized touch devices. You can also force Phone or Desktop and tablet mode in Settings. Switching the interface does not create a second project format or change the contents of a figure.
 
+On desktop, open project tabs keep their close controls beside the project titles. The Pages, Hand, zoom, Format, and Navigation control bar can be moved as one unit and can still use its existing collapse control.
+
+On a phone, open **More → Guide** to reach the FigureLoom Help menu. Help links to the manual, quick task guides, visual guide, and the passive interface tour without closing the current project.
+
 ## Scientific artwork
 
 FigureLoom includes original programmatic artwork and can load outside libraries such as Bioicons, Healthicons, and other compatible packs when they are needed.
@@ -103,7 +107,9 @@ Pull requests run syntax and browser checks for the parts of the app they touch.
 - Duplicate IDs and required assets
 - Offline cache behavior
 - Desktop and phone interface regressions
-- Phone safe areas, touch targets, zoom, panels, and guide controls
+- Phone safe areas, touch targets, zoom, panels, and Help controls
+- Project-tab close placement and movable canvas controls
+- Passive-guide navigation and console-error checks in the focused interface flow
 - Visible FigureLoom branding
 - Account, gallery, collaboration, TeX, pathway, and export wiring
 
