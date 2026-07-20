@@ -44,6 +44,9 @@ test('office themes and editorial fonts are available and apply', async ({ page 
   await fonts.filter({ hasText:'Carlito' }).click();
   expect(await page.evaluate(() => state.defaultFont)).toBe('Carlito');
 
+  await page.evaluate(() => document.getElementById('fontLibraryDrawer')?.classList.remove('open'));
+  await expect(page.locator('#fontLibraryDrawer')).not.toHaveClass(/open/);
+  await expect(page.locator('#designDrawer')).toHaveClass(/open/);
   await themes.filter({ hasText:'Office Neutrals' }).click();
   const applied = await page.evaluate(() => {
     const page = state.pages?.[state.activePage] || null;
