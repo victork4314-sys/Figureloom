@@ -1,5 +1,6 @@
 (() => {
-  if (window.__figureLoomDesktopFinalToolbarPolishV7) return;
+  if (window.__figureLoomDesktopFinalToolbarPolishV8) return;
+  window.__figureLoomDesktopFinalToolbarPolishV8 = true;
   window.__figureLoomDesktopFinalToolbarPolishV7 = true;
   window.__figureLoomDesktopFinalToolbarPolishV6 = true;
   window.__figureLoomDesktopFinalToolbarPolishV5 = true;
@@ -75,56 +76,155 @@
       vertical-align:middle!important;
     }
 
-    /* Compact only the desktop inspector. */
+    /* Proportionally compact desktop inspector: smaller, but never crushed. */
     ${DESKTOP} .workspace{
-      grid-template-columns:192px minmax(0,1fr) 220px!important;
+      grid-template-columns:192px minmax(0,1fr) 228px!important;
     }
     @media(min-width:1540px){
-      ${DESKTOP} .workspace{grid-template-columns:202px minmax(0,1fr) 224px!important}
+      ${DESKTOP} .workspace{grid-template-columns:202px minmax(0,1fr) 232px!important}
     }
     ${DESKTOP} .inspector-tab{
-      height:29px!important;
-      min-height:29px!important;
-      padding:6px 7px!important;
-      font-size:9px!important;
+      height:30px!important;
+      min-height:30px!important;
+      padding:6px 8px!important;
+      font-size:9.5px!important;
+      line-height:1.15!important;
     }
     ${DESKTOP} .inspector-section{
-      padding:9px!important;
+      padding:10px!important;
     }
     ${DESKTOP} .inspector-section h2{
-      margin-bottom:6px!important;
-      font-size:8px!important;
+      margin-bottom:7px!important;
+      font-size:9px!important;
+      line-height:1.2!important;
       letter-spacing:.05em!important;
     }
     ${DESKTOP} #selectionName{
-      font-size:10px!important;
+      font-size:10.5px!important;
+      line-height:1.3!important;
     }
     ${DESKTOP} .field-grid{
-      gap:5px!important;
+      grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;
+      gap:6px!important;
     }
     ${DESKTOP} :where(.field-grid label,.full-field){
-      gap:3px!important;
-      font-size:8.5px!important;
+      min-width:0!important;
+      gap:4px!important;
+      font-size:9.5px!important;
+      line-height:1.2!important;
     }
     ${DESKTOP} :where(.field-grid input,input[type="number"]){
-      height:26px!important;
-      min-height:26px!important;
-      padding:3px 5px!important;
+      box-sizing:border-box!important;
+      width:100%!important;
+      min-width:0!important;
+      height:28px!important;
+      min-height:28px!important;
+      padding:4px 6px!important;
       border-radius:5px!important;
-      font-size:9px!important;
+      font-size:9.5px!important;
+      line-height:1.2!important;
     }
     ${DESKTOP} .full-field{
-      margin-top:6px!important;
+      margin-top:7px!important;
     }
     ${DESKTOP} input[type="color"]{
-      height:27px!important;
+      width:100%!important;
+      height:29px!important;
+      min-height:29px!important;
+      padding:2px!important;
       border-radius:5px!important;
     }
 
-    /* Only Pro Tools is resized here. Other windows keep their existing size. */
+    /* Scale the complete Pro Tools component, not just its outer drawer. */
     ${DESKTOP} #proToolsDrawer{
       width:min(520px,calc(100vw - 48px))!important;
       max-width:min(520px,calc(100vw - 48px))!important;
+      top:72px!important;
+      right:16px!important;
+      bottom:auto!important;
+      max-height:calc(100vh - 96px)!important;
+    }
+    ${DESKTOP} #proToolsDrawer .utility-head{
+      flex:0 0 auto!important;
+      padding:10px 12px!important;
+    }
+    ${DESKTOP} #proToolsDrawer .utility-head strong{
+      font-size:12px!important;
+      line-height:1.2!important;
+    }
+    ${DESKTOP} #proToolsDrawer .utility-head span{
+      margin-top:2px!important;
+      font-size:9px!important;
+      line-height:1.3!important;
+    }
+    ${DESKTOP} #proToolsDrawer .utility-head button{
+      width:28px!important;
+      min-width:28px!important;
+      height:28px!important;
+      min-height:28px!important;
+      padding:0!important;
+      font-size:20px!important;
+      line-height:1!important;
+    }
+    ${DESKTOP} #proToolsDrawer .utility-body{
+      min-height:0!important;
+      padding:10px!important;
+      overflow:auto!important;
+    }
+    ${DESKTOP} #proToolsDrawer .pro-intro{
+      margin:0 0 9px!important;
+      font-size:9.5px!important;
+      line-height:1.4!important;
+    }
+    ${DESKTOP} #proToolsDrawer .pro-workspace-grid{
+      grid-template-columns:repeat(2,minmax(0,1fr))!important;
+      gap:7px!important;
+    }
+    ${DESKTOP} #proToolsDrawer .pro-workspace-card{
+      box-sizing:border-box!important;
+      grid-template-columns:30px minmax(0,1fr) 14px!important;
+      gap:8px!important;
+      min-width:0!important;
+      min-height:74px!important;
+      padding:9px!important;
+      border-radius:9px!important;
+      align-items:center!important;
+    }
+    ${DESKTOP} #proToolsDrawer .pro-workspace-card > span:nth-child(2){
+      min-width:0!important;
+    }
+    ${DESKTOP} #proToolsDrawer .pro-workspace-icon{
+      width:30px!important;
+      min-width:30px!important;
+      height:30px!important;
+      min-height:30px!important;
+      border-radius:8px!important;
+      font-size:16px!important;
+      line-height:1!important;
+    }
+    ${DESKTOP} #proToolsDrawer .pro-workspace-card[data-workspace="code"] .pro-workspace-icon{
+      font-size:11px!important;
+      letter-spacing:-.5px!important;
+    }
+    ${DESKTOP} #proToolsDrawer .pro-workspace-card strong{
+      font-size:10.5px!important;
+      line-height:1.25!important;
+      overflow-wrap:anywhere!important;
+    }
+    ${DESKTOP} #proToolsDrawer .pro-workspace-card small{
+      margin-top:3px!important;
+      font-size:8.25px!important;
+      line-height:1.35!important;
+      overflow-wrap:anywhere!important;
+    }
+    ${DESKTOP} #proToolsDrawer .pro-open-arrow{
+      font-size:18px!important;
+      line-height:1!important;
+    }
+    ${DESKTOP} #proToolsDrawer .pro-shortcuts{
+      margin-top:9px!important;
+      padding:7px!important;
+      border-radius:8px!important;
     }
   `;
   document.head.appendChild(style);
