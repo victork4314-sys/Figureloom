@@ -105,6 +105,8 @@ jobs:
           test -f today-ui-stability.js
           test -f passive-guide-expanded.js
           test -f final-session-polish.js
+          test -f final-session-polish-v2.js
+          test -f mcp-current-screenshot.js
           test -f wiki/index.html
           test -f wiki/wiki.css
           test -f wiki/wiki.js
@@ -143,7 +145,7 @@ jobs:
         run: npm install --no-audit --no-fund
       - name: Install Chromium
         run: npx playwright install --with-deps chromium
-      - name: Check project tabs, text bounds, MCP presence, Phone Help, passive guide, and console
+      - name: Check project tabs, text bounds, MCP presence, screenshots, Phone Help, passive guide, and console
         run: npx playwright test tests/today-ui-stability.spec.js tests/final-session-polish.spec.js
       - name: Upload focused browser results and traces
         if: always()
