@@ -1,4 +1,4 @@
-const FIGURELOOM_BUILD_ID = "stable-71d36df-locked-20260720-v83";
+const FIGURELOOM_BUILD_ID = "stable-71d36df-locked-20260720-v84";
 const FIGURELOOM_CACHE_PREFIX = "figureloom-app-";
 const FIGURELOOM_CACHE_NAME = `${FIGURELOOM_CACHE_PREFIX}${FIGURELOOM_BUILD_ID}`;
 const LEGACY_CACHE_PREFIXES = ["figureloom-shell", "scicanvas-shell"];
@@ -36,6 +36,10 @@ self.addEventListener("install", event => {
       cache.add(new Request("./desktop-tab-recovery-final.js?v=stable-71d36df-locked-20260720-v83", { cache:"reload" })),
       cache.add(new Request("./final-session-polish.js", { cache:"reload" })),
       cache.add(new Request("./final-session-polish.js?v=stable-71d36df-locked-20260720-v83", { cache:"reload" })),
+      cache.add(new Request("./final-session-polish-v2.js", { cache:"reload" })),
+      cache.add(new Request("./final-session-polish-v2.js?v=stable-71d36df-locked-20260720-v83-final-text-v3", { cache:"reload" })),
+      cache.add(new Request("./mcp-current-screenshot.js", { cache:"reload" })),
+      cache.add(new Request("./mcp-current-screenshot.js?v=stable-71d36df-locked-20260720-v83-final-text-v3", { cache:"reload" })),
       cache.add(new Request("./mcp-command-registry.js?v=stable-71d36df-locked-20260720-v83", { cache:"reload" })),
       cache.add(new Request("./mcp-project-command-adapter.js?v=stable-71d36df-locked-20260720-v83", { cache:"reload" })),
       cache.add(new Request("./mcp-browser-bridge.js?v=stable-71d36df-locked-20260720-v83", { cache:"reload" })),
