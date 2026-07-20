@@ -40,9 +40,28 @@ jobs:
       - name: Install MCP server dependencies
         working-directory: mcp-server
         run: npm install --no-audit --no-fund
-      - name: Type-check MCP server
-        working-directory: mcp-server
-        run: npm run typecheck
+      - name: Capture TypeScript diagnostics
+        shell: bash
+        run: |
+          set +e
+          cd mcp-server
+          npm run typecheck -- --pretty false > ../mcp-typecheck.log 2>&1
+          status=$?
+          echo "$status" > ../mcp-typecheck.status
+          cat ../mcp-typecheck.log
+          exit 0
+      - name: Upload TypeScript diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mcp-typecheck
+          path: |
+            mcp-typecheck.log
+            mcp-typecheck.status
+          if-no-files-found: error
+      - name: Require successful type-check
+        shell: bash
+        run: test "$(cat mcp-typecheck.status)" = "0"
       - name: Build MCP server
         working-directory: mcp-server
         run: npm run build
