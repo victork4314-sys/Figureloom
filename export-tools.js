@@ -17,11 +17,19 @@ function safeFileName(extension) {
   return `${name}.${extension}`;
 }
 
-function downloadCleanSvg(includeGrid = false) {
+function createCleanSvgSource(includeGrid = false) {
   const copy = cleanCanvasClone(includeGrid);
-  const source = `<?xml version="1.0" encoding="UTF-8"?>\n${new XMLSerializer().serializeToString(copy)}`;
-  downloadBlob(source, "image/svg+xml", safeFileName("svg"));
+  return `<?xml version="1.0" encoding="UTF-8"?>\n${new XMLSerializer().serializeToString(copy)}`;
 }
+
+function downloadCleanSvg(includeGrid = false) {
+  downloadBlob(createCleanSvgSource(includeGrid), "image/svg+xml", safeFileName("svg"));
+}
+
+window.FigureLoomEditableSvgExport = Object.freeze({
+  createSource: createCleanSvgSource,
+  download: downloadCleanSvg
+});
 
 function downloadPng(scale = 2, includeGrid = false) {
   const copy = cleanCanvasClone(includeGrid);
