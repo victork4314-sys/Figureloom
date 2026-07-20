@@ -91,7 +91,8 @@
     "final-session-core.js",
     "final-session-polish-v2.js",
     "text-emergency-state-recovery.js",
-    "mcp-current-screenshot.js"
+    "mcp-current-screenshot.js",
+    "final-ui-interaction-fix-v1.js"
   ];
 
   const root = document.documentElement;
