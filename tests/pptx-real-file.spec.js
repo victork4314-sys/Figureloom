@@ -90,7 +90,7 @@ test('five real pages are written directly with one unique PNG per PowerPoint sl
       const mediaPath = `ppt/media/${target.split('/').at(-1)}`;
       const bytes = await archive.file(mediaPath).async('uint8array');
       const text = new TextDecoder('latin1').decode(bytes);
-      const markerMatch = text.match(/FigureLoomPage\u0000([^\u0000]{1,80})/);
+      const markerMatch = text.match(/FigureLoomPage\u0000(\d+-[0-9a-f]{8})/);
       if (!markerMatch) throw new Error(`Slide ${slideNumber} did not contain its direct page marker.`);
       mediaMarkers.push(markerMatch[1]);
       pageRecords.push({ index:slideNumber, token:markerMatch[1] });
