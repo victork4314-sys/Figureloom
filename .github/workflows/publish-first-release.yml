@@ -1,0 +1,74 @@
+name: Publish FigureLoom v1.0.0
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/publish-first-release.yml
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the finished build
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check critical JavaScript syntax
+        run: |
+          node --check safe-refresh.js
+          node --check final-ui-interaction-fix-v1.js
+          node --check desktop-history-actions.js
+          node --check interaction-stability-fixes.js
+          node --check mcp-command-registry.js
+          node --check mcp-hosted-bridge.js
+          node --check mcp-simple-connect.js
+
+      - name: Publish FigureLoom v1.0.0
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -f v1.0.0 "$GITHUB_SHA"
+          git push origin refs/tags/v1.0.0 --force
+
+          cat > "$RUNNER_TEMP/figureloom-v1-notes.md" <<'EOF'
+          FigureLoom v1.0.0 is the first public release of the free, open-source scientific figure editor.
+
+          ## Included
+
+          - Local-first, page-based editing with no account required
+          - Editable text, shapes, arrows, connectors, illustrations, maps, equations, code windows, tables, and charts
+          - Project tabs, layers, templates, autosave, recovery, and downloadable project backups
+          - PowerPoint, spreadsheet, SVG, image, and presentation workflows
+          - Desktop, tablet, phone, light, and dark interfaces
+          - Optional accounts, encrypted cloud projects, sharing, review comments, and live collaboration
+          - Loomy as an optional helper for creating an editable starting layout
+          - Hosted MCP access for compatible external assistants, with project-specific links, read-only or full access, separate destructive-action permission, normal history, and revocation controls
+
+          FigureLoom remains usable without Loomy, MCP, an account, or a cloud project.
+
+          Licensed under AGPL-3.0.
+          EOF
+
+          if gh release view v1.0.0 >/dev/null 2>&1; then
+            gh release edit v1.0.0 \
+              --title "FigureLoom v1.0.0" \
+              --notes-file "$RUNNER_TEMP/figureloom-v1-notes.md" \
+              --latest
+          else
+            gh release create v1.0.0 \
+              --title "FigureLoom v1.0.0" \
+              --notes-file "$RUNNER_TEMP/figureloom-v1-notes.md" \
+              --target "$GITHUB_SHA" \
+              --latest
+          fi
