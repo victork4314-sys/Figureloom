@@ -1,4 +1,4 @@
-name: PowerPoint final-page regression
+name: All-pages Editable SVG export
 
 on:
   pull_request:
@@ -14,7 +14,7 @@ permissions:
   contents: read
 
 jobs:
-  three-page-export:
+  three-page-svg-zip:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -32,12 +32,12 @@ jobs:
         run: npm install --no-audit --no-fund
       - name: Install Chromium
         run: npx playwright install --with-deps chromium
-      - name: Run Editable SVG across exactly three pages and convert all three to PowerPoint
+      - name: Export exactly three pages as three Editable SVG files in one ZIP
         run: npx playwright test tests/pptx-final-page.spec.js --project=desktop
       - name: Upload failure evidence
         if: failure()
         uses: actions/upload-artifact@v6
         with:
-          name: pptx-final-page-results
+          name: all-pages-svg-zip-results
           path: test-results
           if-no-files-found: warn
