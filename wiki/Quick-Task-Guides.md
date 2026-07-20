@@ -10,6 +10,16 @@ Use this page when you know what you want to do and need the shortest reliable p
 4. Choose the final page size or a close preset.
 5. Download a `.figureloom` backup before a large import or major edit.
 
+## Choose the interface mode
+
+1. Open Settings.
+2. Choose Automatic, Desktop, Tablet, or Phone.
+3. Use Desktop for the compact mouse-and-keyboard layout.
+4. Use Tablet for the full editor with roomier touch targets.
+5. Use Phone for the dock and sliding panels.
+
+The project format and contents do not change when the interface mode changes.
+
 ## Save a separate backup
 
 1. Press Export.
@@ -56,6 +66,12 @@ Large pasted text should form a readable block instead of one endless line.
 4. Press Enter to finish or Escape to cancel.
 
 Use the inspector when you need formatting rather than content changes.
+
+## Undo, redo, or delete an object
+
+On Desktop and Tablet, select the object and use Undo, Redo, or Delete from the same action group.
+
+On Phone, Undo and Redo stay in the compact header. Delete remains with the selected-object actions.
 
 ## Select and move several objects
 
@@ -150,58 +166,64 @@ FigureLoom draws the chart. It does not validate the analysis or statistics.
 ## Use Loomy without replacing existing work
 
 1. Open Loomy.
-2. Choose Gemini, Puter, or Builder when those choices are available.
+2. Choose an available provider or the deterministic builder.
 3. Describe the structure, stages, direction, and required objects.
 4. Generate the editable draft.
 5. Inspect every label, asset, connector, and scientific claim.
 6. Resize or rearrange the generated group so it fits inside the real page.
 
-Puter does not use a FigureLoom quota. Provider availability and external service behavior can still vary.
+Loomy is optional. The ordinary editor does not depend on it.
 
-## Switch between phone and desktop layout
+## Export the active page as SVG
 
-1. Open Settings.
-2. Choose Automatic, Desktop and tablet, or Phone.
-3. Use Automatic for normal device-based behavior.
-4. Force Phone when you want larger touch controls.
-5. Force Desktop and tablet when a large tablet should keep all panels visible.
-
-The project format and contents do not change when the interface mode changes.
-
-## Export a transparent SVG
-
-1. Set the project background to transparent where supported.
-2. Check that no white rectangle is being used as a manual background.
-3. Press Export.
-4. Choose SVG.
+1. Press Export.
+2. Choose **Editable SVG (per page)**.
+3. Enable **Print page dimensions** when physical dimensions matter.
+4. Enable **Include editor grid** only when the grid belongs in the final output.
 5. Open the result in another browser or vector editor.
 6. Confirm fonts, clipping, image placement, and transparency.
 
-## Export a PNG for print
+## Export every page as SVG
 
-1. Set the final physical page size first.
-2. Use the print PNG option.
-3. Choose sufficient resolution for the destination.
-4. Inspect the exported file at 100 percent.
-5. Confirm dimensions before sending it to a printer or journal.
+1. Check page order in Pages.
+2. Press Export.
+3. Choose **Export all pages as SVG**.
+4. Wait for every page to finish processing.
+5. Confirm that the download contains one SVG for each project page.
+6. Open a sample from the first, middle, and last page.
 
-## Export to PowerPoint
+PNG, PDF, TIFF, and PowerPoint output require converting a checked SVG in another application.
 
-1. Keep objects inside the page bounds.
-2. Use common fonts when the presentation must open on another computer.
-3. Press Export and choose PowerPoint.
-4. Open the file in PowerPoint or another compatible application.
-5. Check text wrapping, unsupported effects, charts, and image placement.
-
-## Share a project for review
+## Share a project with an account
 
 1. Sign in and save an encrypted cloud copy.
 2. Open Share.
-3. Invite the exact email address or create an expiring link.
+3. Invite the exact email address.
 4. Choose Viewer, Reviewer, or Editor according to the access needed.
 5. Download a backup before a large collaborative session.
 6. Resolve remote-update conflicts deliberately.
+
+## Share a project with a guest link
+
+1. Sign in and save or open the cloud project.
+2. Open Share or Live Collaboration.
+3. Choose the guest role and expiry.
+4. Add an optional 4 to 12 digit PIN.
+5. Press **Create link**.
+6. Send the link and PIN through an appropriate channel.
 7. Revoke unused links after the work is complete.
+
+The guest enters a display name and does not need an email account.
+
+## Connect an external assistant with MCP
+
+1. Sign in and open the cloud project.
+2. Open **Settings → MCP & AI access**.
+3. Choose Read-only or Full editor access.
+4. Leave destructive actions off unless they are genuinely needed.
+5. Press **Connect FigureLoom**.
+6. Copy the private MCP connection link into a compatible client.
+7. Revoke the connection when the session is finished.
 
 ## Run the final checks
 
@@ -212,4 +234,4 @@ The project format and contents do not change when the interface mode changes.
 5. Confirm references and asset attribution.
 6. Resolve comments.
 7. Download the final project backup.
-8. Export and inspect the result outside FigureLoom.
+8. Export and inspect the SVG outside FigureLoom.
