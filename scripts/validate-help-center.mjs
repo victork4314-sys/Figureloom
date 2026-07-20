@@ -93,13 +93,25 @@ if (!errors.length) {
     'never opens panels, moves objects, changes selections, or scrolls your project'
   ]) requireText(passiveGuide, marker, 'passive-guide-expanded.js');
 
-  for (const marker of [
-    'stable-71d36df-locked-20260720-v80','today-ui-stability.js','passive-guide-expanded.js'
-  ]) requireText(safeRefresh, marker, 'safe-refresh.js');
+  const loaderBuild = safeRefresh.match(/const STABLE_BUILD\s*=\s*["']([^"']+)["']/)?.[1] || '';
+  const workerBuild = worker.match(/const FIGURELOOM_BUILD_ID\s*=\s*["']([^"']+)["']/)?.[1] || '';
+  if (!loaderBuild) errors.push('safe-refresh.js does not declare STABLE_BUILD');
+  if (!workerBuild) errors.push('service-worker.js does not declare FIGURELOOM_BUILD_ID');
+  if (loaderBuild && workerBuild && loaderBuild !== workerBuild) {
+    errors.push(`Stable loader and offline cache builds do not match: ${loaderBuild} !== ${workerBuild}`);
+  }
+
+  for (const marker of ['today-ui-stability.js','passive-guide-expanded.js']) {
+    requireText(safeRefresh, marker, 'safe-refresh.js');
+  }
+  if (loaderBuild) {
+    for (const path of ['safe-refresh.js','today-ui-stability.js','passive-guide-expanded.js']) {
+      requireText(worker, `./${path}?v=${loaderBuild}`, 'service-worker.js');
+    }
+  }
 
   for (const marker of [
-    'stable-71d36df-locked-20260720-v80','./today-ui-stability.js',
-    './passive-guide-expanded.js','./ai-chat-fixes.js?v=13',
+    './today-ui-stability.js','./passive-guide-expanded.js','./ai-chat-fixes.js?v=13',
     './favicon.ico','./favicon.ico?v=20260719-final'
   ]) requireText(worker, marker, 'service-worker.js');
 
@@ -127,4 +139,4 @@ if (errors.length) {
   process.exit(1);
 }
 
-console.log('FigureLoom polish validation passed: the current stable build includes working phone Help, inline project-tab close controls, the expanded passive guide, focused console checks, one real favicon, and the shared sage interface.');
+console.log('FigureLoom polish validation passed: the stable loader and offline cache match; phone Help, inline project-tab close controls, the expanded passive guide, focused console checks, one real favicon, and the shared sage interface are present.');
