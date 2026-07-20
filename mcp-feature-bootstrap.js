@@ -76,7 +76,7 @@
       const columns=portrait?1:2,rows=Math.ceil(entries.length/columns),margin=canvas.width*.055,gap=canvas.width*.035,top=canvas.height*.19;
       const cardW=(canvas.width-margin*2-gap*(columns-1))/columns,cardH=(canvas.height-top-margin-gap*(rows-1))/rows;
       for (let index=0; index<entries.length; index+=1) {
-        const column=index%columns,row=Math.floor(index/2),x=margin+column*(cardW+gap),y=top+row*(cardH+gap);
+        const column=index%columns,row=Math.floor(index/columns),x=margin+column*(cardW+gap),y=top+row*(cardH+gap);
         objects.push(baseObject('shape',`${entries[index].stageLabel} panel`,x,y,cardW,cardH));
         objects.push(await materialize(entries[index],{x:x+cardW*.08,y:y+cardH*.14,width:cardW*.34,height:cardH*.55}));
         objects.push(baseObject('text',entries[index].stageLabel,x+cardW*.48,y+cardH*.33,cardW*.44,48,{text:entries[index].stageLabel,fill:'#172033',fontSize:18,fontWeight:600}));
@@ -110,7 +110,7 @@
     if (window[flag] || document.querySelector(`script[data-${datasetName}]`)) return;
     const script=document.createElement('script');
     script.setAttribute(`data-${datasetName}`,'1');
-    script.src=`${path}?v=${encodeURIComponent(window.__FIGURELOOM_STABLE_BUILD__ || 'v69')}`;
+    script.src=`${path}?v=${encodeURIComponent(window.__FIGURELOOM_STABLE_BUILD__ || 'v70')}`;
     script.async=false;
     script.onerror=()=>console.error(errorText);
     document.head.appendChild(script);
@@ -119,5 +119,7 @@
   loadModule('__figureLoomMcpFeatureAdaptersV1','figureloom-mcp-feature-adapters','mcp-feature-adapters.js','FigureLoom MCP feature adapters could not be loaded.');
   loadModule('__figureLoomMcpSecurityOverridesV1','figureloom-mcp-security-overrides','mcp-security-overrides.js','FigureLoom MCP security overrides could not be loaded.');
   loadModule('__figureLoomMcpOfficeCommandAdapterV1','figureloom-mcp-office-command-adapter','mcp-office-command-adapter.js','FigureLoom MCP presentation import adapter could not be loaded.');
-  loadModule('__figureLoomMcpSimpleConnectV1','figureloom-mcp-simple-connect','mcp-simple-connect.js','FigureLoom simple MCP connection controls could not be loaded.');
+  loadModule('__figureLoomHostedMcpOnlyV1','figureloom-hosted-mcp-only','mcp-hosted-only.js','FigureLoom could not disable the old local MCP bridge.');
+  loadModule('__figureLoomHostedMcpBridgeV1','figureloom-hosted-mcp-bridge','mcp-hosted-bridge.js','FigureLoom hosted MCP bridge could not be loaded.');
+  loadModule('__figureLoomMcpSimpleConnectV2','figureloom-mcp-simple-connect','mcp-simple-connect.js','FigureLoom hosted MCP connection controls could not be loaded.');
 })();
