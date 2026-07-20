@@ -41,7 +41,14 @@
       line-height:1.25!important;
       box-shadow:none!important;
     }
+    html[data-figureloom-theme] body .right-panel[data-figureloom-inspector-consistent="1"] #figureloomRichTextControls .rich-inspector-grid{
+      display:grid!important;
+      grid-template-columns:repeat(2,minmax(0,1fr))!important;
+      gap:8px!important;
+      min-width:0!important;
+    }
     html[data-figureloom-theme] body .right-panel[data-figureloom-inspector-consistent="1"] #figureloomRichTextControls .rich-inspector-grid label{
+      min-width:0!important;
       color:var(--figureloom-ui-muted,#60706c)!important;
       font-family:inherit!important;
       font-size:11px!important;
@@ -49,6 +56,10 @@
       line-height:1.35!important;
     }
     html[data-figureloom-theme] body .right-panel[data-figureloom-inspector-consistent="1"] #figureloomRichTextControls .rich-inspector-grid :where(input,select){
+      box-sizing:border-box!important;
+      width:100%!important;
+      max-width:100%!important;
+      min-width:0!important;
       min-height:36px!important;
       padding:8px 9px!important;
       color:var(--figureloom-ui-text,#172321)!important;
@@ -60,6 +71,27 @@
       font-weight:650!important;
       line-height:1.25!important;
       box-shadow:none!important;
+    }
+    html[data-figureloom-theme] body .right-panel[data-figureloom-inspector-consistent="1"] .text-layout-buttons{
+      display:grid!important;
+      gap:6px!important;
+      min-width:0!important;
+    }
+    html[data-figureloom-theme] body .right-panel[data-figureloom-inspector-consistent="1"] .text-layout-buttons[data-text-horizontal]{
+      grid-template-columns:repeat(2,minmax(0,1fr))!important;
+    }
+    html[data-figureloom-theme] body .right-panel[data-figureloom-inspector-consistent="1"] .text-layout-buttons[data-text-vertical]{
+      grid-template-columns:repeat(3,minmax(0,1fr))!important;
+    }
+    html[data-figureloom-theme] body .right-panel[data-figureloom-inspector-consistent="1"] .text-layout-buttons button{
+      box-sizing:border-box!important;
+      width:100%!important;
+      min-width:0!important;
+      min-height:34px!important;
+      padding:0 6px!important;
+      white-space:nowrap!important;
+      overflow:hidden!important;
+      text-overflow:ellipsis!important;
     }
   `;
 
