@@ -1,5 +1,6 @@
 (() => {
-  if (window.__figureLoomStableRuntime71d36dfV81) return;
+  if (window.__figureLoomStableRuntime71d36dfV82) return;
+  window.__figureLoomStableRuntime71d36dfV82 = true;
   window.__figureLoomStableRuntime71d36dfV81 = true;
   window.__figureLoomStableRuntime71d36dfV80 = true;
   window.__figureLoomStableRuntime71d36dfV79 = true;
@@ -45,7 +46,7 @@
   window.__figureLoomStableRuntime71d36dfV39 = true;
   window.__figureLoomStableRuntime71d36dfV38 = true;
 
-  const STABLE_BUILD = "stable-71d36df-locked-20260720-v81";
+  const STABLE_BUILD = "stable-71d36df-locked-20260720-v82";
   const GENERAL_ADDONS = [
     "library-more-illustrations.js",
     "library-more-templates.js",
@@ -119,7 +120,8 @@
     "desktop-settings-protools-final-fix.js",
     "desktop-complete-consistency.js",
     "today-ui-stability.js",
-    "passive-guide-expanded.js"
+    "passive-guide-expanded.js",
+    "desktop-tab-recovery-final.js"
   ];
   const TEXT_ADDONS = [
     "text-layout-bundle.js",
