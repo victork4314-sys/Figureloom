@@ -1,5 +1,6 @@
 (() => {
-  if (window.__figureLoomSettingsPageV5) return;
+  if (window.__figureLoomSettingsPageV6) return;
+  window.__figureLoomSettingsPageV6 = true;
   window.__figureLoomSettingsPageV5 = true;
   window.__figureLoomSettingsPageV4 = true;
   window.__figureLoomSettingsPageV3 = true;
@@ -35,6 +36,7 @@
     item.className = 'ribbon-tab settings-ribbon-button';
     item.textContent = 'Settings';
     item.setAttribute('aria-label', 'Settings');
+    item.setAttribute('aria-selected', 'false');
     tabs.prepend(item);
     return item;
   }
@@ -174,6 +176,8 @@
     show(section);
     page.hidden = false;
     document.body.classList.add('figureloom-settings-open');
+    button?.classList.add('active');
+    button?.setAttribute('aria-selected', 'true');
     requestAnimationFrame(() => page.querySelector('[data-settings-close]').focus());
   }
 
@@ -181,6 +185,8 @@
     if (!page || page.hidden) return;
     page.hidden = true;
     document.body.classList.remove('figureloom-settings-open');
+    button?.classList.remove('active');
+    button?.setAttribute('aria-selected', 'false');
     previousFocus?.focus?.();
   }
 
@@ -188,6 +194,7 @@
     if (!api()) return;
     stylesheet();
     button = settingsButton();
+    button?.setAttribute('aria-selected', 'false');
     buildPage();
     button?.addEventListener('click', open);
     addEventListener('figureloom-settings-change', sync);
