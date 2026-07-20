@@ -1,10 +1,10 @@
 (() => {
-  if (window.__figureLoomStableRuntime71d36dfV84) return;
-  for (let version = 38; version <= 84; version += 1) {
+  if (window.__figureLoomStableRuntime71d36dfV85) return;
+  for (let version = 38; version <= 85; version += 1) {
     window[`__figureLoomStableRuntime71d36dfV${version}`] = true;
   }
 
-  const STABLE_BUILD = "stable-71d36df-locked-20260720-v84";
+  const STABLE_BUILD = "stable-71d36df-locked-20260720-v85";
   const GENERAL_ADDONS = [
     "library-more-illustrations.js",
     "library-more-templates.js",
@@ -88,7 +88,7 @@
     "text-editing-gentle-polish.js"
   ];
   const FINAL_ADDONS = [
-    "final-session-polish.js",
+    "final-session-core.js",
     "final-session-polish-v2.js",
     "mcp-current-screenshot.js"
   ];
