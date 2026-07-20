@@ -11,7 +11,7 @@ import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import { isInitializeRequest } from '@modelcontextprotocol/sdk/types.js';
 import { BrowserBridgeHub } from './browser-bridge.js';
-import { ScratchWorkspace } from './scratch-workspace.js';
+import { ExtendedScratchWorkspace } from './extended-scratch-workspace.js';
 import type { CommandDescriptor, SessionInfo, WorkspaceTarget } from './types.js';
 
 const VERSION='0.2.0';
@@ -34,7 +34,7 @@ function refreshSessionBroadcast():void { bridge.updateSessions([...activeSessio
 class SessionController {
   readonly id=randomUUID();
   readonly createdAt=new Date().toISOString();
-  readonly scratch=new ScratchWorkspace();
+  readonly scratch=new ExtendedScratchWorkspace();
   workspace:WorkspaceTarget='scratch';
   selectedProjectId='';
   clientName='MCP client';
