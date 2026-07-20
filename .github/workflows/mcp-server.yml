@@ -5,7 +5,8 @@ on:
     branches: [main]
     paths:
       - 'mcp-*.js'
-      - 'final-session-polish.js'
+      - 'final-session-core.js'
+      - 'final-session-polish-v2.js'
       - 'settings-core.js'
       - 'settings-page.js'
       - 'desktop-density-mode.js'
@@ -19,7 +20,8 @@ on:
   pull_request:
     paths:
       - 'mcp-*.js'
-      - 'final-session-polish.js'
+      - 'final-session-core.js'
+      - 'final-session-polish-v2.js'
       - 'settings-core.js'
       - 'settings-page.js'
       - 'desktop-density-mode.js'
@@ -60,7 +62,9 @@ jobs:
           node --check mcp-office-command-adapter.js
           node --check mcp-hosted-only.js
           node --check mcp-hosted-bridge.js
-          node --check final-session-polish.js
+          node --check mcp-current-screenshot.js
+          node --check final-session-core.js
+          node --check final-session-polish-v2.js
           node --check tests/final-session-polish.spec.js
           node --check settings-core.js
           node --check settings-page.js
