@@ -15,6 +15,11 @@
     { family:'Raleway', category:'Sans', source:'google' },
     { family:'Quicksand', category:'Sans', source:'google' },
     { family:'Cabin', category:'Sans', source:'google' },
+    { family:'Carlito', category:'Sans', source:'google' },
+    { family:'Arimo', category:'Sans', source:'google' },
+    { family:'Lexend', category:'Sans', source:'google' },
+    { family:'Atkinson Hyperlegible', category:'Sans', source:'google' },
+    { family:'Red Hat Display', category:'Sans', source:'google' },
     { family:'Merriweather', category:'Serif', source:'google' },
     { family:'Lora', category:'Serif', source:'google' },
     { family:'Playfair Display', category:'Serif', source:'google' },
@@ -23,11 +28,20 @@
     { family:'Noto Serif', category:'Serif', source:'google' },
     { family:'STIX Two Text', category:'Serif', source:'google' },
     { family:'IBM Plex Serif', category:'Serif', source:'google' },
+    { family:'Tinos', category:'Serif', source:'google' },
+    { family:'Caladea', category:'Serif', source:'google' },
+    { family:'Newsreader', category:'Serif', source:'google' },
+    { family:'EB Garamond', category:'Serif', source:'google' },
+    { family:'Vollkorn', category:'Serif', source:'google' },
+    { family:'Crimson Pro', category:'Serif', source:'google' },
+    { family:'Literata', category:'Serif', source:'google' },
     { family:'JetBrains Mono', category:'Mono', source:'google' },
     { family:'IBM Plex Mono', category:'Mono', source:'google' },
     { family:'Fira Code', category:'Mono', source:'google' },
     { family:'Source Code Pro', category:'Mono', source:'google' },
     { family:'Roboto Mono', category:'Mono', source:'google' },
+    { family:'Cousine', category:'Mono', source:'google' },
+    { family:'Red Hat Mono', category:'Mono', source:'google' },
     { family:'Arial', category:'System', source:'system' },
     { family:'Helvetica', category:'System', source:'system' },
     { family:'Segoe UI', category:'System', source:'system' },
@@ -50,7 +64,7 @@
   }
 
   function familyFromStack(stack = '') {
-    return stack.split(',')[0].trim().replace(/^['"]|['"]$/g, '');
+    return stack.split(',')[0].trim().replace(/^[\'\"]|[\'\"]$/g, '');
   }
 
   function catalogEntry(family) {
