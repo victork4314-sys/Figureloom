@@ -1,16 +1,20 @@
 (() => {
-  if (window.__figureLoomPptxDirectFileExportV1) return;
-  window.__figureLoomPptxDirectFileExportV1 = true;
+  if (window.__figureLoomPptxDirectFileExportV2) return;
+  window.__figureLoomPptxDirectFileExportV2 = true;
 
   const JSZIP_CDN = 'https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js';
-  const EXPORT_BUTTON_ID = 'figureloomExportAllPagesPptxV3';
+  const EXPORT_BUTTON_ID = 'figureloomExportAllPagesPptxV4';
   const LEGACY_BUTTON_SELECTOR = [
     '#figureloomExportAllPagesPptx',
     '#figureloomExportAllPagesPptxV2',
+    '#figureloomExportAllPagesPptxV3',
     'button[data-export="pptx"]',
     'button[data-figureloom-pptx-fixed]',
     'button[data-office-export="flat-pptx"]',
-    '#officeExportFlatPptx'
+    'button[data-office-export="editable-pptx"]',
+    'button[data-export="editable-pptx"]',
+    '#officeExportFlatPptx',
+    '#officeExportPptx'
   ].join(',');
   const CLEANUP_SELECTOR = [
     '#selectionLayer',
@@ -32,8 +36,14 @@
     return JSON.parse(JSON.stringify(value));
   }
 
-  function waitForPaint() {
-    return new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+  function delay(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+  async function waitForStablePaint() {
+    await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+    await delay(24);
+    await new Promise(resolve => requestAnimationFrame(resolve));
   }
 
   function xml(value) {
@@ -85,7 +95,7 @@
     const metadata = document.createElementNS('http://www.w3.org/2000/svg', 'metadata');
     metadata.textContent = JSON.stringify({
       application:'FigureLoom',
-      export:'direct-file-pptx-v1',
+      export:'direct-file-pptx-v2',
       page:index + 1,
       total,
       id:String(page?.id || `page-${index + 1}`),
@@ -109,9 +119,15 @@
     });
   }
 
-  async function svgToPngBlob(source, width, height, options = {}) {
+  async function digestBytes(bytes) {
+    if (!crypto?.subtle) return '';
+    const hash = await crypto.subtle.digest('SHA-256', bytes);
+    return [...new Uint8Array(hash)].map(value => value.toString(16).padStart(2, '0')).join('');
+  }
+
+  async function svgToPngBytes(source, width, height, options = {}) {
     const loaded = await loadSvgImage(source);
-    const maxDimension = 2200;
+    const maxDimension = 1800;
     const scale = Math.max(0.5, Math.min(2, maxDimension / width, maxDimension / height));
     const bitmap = document.createElement('canvas');
     bitmap.width = Math.max(1, Math.round(width * scale));
@@ -127,22 +143,19 @@
       context.imageSmoothingEnabled = true;
       context.imageSmoothingQuality = 'high';
       context.drawImage(loaded.image, 0, 0, bitmap.width, bitmap.height);
-      return await new Promise((resolve, reject) => {
+      const blob = await new Promise((resolve, reject) => {
         bitmap.toBlob(value => value ? resolve(value) : reject(new Error('A page image file could not be created.')), 'image/png');
       });
+      const bytes = new Uint8Array(await blob.arrayBuffer());
+      if (bytes.byteLength < 100) throw new Error('A page image file was unexpectedly empty.');
+      return bytes;
     } finally {
       loaded.image.src = 'data:,';
       URL.revokeObjectURL(loaded.url);
       bitmap.width = 1;
       bitmap.height = 1;
-      await waitForPaint();
+      await waitForStablePaint();
     }
-  }
-
-  async function digestBlob(blob) {
-    if (!crypto?.subtle) return '';
-    const hash = await crypto.subtle.digest('SHA-256', await blob.arrayBuffer());
-    return [...new Uint8Array(hash)].map(value => value.toString(16).padStart(2, '0')).join('');
   }
 
   async function capturePageFiles(options = {}) {
@@ -169,9 +182,10 @@
         if (Array.isArray(state.selectedIds)) state.selectedIds = [];
 
         if (typeof render === 'function') render();
+        if (typeof renderPages === 'function') renderPages();
         window.applyPageBackground?.();
         await document.fonts?.ready;
-        await waitForPaint();
+        await waitForStablePaint();
 
         const sourceCanvas = document.getElementById('canvas');
         if (!sourceCanvas) throw new Error(`Page ${index + 1} could not be drawn because the canvas is missing.`);
@@ -179,16 +193,15 @@
         const source = new XMLSerializer().serializeToString(
           cleanCanvasClone(sourceCanvas, page, index, pages.length, options)
         );
-        const blob = await svgToPngBlob(source, dimensions.width, dimensions.height, options);
+        const bytes = await svgToPngBytes(source, dimensions.width, dimensions.height, options);
         files.push({
           index,
           fileName:`page-${String(index + 1).padStart(3, '0')}.png`,
           name:String(page.name || `Page ${index + 1}`),
-          notes:page.notes ? String(page.notes) : '',
           width:dimensions.width,
           height:dimensions.height,
-          blob,
-          digest:await digestBlob(blob)
+          bytes,
+          digest:await digestBytes(bytes)
         });
       }
     } finally {
@@ -240,7 +253,7 @@
 
   function presentationXml(count, size) {
     const slideIds = Array.from({ length:count }, (_, index) => `<p:sldId id="${256 + index}" r:id="rId${index + 2}"/>`).join('');
-    return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><p:presentation xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main"><p:sldMasterIdLst><p:sldMasterId id="2147483648" r:id="rId1"/></p:sldMasterIdLst><p:sldIdLst>${slideIds}</p:sldIdLst><p:sldSz cx="${size.cx}" cy="${size.cy}"/><p:notesSz cx="6858000" cy="9144000"/><p:defaultTextStyle><a:defPPr><a:defRPr lang="en-US"/></a:defPPr><a:lvl1pPr marL="0" algn="l"><a:defRPr sz="1800"><a:latin typeface="Arial"/></a:defRPr></a:lvl1pPr></p:defaultTextStyle></p:presentation>`;
+    return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><p:presentation xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main" saveSubsetFonts="1"><p:sldMasterIdLst><p:sldMasterId id="2147483648" r:id="rId1"/></p:sldMasterIdLst><p:sldIdLst>${slideIds}</p:sldIdLst><p:sldSz cx="${size.cx}" cy="${size.cy}"/><p:notesSz cx="6858000" cy="9144000"/><p:defaultTextStyle><a:defPPr><a:defRPr lang="en-US"/></a:defPPr></p:defaultTextStyle></p:presentation>`;
   }
 
   function presentationRelationships(count) {
@@ -259,7 +272,7 @@
   }
 
   function slideMasterXml() {
-    return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><p:sldMaster xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main"><p:cSld name="FigureLoom"><p:spTree><p:nvGrpSpPr><p:cNvPr id="1" name=""/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr><p:grpSpPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="0" cy="0"/><a:chOff x="0" y="0"/><a:chExt cx="0" cy="0"/></a:xfrm></p:grpSpPr></p:spTree></p:cSld><p:clrMap accent1="accent1" accent2="accent2" accent3="accent3" accent4="accent4" accent5="accent5" accent6="accent6" bg1="lt1" bg2="lt2" folHlink="folHlink" hlink="hlink" tx1="dk1" tx2="dk2"/><p:sldLayoutIdLst><p:sldLayoutId id="1" r:id="rId1"/></p:sldLayoutIdLst><p:txStyles><p:titleStyle><a:lvl1pPr algn="l"><a:defRPr sz="4400"/></a:lvl1pPr></p:titleStyle><p:bodyStyle><a:lvl1pPr><a:defRPr sz="3200"/></a:lvl1pPr></p:bodyStyle><p:otherStyle><a:defPPr><a:defRPr lang="en-US"/></a:defPPr><a:lvl1pPr><a:defRPr sz="1800"/></a:lvl1pPr></p:otherStyle></p:txStyles></p:sldMaster>`;
+    return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><p:sldMaster xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main"><p:cSld name="FigureLoom"><p:spTree><p:nvGrpSpPr><p:cNvPr id="1" name=""/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr><p:grpSpPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="0" cy="0"/><a:chOff x="0" y="0"/><a:chExt cx="0" cy="0"/></a:xfrm></p:grpSpPr></p:spTree></p:cSld><p:clrMap accent1="accent1" accent2="accent2" accent3="accent3" accent4="accent4" accent5="accent5" accent6="accent6" bg1="lt1" bg2="lt2" folHlink="folHlink" hlink="hlink" tx1="dk1" tx2="dk2"/><p:sldLayoutIdLst><p:sldLayoutId id="2147483649" r:id="rId1"/></p:sldLayoutIdLst><p:txStyles><p:titleStyle/><p:bodyStyle/><p:otherStyle><a:defPPr><a:defRPr lang="en-US"/></a:defPPr></p:otherStyle></p:txStyles></p:sldMaster>`;
   }
 
   function slideMasterRelationships() {
@@ -279,7 +292,8 @@
   }
 
   function appXml(count) {
-    return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Properties xmlns="http://schemas.openxmlformats.org/officeDocument/2006/extended-properties" xmlns:vt="http://schemas.openxmlformats.org/officeDocument/2006/docPropsVTypes"><Application>FigureLoom</Application><PresentationFormat>Custom</PresentationFormat><Slides>${count}</Slides><Notes>0</Notes><HiddenSlides>0</HiddenSlides><Company>FigureLoom</Company><AppVersion>1.0</AppVersion></Properties>`;
+    const titles = Array.from({ length:count }, (_, index) => `<vt:lpstr>Page ${index + 1}</vt:lpstr>`).join('');
+    return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Properties xmlns="http://schemas.openxmlformats.org/officeDocument/2006/extended-properties" xmlns:vt="http://schemas.openxmlformats.org/officeDocument/2006/docPropsVTypes"><Application>FigureLoom</Application><PresentationFormat>Custom</PresentationFormat><Slides>${count}</Slides><Notes>0</Notes><HiddenSlides>0</HiddenSlides><Company>FigureLoom</Company><HeadingPairs><vt:vector size="2" baseType="variant"><vt:variant><vt:lpstr>Slides</vt:lpstr></vt:variant><vt:variant><vt:i4>${count}</vt:i4></vt:variant></vt:vector></HeadingPairs><TitlesOfParts><vt:vector size="${count}" baseType="lpstr">${titles}</vt:vector></TitlesOfParts><AppVersion>1.0</AppVersion></Properties>`;
   }
 
   function coreXml() {
@@ -288,7 +302,47 @@
     return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:dcmitype="http://purl.org/dc/dcmitype/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><dc:title>${title}</dc:title><dc:creator>FigureLoom</dc:creator><cp:lastModifiedBy>FigureLoom</cp:lastModifiedBy><dcterms:created xsi:type="dcterms:W3CDTF">${now}</dcterms:created><dcterms:modified xsi:type="dcterms:W3CDTF">${now}</dcterms:modified></cp:coreProperties>`;
   }
 
-  async function buildPptxBlob(pageFiles) {
+  async function validatePptxBytes(JSZip, bytes, pageFiles) {
+    const zip = await JSZip.loadAsync(bytes);
+    const expected = pageFiles.length;
+    const exactEntries = prefix => Object.keys(zip.files).filter(path => path.startsWith(prefix) && !zip.files[path].dir);
+    const slides = exactEntries('ppt/slides/').filter(path => /^ppt\/slides\/slide\d+\.xml$/.test(path));
+    const slideRels = exactEntries('ppt/slides/_rels/').filter(path => /^ppt\/slides\/_rels\/slide\d+\.xml\.rels$/.test(path));
+    const media = exactEntries('ppt/media/').filter(path => /^ppt\/media\/image\d+\.png$/.test(path));
+    if (slides.length !== expected || slideRels.length !== expected || media.length !== expected) {
+      throw new Error(`PowerPoint verification found ${slides.length} slides, ${slideRels.length} slide links, and ${media.length} page images for ${expected} pages.`);
+    }
+
+    const presentation = await zip.file('ppt/presentation.xml')?.async('text');
+    const presentationRels = await zip.file('ppt/_rels/presentation.xml.rels')?.async('text');
+    if (!presentation || !presentationRels) throw new Error('PowerPoint verification could not find the presentation index.');
+    const slideIdCount = (presentation.match(/<p:sldId\b/g) || []).length;
+    const slideRelationshipCount = (presentationRels.match(/relationships\/slide"/g) || []).length;
+    if (slideIdCount !== expected || slideRelationshipCount !== expected) {
+      throw new Error(`PowerPoint verification indexed ${slideIdCount} slides and ${slideRelationshipCount} slide relationships for ${expected} pages.`);
+    }
+
+    for (let index = 0; index < expected; index += 1) {
+      const number = index + 1;
+      const slidePath = `ppt/slides/slide${number}.xml`;
+      const relPath = `ppt/slides/_rels/slide${number}.xml.rels`;
+      const mediaPath = `ppt/media/image${number}.png`;
+      const slide = await zip.file(slidePath)?.async('text');
+      const rels = await zip.file(relPath)?.async('text');
+      const image = await zip.file(mediaPath)?.async('uint8array');
+      if (!slide || !rels || !image?.byteLength) throw new Error(`PowerPoint verification could not read page ${number}.`);
+      if (!slide.includes('r:embed="rId2"') || !rels.includes(`Target="../media/image${number}.png"`)) {
+        throw new Error(`PowerPoint verification found a broken image link on page ${number}.`);
+      }
+      if (pageFiles[index].digest) {
+        const digest = await digestBytes(image);
+        if (digest !== pageFiles[index].digest) throw new Error(`PowerPoint verification found altered image data on page ${number}.`);
+      }
+    }
+    return { slideCount:expected, mediaCount:expected };
+  }
+
+  async function buildPptxBytes(pageFiles) {
     if (!Array.isArray(pageFiles) || !pageFiles.length) throw new Error('No page image files were supplied.');
     const JSZip = await loadJsZip();
     const zip = new JSZip();
@@ -310,14 +364,20 @@
     zip.file('ppt/tableStyles.xml', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><a:tblStyleLst xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" def="{5C22544A-7EE6-4342-B048-85BDC9FD1C3A}"/>');
 
     pageFiles.forEach((file, index) => {
-      zip.file(`ppt/media/image${index + 1}.png`, file.blob);
+      zip.file(`ppt/media/image${index + 1}.png`, file.bytes, { binary:true, compression:'STORE' });
       zip.file(`ppt/slides/slide${index + 1}.xml`, slideXml(file, size, index));
       zip.file(`ppt/slides/_rels/slide${index + 1}.xml.rels`, slideRelationships(index));
     });
 
-    const blob = await zip.generateAsync({ type:'blob', mimeType:'application/vnd.openxmlformats-officedocument.presentationml.presentation', compression:'DEFLATE', compressionOptions:{ level:6 } });
-    if (!blob?.size) throw new Error('The PowerPoint file was empty.');
-    return blob;
+    const bytes = await zip.generateAsync({ type:'uint8array', compression:'DEFLATE', compressionOptions:{ level:6 } });
+    if (!bytes?.byteLength) throw new Error('The PowerPoint file was empty.');
+    await validatePptxBytes(JSZip, bytes, pageFiles);
+    return bytes;
+  }
+
+  async function buildPptxBlob(pageFiles) {
+    const bytes = await buildPptxBytes(pageFiles);
+    return new Blob([bytes], { type:'application/vnd.openxmlformats-officedocument.presentationml.presentation' });
   }
 
   function outputFileName() {
@@ -335,11 +395,11 @@
     document.body.appendChild(link);
     link.click();
     link.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 30000);
+    setTimeout(() => URL.revokeObjectURL(url), 60000);
   }
 
   function matchingButtons() {
-    return [...document.querySelectorAll(`#${EXPORT_BUTTON_ID},#officeExportFlatPptx`)].filter(Boolean);
+    return [...document.querySelectorAll(`#${EXPORT_BUTTON_ID},#officeExportFlatPptx,#officeExportPptx`)].filter(Boolean);
   }
 
   function setProgress(text, detail = '') {
@@ -364,11 +424,11 @@
     if (exporting) return;
     exporting = true;
     try {
-      setProgress('Creating page files…', 'One PNG file per FigureLoom page');
+      setProgress('Creating page files…', 'Capturing every FigureLoom page');
       const pageFiles = await capturePageFiles(options);
-      setProgress('Packing PowerPoint…', `${pageFiles.length} separate page files`);
+      setProgress('Building PowerPoint…', `Packing and verifying ${pageFiles.length} pages`);
       const pptxBlob = await buildPptxBlob(pageFiles);
-      setProgress('Downloading PowerPoint…', `${pageFiles.length} pages`);
+      setProgress('Downloading PowerPoint…', `${pageFiles.length} verified pages`);
       downloadBlob(pptxBlob, outputFileName());
     } finally {
       restoreButtons();
@@ -377,7 +437,10 @@
   }
 
   function exportOptions() {
-    return { includeGrid:Boolean(document.getElementById('exportGrid')?.checked), transparent:Boolean(document.getElementById('pptxTransparent')?.checked) };
+    return {
+      includeGrid:Boolean(document.getElementById('exportGrid')?.checked),
+      transparent:Boolean(document.getElementById('pptxTransparent')?.checked)
+    };
   }
 
   function installExportButton() {
@@ -391,7 +454,7 @@
       button = document.createElement('button');
       button.id = EXPORT_BUTTON_ID;
       button.type = 'button';
-      button.innerHTML = '<strong>PowerPoint (.pptx) · all pages</strong><small>Builds one separate page file, then packs them into one PowerPoint</small>';
+      button.innerHTML = '<strong>PowerPoint (.pptx) · all pages</strong><small>Creates and verifies one real PNG-backed slide per page</small>';
       menu.insertBefore(button, menu.firstElementChild);
     }
     return true;
@@ -407,7 +470,7 @@
   }
 
   document.addEventListener('click', event => {
-    const trigger = event.target.closest?.(`#${EXPORT_BUTTON_ID},#officeExportFlatPptx`);
+    const trigger = event.target.closest?.(`#${EXPORT_BUTTON_ID},#officeExportFlatPptx,#officeExportPptx`);
     if (!trigger) return;
     event.preventDefault();
     event.stopImmediatePropagation();
@@ -424,6 +487,6 @@
 
   window.FigureLoomExportPowerPointAllPages = options => exportAllPages(options || {});
   window.FigureLoomSafeJpegPowerPoint = window.FigureLoomExportPowerPointAllPages;
-  window.FigureLoomPptxFileExport = Object.freeze({ capturePageFiles, buildPptxBlob, exportAllPages });
+  window.FigureLoomPptxFileExport = Object.freeze({ capturePageFiles, buildPptxBytes, buildPptxBlob, validatePptxBytes, exportAllPages });
   installExportButton();
 })();
