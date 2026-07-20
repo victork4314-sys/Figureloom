@@ -1,5 +1,6 @@
 (() => {
-  if (window.__figureLoomMcpCurrentScreenshotV2) return;
+  if (window.__figureLoomMcpCurrentScreenshotV3) return;
+  window.__figureLoomMcpCurrentScreenshotV3 = true;
   window.__figureLoomMcpCurrentScreenshotV2 = true;
   window.__figureLoomMcpCurrentScreenshotV1 = true;
 
@@ -8,8 +9,17 @@
   async function settleCurrentPage() {
     try { window.syncPage?.(); } catch {}
     try { window.render?.(); } catch {}
-    await nextFrame();
-    try { await window.FigureLoomFinalSessionPolishV2?.settleTextBounds?.(); } catch {}
+    try {
+      if (window.FigureLoomFinalSessionPolishV2?.settleTextRepair) {
+        await window.FigureLoomFinalSessionPolishV2.settleTextRepair();
+      } else {
+        await nextFrame();
+        window.FigureLoomFinalSessionPolishV2?.repairRenderedText?.();
+      }
+    } catch {}
+    try { await document.fonts?.ready; } catch {}
+    try { window.FigureLoomFinalSessionPolishV2?.repairRenderedText?.(); } catch {}
+    try { window.syncPage?.(); } catch {}
     await nextFrame();
   }
 
@@ -34,15 +44,17 @@
     if (!commands?.register || !commands?.renderPage) return false;
 
     commands.register('view.screenshot', {
-      description:'Capture the current active FigureLoom page as a PNG screenshot after the latest edits and text bounds have settled.',
+      description:'Capture the current active FigureLoom page as a repaired PNG screenshot after the latest edits have rendered.',
       category:'view',
+      write:false,
       inputSchema:{ scale:'number', includeGrid:'boolean' },
       run:currentScreenshot
     });
 
     commands.register('page.render', {
-      description:'Render the current active FigureLoom page to SVG or PNG after the latest edits have settled.',
+      description:'Render the current active FigureLoom page to SVG or PNG after fonts, wrapping and text bounds have settled.',
       category:'view',
+      write:false,
       inputSchema:{ format:'svg|png', scale:'number', includeGrid:'boolean' },
       run:async args => {
         await settleCurrentPage();
