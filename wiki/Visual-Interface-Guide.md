@@ -10,7 +10,7 @@ This page maps the main parts of FigureLoom before you start clicking around. Th
 
 The profile button opens account and project gallery controls. The project name is editable. Local save status appears beside it.
 
-Open project tabs sit below the title area. Each tab keeps its **×** close control directly beside the project title rather than below the tab.
+Open project tabs sit below the title area. Each tab keeps its **×** close control directly beside the project title rather than below the tab. Closing a tab does not silently delete the project.
 
 ### 2. Undo, redo, Help, and Export
 
@@ -57,7 +57,7 @@ Add opens a large insertion panel for text, shapes, files, images, templates, ch
 - **Tools** shows the current ribbon controls.
 - **Pages** shows pages and layers.
 - **Edit** opens the selected object's inspector.
-- **More** contains projects, settings, account, templates, Loomy, Pro Tools, Guide, sharing, and other less frequent actions.
+- **More** contains projects, settings, account, templates, Loomy, Pro Tools, Help, sharing, and other less frequent actions.
 
 ### Moving and zooming
 
@@ -65,13 +65,13 @@ Drag a selected object with one finger. Pinch with two fingers to zoom. Use the 
 
 ### Help on a phone
 
-Open **More → Guide**. The phone sheet closes and the FigureLoom Help menu opens without leaving the current project.
+Open **More**, then choose **Help**. The phone sheet closes and the FigureLoom Help menu opens without leaving the current project.
 
 ## Help menu
 
 ![FigureLoom Help menu](https://figureloom.org/wiki-assets/help-menu.svg)
 
-Press **?** on desktop or use **More → Guide** on a phone to open:
+Press **?** on desktop or use **More**, then **Help** on a phone to open:
 
 - Search the full manual
 - Start here
@@ -79,13 +79,29 @@ Press **?** on desktop or use **More → Guide** on a phone to open:
 - Visual interface guide
 - Passive interface tour
 
-The passive tour now covers the main sections, project tabs, Add and Illustrations, the real page area, the movable canvas controls, pages and layers, the inspector, Pro Tools, Help, export, checks, and backups.
+The passive guide has 13 steps:
+
+1. Projects and open tabs
+2. Settings and appearance
+3. Main workspaces
+4. Tools for the current task
+5. The canvas and real page
+6. Pages and layers
+7. The canvas control bar
+8. The inspector
+9. Pro Tools
+10. Loomy
+11. Share and collaboration
+12. Help and manuals
+13. Export and backup
+
+The guide only points things out. It does not open panels, move objects, change selections, or scroll the project.
 
 The manual opens in a new tab so the current canvas remains open.
 
 ## Light and dark appearance
 
-The editor and the Help center use the same saved appearance setting. Changing appearance in the manual also updates the FigureLoom appearance preference for the next editor load.
+The editor, Help center, and passive guide use the same saved appearance setting. Changing appearance in the manual also updates the FigureLoom appearance preference for the next editor load.
 
 The canvas background can still be white or another project color while the surrounding interface is dark. Interface appearance and exported page color are separate settings.
 
