@@ -7,6 +7,6 @@
   },
   "devDependencies": {
     "@playwright/test": "^1.55.0",
-    "pptxgenjs": "4.0.1"
+    "jszip": "3.10.1"
   }
 }
