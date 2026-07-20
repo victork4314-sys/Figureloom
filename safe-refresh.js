@@ -1,10 +1,10 @@
 (() => {
-  if (window.__figureLoomStableRuntime71d36dfV85) return;
-  for (let version = 38; version <= 85; version += 1) {
+  if (window.__figureLoomStableRuntime71d36dfV89) return;
+  for (let version = 38; version <= 89; version += 1) {
     window[`__figureLoomStableRuntime71d36dfV${version}`] = true;
   }
 
-  const STABLE_BUILD = "stable-71d36df-locked-20260720-v85";
+  const STABLE_BUILD = "stable-71d36df-locked-20260721-v89";
   const GENERAL_ADDONS = [
     "library-more-illustrations.js",
     "library-more-templates.js",
@@ -90,6 +90,7 @@
   const FINAL_ADDONS = [
     "final-session-core.js",
     "final-session-polish-v2.js",
+    "text-emergency-state-recovery.js",
     "mcp-current-screenshot.js"
   ];
 
