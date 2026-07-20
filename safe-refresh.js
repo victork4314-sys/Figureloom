@@ -1,10 +1,10 @@
 (() => {
-  if (window.__figureLoomStableRuntime71d36dfV85) return;
-  for (let version = 38; version <= 85; version += 1) {
+  if (window.__figureLoomStableRuntime71d36dfV86) return;
+  for (let version = 38; version <= 86; version += 1) {
     window[`__figureLoomStableRuntime71d36dfV${version}`] = true;
   }
 
-  const STABLE_BUILD = "stable-71d36df-locked-20260720-v85";
+  const STABLE_BUILD = "stable-71d36df-locked-20260720-v86";
   const GENERAL_ADDONS = [
     "library-more-illustrations.js",
     "library-more-templates.js",
@@ -87,8 +87,11 @@
     "text-editing-stability-fix.js",
     "text-editing-gentle-polish.js"
   ];
-  const FINAL_ADDONS = [
+  const CRITICAL_FINAL_ADDONS = [
     "final-session-core.js",
+    "projects-tab-close-final.js"
+  ];
+  const DEFERRED_FINAL_ADDONS = [
     "final-session-polish-v2.js",
     "mcp-current-screenshot.js"
   ];
@@ -131,7 +134,7 @@
       return new Promise(resolve => {
         existing.addEventListener("load", resolve, { once:true });
         existing.addEventListener("error", resolve, { once:true });
-        setTimeout(resolve, 8000);
+        setTimeout(resolve, 4000);
       });
     }
 
@@ -162,10 +165,6 @@
     for (const path of TEXT_ADDONS.slice(1)) await loadAddon(path);
   }
 
-  async function loadFinalStackInOrder() {
-    for (const path of FINAL_ADDONS) await loadAddon(path);
-  }
-
   function revealStableApp() {
     if (!root.dataset.figureloomStableLoading) return;
     delete root.dataset.figureloomStableLoading;
@@ -181,11 +180,19 @@
     }));
   }
 
-  const fallback = setTimeout(revealStableApp, 30000);
+  const fallback = setTimeout(revealStableApp, 20000);
   void Promise.all([
     Promise.all(GENERAL_ADDONS.map(loadAddon)),
     loadTextStackInOrder()
-  ]).then(loadFinalStackInOrder).finally(() => {
+  ]).then(async () => {
+    const critical = Promise.all(CRITICAL_FINAL_ADDONS.map(loadAddon));
+    const deferred = Promise.all(DEFERRED_FINAL_ADDONS.map(loadAddon));
+    await critical;
+    clearTimeout(fallback);
+    revealStableApp();
+    void deferred.catch(error => console.warn("FigureLoom deferred tools finished with an error.", error));
+  }).catch(error => {
+    console.error("FigureLoom could not finish loading the stable editor.", error);
     clearTimeout(fallback);
     revealStableApp();
   });
