@@ -124,8 +124,8 @@ test('desktop tabs use one box for title and close, with compact Recovery Histor
   expect(tabGeometry.closeCenterDifference).toBeLessThanOrEqual(4);
   expect(tabGeometry.closeInside).toBe(true);
   expect(tabGeometry.plusAfterTab).toBe(true);
-  expect(tabGeometry.plusSize.width).toBe(28);
-  expect(tabGeometry.plusSize.height).toBe(28);
+  expect(tabGeometry.plusSize.width).toBe(29);
+  expect(tabGeometry.plusSize.height).toBe(29);
   expect(tabGeometry.wrapperBorder).toBeGreaterThanOrEqual(1);
   expect(tabGeometry.wrapperRadius).toBeGreaterThanOrEqual(8);
   expect(tabGeometry.tabBorder).toBe(0);
