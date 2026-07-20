@@ -96,40 +96,58 @@
     return group;
   }
 
+  function syncSignOutButton() {
+    const drawer = document.getElementById('cloudGalleryDrawer');
+    const actions = drawer?.querySelector('.sc-profile-actions');
+    const signOut = drawer?.querySelector('#cloudSignOut');
+    if (!drawer || !actions || !signOut) return;
+
+    if (signOut.parentElement !== actions) actions.appendChild(signOut);
+    signOut.classList.add('sc-profile-sign-out');
+    signOut.hidden = !activeUser;
+    drawer.dataset.accountSignedIn = activeUser ? '1' : '0';
+  }
+
   function installAccountProfileCard() {
     const drawer = document.getElementById('cloudGalleryDrawer');
     const panel = drawer?.querySelector('.cloud-account-panel');
-    if (!drawer || !panel || drawer.querySelector('#scAccountProfileCard')) return;
+    if (!drawer || !panel) return;
 
-    const card = document.createElement('section');
-    card.id = 'scAccountProfileCard';
-    card.className = 'sc-account-profile-card';
-    card.innerHTML = `
-      <div class="sc-profile-summary">
-        <div class="sc-profile-avatar" data-sc-avatar-preview></div>
-        <div class="sc-profile-copy"><strong id="scProfileDisplayName"></strong><small id="scProfileSubtitle">Local SciCanvas profile</small></div>
-        <button id="scProfileEditName" type="button">Edit name</button>
-      </div>
-      <div class="sc-profile-picker-heading"><span>Choose your profile symbol</span><small>Only changes the app profile—not your figures or exports.</small></div>
-    `;
-    card.appendChild(avatarPicker('account-avatar-options'));
-    panel.insertAdjacentElement('beforebegin', card);
+    let card = drawer.querySelector('#scAccountProfileCard');
+    if (!card) {
+      card = document.createElement('section');
+      card.id = 'scAccountProfileCard';
+      card.className = 'sc-account-profile-card';
+      card.innerHTML = `
+        <div class="sc-profile-summary">
+          <div class="sc-profile-avatar" data-sc-avatar-preview></div>
+          <div class="sc-profile-copy"><strong id="scProfileDisplayName"></strong><small id="scProfileSubtitle">Local FigureLoom profile</small></div>
+          <div class="sc-profile-actions"><button id="scProfileEditName" type="button">Edit name</button></div>
+        </div>
+        <div class="sc-profile-picker-heading"><span>Choose your profile symbol</span><small>Only changes the app profile, not your figures or exports.</small></div>
+      `;
+      card.appendChild(avatarPicker('account-avatar-options'));
+      panel.insertAdjacentElement('beforebegin', card);
+      card.querySelector('#scProfileEditName').addEventListener('click', () => window.openSciCanvasWelcome?.({ edit:true }));
+    }
 
-    card.querySelector('#scProfileEditName').addEventListener('click', () => window.openSciCanvasWelcome?.({ edit:true }));
+    syncSignOutButton();
     renderProfileCard();
   }
 
   function renderProfileCard() {
-    const card = document.getElementById('scAccountProfileCard');
+    const drawer = document.getElementById('cloudGalleryDrawer');
+    const card = drawer?.querySelector('#scAccountProfileCard');
     if (!card) return;
     card.querySelector('#scProfileDisplayName').textContent = currentName();
-    card.querySelector('#scProfileSubtitle').textContent = activeUser?.email || 'Local SciCanvas profile · sign in when you want cloud projects';
+    card.querySelector('#scProfileSubtitle').textContent = activeUser?.email || 'Local FigureLoom profile · sign in when you want cloud projects';
     renderPreview(card.querySelector('[data-sc-avatar-preview]'));
     card.querySelectorAll('[data-sc-avatar-option]').forEach(button => {
       const id = button.dataset.scAvatarOption;
       button.setAttribute('aria-pressed', currentChoice() === id ? 'true' : 'false');
       if (id === 'initial') button.querySelector('span').textContent = initials(currentName());
     });
+    syncSignOutButton();
   }
 
   function installWelcomePicker() {
@@ -176,14 +194,16 @@
     .cloud-gallery-drawer .cloud-hero::after{content:'⌬';position:absolute;right:72px;top:-18px;color:rgba(84,139,151,.12);font-size:86px;line-height:1;transform:rotate(12deg);pointer-events:none}
     .cloud-gallery-drawer .cloud-hero strong{font-size:18px!important;letter-spacing:-.025em}
     .cloud-gallery-drawer .cloud-account-panel{padding:15px!important;border-radius:16px!important;background:rgba(255,255,255,.82)!important;box-shadow:0 8px 24px rgba(48,67,91,.06)}
+    .cloud-gallery-drawer[data-account-signed-in="1"] .cloud-account-panel{display:none!important}
     .sc-account-profile-card{display:grid;gap:12px;margin-top:12px;padding:15px;border:1px solid rgba(109,137,157,.23);border-radius:16px;background:linear-gradient(145deg,rgba(255,255,255,.92),rgba(241,248,248,.88) 55%,rgba(246,243,250,.9));box-shadow:0 9px 28px rgba(43,62,88,.07)}
     .sc-profile-summary{display:grid;grid-template-columns:50px minmax(0,1fr) auto;align-items:center;gap:11px}.sc-profile-avatar{display:grid;place-items:center;width:50px;height:50px;border-radius:16px;background:linear-gradient(145deg,#365eae,#5d91a0 56%,#8175a8);color:#fff;font-size:24px;font-weight:850;box-shadow:0 9px 20px rgba(65,105,193,.2)}
     .sc-profile-copy strong,.sc-profile-copy small{display:block}.sc-profile-copy strong{font-size:13px}.sc-profile-copy small{margin-top:3px;color:#718095;font-size:9px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.sc-profile-picker-heading{display:flex;align-items:end;justify-content:space-between;gap:10px}.sc-profile-picker-heading span{font-size:10px;font-weight:800;color:#4c5e73}.sc-profile-picker-heading small{font-size:8px;color:#7d8998}
+    .sc-profile-actions{display:flex;align-items:center;gap:7px}.sc-profile-actions>button{min-width:86px!important;height:38px!important;min-height:38px!important;padding:0 12px!important;border-radius:10px!important;font-size:10px!important;font-weight:750!important;white-space:nowrap}.sc-profile-sign-out{border-color:#d8b7b7!important;background:#fff7f7!important;color:#8d3f3f!important}
     .scientific-avatar-picker{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:7px}.scientific-avatar-picker button{display:grid!important;place-items:center;gap:3px;min-width:0!important;min-height:58px!important;padding:6px!important;border:1px solid #d2dde5!important;border-radius:12px!important;background:rgba(255,255,255,.86)!important;color:#4a5c73!important}.scientific-avatar-picker button span{font-size:20px;line-height:1}.scientific-avatar-picker button small{font-size:7px;color:#7a8797}.scientific-avatar-picker button[aria-pressed="true"]{border-color:#5f8eaa!important;background:linear-gradient(145deg,#edf8f6,#f1eff9)!important;box-shadow:0 0 0 3px rgba(95,142,170,.12)!important;color:#315c76!important}
     .welcome-avatar-chooser{display:grid;gap:9px;margin-top:14px;padding:12px;border:1px solid rgba(109,137,157,.22);border-radius:14px;background:rgba(255,255,255,.52)}.welcome-avatar-chooser>div{display:flex;align-items:end;justify-content:space-between;gap:8px}.welcome-avatar-chooser strong{font-size:11px;color:#4f6076}.welcome-avatar-chooser small{font-size:9px;color:#7d8998}.welcome-avatar-options{grid-template-columns:repeat(7,minmax(0,1fr))}
     .cloud-gallery-drawer .cloud-account-actions{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px!important}.cloud-gallery-drawer .cloud-toolbar{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px!important}.cloud-gallery-drawer .cloud-uniform-button{display:inline-flex!important;align-items:center;justify-content:center;min-height:40px!important;height:40px;padding:0 14px!important;border-radius:11px!important;font-size:9px!important;font-weight:780!important;line-height:1.1;white-space:nowrap}.cloud-gallery-drawer .password-field .cloud-uniform-button{min-width:66px!important}.cloud-gallery-drawer .project-card-actions{display:grid!important;grid-template-columns:repeat(auto-fit,minmax(66px,1fr));gap:6px!important;width:100%}.cloud-gallery-drawer .project-card-actions .cloud-uniform-button{width:100%;min-height:34px!important;height:34px;padding:0 8px!important;font-size:8px!important}.cloud-gallery-drawer .cloud-danger-button{border-color:#e5b6b6!important;background:#fff4f4!important;color:#9a3b3b!important}
     .cloud-gallery-drawer .gallery-section{padding:13px;border:1px solid rgba(109,137,157,.18);border-radius:16px;background:rgba(250,252,253,.72)}.cloud-gallery-drawer .project-gallery{gap:11px!important}.cloud-gallery-drawer .project-gallery-card{padding:11px!important;border-radius:14px!important;background:linear-gradient(150deg,rgba(255,255,255,.96),rgba(245,249,250,.92))!important;box-shadow:0 7px 20px rgba(43,62,88,.06)}.cloud-gallery-drawer .project-thumb{border-radius:11px!important;background:linear-gradient(145deg,#edf4f5,#f1eef7)!important}
-    @media(max-width:700px){.scientific-avatar-picker,.welcome-avatar-options{grid-template-columns:repeat(4,minmax(0,1fr))}.cloud-gallery-drawer .cloud-toolbar{grid-template-columns:1fr}.sc-profile-summary{grid-template-columns:46px minmax(0,1fr)}.sc-profile-summary>button{grid-column:1/-1}.sc-profile-picker-heading{align-items:flex-start;flex-direction:column}}
+    @media(max-width:700px){.scientific-avatar-picker,.welcome-avatar-options{grid-template-columns:repeat(4,minmax(0,1fr))}.cloud-gallery-drawer .cloud-toolbar{grid-template-columns:1fr}.sc-profile-summary{grid-template-columns:46px minmax(0,1fr)}.sc-profile-actions{grid-column:1/-1;display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.sc-profile-actions>button{width:100%!important}.sc-profile-picker-heading{align-items:flex-start;flex-direction:column}}
   `;
   document.head.appendChild(style);
 
