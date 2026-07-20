@@ -5,6 +5,9 @@
   const PPTX_BUTTON_ID = 'figureloomExportAllPagesPptxV6';
   const SVG_ZIP_BUTTON_ID = 'figureloomExportAllPagesSvgZipV2';
   const JSZIP_CDN = 'https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js';
+  const READY_LABEL = '<strong>Export all pages as SVG (.zip)</strong><small>One separate editable SVG file per page</small>';
+  const PACKING_LABEL = '<strong>Packing SVG pages…</strong><small>Creating one separate SVG file per page</small>';
+  const SAVING_LABEL = '<strong>Saving SVG pages…</strong><small>Creating one separate SVG file per page</small>';
   let jsZipPromise = null;
 
   function ensureJsZip() {
@@ -142,8 +145,12 @@
   }
 
   function installSvgOnlyConverter() {
-    window.PptxGenJS = SvgOnlyPresentation;
+    if (window.PptxGenJS !== SvgOnlyPresentation) window.PptxGenJS = SvgOnlyPresentation;
     window.__figureLoomLibraryPromise_PptxGenJS = Promise.resolve(SvgOnlyPresentation);
+  }
+
+  function setHtmlIfDifferent(element, html) {
+    if (element && element.innerHTML !== html) element.innerHTML = html;
   }
 
   function updateExportLabels() {
@@ -151,11 +158,11 @@
     if (button) {
       const text = button.textContent || '';
       if (text.includes('Building PowerPoint')) {
-        button.innerHTML = '<strong>Packing SVG pages…</strong><small>Creating one separate SVG file per page</small>';
+        setHtmlIfDifferent(button, PACKING_LABEL);
       } else if (text.includes('PowerPoint failed')) {
-        button.innerHTML = '<strong>Saving SVG pages…</strong><small>Creating one separate SVG file per page</small>';
+        setHtmlIfDifferent(button, SAVING_LABEL);
       } else if (!button.disabled || text.includes('PowerPoint')) {
-        button.innerHTML = '<strong>Export all pages as SVG (.zip)</strong><small>One separate editable SVG file per page</small>';
+        setHtmlIfDifferent(button, READY_LABEL);
       }
     }
 
@@ -168,8 +175,7 @@
 
     ['officeExportFlatPptx', 'officeExportPptx'].forEach(id => {
       const officeButton = document.getElementById(id);
-      if (!officeButton) return;
-      officeButton.innerHTML = '<strong>Export all pages as SVG (.zip)</strong><small>One separate editable SVG file per page</small>';
+      if (officeButton) setHtmlIfDifferent(officeButton, READY_LABEL);
     });
   }
 
