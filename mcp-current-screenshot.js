@@ -1,5 +1,6 @@
 (() => {
-  if (window.__figureLoomMcpCurrentScreenshotV3) return;
+  if (window.__figureLoomMcpCurrentScreenshotV4) return;
+  window.__figureLoomMcpCurrentScreenshotV4 = true;
   window.__figureLoomMcpCurrentScreenshotV3 = true;
   window.__figureLoomMcpCurrentScreenshotV2 = true;
   window.__figureLoomMcpCurrentScreenshotV1 = true;
@@ -10,15 +11,16 @@
     try { window.syncPage?.(); } catch {}
     try { window.render?.(); } catch {}
     try {
-      if (window.FigureLoomFinalSessionPolishV2?.settleTextRepair) {
-        await window.FigureLoomFinalSessionPolishV2.settleTextRepair();
-      } else {
+      const polish = window.FigureLoomFinalSessionPolishV2;
+      if (polish?.settleTextBounds) await polish.settleTextBounds();
+      else if (polish?.settleTextRepair) await polish.settleTextRepair();
+      else {
         await nextFrame();
-        window.FigureLoomFinalSessionPolishV2?.repairRenderedText?.();
+        polish?.repairRenderedText?.();
       }
     } catch {}
     try { await document.fonts?.ready; } catch {}
-    try { window.FigureLoomFinalSessionPolishV2?.repairRenderedText?.(); } catch {}
+    try { window.FigureLoomFinalSessionPolishV2?.repairRenderedText?.({ rerender:false, growBox:false }); } catch {}
     try { window.syncPage?.(); } catch {}
     await nextFrame();
   }
