@@ -20,8 +20,10 @@ async function openApp(page) {
 async function addPageMarker(page, number) {
   if (number > 1) await page.locator('#addPageButton').click();
   await page.locator('#addTextButton').click();
-  await page.locator('#addShapeButton').click();
   await page.evaluate(index => {
+    if (typeof makeObject !== 'function') throw new Error('FigureLoom makeObject is unavailable');
+    makeObject('shape');
+
     const text = state.objects.at(-2);
     text.text = `EXACT ISOLATED PAGE ${index}`;
     text.name = `Isolated marker ${index}`;
