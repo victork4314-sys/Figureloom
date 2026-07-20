@@ -25,6 +25,7 @@
 ### Projects and files
 
 - [Accounts and collaboration](Accounts-Cloud-and-Collaboration)
+- [MCP and AI access](MCP-and-AI-Access)
 - [PowerPoint and spreadsheet import](Importing-PowerPoint-and-Spreadsheets)
 - [Export, backup, and presentation](Export-Backup-and-Presentation)
 - [Privacy, security, and offline use](Privacy-Security-and-Offline-Use)
