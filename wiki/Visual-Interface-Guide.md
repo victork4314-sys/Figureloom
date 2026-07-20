@@ -10,11 +10,13 @@ This page maps the main parts of FigureLoom before you start clicking around. Th
 
 The profile button opens account and project gallery controls. The project name is editable. Local save status appears beside it.
 
-Open project tabs sit below the title area. Each tab keeps its **×** close control directly beside the project title rather than below the tab. Closing a tab does not silently delete the project.
+Open project tabs sit below the title area. Each tab keeps its **×** close control directly beside the project title and inside the same tab box. Closing a tab does not silently delete the project.
 
-### 2. Undo, redo, Help, and Export
+### 2. Selected-object actions
 
-These actions stay close to the top of the editor. The **?** button opens a Help menu with the complete manual, quick task guides, the visual guide, and the passive tour.
+When an object is selected on Desktop or Tablet, Undo and Redo sit directly beside Delete in the same action group.
+
+Help and Export remain available through their normal top-level controls. The **?** button opens a Help menu with the complete manual, quick task guides, the visual guide, and the passive tour.
 
 ### 3. Main tabs
 
@@ -36,13 +38,24 @@ The right side changes with the selected object. Position, size, color, opacity,
 
 Pages, the Hand tool, zoom, 100 percent, Format, and Navigation stay together in one control bar. On supported desktop layouts, drag the complete bar from an empty part of the bar or its grip. The existing collapse control still collapses it.
 
+## Interface modes
+
+Open Settings to choose:
+
+- Automatic
+- Desktop
+- Tablet
+- Phone
+
+Desktop is the compact mouse-and-keyboard layout. Tablet keeps the full editor with roomier touch targets. Phone uses the dock and sliding panels.
+
 ## Phone overview
 
 ![Annotated FigureLoom phone interface](https://figureloom.org/wiki-assets/phone-overview.svg)
 
 ### Compact top bar
 
-The project name, undo, redo, and Export remain available. Less frequent actions move into **More**.
+The project name, Undo, Redo, and Export remain available. Less frequent actions move into **More**.
 
 ### Scrollable tabs
 
@@ -71,7 +84,7 @@ Open **More**, then choose **Help**. The phone sheet closes and the FigureLoom H
 
 ![FigureLoom Help menu](https://figureloom.org/wiki-assets/help-menu.svg)
 
-Press **?** on desktop or use **More**, then **Help** on a phone to open:
+Press **?** on Desktop or Tablet, or use **More**, then **Help** on a phone to open:
 
 - Search the full manual
 - Start here
