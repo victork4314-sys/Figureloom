@@ -15,7 +15,7 @@ This page separates normal supported workflows from areas that still require ano
 
 ### Important limitation
 
-A visual export such as PNG, SVG, or PowerPoint is not a replacement for the editable project backup.
+A visual export such as SVG is not a replacement for the editable project backup.
 
 ## Image import
 
@@ -44,7 +44,7 @@ FigureLoom is not a full raster-image editor. Perform scientific image processin
 
 ### Limitations
 
-- Not a complete Illustrator-style Bézier-handle system
+- Not a complete Illustrator-style Bezier-handle system
 - Advanced arbitrary Boolean operations may require a dedicated vector editor
 - Complex imported SVG behavior can vary
 
@@ -97,6 +97,8 @@ Many common slide elements, including:
 ### Limitations
 
 Complex slide masters, SmartArt, WordArt, animations, transitions, embedded media, theme behavior, nested transformations, and advanced chart features may not convert exactly.
+
+PowerPoint import is supported separately from export. The current export panel does not create a `.pptx` file.
 
 ## Chart and table objects
 
@@ -177,21 +179,21 @@ FigureLoom is not a GIS. It does not replace spatial analysis, projection manage
 
 ### Supported
 
-- SVG
-- Standard PNG
-- High-resolution or print PNG
-- PowerPoint
-- Complete editable project backup
-- Reference and attribution output
+- **Export all pages as SVG**, producing one editable SVG for every page
+- **Editable SVG (per page)** for the active page
+- Optional physical print dimensions in SVG output
+- Optional exported editor grid
+- Complete editable `.figureloom` project backup
+- Reference and attribution output where available
 - Publication readiness report
 - Presentation mode
 - Starter SBGN-ML, BioPAX, and SBML pathway exchange
 
 ### Limitations
 
-- Compatibility PowerPoint output can use a high-resolution page image rather than native PowerPoint objects
-- Not every editable-first export element remains native
-- PDF and TIFF may require opening an SVG, PNG, or PowerPoint in another application
+- The current export panel does not directly create PNG, PDF, TIFF, or PowerPoint files
+- Those formats require conversion in another application when needed
+- Fonts and complex SVG behavior can change in another application
 - Pathway exchange requires specialist validation
 - Journal acceptance is never guaranteed
 
@@ -204,18 +206,41 @@ FigureLoom is not a GIS. It does not replace spatial analysis, projection manage
 - Encrypted cloud gallery
 - Owner, editor, reviewer, and viewer roles
 - Pending email invitations
-- Expiring share links
-- Authenticated presence and remote cursors
+- Expiring guest links
+- Guest joining with a display name and no email account
+- Optional 4 to 12 digit guest-link PIN
+- Authenticated or temporary guest presence and remote cursors
 - Encrypted edit broadcasts
 - Persistent review comments
 - Conflict controls
 
 ### Limitations
 
+- The owner must sign in and save the project to the cloud before creating a guest link
+- Guest access depends on anonymous authentication being enabled for the deployment
 - Application-layer encryption is not zero knowledge
 - Project titles and permission metadata remain visible
 - Offline users cannot synchronize
-- Removing access cannot delete files already downloaded by a collaborator
+- Removing access cannot delete files already downloaded by another person
+
+## MCP and AI access
+
+### Supported
+
+- Project-specific hosted MCP connection links
+- Read-only or full editor access
+- Separate permission for destructive actions
+- Current command discovery
+- Normal history and save paths for successful write commands
+- Immediate revocation of a connection link
+
+### Limitations
+
+- A FigureLoom account and cloud-backed project are required for the hosted connection
+- The matching project must remain open while commands are being processed
+- Client support for remote MCP servers varies
+- A copied connection link contains authorization and must be treated as private
+- Switching projects revokes the old project authorization
 
 ## Offline use
 
@@ -227,20 +252,22 @@ FigureLoom is not a GIS. It does not replace spatial analysis, projection manage
 
 ### Limitations
 
-- Cloud, authentication, collaboration, outside libraries, MathJax, and optional providers may need network access
+- Cloud, authentication, collaboration, hosted MCP, outside libraries, MathJax, and optional providers may need network access
 - Browser storage can be removed by cleanup or eviction
 
-## Phone mode
+## Interface modes
 
 ### Supported
 
-- Phone-specific layout
-- Touch-friendly panels
-- Safe areas
-- Bottom dock
+- Automatic mode
+- Desktop mode
+- Tablet mode
+- Phone mode
+- Touch-friendly panels and safe areas
+- Bottom dock in Phone mode
 - Canvas zoom and pan
 - Object movement
-- Full-screen Add and Export surfaces
+- Full-screen Add and Export surfaces on phones
 - Accessible passive guide controls
 
 ### Limitations
