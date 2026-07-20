@@ -1,19 +1,15 @@
 (() => {
-  if (window.__figureLoomMcpCurrentScreenshotV1) return;
+  if (window.__figureLoomMcpCurrentScreenshotV2) return;
+  window.__figureLoomMcpCurrentScreenshotV2 = true;
   window.__figureLoomMcpCurrentScreenshotV1 = true;
 
-  const nextFrame = () => new Promise(resolve => requestAnimationFrame(() => resolve()));
+  const nextFrame = () => new Promise(resolve => requestAnimationFrame(resolve));
 
   async function settleCurrentPage() {
     try { window.syncPage?.(); } catch {}
     try { window.render?.(); } catch {}
     await nextFrame();
-    try { window.FigureLoomFinalSessionPolishV2?.repairRenderedText?.(); } catch {}
-    await nextFrame();
-    try { window.render?.(); } catch {}
-    await nextFrame();
-    try { await document.fonts?.ready; } catch {}
-    try { window.FigureLoomFinalSessionPolishV2?.repairRenderedText?.(); } catch {}
+    try { await window.FigureLoomFinalSessionPolishV2?.settleTextBounds?.(); } catch {}
     await nextFrame();
   }
 
@@ -38,7 +34,7 @@
     if (!commands?.register || !commands?.renderPage) return false;
 
     commands.register('view.screenshot', {
-      description:'Capture the current active FigureLoom page as a PNG screenshot after the latest edits have rendered.',
+      description:'Capture the current active FigureLoom page as a PNG screenshot after the latest edits and text bounds have settled.',
       category:'view',
       inputSchema:{ scale:'number', includeGrid:'boolean' },
       run:currentScreenshot
