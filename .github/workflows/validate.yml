@@ -28,6 +28,7 @@ jobs:
           node --check tests/smoke.spec.js
           node --check tests/help-center-theme.spec.js
           node --check tests/today-ui-stability.spec.js
+          node --check tests/final-session-polish.spec.js
           node --check tests/runtime-console.spec.js
 
       - name: Check required application files
@@ -103,12 +104,14 @@ jobs:
           test -f figureloom-sage-theme.js
           test -f today-ui-stability.js
           test -f passive-guide-expanded.js
+          test -f final-session-polish.js
           test -f wiki/index.html
           test -f wiki/wiki.css
           test -f wiki/wiki.js
           test -f scripts/validate-help-center.mjs
           test -f tests/help-center-theme.spec.js
           test -f tests/today-ui-stability.spec.js
+          test -f tests/final-session-polish.spec.js
           test -f tests/runtime-console.spec.js
           test -f supabase/schema.sql
           test -f supabase/share-links.sql
@@ -140,8 +143,8 @@ jobs:
         run: npm install --no-audit --no-fund
       - name: Install Chromium
         run: npx playwright install --with-deps chromium
-      - name: Check project tabs, Phone Help, passive guide, and console
-        run: npx playwright test tests/today-ui-stability.spec.js
+      - name: Check project tabs, text bounds, MCP presence, Phone Help, passive guide, and console
+        run: npx playwright test tests/today-ui-stability.spec.js tests/final-session-polish.spec.js
       - name: Upload focused browser results and traces
         if: always()
         uses: actions/upload-artifact@v6
@@ -173,4 +176,3 @@ jobs:
         with:
           name: playwright-results
           path: test-results
-          if-no-files-found: warn
