@@ -2,7 +2,7 @@
 
 An account is optional. The local editor, local gallery, autosave, project backups, imports, and exports work without signing in.
 
-Accounts add encrypted cloud projects and collaboration features.
+Accounts add encrypted cloud projects, account invitations, hosted MCP, and collaboration controls. Guest links allow another person to join a shared project without creating an email account.
 
 ## Creating an account
 
@@ -68,13 +68,13 @@ Keep a downloaded `.figureloom` backup as a separate copy.
 
 The editable project payload and persistent collaboration comment bodies are encrypted with AES-GCM in the browser before storage.
 
-A protected database function verifies membership and provides a stable project-specific key to an authorized signed-in user.
+A protected database function verifies membership and provides a stable project-specific key to an authorized signed-in or accepted guest session.
 
 This is application-layer encryption, not a zero-knowledge system. A privileged database operator can derive project keys. Protect database credentials and backups.
 
 ## Visible cloud metadata
 
-The gallery needs some unencrypted metadata to function.
+The gallery and access system need some unencrypted metadata to function.
 
 This can include:
 
@@ -83,9 +83,7 @@ This can include:
 - Timestamps
 - Role
 - Revision number
-- Membership and invitation records
-
-Cloud gallery thumbnails are not required for the encrypted project gallery.
+- Membership, invitation, guest-link, and connection records
 
 ## Roles
 
@@ -96,36 +94,58 @@ Cloud gallery thumbnails are not required for the encrypted project gallery.
 | Editor | Yes | Yes | Yes | Yes | No |
 | Owner | Yes | Yes | Yes | Yes | Yes |
 
-## Inviting by email
+## Inviting an account by email
 
-The owner can enter a collaborator's email address and choose a role.
+The owner can enter a person's email address and choose a role.
 
 - If the account already exists, access can be added immediately.
 - If the account does not exist, the invitation can remain pending for that email.
 - When the exact email creates an account, access can activate automatically.
 
-The project invitation system reserves access. The owner may still need to send the FigureLoom link to the collaborator separately.
+Email invitations are for people who will use a normal FigureLoom account.
 
-## Sharing by secure link
+## Sharing with a guest link
 
-An owner can create an expiring link for a viewer, reviewer, or editor.
+A guest link is different from an email invitation.
 
-Link behavior includes:
+The owner must:
 
-- The recipient signs in before access is granted.
-- The raw token appears in the generated URL.
-- The service stores a hash of the token rather than the raw token.
-- Links can expire after a chosen period.
-- Owners can revoke active project links.
-- Accepting a link does not reduce an existing stronger role.
+1. Sign in.
+2. Save or open the project as a cloud project.
+3. Open Share or Live Collaboration.
+4. Choose the guest role and expiry.
+5. Add an optional numeric PIN containing 4 to 12 digits.
+6. Press **Create link**.
+7. Send the generated link and, when used, the PIN through an appropriate channel.
 
-Treat a share link like an invitation. Send it through an appropriate channel and revoke it when it is no longer needed.
+The recipient opens the link and enters a display name. No email account or password is required for the guest join flow.
+
+The deployment creates a temporary guest session, checks the link and optional PIN, grants the selected project role, and opens the encrypted project.
+
+## Guest-link safety
+
+The raw share token appears in the generated URL. The service stores a hash of the token rather than the raw token.
+
+- Treat the URL like an invitation credential.
+- Do not post it publicly.
+- Send the PIN separately when extra protection matters.
+- Use the smallest role needed.
+- Choose a short expiry for temporary work.
+- Revoke links that are no longer needed.
+
+Accepting a guest link does not reduce a stronger role that the same session already has.
+
+## Revoking guest links
+
+The owner can revoke active guest links from the collaboration controls.
+
+Revocation stops future use of those links. It does not remotely delete project backups or exports that were already downloaded.
 
 ## Presence and remote cursors
 
-Project members can see named presence and remote cursors in an active shared project.
+Accepted project members and guests can see named presence and remote cursors in an active shared project according to the deployment and role permissions.
 
-Presence shows who is connected. A remote cursor shows another member's current location in the project.
+Presence shows who is connected. A remote cursor shows another participant's current location in the project.
 
 ## Live editing
 
@@ -149,22 +169,22 @@ Comment bodies are encrypted before storage. Comment metadata still needs enough
 A safe collaboration routine is:
 
 1. Owner saves the first cloud copy.
-2. Owner invites members with the smallest role they need.
-3. Each person downloads a local backup before a major session.
+2. Owner grants the smallest role each person needs.
+3. Each editor downloads a local backup before a major session.
 4. Editors avoid making unrelated large changes at the same time.
 5. Reviewers use comments instead of editing when possible.
 6. The owner creates checkpoints before accepting large revisions.
-7. The team resolves conflicts deliberately.
+7. The group resolves conflicts deliberately.
 8. The owner exports and archives the final project.
 
 ## Removing access
 
-Owners manage project membership and share links.
+Owners manage project membership, email invitations, and guest links.
 
 After removing access:
 
-- Confirm the member no longer appears in the project.
-- Revoke active share links if necessary.
+- Confirm the member or guest no longer appears in the project.
+- Revoke active guest links if necessary.
 - Remember that previously downloaded exports or project backups cannot be remotely deleted.
 
 ## Profile picture choices
@@ -185,14 +205,20 @@ If cloud features are unavailable:
 
 Do not repeatedly press cloud save during an outage. Download a `.figureloom` backup and retry when the service is available.
 
+## Guest link says access is not enabled
+
+The deployment must allow anonymous authentication for temporary guest sessions and must include the guest-link database functions and policies.
+
+The owner can still invite an ordinary email account when guest access is unavailable.
+
 ## Privacy notes
 
 Do not put secrets, patient identifiers, or restricted data into a shared project unless the deployment and workflow have been approved for that information.
 
-Encryption protects stored payloads from ordinary exposure, but collaboration still involves accounts, metadata, browser sessions, and authorized users.
+Encryption protects stored payloads from ordinary exposure, but collaboration still involves accounts or temporary guest sessions, metadata, browser sessions, and authorized users.
 
 See [Privacy, security, and offline use](Privacy-Security-and-Offline-Use).
 
 ## Deployment details
 
-Administrators should read [Self-hosting and deployment](Self-Hosting-and-Deployment) and the repository's cloud setup document before enabling accounts publicly.
+Administrators should read [Self-hosting and deployment](Self-Hosting-and-Deployment) and the repository's cloud setup document before enabling accounts, guest links, collaboration, or hosted MCP publicly.
