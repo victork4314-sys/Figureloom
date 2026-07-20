@@ -1,4 +1,4 @@
-const FIGURELOOM_BUILD_ID = "stable-71d36df-locked-20260720-v66";
+const FIGURELOOM_BUILD_ID = "stable-71d36df-locked-20260720-v67";
 const FIGURELOOM_CACHE_PREFIX = "figureloom-app-";
 const FIGURELOOM_CACHE_NAME = `${FIGURELOOM_CACHE_PREFIX}${FIGURELOOM_BUILD_ID}`;
 const LEGACY_CACHE_PREFIXES = ["figureloom-shell", "scicanvas-shell"];
@@ -17,7 +17,7 @@ self.addEventListener("install", event => {
       cache.add(new Request("./styles.css", { cache:"reload" })),
       cache.add(new Request("./app.js", { cache:"reload" })),
       cache.add(new Request("./pptx-export.js", { cache:"reload" })),
-      cache.add(new Request("./export-menu-final.js?v=20260720-v2", { cache:"reload" })),
+      cache.add(new Request("./export-menu-final.js?v=20260720-v3", { cache:"reload" })),
       cache.add(new Request("./export-svg-placement.js", { cache:"reload" })),
       cache.add(new Request("./safe-refresh.js", { cache:"reload" })),
       cache.add(new Request("./safe-refresh.js?v=stable-71d36df-locked-20260720-v64", { cache:"reload" })),
