@@ -4,6 +4,8 @@ import type { CommandContext, CommandDescriptor, FigureObject, FigurePage, Figur
 
 type ExtraDefinition={description:string;category:string;write?:boolean;destructive?:boolean};
 type TemplateDefinition={id:string;name:string;description:string;objects:Array<Record<string,unknown>>};
+type ScratchComment={id:string;text:string;author:string;createdAt:string};
+type ScratchSettings={defaultFont:string;theme:unknown;guides:unknown[];snap:boolean};
 
 const EXTRA_DEFINITIONS:Record<string,ExtraDefinition>={
   'project.snapshot':{description:'Return a complete portable scratch project snapshot',category:'projects'},
@@ -34,8 +36,8 @@ const EXTRA_DEFINITIONS:Record<string,ExtraDefinition>={
   'review.comments.list':{description:'List scratch review comments',category:'review'},
   'review.comments.add':{description:'Add a scratch review comment',category:'review',write:true},
   'share.status':{description:'Get scratch sharing status',category:'share'},
-  'share.session.start':{description:'Start scratch sharing',category:'share',write:true},
-  'share.session.stop':{description:'Stop scratch sharing',category:'share',write:true},
+  'share.session.start':{description:'Start scratch sharing',category:'share'},
+  'share.session.stop':{description:'Stop scratch sharing',category:'share'},
   'share.invite':{description:'Invite a collaborator to scratch',category:'share',write:true},
   'ai.status':{description:'Get deterministic scratch AI helper status',category:'ai'},
   'ai.run':{description:'Build, review, or rewrite using the deterministic scratch helper',category:'ai',write:true},
@@ -88,14 +90,12 @@ const EXTRA_COMMANDS:CommandDescriptor[]=Object.entries(EXTRA_DEFINITIONS).map((
 const EXTRA_MAP=new Map(EXTRA_COMMANDS.map(command=>[command.name,command]));
 const clone=<T>(value:T):T=>structuredClone(value);
 const finite=(value:unknown,fallback=0)=>Number.isFinite(Number(value))?Number(value):fallback;
-const unique=(values:unknown)=>Array.isArray(values)?[...new Set(values.map(String))]:[];
+const unique=(values:unknown):string[]=>Array.isArray(values)?[...new Set(values.map(String))]:[];
 
 export class ExtendedScratchWorkspace extends ScratchWorkspace {
   private objectClipboard:FigureObject[]=[];
   private textClipboard='';
-  private comments:Array<{id:string;text:string;author:string;createdAt:string}>=[];
   private sharing=false;
-  private settings={defaultFont:'Inter',theme:null as unknown,guides:[] as unknown[],snap:true};
 
   override listCommands():CommandDescriptor[] {
     const merged=new Map(super.listCommands().map(command=>[command.name,command]));
@@ -103,20 +103,31 @@ export class ExtendedScratchWorkspace extends ScratchWorkspace {
     return [...merged.values()].sort((a,b)=>a.name.localeCompare(b.name));
   }
 
-  private geometry(item:FigureObject){return{x:finite(item.x),y:finite(item.y),w:finite(item.width),h:finite(item.height),rotation:finite(item.rotation)};}
-  private result(item:FigureObject){return{id:item.id,type:item.type,name:item.name||item.type,geometry:this.geometry(item),object:clone(item)};}
+  private geometryOf(item:FigureObject){return{x:finite(item.x),y:finite(item.y),w:finite(item.width),h:finite(item.height),rotation:finite(item.rotation)};}
+  private result(item:FigureObject){return{id:item.id,type:item.type,name:item.name||item.type,geometry:this.geometryOf(item),object:clone(item)};}
   private ids(value:unknown){return unique(value).filter(id=>this.object(id));}
+  private metadata():Record<string,unknown>{this.project().metadata??={};return this.project().metadata;}
+  private settings():ScratchSettings {
+    const value=this.metadata().mcpScratchSettings;
+    return {defaultFont:'Inter',theme:null,guides:[],snap:true,...(value&&typeof value==='object'?clone(value as Partial<ScratchSettings>):{})};
+  }
+  private saveSettings(value:ScratchSettings):void {this.metadata().mcpScratchSettings=clone(value);}
+  private comments():ScratchComment[]{const value=this.metadata().mcpScratchComments;return Array.isArray(value)?clone(value as ScratchComment[]):[];}
+  private saveComments(value:ScratchComment[]):void {this.metadata().mcpScratchComments=clone(value);}
   private newObject(input:Record<string,unknown>):FigureObject {
     const type=String(input.type||'shape');
-    return {
+    const item={
       id:`obj-${randomUUID()}`,type,name:String(input.name||type),x:finite(input.x),y:finite(input.y),
       width:Math.max(1,finite(input.width??input.w,type==='text'?220:200)),height:Math.max(1,finite(input.height??input.h,type==='text'?60:120)),
       rotation:finite(input.rotation),opacity:Math.max(0,Math.min(1,finite(input.opacity,1))),fill:String(input.fill||'#8ea0ff'),stroke:String(input.stroke||'#26324a'),visible:input.visible!==false,locked:Boolean(input.locked),...clone(input)
     } as FigureObject;
+    item.id=`obj-${randomUUID()}`;
+    item.type=type;
+    item.width=Math.max(1,finite(item.width,1));
+    item.height=Math.max(1,finite(item.height,1));
+    return item;
   }
-  private async checkpoint(context:CommandContext):Promise<void> {
-    await super.execute('document.rename',{title:this.project().title},context);
-  }
+  private async checkpoint(context:CommandContext):Promise<void> {await super.execute('document.rename',{title:this.project().title},context);}
   private assertExtra(command:CommandDescriptor,context:CommandContext):void {
     if(command.write&&context.readOnly)throw new Error('This MCP session is read-only.');
     if(command.destructive&&!context.allowDestructive)throw new Error('This destructive action is not authorized.');
@@ -164,13 +175,15 @@ export class ExtendedScratchWorkspace extends ScratchWorkspace {
       case'project.snapshot':case'document.get_full':return this.fullProject();
       case'document.metadata.get':return clone(this.project().metadata||{});
       case'document.metadata.set':this.project().metadata=args.replace?clone(args.metadata||{}):{...(this.project().metadata||{}),...clone(args.metadata||{})};return clone(this.project().metadata);
-      case'document.settings.get':return{projectSize:clone(this.project().projectSize),defaultFont:this.settings.defaultFont,theme:clone(this.settings.theme),guides:clone(this.settings.guides),snap:this.settings.snap,...await super.execute('view.get',{},context)};
+      case'document.settings.get':{const settings=this.settings();return{projectSize:clone(this.project().projectSize),...settings,...await super.execute('view.get',{},context)};}
       case'document.settings.set':{
+        const settings=this.settings();
         if(args.projectSize&&typeof args.projectSize==='object')this.project().projectSize={...this.project().projectSize,...clone(args.projectSize)};
-        if(typeof args.defaultFont==='string'&&args.defaultFont.trim())this.settings.defaultFont=args.defaultFont.trim();
-        if(args.theme!==undefined)this.settings.theme=clone(args.theme);
-        if(Array.isArray(args.guides))this.settings.guides=clone(args.guides);
-        if(typeof args.snap==='boolean')this.settings.snap=args.snap;
+        if(typeof args.defaultFont==='string'&&args.defaultFont.trim())settings.defaultFont=args.defaultFont.trim();
+        if(args.theme!==undefined)settings.theme=clone(args.theme);
+        if(Array.isArray(args.guides))settings.guides=clone(args.guides);
+        if(typeof args.snap==='boolean')settings.snap=args.snap;
+        this.saveSettings(settings);
         await super.execute('view.set',{zoom:args.zoom,grid:args.grid,smartGuides:args.smartGuides},context);
         return this.execute('document.settings.get',{},context);
       }
@@ -182,7 +195,7 @@ export class ExtendedScratchWorkspace extends ScratchWorkspace {
         if(args.metadata!==undefined)(page as FigurePage&{metadata?:Record<string,unknown>}).metadata=args.replaceMetadata?clone(args.metadata):{...((page as FigurePage&{metadata?:Record<string,unknown>}).metadata||{}),...clone(args.metadata||{})};
         return this.pageState(this.pages().indexOf(page));
       }
-      case'page.list_objects':{const page=this.page(Number.isInteger(Number(args.index))?Number(args.index):this.project().activePage);return page.objects.map(item=>({id:item.id,type:item.type,name:item.name||item.type,geometry:this.geometry(item),visible:item.visible!==false,locked:Boolean(item.locked),groupId:item.groupId||null,fromId:item.fromId||null,toId:item.toId||null}));}
+      case'page.list_objects':{const page=this.page(Number.isInteger(Number(args.index))?Number(args.index):this.project().activePage);return page.objects.map(item=>({id:item.id,type:item.type,name:item.name||item.type,geometry:this.geometryOf(item),visible:item.visible!==false,locked:Boolean(item.locked),groupId:item.groupId||null,fromId:item.fromId||null,toId:item.toId||null}));}
       case'connector.list':return this.objects().filter(item=>item.type==='connector').map(item=>this.result(item));
       case'connector.create':{
         const from=this.object(String(args.fromId||'')),to=this.object(String(args.toId||''));if(!from||!to)throw new Error('Both connector endpoints must exist.');
@@ -195,16 +208,26 @@ export class ExtendedScratchWorkspace extends ScratchWorkspace {
       case'clipboard.get':return{available:true,text:this.textClipboard};
       case'clipboard.write_text':this.textClipboard=String(args.text||'');return{written:true,length:this.textClipboard.length};
       case'assets.search_all':return super.execute('assets.search',args,context);
-      case'asset.insert_external':{const entry=args.entry||{};const assetId=String(entry.asset?.id||entry.id||args.assetId||'');if(assetId)return super.execute('asset.insert',{assetId,x:args.x,y:args.y,width:args.width,height:args.height},context);return this.result(this.newObject({type:'svg',name:entry.name||entry.label||'Imported asset',svgSource:String(entry.svgSource||''),x:finite(args.x,420),y:finite(args.y,240),width:Math.max(1,finite(args.width,230)),height:Math.max(1,finite(args.height,180))}));}
+      case'asset.insert_external':{
+        const entry=args.entry||{};const assetId=String(entry.asset?.id||entry.id||args.assetId||'');
+        const item=assetId
+          ?this.newObject({type:'science',asset:assetId,name:entry.name||entry.label||assetId,x:finite(args.x,420),y:finite(args.y,240),width:Math.max(1,finite(args.width,230)),height:Math.max(1,finite(args.height,180)),fill:args.fill||'#7c8cf5',stroke:args.stroke||'#26324a',metadata:clone(entry.metadata||{})})
+          :this.newObject({type:'svg',name:entry.name||entry.label||'Imported asset',svgSource:String(entry.svgSource||''),x:finite(args.x,420),y:finite(args.y,240),width:Math.max(1,finite(args.width,230)),height:Math.max(1,finite(args.height,180)),metadata:clone(entry.metadata||{})});
+        this.objects().push(item);await super.execute('selection.set',{ids:[item.id]},context);return this.result(item);
+      }
       case'template.list':return TEMPLATES.map(template=>({id:template.id,name:template.name,description:template.description,objectCount:template.objects.length}));
       case'template.get':{const template=TEMPLATES.find(item=>item.id===String(args.id));if(!template)throw new Error('Template not found.');return clone(template);}
       case'template.apply':{const template=TEMPLATES.find(item=>item.id===String(args.id));if(!template)throw new Error('Template not found.');const objects=template.objects.map(value=>this.newObject(value));if(args.destination==='new-page'){const page:FigurePage={id:`page-${randomUUID()}`,name:String(args.name||template.name),objects};this.pages().push(page);this.project().activePage=this.pages().length-1;}else{this.page().objects=objects;if(args.rename!==false)this.page().name=String(args.name||template.name);}await super.execute('selection.set',{ids:[]},context);return this.pageState();}
-      case'import.project':{const source=clone(args.project||args.data) as Partial<FigureProject>&{documentName?:string};if(!source||!Array.isArray(source.pages))throw new Error('A complete project payload with pages is required.');const current=this.project();current.title=String(source.title||source.documentName||'Imported scratch project');current.pages=source.pages.map(page=>({...clone(page),id:page.id||`page-${randomUUID()}`,objects:(page.objects||[]).map(item=>({...clone(item),id:item.id||`obj-${randomUUID()}`}))}));current.activePage=Math.max(0,Math.min(finite(source.activePage),current.pages.length-1));if(source.projectSize)current.projectSize={...current.projectSize,...clone(source.projectSize)};if(source.metadata)current.metadata=clone(source.metadata);await super.execute('selection.set',{ids:[]},context);return this.pageState();}
+      case'import.project':{
+        const source=clone(args.project||args.data) as Partial<FigureProject>&{documentName?:string};
+        if(!source||!Array.isArray(source.pages)||!source.pages.length)throw new Error('A complete project payload with at least one page is required.');
+        const current=this.project();current.title=String(source.title||source.documentName||'Imported scratch project');current.pages=source.pages.map(page=>({...clone(page),id:page.id||`page-${randomUUID()}`,objects:(page.objects||[]).map(item=>({...clone(item),id:item.id||`obj-${randomUUID()}`}))}));current.activePage=Math.max(0,Math.min(finite(source.activePage),current.pages.length-1));if(source.projectSize)current.projectSize={...current.projectSize,...clone(source.projectSize)};if(source.metadata)current.metadata=clone(source.metadata);await super.execute('selection.set',{ids:[]},context);return this.pageState();
+      }
       case'import.image':{const src=String(args.src||'');if(!src)throw new Error('An image source is required.');const item=this.newObject({type:'image',name:args.name||'Imported image',src,x:finite(args.x),y:finite(args.y),width:Math.max(1,finite(args.width,320)),height:Math.max(1,finite(args.height,220)),rotation:finite(args.rotation),opacity:finite(args.opacity,1),metadata:clone(args.metadata||{})});this.objects().push(item);await super.execute('selection.set',{ids:[item.id]},context);return this.result(item);}
       case'import.data_table':{const rows=Array.isArray(args.rows)?clone(args.rows):[];if(!rows.length)throw new Error('At least one data row is required.');const columns=Array.isArray(args.columns)&&args.columns.length?clone(args.columns):Object.keys(rows[0]||{});const item=this.newObject({type:'table',name:args.name||'Data table',columns,rows,x:finite(args.x,120),y:finite(args.y,120),width:Math.max(1,finite(args.width,720)),height:Math.max(1,finite(args.height,360)),fill:args.fill||'#ffffff',stroke:args.stroke||'#7a8494',metadata:clone(args.metadata||{})});this.objects().push(item);await super.execute('selection.set',{ids:[item.id]},context);return this.result(item);}
       case'review.audit':return this.audit();
-      case'review.comments.list':return clone(this.comments);
-      case'review.comments.add':{const text=String(args.text||'').trim();if(!text)throw new Error('A comment is required.');const comment={id:`comment-${randomUUID()}`,text,author:'MCP scratch session',createdAt:new Date().toISOString()};this.comments.push(comment);return clone(comment);}
+      case'review.comments.list':return this.comments();
+      case'review.comments.add':{const text=String(args.text||'').trim();if(!text)throw new Error('A comment is required.');const comments=this.comments();const comment={id:`comment-${randomUUID()}`,text,author:'MCP scratch session',createdAt:new Date().toISOString()};comments.push(comment);this.saveComments(comments);return clone(comment);}
       case'share.status':return{available:false,scratch:true,live:this.sharing,message:'Scratch projects are isolated inside the MCP process and are not shared with cloud collaborators.'};
       case'share.session.start':this.sharing=true;return{available:false,scratch:true,live:true,message:'Scratch state remains isolated to this MCP session.'};
       case'share.session.stop':this.sharing=false;return{available:false,scratch:true,live:false};
