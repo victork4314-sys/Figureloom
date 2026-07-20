@@ -1,6 +1,17 @@
 # Interface and navigation
 
-FigureLoom uses an office-style editor layout. The exact arrangement changes on a phone, but the project and editing tools are the same.
+FigureLoom uses an office-style editor layout. The exact arrangement changes by interface mode, but the project and editing tools stay the same.
+
+## Interface modes
+
+Open **Settings** to choose:
+
+- **Automatic**, which chooses a mode from the device size and input type
+- **Desktop**, which uses the compact mouse-and-keyboard layout
+- **Tablet**, which keeps the full editor with roomier touch targets
+- **Phone**, which uses the phone dock and sliding panels
+
+Switching modes does not change the project format or project contents.
 
 ## Top line
 
@@ -9,17 +20,21 @@ The top line contains the project name and the controls that need to stay close 
 Common controls include:
 
 - Project name
-- Undo
-- Redo
 - Export
 - Account or profile access
 - Help access
 
-On a phone, the header is deliberately compact. Less common actions move into **More** so the project name, undo, redo, and export controls remain usable.
+On a phone, Undo and Redo also remain in the compact header. Less common actions move into **More**.
+
+## Selected-object actions
+
+On Desktop and Tablet, Undo and Redo sit directly beside Delete in the selected-object action group.
+
+This is the same order in both modes. Tablet uses touch-friendly sizing without moving the controls to another part of the interface.
 
 ## Open project tabs
 
-Open cloud projects appear in the project-tab row. Each tab shows its project title and keeps its own **×** close control directly beside the title.
+Open cloud projects appear in the project-tab row. Each tab shows its project title and keeps its own **×** close control directly beside the title and inside the same bordered tab box.
 
 Closing a tab closes that workspace tab. It does not silently delete the project. FigureLoom shows the available save, export, or delete choices when a close action needs confirmation.
 
@@ -29,16 +44,17 @@ The visible tabs organize the normal editing workflow.
 
 ### Settings
 
-Use Settings for interface behavior and accessibility options.
+Use Settings for interface behavior, appearance, accessibility, and MCP access.
 
 Important controls include:
 
-- Automatic, Desktop and tablet, or Phone interface mode
+- Automatic, Desktop, Tablet, or Phone interface mode
 - Light or dark appearance
 - Text and control sizing
 - Reduced motion
 - Stronger focus indicators
 - Higher contrast and other readability options
+- MCP and AI access for a compatible external assistant
 
 ### Projects
 
@@ -58,7 +74,7 @@ Illustrations opens the searchable scientific artwork library. Some assets are b
 
 ### Other workspaces
 
-Design, Data, Review, and specialist areas may appear directly in the ribbon or inside Pro Tools, depending on the current layout and screen size.
+Arrange, Style, Charts, Check, Share, and specialist areas may appear directly in the ribbon or inside Pro Tools, depending on the current layout and screen size.
 
 ## The canvas
 
@@ -77,7 +93,7 @@ The gray area outside the page is workspace, not part of the exported figure.
 
 ## Left side: pages and layers
 
-On desktop and tablet, the left panel usually contains pages and layers.
+On Desktop and Tablet, the left panel usually contains pages and layers.
 
 Use it to:
 
@@ -124,7 +140,7 @@ Depending on the current mode, it can include:
 - Navigator
 - Check
 
-On supported desktop layouts, the complete toolbar can be dragged as one unit. Start the drag from the bar or its grip rather than from a working button. Its existing collapse control remains separate and still collapses the bar.
+On supported Desktop layouts, the complete toolbar can be dragged as one unit. Start the drag from the bar or its grip rather than from a working button. Its existing collapse control remains separate and still collapses the bar.
 
 ## Pro Tools
 
@@ -133,6 +149,24 @@ Pro Tools groups advanced workspaces so the normal editor does not become a wall
 Workspaces include arranging, data, annotations, components, review, publishing, office import, recovery, advanced science, accounts, collaboration, SVG paths, TeX, and pathway exchange.
 
 See [Pro Tools and advanced science](Pro-Tools-and-Advanced-Science).
+
+## Share and live collaboration
+
+The Share area includes account invitations and guest links.
+
+- Account invitations are tied to an email account.
+- Guest links require only a display name and can use an optional numeric PIN.
+- Create link and Revoke links stay in the same horizontal control row.
+
+See [Accounts, cloud projects, and collaboration](Accounts-Cloud-and-Collaboration).
+
+## MCP and AI access
+
+Open **Settings → MCP & AI access** to connect the current cloud project to a compatible external assistant.
+
+The connection is project-specific, can be read-only or full access, and uses a separate permission for destructive actions.
+
+See [MCP and AI access](MCP-and-AI-Access).
 
 ## Drawers, sheets, and dialogs
 
@@ -146,7 +180,7 @@ To leave one of these areas:
 
 ## Help and passive guide
 
-Press the desktop Help button or open **More**, then choose **Help** in Phone mode. This opens the FigureLoom Help menu with links to the manual, Start here, quick task guides, the visual interface guide, and the passive tour.
+Press the Help button on Desktop or Tablet, or open **More**, then choose **Help** in Phone mode. This opens the FigureLoom Help menu with links to the manual, Start here, quick task guides, the visual interface guide, and the passive tour.
 
 The passive guide has 13 steps:
 
