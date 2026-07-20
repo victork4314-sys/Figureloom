@@ -309,11 +309,14 @@
 
   const style = document.createElement('style');
   style.textContent = `
-    .figureloom-text-layout-controls{margin-top:12px;padding-top:11px;border-top:1px solid #e1e6ee}
+    .figureloom-text-layout-controls{margin-top:12px;padding-top:11px;border-top:1px solid #e1e6ee;min-width:0}
     .figureloom-text-layout-controls h3{margin:0 0 9px;font-size:11px;color:#526077;text-transform:uppercase;letter-spacing:.04em}
-    .figureloom-text-layout-controls select{width:100%;border:1px solid #cfd7e3;border-radius:6px;padding:7px;background:#fff}
+    .figureloom-text-layout-controls select{box-sizing:border-box;width:100%;min-width:0;border:1px solid #cfd7e3;border-radius:6px;padding:7px;background:#fff}
     .text-layout-label{display:block;margin:10px 0 5px;font-size:10px;color:#6e798c}
-    .text-layout-buttons{display:flex;gap:5px}.text-layout-buttons button{flex:1;min-width:0;border:1px solid #cfd7e3;border-radius:7px;background:#f8fafc;padding:7px 3px;font-size:10px}
+    .text-layout-buttons{display:grid;gap:6px;min-width:0}
+    .text-layout-buttons[data-text-horizontal]{grid-template-columns:repeat(2,minmax(0,1fr))}
+    .text-layout-buttons[data-text-vertical]{grid-template-columns:repeat(3,minmax(0,1fr))}
+    .text-layout-buttons button{box-sizing:border-box;width:100%;min-width:0;min-height:34px;border:1px solid #cfd7e3;border-radius:7px;background:#f8fafc;padding:0 7px;font-size:10px;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
     .text-layout-buttons button.active{background:#e8efff;border-color:#7095e0;color:#1e4fa8}
     .text-box-resize-grip{fill:#eef5ff!important}
     html[data-figureloom-theme="dark"] .figureloom-text-layout-controls{border-color:#414854}
