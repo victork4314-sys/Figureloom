@@ -172,7 +172,14 @@
       item.y = Math.round(Number(item.y || 0) / 10) * 10;
     }
     requestAnimationFrame(() => {
-      try { render?.(); } catch (error) { console.error('FigureLoom could not finish moving a text box.', error); }
+      try {
+        render?.();
+      } catch {
+        try {
+          state.drag = null;
+          renderSelection?.();
+        } catch {}
+      }
       try { scheduleSave?.(); } catch {}
     });
   }
