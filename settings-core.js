@@ -1,10 +1,11 @@
 (() => {
-  if (window.__figureLoomSettingsCoreV3) return;
+  if (window.__figureLoomSettingsCoreV4) return;
+  window.__figureLoomSettingsCoreV4 = true;
   window.__figureLoomSettingsCoreV3 = true;
 
   const KEY = 'figureloom-settings-v1';
   const root = document.documentElement;
-  const modes = new Set(['auto','desktop','phone']);
+  const modes = new Set(['auto','desktop','tablet','phone']);
   const sizes = new Set(['standard','large','xlarge']);
   const defaults = () => ({
     interfaceMode:'auto',
@@ -45,10 +46,20 @@
     );
   }
 
+  function desktopDevice() {
+    return Boolean(
+      innerWidth >= 1180 &&
+      window.matchMedia?.('(pointer: fine)').matches &&
+      window.matchMedia?.('(hover: hover)').matches
+    );
+  }
+
   function resolvedMode() {
     if (state.interfaceMode === 'phone') return 'phone';
+    if (state.interfaceMode === 'tablet') return 'tablet';
     if (state.interfaceMode === 'desktop') return 'desktop';
-    return phoneDevice() ? 'phone' : 'desktop';
+    if (phoneDevice()) return 'phone';
+    return desktopDevice() ? 'desktop' : 'tablet';
   }
 
   function dataset(name, enabled) {
@@ -57,10 +68,11 @@
   }
 
   function apply({ persist = true, notify = true } = {}) {
+    const mode = resolvedMode();
     root.lang = 'en';
     root.dataset.figureloomLanguage = 'en';
     root.dataset.figureloomModePreference = state.interfaceMode;
-    root.dataset.figureloomResolvedMode = resolvedMode();
+    root.dataset.figureloomResolvedMode = mode;
     root.dataset.figureloomTextSize = state.textSize;
     dataset('figureloomLargerControls', state.largerControls);
     dataset('figureloomStrongFocus', state.strongFocus);
@@ -69,7 +81,7 @@
     dataset('figureloomUnderlineLinks', state.underlineLinks);
     dataset('figureloomReadableFont', state.readableFont);
     if (persist) save();
-    if (notify) dispatchEvent(new CustomEvent('figureloom-settings-change', { detail:{ ...state, resolvedMode:resolvedMode() } }));
+    if (notify) dispatchEvent(new CustomEvent('figureloom-settings-change', { detail:{ ...state, resolvedMode:mode } }));
   }
 
   function normalize(next) {
@@ -95,7 +107,9 @@
     };
     addEventListener('resize', auto);
     window.matchMedia?.('(pointer: coarse)').addEventListener?.('change', auto);
+    window.matchMedia?.('(pointer: fine)').addEventListener?.('change', auto);
     window.matchMedia?.('(hover: none)').addEventListener?.('change', auto);
+    window.matchMedia?.('(hover: hover)').addEventListener?.('change', auto);
     dispatchEvent(new CustomEvent('figureloom-settings-ready'));
   }
 
