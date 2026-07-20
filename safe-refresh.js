@@ -90,7 +90,6 @@
   const FINAL_ADDONS = [
     "final-session-core.js",
     "final-session-polish-v2.js",
-    "text-no-crop-emergency.js",
     "mcp-current-screenshot.js"
   ];
 
