@@ -5,6 +5,8 @@ on:
     branches: [main]
     paths:
       - 'mcp-*.js'
+      - 'settings-core.js'
+      - 'settings-page.js'
       - 'desktop-density-mode.js'
       - 'mcp-server/**'
       - 'safe-refresh.js'
@@ -13,6 +15,8 @@ on:
   pull_request:
     paths:
       - 'mcp-*.js'
+      - 'settings-core.js'
+      - 'settings-page.js'
       - 'desktop-density-mode.js'
       - 'mcp-server/**'
       - 'safe-refresh.js'
@@ -33,7 +37,7 @@ jobs:
           node-version: 22
           cache: npm
           cache-dependency-path: mcp-server/package.json
-      - name: Check browser MCP and desktop modules
+      - name: Check browser MCP, settings and desktop modules
         run: |
           node --check mcp-command-registry.js
           node --check mcp-project-command-adapter.js
@@ -48,6 +52,8 @@ jobs:
           node --check mcp-office-command-adapter.js
           node --check mcp-hosted-only.js
           node --check mcp-hosted-bridge.js
+          node --check settings-core.js
+          node --check settings-page.js
           node --check desktop-density-mode.js
           node --check safe-refresh.js
           node --check service-worker.js
