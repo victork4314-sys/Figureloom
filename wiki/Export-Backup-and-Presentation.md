@@ -7,13 +7,13 @@ A complete project backup is different from a visual export. Keep both when the 
 ## Before exporting
 
 1. Confirm the final page size.
-2. Run Check or publication readiness.
+2. Run Check or the available readiness checks.
 3. Resolve off-canvas objects and broken connectors.
 4. Review small text and contrast warnings.
 5. Check references and attribution.
 6. Add alt text and a long description where needed.
 7. Download a `.figureloom` backup.
-8. Export the output format.
+8. Export the required SVG output.
 9. Open the exported file outside FigureLoom.
 
 ## Editable project backup
@@ -36,94 +36,76 @@ It preserves editable project information such as:
 
 Use this file to reopen the project later or move it to another device.
 
-## SVG export
+## Export all pages as SVG
 
-SVG is a vector format and is often the best choice for editable scientific artwork.
+**Export all pages as SVG** processes every project page in order and produces one editable SVG for each page. The browser may package the page files together for one download.
 
-Use SVG when:
+Use this option when:
 
-- The publication system accepts vector files.
-- Lines and text must remain sharp.
-- Another vector editor will be used later.
-- Physical dimensions matter.
+- A project contains several figures or slides.
+- Every page needs a separate editable vector file.
+- Page order and consistent naming matter.
+- A coauthor or publisher will open the pages in another vector application.
 
-FigureLoom can export page geometry using physical-size information for poster and print workflows.
+After downloading, confirm that the package contains the same number of SVG files as the project contains pages.
 
-### SVG checks
+## Editable SVG for one page
 
-Open the SVG in a second browser or vector editor and check:
+**Editable SVG (per page)** exports the active page as an editable vector file.
 
+Use it when:
+
+- Only the current page is needed.
+- You are testing an export before processing the entire project.
+- Another vector editor will be used for final adjustments.
+
+SVG keeps lines and text sharp, but another application can substitute fonts or interpret complex SVG features differently.
+
+## Print page dimensions
+
+Enable **Print page dimensions** when the SVG must carry the project's physical width and height for print or poster work.
+
+Check the final dimensions in the program used by the printer or publisher. Browser display size is not the same as physical print size.
+
+## Include editor grid
+
+The grid is normally an editing aid and is not exported.
+
+Enable **Include editor grid** only when the grid is intentionally part of the final figure. Do not enable it merely because snapping was used while editing.
+
+## SVG checks
+
+Open every SVG in a second browser or vector editor and check:
+
+- Page count and page order
+- Physical dimensions
 - Fonts
 - Text wrapping
-- Clipping
+- Text clipping
 - Gradients
 - Images
 - Equations
 - Line widths
 - Transparency
+- Background color
 
-## PNG export
+## Formats not produced directly by the current export panel
 
-PNG is a raster image.
+The current finished export path is centered on editable SVG and project backups. PNG, PDF, TIFF, and PowerPoint output may require opening the exported SVG in another application and saving or converting it there.
 
-Use standard PNG for:
+PowerPoint import remains separate from export. Import support does not mean that a matching PowerPoint export is available.
 
-- Web pages
-- Draft review
-- Documents that do not accept SVG
-- Quick sharing
+When converting elsewhere:
 
-Use the higher-resolution or print option when the output needs more pixels.
-
-### PNG transparency
-
-A transparent page can produce a transparent PNG when the export option and content support it.
-
-Check the PNG against both light and dark backgrounds.
-
-## Print PNG
-
-Print PNG uses a larger raster output based on page size and the available print export setting.
-
-Raster export still has a fixed pixel resolution. For very large posters, SVG is usually safer when the printer accepts it.
-
-## Exporting the grid
-
-The editor grid is normally an editing aid. Enable exported grid only when the grid is intentionally part of the figure.
-
-## PowerPoint export
-
-PowerPoint export creates a `.pptx` with one project page per slide.
-
-The normal compatibility export places a high-resolution image of each page onto a matching slide. This preserves appearance but does not convert every FigureLoom object into a native PowerPoint shape.
-
-Use PowerPoint export for:
-
-- Presentations
-- Coauthor review
-- Slide-based distribution
-- Import into Keynote, LibreOffice Impress, or Google Slides
-
-### PowerPoint checks
-
-Open the file in the intended presentation application and check:
-
-- Slide order
-- Page aspect ratio
-- Image sharpness
-- Backgrounds
-- Transparency
-- Fonts in any separately editable content
-
-## Editable-first PowerPoint options
-
-The Office bridge can provide editable-first or visual-compatibility export paths depending on the current tool and content.
-
-Complex SVG, chart, equation, or imported objects may still be flattened for compatibility. Inspect the file instead of assuming every element is editable.
+- Keep the original SVG files.
+- Confirm the final pixel dimensions for raster output.
+- Confirm the physical dimensions for PDF or print output.
+- Recheck fonts and transparency.
+- Open the converted file before submitting it.
 
 ## Presentation mode
 
-Presentation mode shows project pages full-screen in order.
+Presentation mode shows project pages full-screen in order without changing the project files.
 
 Use it for:
 
@@ -137,18 +119,18 @@ Before presenting:
 - Test page navigation.
 - Hide editing panels.
 - Check text from the expected viewing distance.
-- Keep a PowerPoint or static image fallback.
+- Keep exported SVG files or another static fallback.
 - Avoid relying on a network connection for assets that have not loaded yet.
 
-## Reference and attribution export
+## Reference and attribution output
 
-The review workspace can download collected references and attribution information.
+The review workspace can download collected references and attribution information where that tool is available.
 
 Check the file before publication. Automatic metadata can be incomplete or require reformatting.
 
 ## Publication readiness report
 
-The report records warnings such as missing alt text, unresolved comments, small text, off-canvas objects, broken connectors, external assets, and incomplete reference workflow.
+The report can record warnings such as missing alt text, unresolved comments, small text, off-canvas objects, broken connectors, external assets, and incomplete reference workflow.
 
 A clean report does not guarantee acceptance by a journal or printer.
 
@@ -162,28 +144,15 @@ The active page can be mapped to starter structures such as:
 
 Open the result in a specialist pathway tool and validate it. FigureLoom diagrams are visually flexible, so not every object has a precise domain model.
 
-## Exporting several pages
-
-PowerPoint and presentation mode preserve page order.
-
-For separate SVG or PNG files, export each page and use a consistent naming pattern:
-
-```text
-Study-overview-page-01.svg
-Study-overview-page-02.svg
-Study-overview-page-03.svg
-```
-
 ## File naming
 
-Use names that identify the content and version.
+Use names that identify the content, page, and version.
 
 Examples:
 
 ```text
-Figure-3-host-pathogen-final.svg
-Conference-poster-print.png
-Study-workflow-review.pptx
+Figure-3-host-pathogen-page-01.svg
+Conference-poster-final.svg
 Study-workflow-source.figureloom
 ```
 
@@ -191,7 +160,7 @@ Avoid filenames such as `final-final-2-really-final`.
 
 ## Export privacy
 
-Exports can contain project text, images, references, comments, metadata, or embedded data depending on format.
+Exports can contain project text, images, references, comments, metadata, or embedded data depending on the workflow.
 
 Before sharing:
 
@@ -220,13 +189,14 @@ Wait for the export to complete before switching tabs. If it repeatedly fails:
 
 1. Download a project backup.
 2. Reload FigureLoom.
-3. Try one page.
+3. Test **Editable SVG (per page)** on one page.
 4. Remove unused large assets.
-5. Try SVG or standard PNG before a very large raster export.
+5. Try **Export all pages as SVG** again.
 
 ## Final export checklist
 
-- Correct page and page order
+- Correct number of pages
+- Correct page order
 - Correct physical size
 - Correct background
 - No clipped objects
