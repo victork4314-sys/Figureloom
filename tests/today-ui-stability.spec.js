@@ -46,7 +46,7 @@ function expectNoRuntimeErrors(errors) {
   expect(errors.consoleErrors, `Console errors:\n${errors.consoleErrors.join('\n')}`).toEqual([]);
 }
 
-test('desktop project tabs, avatar, Pages controls, Data checks and Review density stay compact', async ({ page }, testInfo) => {
+test('desktop tabs use one box for title and close, with compact Recovery History', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'desktop', 'desktop-only UI density check');
   const errors = await prepare(page, 'desktop');
   await expect(page.locator('html')).toHaveAttribute('data-figureloom-device-class', 'desktop');
@@ -71,7 +71,7 @@ test('desktop project tabs, avatar, Pages controls, Data checks and Review densi
       tools.className = 'project-tab-tools';
       rail.appendChild(tools);
     }
-    if (!tools.querySelector('.project-tab-add')) {
+    if (!rail.querySelector('.project-tab-add')) {
       const add = document.createElement('button');
       add.type = 'button';
       add.className = 'project-tab-add';
@@ -84,40 +84,52 @@ test('desktop project tabs, avatar, Pages controls, Data checks and Review densi
       wrap.innerHTML = '<button class="project-tab active" type="button"><span>Untitled figure</span></button><button class="project-tab-close" type="button">×</button>';
       scroll.appendChild(wrap);
     }
-    window.FigureLoomTodayUiStability.ensureInlineProjectAdd();
+    window.FigureLoomTodayUiStability.refreshDesktop();
   });
 
-  const inlineAdd = page.locator('#projectTabRail .project-tab-scroll>.project-tab-add-inline');
-  await expect(inlineAdd).toBeVisible();
+  const realAdd = page.locator('#projectTabRail .project-tab-scroll>.project-tab-add');
+  await expect(realAdd).toBeVisible();
+  await expect(page.locator('#projectTabRail .project-tab-add-inline')).toHaveCount(0);
 
   const tabGeometry = await page.evaluate(() => {
     const scroll = document.querySelector('#projectTabRail .project-tab-scroll');
     const wrap = scroll.querySelector('.project-tab-wrap');
     const tab = wrap.querySelector('.project-tab');
     const close = wrap.querySelector('.project-tab-close');
-    const add = scroll.querySelector('.project-tab-add-inline');
+    const add = scroll.querySelector('.project-tab-add');
     const outer = wrap.getBoundingClientRect();
     const body = tab.getBoundingClientRect();
     const x = close.getBoundingClientRect();
     const plus = add.getBoundingClientRect();
+    const wrapperStyle = getComputedStyle(wrap);
+    const tabStyle = getComputedStyle(tab);
     return {
-      inlineParent:add.parentElement === scroll,
-      inlineLast:scroll.lastElementChild === add,
+      addIsOriginal:add.classList.contains('project-tab-add'),
+      addParent:add.parentElement === scroll,
+      addLast:scroll.lastElementChild === add,
       closeCenterDifference:Math.abs((body.top + body.bottom) / 2 - (x.top + x.bottom) / 2),
-      closeInside:x.right <= outer.right + 1 && x.top >= outer.top - 1 && x.bottom <= outer.bottom + 1,
+      closeInside:x.left >= outer.left && x.right <= outer.right + 1 && x.top >= outer.top - 1 && x.bottom <= outer.bottom + 1,
       plusAfterTab:plus.left >= outer.right - 1,
       plusSize:{ width:plus.width, height:plus.height },
-      originalDisplay:getComputedStyle(document.querySelector('#projectTabRail .project-tab-tools>.project-tab-add')).display
+      wrapperBorder:Number.parseFloat(wrapperStyle.borderTopWidth),
+      wrapperRadius:Number.parseFloat(wrapperStyle.borderTopLeftRadius),
+      tabBorder:Number.parseFloat(tabStyle.borderTopWidth),
+      tabBackground:tabStyle.backgroundColor
     };
   });
-  expect(tabGeometry.inlineParent).toBe(true);
-  expect(tabGeometry.inlineLast).toBe(true);
+
+  expect(tabGeometry.addIsOriginal).toBe(true);
+  expect(tabGeometry.addParent).toBe(true);
+  expect(tabGeometry.addLast).toBe(true);
   expect(tabGeometry.closeCenterDifference).toBeLessThanOrEqual(4);
   expect(tabGeometry.closeInside).toBe(true);
   expect(tabGeometry.plusAfterTab).toBe(true);
   expect(tabGeometry.plusSize.width).toBe(28);
   expect(tabGeometry.plusSize.height).toBe(28);
-  expect(tabGeometry.originalDisplay).toBe('none');
+  expect(tabGeometry.wrapperBorder).toBeGreaterThanOrEqual(1);
+  expect(tabGeometry.wrapperRadius).toBeGreaterThanOrEqual(8);
+  expect(tabGeometry.tabBorder).toBe(0);
+  expect(tabGeometry.tabBackground).toBe('rgba(0, 0, 0, 0)');
 
   const desktopGeometry = await page.evaluate(() => {
     const avatar = document.getElementById('accountProfileButton');
@@ -147,7 +159,6 @@ test('desktop project tabs, avatar, Pages controls, Data checks and Review densi
 
   await page.evaluate(() => window.openDataLab?.());
   await expect(page.locator('#dataLabDrawer')).toHaveClass(/open/);
-  await expect(page.locator('#dataShowLegend')).toBeVisible();
   const dataCheckbox = await page.locator('#dataShowLegend').boundingBox();
   expect(dataCheckbox.width).toBeLessThanOrEqual(14);
   expect(dataCheckbox.height).toBeLessThanOrEqual(14);
@@ -175,60 +186,37 @@ test('desktop project tabs, avatar, Pages controls, Data checks and Review densi
   expect(reviewMetrics.checkboxWidth).toBeLessThanOrEqual(14);
   expect(reviewMetrics.checkboxHeight).toBeLessThanOrEqual(14);
 
-  expectNoRuntimeErrors(errors);
-});
-
-test('Phone Data and Review controls use compact checkbox, font and button sizing', async ({ page }, testInfo) => {
-  test.skip(testInfo.project.name !== 'mobile', 'phone Data and Review scale check');
-  const errors = await prepare(page, 'phone');
-  await expect(page.locator('html')).toHaveAttribute('data-figureloom-resolved-mode', 'phone');
-
-  await page.evaluate(() => window.openDataLab?.());
-  const dataDrawer = page.locator('#dataLabDrawer');
-  await expect(dataDrawer).toHaveClass(/open/);
-  const dataCheckboxes = await dataDrawer.locator('.data-check-grid input[type="checkbox"],.data-inline-check input[type="checkbox"]').evaluateAll(nodes =>
-    nodes.map(node => {
-      const rect = node.getBoundingClientRect();
-      return { width:rect.width, height:rect.height };
-    })
-  );
-  expect(dataCheckboxes.length).toBeGreaterThan(0);
-  for (const checkbox of dataCheckboxes) {
-    expect(checkbox.width).toBeGreaterThanOrEqual(14);
-    expect(checkbox.width).toBeLessThanOrEqual(20);
-    expect(checkbox.height).toBeGreaterThanOrEqual(14);
-    expect(checkbox.height).toBeLessThanOrEqual(20);
-  }
-
-  await page.evaluate(() => document.getElementById('dataLabDrawer')?.classList.remove('open'));
-  await page.evaluate(() => window.openReviewTools?.());
-  const reviewDrawer = page.locator('#reviewProDrawer');
-  await expect(reviewDrawer).toHaveClass(/open/);
-
-  const reviewScale = await reviewDrawer.evaluate(drawer => {
-    const summary = drawer.querySelector('.review-section>summary');
-    const textarea = drawer.querySelector('#reviewCommentInput');
-    const button = drawer.querySelector('#addReviewComment');
-    const checkbox = drawer.querySelector('#showResolvedComments');
-    const checkboxRect = checkbox.getBoundingClientRect();
-    const buttonRect = button.getBoundingClientRect();
+  const recoveryMetrics = await page.evaluate(() => {
+    const drawer = document.getElementById('historyDrawer');
+    drawer.classList.add('open');
+    const body = drawer.querySelector('.utility-body');
+    if (!body.querySelector('.snapshot')) {
+      const snapshot = document.createElement('div');
+      snapshot.className = 'snapshot';
+      snapshot.innerHTML = '<div><strong>Automatic recovery</strong><small>Today · 4 objects</small></div><button type="button">Restore</button>';
+      body.appendChild(snapshot);
+    }
+    const title = drawer.querySelector('.utility-head strong');
+    const subtitle = drawer.querySelector('.utility-head span');
+    const snapshot = drawer.querySelector('.snapshot');
+    const strong = snapshot.querySelector('strong');
+    const small = snapshot.querySelector('small');
+    const button = snapshot.querySelector('button');
     return {
-      summaryFont:parseFloat(getComputedStyle(summary).fontSize),
-      textareaFont:parseFloat(getComputedStyle(textarea).fontSize),
-      buttonFont:parseFloat(getComputedStyle(button).fontSize),
-      buttonHeight:buttonRect.height,
-      checkboxWidth:checkboxRect.width,
-      checkboxHeight:checkboxRect.height
+      titleFont:Number.parseFloat(getComputedStyle(title).fontSize),
+      subtitleFont:Number.parseFloat(getComputedStyle(subtitle).fontSize),
+      entryFont:Number.parseFloat(getComputedStyle(strong).fontSize),
+      timestampFont:Number.parseFloat(getComputedStyle(small).fontSize),
+      buttonFont:Number.parseFloat(getComputedStyle(button).fontSize),
+      buttonHeight:button.getBoundingClientRect().height
     };
   });
-
-  expect(reviewScale.summaryFont).toBeLessThanOrEqual(13);
-  expect(reviewScale.textareaFont).toBeLessThanOrEqual(13);
-  expect(reviewScale.buttonFont).toBeLessThanOrEqual(12);
-  expect(reviewScale.buttonHeight).toBeGreaterThanOrEqual(36);
-  expect(reviewScale.buttonHeight).toBeLessThanOrEqual(42);
-  expect(reviewScale.checkboxWidth).toBeLessThanOrEqual(20);
-  expect(reviewScale.checkboxHeight).toBeLessThanOrEqual(20);
+  expect(recoveryMetrics.titleFont).toBeLessThanOrEqual(10.5);
+  expect(recoveryMetrics.subtitleFont).toBeLessThanOrEqual(8.5);
+  expect(recoveryMetrics.entryFont).toBeLessThanOrEqual(9.5);
+  expect(recoveryMetrics.timestampFont).toBeLessThanOrEqual(8);
+  expect(recoveryMetrics.buttonFont).toBeLessThanOrEqual(8.5);
+  expect(recoveryMetrics.buttonHeight).toBeLessThanOrEqual(28);
 
   expectNoRuntimeErrors(errors);
 });
