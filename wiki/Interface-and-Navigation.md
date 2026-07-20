@@ -13,7 +13,7 @@ Common controls include:
 - Redo
 - Export
 - Account or profile access
-- Help or guide access
+- Help access
 
 On a phone, the header is deliberately compact. Less common actions move into **More** so the project name, undo, redo, and export controls remain usable.
 
@@ -146,22 +146,25 @@ To leave one of these areas:
 
 ## Help and passive guide
 
-Press the desktop Help button or open **More → Guide** in Phone mode. This opens the FigureLoom Help menu with links to the manual, Start here, quick task guides, the visual interface guide, and the passive tour.
+Press the desktop Help button or open **More**, then choose **Help** in Phone mode. This opens the FigureLoom Help menu with links to the manual, Start here, quick task guides, the visual interface guide, and the passive tour.
 
-The passive guide now explains:
+The passive guide has 13 steps:
 
-- Main sections
-- Project names and project tabs
-- Add and Illustrations
-- Real page bounds and canvas navigation
-- The movable and collapsible canvas toolbar
-- Pages and layers
-- The inspector
-- Pro Tools
-- Help and the manual
-- Export, checks, and backups
+1. Projects and open tabs
+2. Settings and appearance
+3. Main workspaces
+4. Tools for the current task
+5. The canvas and real page
+6. Pages and layers
+7. The canvas control bar
+8. The inspector
+9. Pro Tools
+10. Loomy
+11. Share and collaboration
+12. Help and manuals
+13. Export and backup
 
-The guide does not click controls, open panels, move objects, scroll the project, or change the document. Use **Next**, **Back**, or **Close** at the bottom. On a phone, the action row stays above the browser safe area and the FigureLoom dock.
+The guide does not click controls, open panels, move objects, change selections, or scroll the project. Use **Next**, **Back**, or **Close** at the bottom. On a phone, the action row stays above the browser safe area and the FigureLoom dock.
 
 ## Useful navigation habits
 
