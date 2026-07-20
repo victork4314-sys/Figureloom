@@ -11,7 +11,15 @@
     { id:'journal-mono', name:'Journal Mono', description:'Black, white, and publication gray', accent:'#333333', accent2:'#777777', page:{mode:'solid',primary:'#ffffff',secondary:'#eeeeee',angle:135}, palette:['#2e2e2e','#676767','#969696','#bcbcbc','#e0e0e0'], text:'#111111', stroke:'#111111' },
     { id:'solar-lab', name:'Solar Lab', description:'Golden light with teal contrast', accent:'#c07a16', accent2:'#1b8d85', page:{mode:'gradient',primary:'#fffaf0',secondary:'#f7dfa5',angle:135}, palette:['#e5a63c','#3aa59c','#d36e7d','#6f91cf','#9b7ac2'], text:'#463d29', stroke:'#675a3e' },
     { id:'cytometry-pop', name:'Cytometry Pop', description:'Bold gates and bright cell populations', accent:'#f0448b', accent2:'#6a62ff', page:{mode:'gradient',primary:'#fff9ff',secondary:'#e6e1ff',angle:45}, palette:['#f05293','#675fff','#21b7a8','#f5b83d','#925fca'], text:'#392c4b', stroke:'#55436c' },
-    { id:'high-contrast', name:'High Contrast', description:'Maximum figure separation', accent:'#005fcc', accent2:'#d10068', page:{mode:'solid',primary:'#ffffff',secondary:'#e8edf4',angle:135}, palette:['#0066cc','#d0005f','#009267','#e58a00','#6d42c7'], text:'#000000', stroke:'#000000' }
+    { id:'high-contrast', name:'High Contrast', description:'Maximum figure separation', accent:'#005fcc', accent2:'#d10068', page:{mode:'solid',primary:'#ffffff',secondary:'#e8edf4',angle:135}, palette:['#0066cc','#d0005f','#009267','#e58a00','#6d42c7'], text:'#000000', stroke:'#000000' },
+    { id:'office-neutrals', name:'Office Neutrals', description:'Warm white, slate, and quiet blue', accent:'#526b7a', accent2:'#7a8f88', page:{mode:'solid',primary:'#fbfbfa',secondary:'#f0f1ef',angle:135}, palette:['#dfe4e3','#c8d0d2','#9eabb0','#75858b','#b7afa4'], text:'#263137', stroke:'#536167' },
+    { id:'executive-navy', name:'Executive Navy', description:'Navy, steel blue, linen, and muted gold', accent:'#244a6a', accent2:'#9a7a3d', page:{mode:'solid',primary:'#fffefd',secondary:'#edf1f4',angle:135}, palette:['#355e7d','#6f8798','#a9b6bf','#d9d2c4','#b99558'], text:'#182c3b', stroke:'#405565' },
+    { id:'warm-office', name:'Warm Office', description:'Cream, taupe, charcoal, and terracotta', accent:'#705f52', accent2:'#a7654f', page:{mode:'gradient',primary:'#fffdf8',secondary:'#eee7dc',angle:135}, palette:['#c9bdae','#a69787','#786e65','#d7c9b5','#bd8068'], text:'#3a342f', stroke:'#62594f' },
+    { id:'slate-sand', name:'Slate + Sand', description:'Cool slate, paper, and sandstone', accent:'#526272', accent2:'#a17d57', page:{mode:'gradient',primary:'#fbfaf7',secondary:'#e7e5df',angle:135}, palette:['#70808f','#aeb7bf','#d5d4ce','#c4a985','#92775c'], text:'#2a333b', stroke:'#59636c' },
+    { id:'sage-studio', name:'Sage Studio', description:'Sage, olive gray, clay, and natural paper', accent:'#5e7568', accent2:'#a56f5e', page:{mode:'solid',primary:'#fdfdf9',secondary:'#e9eee8',angle:135}, palette:['#8fa397','#bdc8bf','#d9d5c7','#b88b78','#778174'], text:'#29342e', stroke:'#536158' },
+    { id:'monochrome-report', name:'Monochrome Report', description:'Ink, graphite, silver, and white', accent:'#30363b', accent2:'#71777c', page:{mode:'solid',primary:'#ffffff',secondary:'#eeeeee',angle:135}, palette:['#1f2428','#555b60','#8a9095','#bcc0c3','#e1e3e4'], text:'#171a1d', stroke:'#444a4f' },
+    { id:'linen-burgundy', name:'Linen + Burgundy', description:'Warm linen, burgundy, and muted rose', accent:'#713d4b', accent2:'#a77a68', page:{mode:'gradient',primary:'#fffdf9',secondary:'#eee5dc',angle:135}, palette:['#824b58','#a66d76','#c7a3a0','#d8c7b8','#987d6c'], text:'#3d2930', stroke:'#664d55' },
+    { id:'accessible-office', name:'Accessible Office', description:'High-contrast navy, teal, orange, and neutrals', accent:'#164e73', accent2:'#b45309', page:{mode:'solid',primary:'#ffffff',secondary:'#edf3f5',angle:135}, palette:['#176b87','#258277','#c56a13','#7a5a96','#66737d'], text:'#102f43', stroke:'#294c5d' }
   ];
 
   state.projectTheme ??= 'lab-light';
@@ -73,7 +81,7 @@
   panel.className = 'project-theme-panel';
   panel.innerHTML = `
     <h3>Project color theme</h3>
-    <p>Changes only the figure itself. The SciCanvas interface stays unchanged.</p>
+    <p>Changes only the figure itself. The FigureLoom interface stays unchanged.</p>
     <div class="project-theme-options">
       <label><input id="themeRecolor" type="checkbox" checked> Recolor project objects</label>
       <label><input id="themeBackgrounds" type="checkbox" checked> Change every page background</label>
