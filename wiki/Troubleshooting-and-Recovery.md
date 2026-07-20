@@ -68,6 +68,8 @@ Large images, workbooks, or imports can make saving slower.
 
 ## Undo or redo behaves unexpectedly
 
+On Desktop and Tablet, Undo and Redo sit beside Delete in the selected-object action group. On Phone, they remain in the compact header.
+
 Some actions create several internal changes. Undo may step through them separately.
 
 If the result is unclear:
@@ -104,7 +106,7 @@ If the page looks wrong:
 1. Return to 100 percent.
 2. Close and reopen the project.
 3. Confirm that browser page zoom is normal.
-4. Switch to Desktop and tablet mode, then back to Phone.
+4. Switch to Desktop or Tablet, then back to Phone.
 5. Reload the current app build.
 
 ## Phone controls cover a dialog
@@ -121,13 +123,27 @@ If a control is still covered:
 
 Report the device, browser version, orientation, and a screenshot.
 
-## Text does not wrap
+## Text does not wrap or appears clipped
 
-- Resize the text box.
+- Resize the text box width deliberately.
 - Check for a long unbroken URL or code string.
 - Use a code window for code.
 - Replace unusual spaces copied from another application.
-- Recreate the text object if pasted formatting is corrupted.
+- Let imported fonts finish loading.
+- Close and reopen the project if an old cached text renderer is still active.
+- Recreate the text object only when pasted formatting itself is corrupted.
+
+Do not repeatedly resize a text box while the page is still loading.
+
+## Moving a text box feels janky
+
+- Confirm that the drag starts on the text object rather than inside active text editing.
+- Press Escape to leave text editing, then drag again.
+- Return browser zoom to normal.
+- Close duplicate editor tabs.
+- Reload once after downloading a project backup.
+
+Desktop text movement should follow the pointer and complete one normal render when released.
 
 ## A font changed
 
@@ -178,28 +194,38 @@ Try exporting a plain SVG with embedded styles and no scripts.
 - Simplify SmartArt, WordArt, animations, and complex groups.
 - Import critical slides as SVG or images when exact appearance matters more than editability.
 
-## PowerPoint export looks blurry
+## I cannot find PowerPoint, PNG, PDF, or TIFF export
 
-The compatibility export uses a page image on each slide.
+The current finished export panel is centered on editable SVG and `.figureloom` backups.
 
-- Increase the source page quality.
-- Avoid scaling the slide image far beyond its intended size.
-- Use SVG for vector publication output.
-- Check the PowerPoint in the intended presentation application.
+Use:
+
+- **Editable SVG (per page)** for the active page
+- **Export all pages as SVG** for the whole project
+- **Print page dimensions** when physical SVG dimensions matter
+
+Convert a checked SVG in another trusted application when another output format is required.
 
 ## Export does nothing
 
 - Check the browser download list.
 - Allow downloads for the site.
-- Wait for a large export.
+- Wait for a large all-pages export.
 - Check device storage.
-- Try one page.
-- Try SVG or standard PNG first.
+- Try **Editable SVG (per page)** on one page.
 - Reload after downloading a project backup.
+
+## The all-pages SVG download is incomplete
+
+- Confirm the project page count before exporting.
+- Wait until the export finishes before switching tabs.
+- Check that the download contains one SVG per page.
+- Open the first, middle, and last SVG.
+- Retry after removing unused large assets when the project is extremely large.
 
 ## Export panel is difficult to leave
 
-Use **Back to editor** or the close control. On a phone, it should remain visible above the safe area.
+Use the close control. On a phone, **Back to editor** should remain visible above the safe area.
 
 ## Cloud save fails
 
@@ -210,19 +236,58 @@ Use **Back to editor** or the close control. On a phone, it should remain visibl
 - Retry once after the connection returns.
 - Do not create many repeated cloud copies while diagnosing the issue.
 
-## Invitation does not work
+## An email invitation does not work
 
 - Confirm the exact email address.
 - Confirm that the recipient signed in with that address.
 - Check the assigned role.
-- Create a new expiring link if the original expired.
-- Ask the owner to revoke old links after testing.
+- Ask the owner to remove and recreate the invitation when necessary.
+
+## A guest link does not work
+
+- Confirm that the owner is signed in and the project is saved to the cloud.
+- Confirm that the link has not expired or been revoked.
+- Enter the optional PIN exactly as supplied.
+- Use a display name.
+- Confirm that anonymous authentication is enabled for the deployment.
+- Create a new guest link instead of repeatedly testing a damaged or expired one.
+
+## Create link and Revoke links are stacked vertically
+
+Close and reopen FigureLoom to load the current collaboration layout. Both controls should remain in the same horizontal row.
+
+If they still stack, report the device, browser width, and a screenshot.
 
 ## Remote update conflict
 
 Choose deliberately between the remote update and local state.
 
 Before choosing, download a backup of the local state when possible. If both versions contain useful changes, preserve both and merge manually.
+
+## MCP cannot connect
+
+- Sign in first.
+- Open the exact cloud project that should be authorized.
+- Open **Settings → MCP & AI access**.
+- Press Connect or Reconnect FigureLoom.
+- Keep the matching project tab open.
+- Confirm that the client supports a remote MCP server address.
+
+## MCP can read but cannot edit
+
+The connection is read-only. Reconnect with Full editor access.
+
+Destructive actions still require the separate permission switch.
+
+## An MCP edit is missing after reconnecting
+
+- Keep the project tab open until the command reports success.
+- Confirm that the project save indicator completes.
+- Reopen the same cloud project, not a different local copy.
+- Check Undo history and the latest project state.
+- Revoke and recreate the connection if it belongs to another project.
+
+Successful write commands use the normal FigureLoom history and durable save paths.
 
 ## Loomy does not generate anything
 
