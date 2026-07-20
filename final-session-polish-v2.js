@@ -1,5 +1,6 @@
 (() => {
-  if (window.__figureLoomFinalSessionPolishV2) return;
+  if (window.__figureLoomFinalSessionPolishV3) return;
+  window.__figureLoomFinalSessionPolishV3 = true;
   window.__figureLoomFinalSessionPolishV2 = true;
 
   const root = document.documentElement;
@@ -50,15 +51,16 @@
       filter:drop-shadow(0 1px 0 rgba(0,0,0,.8)) drop-shadow(0 2px 4px rgba(0,0,0,.52));
     }
 
-    /* Editors should reveal their complete final line instead of masking it. */
+    /* Editors must reveal the complete last line and horizontal overhangs. */
     .figureloom-direct-label-editor[data-figureloom-text-id]{
-      overflow-x:hidden!important;
-      overflow-y:auto!important;
+      overflow:auto!important;
+      padding-right:max(8px,.32em)!important;
       padding-bottom:max(8px,.32em)!important;
       box-sizing:border-box!important;
     }
     #figureloomRichTextOverlay .rich-editable{
-      overflow-y:auto!important;
+      overflow:auto!important;
+      padding-right:max(12px,.45em)!important;
       padding-bottom:max(12px,.45em)!important;
       box-sizing:border-box!important;
     }
@@ -107,6 +109,18 @@
     return null;
   }
 
+  function pageSize() {
+    try {
+      const size = window.currentCanvasSize?.();
+      if (Number(size?.width) > 0 && Number(size?.height) > 0) return { width:Number(size.width), height:Number(size.height) };
+    } catch {}
+    const viewBox = document.getElementById('canvas')?.viewBox?.baseVal;
+    return {
+      width:Math.max(1, Number(viewBox?.width) || 1200),
+      height:Math.max(1, Number(viewBox?.height) || 750)
+    };
+  }
+
   function unclippedBBox(node) {
     if (!(node instanceof SVGGraphicsElement)) return null;
     const clip = node.getAttribute('clip-path');
@@ -144,36 +158,75 @@
     if (!bounds) return false;
 
     const fontSize = Math.max(6, Number(item.fontSize) || 30);
-    const currentHeight = Math.max(1, Number(item.height) || Number(item.textBoxHeight) || 1);
+    const horizontalGuard = Math.max(3, Math.ceil(fontSize * .12));
     const topGuard = Math.max(2, Math.ceil(fontSize * .1));
-    const bottomGuard = Math.max(6, Math.ceil(fontSize * .28));
-    const horizontalGuard = Math.max(2, Math.ceil(fontSize * .08));
-    const clipTop = Math.min(-topGuard, Math.floor(bounds.minY - topGuard));
-    const clipBottom = Math.ceil(Math.max(currentHeight, bounds.maxY + bottomGuard));
-    const requiredHeight = Math.max(currentHeight, clipBottom);
+    const bottomGuard = Math.max(6, Math.ceil(fontSize * .3));
+    const size = pageSize();
+
+    let x = Math.max(0, Number(item.x) || 0);
+    let y = Math.max(0, Number(item.y) || 0);
+    let width = Math.max(1, Number(item.width) || Number(item.textBoxWidth) || 1);
+    let height = Math.max(1, Number(item.height) || Number(item.textBoxHeight) || 1);
     let changed = false;
 
-    if (requiredHeight > currentHeight + .5) {
-      item.height = requiredHeight;
-      item.textBoxHeight = requiredHeight;
-      changed = true;
+    const measuredWidth = Math.ceil(Math.max(bounds.maxX + horizontalGuard, bounds.width + horizontalGuard * 2));
+    if (measuredWidth > width + .5) {
+      const missing = measuredWidth - Math.max(1, size.width - x);
+      if (missing > 0 && x > 0) {
+        const shift = Math.min(x, missing);
+        x -= shift;
+        item.x = x;
+        changed = true;
+      }
+      const nextWidth = Math.min(Math.max(1, size.width - x), measuredWidth);
+      if (nextWidth > width + .5) {
+        width = nextWidth;
+        item.width = width;
+        item.textBoxWidth = width;
+        changed = true;
+      }
     }
 
+    const clipTop = Math.min(-topGuard, Math.floor(bounds.minY - topGuard));
+    const measuredHeight = Math.ceil(Math.max(height, bounds.maxY + bottomGuard));
+    if (measuredHeight > height + .5) {
+      const missing = measuredHeight - Math.max(1, size.height - y);
+      if (missing > 0 && y > 0) {
+        const shift = Math.min(y, missing);
+        y -= shift;
+        item.y = y;
+        changed = true;
+      }
+      const nextHeight = Math.min(Math.max(1, size.height - y), measuredHeight);
+      if (nextHeight > height + .5) {
+        height = nextHeight;
+        item.height = height;
+        item.textBoxHeight = height;
+        changed = true;
+      }
+    }
+
+    const clipLeft = Math.min(0, Math.floor(bounds.minX - horizontalGuard));
+    const clipRight = Math.max(width, Math.ceil(bounds.maxX + horizontalGuard));
+    const clipBottom = Math.max(height, Math.ceil(bounds.maxY + bottomGuard));
     group.querySelectorAll('clipPath[data-figureloom-text-clip="1"] rect').forEach(rect => {
-      rect.setAttribute('x', String(Math.min(0, Math.floor(bounds.minX - horizontalGuard))));
+      rect.setAttribute('x', String(clipLeft));
       rect.setAttribute('y', String(clipTop));
-      rect.setAttribute('width', String(Math.max(Number(item.width) || 1, Math.ceil(bounds.maxX + horizontalGuard)) + horizontalGuard));
-      rect.setAttribute('height', String(requiredHeight - clipTop + bottomGuard));
+      rect.setAttribute('width', String(Math.max(1, clipRight - clipLeft)));
+      rect.setAttribute('height', String(Math.max(1, clipBottom - clipTop)));
     });
 
+    if (changed) {
+      group.setAttribute('transform', `translate(${x} ${y}) rotate(${Number(item.rotation) || 0} ${width / 2} ${height / 2})`);
+    }
     return changed;
   }
 
   function repairRenderedText() {
     repairFrame = 0;
-    if (repairing) return;
+    if (repairing) return false;
     const layer = document.getElementById('objectLayer');
-    if (!layer) return;
+    if (!layer) return false;
 
     repairing = true;
     let changed = false;
@@ -191,11 +244,20 @@
       try { window.render?.(); } catch (error) { console.warn('FigureLoom could not rerender a repaired text box.', error); }
       try { window.scheduleSave?.(); } catch {}
     }
+    return changed;
   }
 
   function scheduleTextRepair() {
     if (repairFrame) return;
     repairFrame = requestAnimationFrame(repairRenderedText);
+  }
+
+  async function settleTextRepair() {
+    scheduleTextRepair();
+    await new Promise(resolve => requestAnimationFrame(resolve));
+    repairRenderedText();
+    await new Promise(resolve => requestAnimationFrame(resolve));
+    repairRenderedText();
   }
 
   function wrapRender() {
@@ -240,6 +302,7 @@
     measuredTextBounds,
     repairTextGroup,
     repairRenderedText,
-    scheduleTextRepair
+    scheduleTextRepair,
+    settleTextRepair
   });
 })();
