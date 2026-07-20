@@ -1,10 +1,30 @@
 (() => {
-  if (window.__figureLoomMcpProjectAdapterV1) return;
+  if (window.__figureLoomMcpProjectAdapterV2) return;
+  window.__figureLoomMcpProjectAdapterV2 = true;
   window.__figureLoomMcpProjectAdapterV1 = true;
 
   const clone = value => typeof structuredClone === 'function' ? structuredClone(value) : JSON.parse(JSON.stringify(value));
   const currentPayload = () => typeof projectData === 'function' ? clone(projectData()) : JSON.parse(snapshot());
   const cloudKey = 'scicanvas-current-cloud-project-v1';
+  const localProjectKey = 'figureloom-mcp-local-project-id-v1';
+
+  function rotateLocalProjectId() {
+    const id = `local-${crypto.randomUUID?.() || `${Date.now()}-${Math.random().toString(16).slice(2)}`}`;
+    try { sessionStorage.setItem(localProjectKey, id); } catch {}
+    dispatchEvent(new CustomEvent('figureloom-project-opened', { detail:{ projectId:id, source:'local' } }));
+    return id;
+  }
+
+  function currentProjectId() {
+    const cloudId = localStorage.getItem(cloudKey) || '';
+    if (cloudId) return cloudId;
+    try {
+      const existing = sessionStorage.getItem(localProjectKey);
+      return existing || rotateLocalProjectId();
+    } catch {
+      return 'local-current';
+    }
+  }
 
   function safeName(extension) {
     const title = String(document.getElementById('documentName')?.value || 'FigureLoom')
@@ -38,6 +58,7 @@
   function regenerateIds(payload) {
     const copy = clone(payload);
     const pages = Array.isArray(copy.pages) ? copy.pages : [{ id:uid(), name:'Figure 1', objects:copy.objects || [] }];
+    const groupMap = new Map();
     pages.forEach(page => {
       page.id = uid();
       const idMap = new Map();
@@ -45,7 +66,10 @@
       (page.objects || []).forEach(item => {
         if (item.fromId && idMap.has(item.fromId)) item.fromId = idMap.get(item.fromId);
         if (item.toId && idMap.has(item.toId)) item.toId = idMap.get(item.toId);
-        if (item.groupId) item.groupId = `group-${uid()}`;
+        if (item.groupId) {
+          if (!groupMap.has(item.groupId)) groupMap.set(item.groupId, `group-${uid()}`);
+          item.groupId = groupMap.get(item.groupId);
+        }
       });
     });
     copy.pages = pages;
@@ -122,19 +146,27 @@
     if (!commands) return false;
 
     commands.register('project.list', { description:'List the current project and accessible cloud projects.', category:'projects', run:async() => {
-      const currentId=localStorage.getItem(cloudKey)||'';
+      const currentId=currentProjectId();
+      const cloudId=localStorage.getItem(cloudKey)||'';
       let cloud=[];
       try { cloud=await window.SciCanvasCloud?.listProjects?.()||[]; } catch {}
-      return {current:{id:currentId||'local-current',title:document.getElementById('documentName')?.value||'Untitled figure',source:currentId?'cloud':'local',active:true},projects:cloud.map(item=>({id:item.id,title:item.title,updatedAt:item.updated_at,revision:item.revision,ownerId:item.owner_id,source:'cloud'}))};
+      return {current:{id:currentId,title:document.getElementById('documentName')?.value||'Untitled figure',source:cloudId?'cloud':'local',active:true},projects:cloud.map(item=>({id:item.id,title:item.title,updatedAt:item.updated_at,revision:item.revision,ownerId:item.owner_id,source:'cloud'}))};
     }});
     commands.register('project.create', { write:true, description:'Create and open a blank FigureLoom project.', category:'projects', run:args => {
       restoreProject(blankProject(String(args.title||'Untitled figure')));
       localStorage.removeItem(cloudKey);
       if (window.SciCanvasCloud) window.SciCanvasCloud.currentProjectId='';
+      rotateLocalProjectId();
       return commands.documentState();
     }});
     commands.register('project.open', { write:true, description:'Open a portable project payload or an authorized cloud project.', category:'projects', run:async args => {
-      if (args.data) { restoreProject(args.data); return commands.documentState(); }
+      if (args.data) {
+        restoreProject(args.data);
+        localStorage.removeItem(cloudKey);
+        if (window.SciCanvasCloud) window.SciCanvasCloud.currentProjectId='';
+        rotateLocalProjectId();
+        return commands.documentState();
+      }
       if (!args.id) throw new Error('A project id or project data payload is required.');
       const result=await window.SciCanvasCloud?.openProject?.(String(args.id),{keepDrawer:true});
       if (!result) throw new Error('The cloud project service is unavailable.');
@@ -154,6 +186,7 @@
       restoreProject(copy);
       localStorage.removeItem(cloudKey);
       if (window.SciCanvasCloud) window.SciCanvasCloud.currentProjectId='';
+      rotateLocalProjectId();
       if (args.destination==='cloud') await window.SciCanvasCloud?.saveCurrentProject?.({forceNew:true});
       return commands.documentState();
     }});
@@ -168,6 +201,7 @@
         localStorage.removeItem(cloudKey);
         if (window.SciCanvasCloud) window.SciCanvasCloud.currentProjectId='';
         restoreProject(blankProject());
+        rotateLocalProjectId();
       }
       return {deletedProjectId:id,current:commands.documentState()};
     }});
