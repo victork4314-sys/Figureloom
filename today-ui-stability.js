@@ -1,5 +1,6 @@
 (() => {
-  if (window.__figureLoomTodayUiStabilityV1) return;
+  if (window.__figureLoomTodayUiStabilityV2) return;
+  window.__figureLoomTodayUiStabilityV2 = true;
   window.__figureLoomTodayUiStabilityV1 = true;
 
   const root = document.documentElement;
@@ -91,16 +92,27 @@
     if (!style.isConnected || document.head.lastElementChild !== style) document.head.appendChild(style);
   }
 
+  function labelPhoneHelp() {
+    document.querySelectorAll('[data-phone-action="guide"]').forEach(button => {
+      const label = button.querySelector('small');
+      if (label && label.textContent !== 'Help') label.textContent = 'Help';
+      button.setAttribute('aria-label', 'Open FigureLoom help');
+      button.title = 'Open FigureLoom help';
+    });
+  }
+
   document.getElementById(style.id)?.remove();
   document.head.appendChild(style);
   let styleFrame = 0;
   new MutationObserver(() => {
-    if (styleFrame) return;
-    styleFrame = requestAnimationFrame(() => {
-      styleFrame = 0;
-      keepStyleLast();
-    });
-  }).observe(document.head, { childList:true });
+    if (!styleFrame) {
+      styleFrame = requestAnimationFrame(() => {
+        styleFrame = 0;
+        keepStyleLast();
+      });
+    }
+    labelPhoneHelp();
+  }).observe(document.documentElement, { childList:true, subtree:true });
 
   function openPhoneHelp() {
     window.FigureLoomPhoneMode?.close?.({ restoreFocus:false });
@@ -130,7 +142,14 @@
     openPhoneHelp();
   }, true);
 
-  addEventListener('figureloom-stable-ready', keepStyleLast);
-  addEventListener('figureloom-settings-change', keepStyleLast);
-  window.FigureLoomTodayUiStability = Object.freeze({ openPhoneHelp, keepStyleLast });
+  addEventListener('figureloom-stable-ready', () => {
+    keepStyleLast();
+    labelPhoneHelp();
+  });
+  addEventListener('figureloom-settings-change', () => {
+    keepStyleLast();
+    labelPhoneHelp();
+  });
+  labelPhoneHelp();
+  window.FigureLoomTodayUiStability = Object.freeze({ openPhoneHelp, keepStyleLast, labelPhoneHelp });
 })();
