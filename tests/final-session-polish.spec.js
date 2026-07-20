@@ -32,7 +32,10 @@ async function prepare(page) {
   await expect(page.locator('#canvas')).toBeVisible();
   await page.waitForFunction(() => Boolean(
     window.FigureLoomFinalSessionPolish &&
+    window.FigureLoomFinalSessionPolishV2 &&
+    window.FigureLoomMcpCurrentScreenshot &&
     window.FigureLoomMCP &&
+    window.FigureLoomCommands?.get?.('view.screenshot') &&
     document.documentElement.dataset.figureloomReady === '1'
   ), null, { timeout:40000 });
   await page.waitForTimeout(250);
@@ -44,7 +47,7 @@ function expectNoRuntimeErrors(errors) {
   expect(errors.consoleErrors, `Console errors:\n${errors.consoleErrors.join('\n')}`).toEqual([]);
 }
 
-test('final layer owns tab chrome, protects text bounds, and shows the named MCP paw', async ({ page }, testInfo) => {
+test('final layer owns tab chrome, repairs text on both axes, and exposes a themed MCP screenshot pointer', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'desktop', 'desktop verification');
   const errors = await prepare(page);
   await expect(page.locator('html')).toHaveAttribute('data-figureloom-device-class', 'desktop');
@@ -99,6 +102,13 @@ test('final layer owns tab chrome, protects text bounds, and shows the named MCP
 
   const textMetrics = await page.evaluate(() => {
     const ns = 'http://www.w3.org/2000/svg';
+    const svg = document.createElementNS(ns, 'svg');
+    svg.setAttribute('width', '500');
+    svg.setAttribute('height', '200');
+    svg.style.position = 'fixed';
+    svg.style.left = '-1000px';
+    document.body.appendChild(svg);
+
     const group = document.createElementNS(ns, 'g');
     const clip = document.createElementNS(ns, 'clipPath');
     clip.dataset.figureloomTextClip = '1';
@@ -107,12 +117,17 @@ test('final layer owns tab chrome, protects text bounds, and shows the named MCP
     rect.setAttribute('height', '40');
     clip.appendChild(rect);
     const text = document.createElementNS(ns, 'text');
-    text.append(document.createElementNS(ns, 'tspan'), document.createElementNS(ns, 'tspan'));
+    Object.defineProperty(text, 'getBBox', {
+      configurable:true,
+      value:() => ({ x:-6, y:-3, width:386, height:91 })
+    });
     group.append(clip, text);
+    svg.appendChild(group);
+
     const item = {
       id:'text-clip-test',
       type:'text',
-      text:'gypq\nsecond line',
+      text:'Horizontally long text\nwith a visible final line',
       x:10,
       y:10,
       width:300,
@@ -123,18 +138,30 @@ test('final layer owns tab chrome, protects text bounds, and shows the named MCP
       textFlow:'auto-height',
       rotation:0
     };
-    window.FigureLoomFinalSessionPolish.textSafetyHeight(item, group);
-    return {
+    const changed = window.FigureLoomFinalSessionPolishV2.repairTextGroup(group, item);
+    const result = {
+      changed,
+      width:item.width,
       height:item.height,
+      textBoxWidth:item.textBoxWidth,
       textBoxHeight:item.textBoxHeight,
+      clipX:Number(rect.getAttribute('x')),
       clipY:Number(rect.getAttribute('y')),
+      clipWidth:Number(rect.getAttribute('width')),
       clipHeight:Number(rect.getAttribute('height'))
     };
+    svg.remove();
+    return result;
   });
+  expect(textMetrics.changed).toBe(true);
+  expect(textMetrics.width).toBeGreaterThan(300);
   expect(textMetrics.height).toBeGreaterThan(40);
+  expect(textMetrics.textBoxWidth).toBe(textMetrics.width);
   expect(textMetrics.textBoxHeight).toBe(textMetrics.height);
+  expect(textMetrics.clipX).toBeLessThan(0);
   expect(textMetrics.clipY).toBeLessThan(0);
-  expect(textMetrics.clipHeight).toBeGreaterThan(textMetrics.height);
+  expect(textMetrics.clipWidth).toBeGreaterThan(386);
+  expect(textMetrics.clipHeight).toBeGreaterThan(91);
 
   await page.evaluate(() => {
     dispatchEvent(new CustomEvent('figureloom-mcp-agent-activity', {
@@ -152,10 +179,35 @@ test('final layer owns tab chrome, protects text bounds, and shows the named MCP
   await expect(cursor).toHaveClass(/visible/);
   await expect(cursor.locator('b')).toHaveText('Claude');
   await expect(cursor.locator('small')).toContainText('Object Edit Text');
+  await expect.poll(() => cursor.evaluate(node => node.dataset.agent)).toBe('claude');
+  expect(await cursor.evaluate(node => node.style.getPropertyValue('--mcp-agent-color'))).toBe('#d97757');
+  expect(await cursor.locator('.mcp-paw svg').evaluate(node => getComputedStyle(node).display)).toBe('none');
   const cursorBox = await cursor.boundingBox();
   expect(cursorBox).not.toBeNull();
   expect(cursorBox.x).toBeGreaterThanOrEqual(0);
   expect(cursorBox.y).toBeGreaterThanOrEqual(0);
+
+  const screenshot = await page.evaluate(async () => {
+    const result = await window.FigureLoomCommands.execute('view.screenshot', { scale:.25, includeGrid:false }, {
+      source:'test',
+      readOnly:true,
+      allowDestructive:false
+    });
+    return {
+      mimeType:result.mimeType,
+      encoding:result.encoding,
+      width:result.width,
+      height:result.height,
+      dataLength:String(result.data || '').length,
+      pageIndex:result.pageIndex
+    };
+  });
+  expect(screenshot.mimeType).toBe('image/png');
+  expect(screenshot.encoding).toBe('base64');
+  expect(screenshot.width).toBeGreaterThan(0);
+  expect(screenshot.height).toBeGreaterThan(0);
+  expect(screenshot.dataLength).toBeGreaterThan(100);
+  expect(screenshot.pageIndex).toBeGreaterThanOrEqual(0);
 
   await page.evaluate(() => {
     dispatchEvent(new CustomEvent('figureloom-mcp-agent-activity', {
