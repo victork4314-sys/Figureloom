@@ -1,8 +1,19 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { execFileSync } from 'node:child_process';
 
 const wikiDir = path.resolve('wiki');
-const required = ['Home.md', '_Sidebar.md', '_Footer.md', 'Start-Here.md', 'Visual-Interface-Guide.md', 'Quick-Task-Guides.md', 'Tutorials.md', 'Troubleshooting-and-Recovery.md'];
+const required = [
+  'Home.md',
+  '_Sidebar.md',
+  '_Footer.md',
+  'Start-Here.md',
+  'Visual-Interface-Guide.md',
+  'Quick-Task-Guides.md',
+  'Tutorials.md',
+  'Troubleshooting-and-Recovery.md',
+  'MCP-and-AI-Access.md'
+];
 const requiredShell = ['index.html', 'wiki.css', 'wiki.js'];
 const errors = [];
 
@@ -59,9 +70,7 @@ for (const name of files) {
   for (const match of text.matchAll(/\[[^\]]+\]\(([^)]+)\)/g)) {
     const target = pageForTarget(match[1]);
     if (!target) continue;
-    if (!fileSet.has(target)) {
-      errors.push(`Broken wiki link in ${name}: ${match[1]} -> ${target}`);
-    }
+    if (!fileSet.has(target)) errors.push(`Broken wiki link in ${name}: ${match[1]} -> ${target}`);
   }
 }
 
@@ -70,9 +79,37 @@ for (const name of files) {
   if (!linkedFromSidebar.has(name)) errors.push(`Page is not linked from _Sidebar.md: ${name}`);
 }
 
-if (files.length < 22) {
-  errors.push(`Wiki is unexpectedly small: ${files.length} Markdown pages`);
+const wikiScriptPath = path.join(wikiDir, 'wiki.js');
+const wikiIndexPath = path.join(wikiDir, 'index.html');
+const wikiScript = fs.existsSync(wikiScriptPath) ? fs.readFileSync(wikiScriptPath, 'utf8') : '';
+const wikiIndex = fs.existsSync(wikiIndexPath) ? fs.readFileSync(wikiIndexPath, 'utf8') : '';
+const registeredSlugs = [...wikiScript.matchAll(/\['[^']+','([^']+)','[^']+'\]/g)].map(match => match[1]);
+const registeredSet = new Set(registeredSlugs);
+
+if (registeredSet.size !== registeredSlugs.length) errors.push('Duplicate page slug found in wiki/wiki.js');
+
+for (const name of files) {
+  if (name.startsWith('_')) continue;
+  const slug = name.replace(/\.md$/i, '');
+  if (!registeredSet.has(slug)) errors.push(`Hosted wiki page is not registered in wiki/wiki.js: ${name}`);
 }
+
+for (const slug of registeredSlugs) {
+  if (!fileSet.has(`${slug}.md`)) errors.push(`Hosted wiki registry points to a missing page: ${slug}.md`);
+}
+
+if (!registeredSet.has('MCP-and-AI-Access')) errors.push('MCP page is missing from the hosted wiki registry');
+if (!/wiki\.js\?v=\d+/.test(wikiIndex)) errors.push('wiki/index.html does not load a versioned wiki.js');
+if (/wiki-mcp\.js/i.test(wikiIndex)) errors.push('wiki/index.html still loads the obsolete MCP routing patch');
+if (fs.existsSync(path.join(wikiDir, 'wiki-mcp.js'))) errors.push('Obsolete wiki/wiki-mcp.js still exists');
+
+try {
+  execFileSync(process.execPath, ['--check', wikiScriptPath], { stdio:'pipe' });
+} catch (error) {
+  errors.push(`Hosted wiki JavaScript syntax check failed: ${String(error.stderr || error.message).trim()}`);
+}
+
+if (files.length < 22) errors.push(`Wiki is unexpectedly small: ${files.length} Markdown pages`);
 
 if (errors.length) {
   console.error(`Wiki validation failed with ${errors.length} problem(s):`);
@@ -85,4 +122,4 @@ const totalWords = files.reduce((sum, name) => {
   return sum + text.split(/\s+/).filter(Boolean).length;
 }, 0);
 
-console.log(`Wiki validation passed: ${files.length} pages, approximately ${totalWords.toLocaleString('en-US')} words, plus the in-app Help center.`);
+console.log(`Wiki validation passed: ${files.length} pages, ${registeredSlugs.length} hosted routes, approximately ${totalWords.toLocaleString('en-US')} words.`);
