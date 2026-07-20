@@ -1,6 +1,6 @@
 (() => {
-  if (window.__figureLoomExportMenuFinalV2) return;
-  window.__figureLoomExportMenuFinalV2 = true;
+  if (window.__figureLoomExportMenuFinalV3) return;
+  window.__figureLoomExportMenuFinalV3 = true;
 
   const ALL_SVG_ID = 'figureloomExportAllPagesPptxV6';
   const ALL_PNG_ID = 'figureloomExportAllPagesPngV1';
@@ -149,7 +149,8 @@
     #exportMenu>#figureloomExportAllPagesSvgZipV2,
     #exportMenu>.export-svg-library-button{display:none!important}
     #exportMenu>small{display:none!important}
-    #exportMenu>button{
+    html:not([data-figureloom-resolved-mode="phone"]) #figureloomPhoneExportBack{display:none!important}
+    #exportMenu>button:not(#figureloomPhoneExportBack){
       box-sizing:border-box!important;
       width:100%!important;
       min-height:38px!important;
