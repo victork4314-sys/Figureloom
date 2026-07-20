@@ -1,4 +1,4 @@
-const FIGURELOOM_BUILD_ID = "stable-71d36df-locked-20260720-v64";
+const FIGURELOOM_BUILD_ID = "stable-71d36df-locked-20260720-v65";
 const FIGURELOOM_CACHE_PREFIX = "figureloom-app-";
 const FIGURELOOM_CACHE_NAME = `${FIGURELOOM_CACHE_PREFIX}${FIGURELOOM_BUILD_ID}`;
 const LEGACY_CACHE_PREFIXES = ["figureloom-shell", "scicanvas-shell"];
@@ -17,11 +17,11 @@ self.addEventListener("install", event => {
       cache.add(new Request("./styles.css", { cache:"reload" })),
       cache.add(new Request("./app.js", { cache:"reload" })),
       cache.add(new Request("./safe-refresh.js", { cache:"reload" })),
-      cache.add(new Request("./safe-refresh.js?v=stable-71d36df-locked-20260720-v64", { cache:"reload" })),
+      cache.add(new Request("./safe-refresh.js?v=stable-71d36df-locked-20260720-v65", { cache:"reload" })),
       cache.add(new Request("./pptx-export-rebuilt.js", { cache:"reload" })),
-      cache.add(new Request("./pptx-export-rebuilt.js?v=stable-71d36df-locked-20260720-v64", { cache:"reload" })),
+      cache.add(new Request("./pptx-export-rebuilt.js?v=stable-71d36df-locked-20260720-v65", { cache:"reload" })),
       cache.add(new Request("./svg-all-pages-only.js", { cache:"reload" })),
-      cache.add(new Request("./svg-all-pages-only.js?v=stable-71d36df-locked-20260720-v64", { cache:"reload" })),
+      cache.add(new Request("./svg-all-pages-only.js?v=stable-71d36df-locked-20260720-v65", { cache:"reload" })),
       cache.add(new Request("./text-editing-gentle-polish.js", { cache:"reload" })),
       cache.add(new Request("./text-editing-gentle-polish.js?v=stable-71d36df-locked-20260719-v38", { cache:"reload" })),
       cache.add(new Request("./mobile-mode.js", { cache:"reload" })),
