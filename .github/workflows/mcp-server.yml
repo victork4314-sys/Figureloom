@@ -8,6 +8,8 @@ on:
       - 'settings-core.js'
       - 'settings-page.js'
       - 'desktop-density-mode.js'
+      - 'desktop-final-toolbar-polish.js'
+      - 'tests/desktop-toolbar-polish.spec.js'
       - 'mcp-server/**'
       - 'safe-refresh.js'
       - 'service-worker.js'
@@ -18,6 +20,8 @@ on:
       - 'settings-core.js'
       - 'settings-page.js'
       - 'desktop-density-mode.js'
+      - 'desktop-final-toolbar-polish.js'
+      - 'tests/desktop-toolbar-polish.spec.js'
       - 'mcp-server/**'
       - 'safe-refresh.js'
       - 'service-worker.js'
@@ -55,6 +59,8 @@ jobs:
           node --check settings-core.js
           node --check settings-page.js
           node --check desktop-density-mode.js
+          node --check desktop-final-toolbar-polish.js
+          node --check tests/desktop-toolbar-polish.spec.js
           node --check safe-refresh.js
           node --check service-worker.js
       - name: Install MCP server dependencies
