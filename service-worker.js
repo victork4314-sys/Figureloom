@@ -30,6 +30,8 @@ self.addEventListener("install", event => {
       cache.add(new Request("./desktop-complete-consistency.js?v=stable-71d36df-locked-20260720-v80", { cache:"reload" })),
       cache.add(new Request("./today-ui-stability.js", { cache:"reload" })),
       cache.add(new Request("./today-ui-stability.js?v=stable-71d36df-locked-20260720-v80", { cache:"reload" })),
+      cache.add(new Request("./passive-guide-expanded.js", { cache:"reload" })),
+      cache.add(new Request("./passive-guide-expanded.js?v=stable-71d36df-locked-20260720-v80", { cache:"reload" })),
       cache.add(new Request("./mcp-command-registry.js?v=stable-71d36df-locked-20260720-v80", { cache:"reload" })),
       cache.add(new Request("./mcp-project-command-adapter.js?v=stable-71d36df-locked-20260720-v80", { cache:"reload" })),
       cache.add(new Request("./mcp-browser-bridge.js?v=stable-71d36df-locked-20260720-v80", { cache:"reload" })),
