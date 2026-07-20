@@ -1,13 +1,12 @@
 (() => {
-  if (window.__figureLoomDirectPptxPackageV1) return;
-  window.__figureLoomDirectPptxPackageV1 = true;
+  if (window.__figureLoomDirectPptxPackageV2) return;
+  window.__figureLoomDirectPptxPackageV2 = true;
 
   const JSZIP_SOURCES = [
     'https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js',
     'https://unpkg.com/jszip@3.10.1/dist/jszip.min.js'
   ];
   const EMU_PER_INCH = 914400;
-  const TINY_PNG_BASE64 = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAFgwJ/l2ZfWQAAAABJRU5ErkJggg==';
   let jsZipLoad = null;
 
   const xml = body => `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>${body}`;
@@ -75,7 +74,7 @@
           failures.push(error?.message || String(error));
         }
       }
-      throw new Error(`The PowerPoint ZIP writer could not load. ${failures.join(' ')}`);
+      throw new Error(`The direct PowerPoint ZIP writer could not load. ${failures.join(' ')}`);
     })();
     try {
       return await jsZipLoad;
@@ -91,21 +90,118 @@
     const header = value.slice(0, comma);
     const payload = value.slice(comma + 1);
     if (!/^data:image\/svg\+xml/i.test(header)) {
-      throw new Error('The direct PowerPoint writer only accepts the isolated SVG page output.');
+      throw new Error('The direct PowerPoint writer only accepts isolated SVG page output.');
     }
     if (/;base64/i.test(header)) {
       const binary = atob(payload);
-      const bytes = Uint8Array.from(binary, character => character.charCodeAt(0));
-      return new TextDecoder().decode(bytes);
+      return new TextDecoder().decode(Uint8Array.from(binary, character => character.charCodeAt(0)));
     }
     return decodeURIComponent(payload);
   }
 
-  function identifySvg(source, slideNumber) {
-    if (!source.includes('<svg')) throw new Error(`Page ${slideNumber} did not contain valid SVG.`);
-    const token = hashText(`${slideNumber}|${source}`);
-    const identified = source.replace(/<svg\b/, `<svg data-figureloom-direct-slide="${slideNumber}" data-figureloom-direct-token="${token}"`);
-    return { source:identified, token };
+  function svgDimensions(source) {
+    const parsed = new DOMParser().parseFromString(source, 'image/svg+xml');
+    if (parsed.querySelector('parsererror')) throw new Error('A page produced invalid SVG before PowerPoint conversion.');
+    const svg = parsed.documentElement;
+    const viewBox = String(svg.getAttribute('viewBox') || '').trim().split(/[\s,]+/).map(Number);
+    const width = viewBox.length === 4 && Number.isFinite(viewBox[2])
+      ? viewBox[2]
+      : Number.parseFloat(svg.getAttribute('width')) || 1200;
+    const height = viewBox.length === 4 && Number.isFinite(viewBox[3])
+      ? viewBox[3]
+      : Number.parseFloat(svg.getAttribute('height')) || 750;
+    if (!(width > 0 && height > 0)) throw new Error('A page had invalid canvas dimensions.');
+    return { width, height };
+  }
+
+  function canvasToBlob(canvas) {
+    return new Promise((resolve, reject) => {
+      const timer = setTimeout(() => reject(new Error('PowerPoint page rasterization timed out.')), 30000);
+      canvas.toBlob(blob => {
+        clearTimeout(timer);
+        if (!blob?.size) reject(new Error('PowerPoint page rasterization produced an empty PNG.'));
+        else resolve(blob);
+      }, 'image/png');
+    });
+  }
+
+  function crc32(bytes) {
+    let crc = 0xffffffff;
+    for (const byte of bytes) {
+      crc ^= byte;
+      for (let bit = 0; bit < 8; bit += 1) crc = (crc >>> 1) ^ (0xedb88320 & -(crc & 1));
+    }
+    return (crc ^ 0xffffffff) >>> 0;
+  }
+
+  function writeUint32(target, offset, value) {
+    target[offset] = (value >>> 24) & 255;
+    target[offset + 1] = (value >>> 16) & 255;
+    target[offset + 2] = (value >>> 8) & 255;
+    target[offset + 3] = value & 255;
+  }
+
+  function tagPngBytes(originalBytes, marker) {
+    const bytes = originalBytes instanceof Uint8Array ? originalBytes : new Uint8Array(originalBytes);
+    if (bytes.length < 20 || bytes[0] !== 137 || bytes[1] !== 80 || bytes[2] !== 78 || bytes[3] !== 71) {
+      throw new Error('PowerPoint page rasterization did not produce a valid PNG.');
+    }
+    const keyword = new TextEncoder().encode('FigureLoomPage');
+    const value = new TextEncoder().encode(String(marker));
+    const data = new Uint8Array(keyword.length + 1 + value.length);
+    data.set(keyword, 0);
+    data[keyword.length] = 0;
+    data.set(value, keyword.length + 1);
+    const type = new TextEncoder().encode('tEXt');
+    const crcInput = new Uint8Array(type.length + data.length);
+    crcInput.set(type, 0);
+    crcInput.set(data, type.length);
+    const chunk = new Uint8Array(12 + data.length);
+    writeUint32(chunk, 0, data.length);
+    chunk.set(type, 4);
+    chunk.set(data, 8);
+    writeUint32(chunk, 8 + data.length, crc32(crcInput));
+    const insertAt = bytes.length - 12;
+    const tagged = new Uint8Array(bytes.length + chunk.length);
+    tagged.set(bytes.subarray(0, insertAt), 0);
+    tagged.set(chunk, insertAt);
+    tagged.set(bytes.subarray(insertAt), insertAt + chunk.length);
+    return tagged;
+  }
+
+  async function rasterizeSvgData(svgData, slideNumber) {
+    const source = dataUriToText(svgData);
+    const { width, height } = svgDimensions(source);
+    const maxPixels = 12000000;
+    const scale = Math.max(1, Math.min(2, 4096 / width, 4096 / height, Math.sqrt(maxPixels / (width * height))));
+    const pixelWidth = Math.max(1, Math.round(width * scale));
+    const pixelHeight = Math.max(1, Math.round(height * scale));
+    const token = `${slideNumber}-${hashText(`${slideNumber}|${source}`)}`;
+    const objectUrl = URL.createObjectURL(new Blob([source], { type:'image/svg+xml;charset=utf-8' }));
+    const image = new Image();
+    try {
+      await new Promise((resolve, reject) => {
+        const timer = setTimeout(() => reject(new Error(`Page ${slideNumber} did not finish loading for PowerPoint conversion.`)), 30000);
+        image.onload = () => { clearTimeout(timer); resolve(); };
+        image.onerror = () => { clearTimeout(timer); reject(new Error(`Page ${slideNumber} could not be converted into its own PowerPoint image.`)); };
+        image.src = objectUrl;
+      });
+      const canvas = document.createElement('canvas');
+      canvas.width = pixelWidth;
+      canvas.height = pixelHeight;
+      const context = canvas.getContext('2d', { alpha:true });
+      if (!context) throw new Error(`Page ${slideNumber} could not create its PowerPoint conversion canvas.`);
+      context.clearRect(0, 0, pixelWidth, pixelHeight);
+      context.drawImage(image, 0, 0, pixelWidth, pixelHeight);
+      const blob = await canvasToBlob(canvas);
+      const bytes = tagPngBytes(new Uint8Array(await blob.arrayBuffer()), token);
+      canvas.width = 1;
+      canvas.height = 1;
+      return { bytes, token, width:pixelWidth, height:pixelHeight };
+    } finally {
+      image.src = '';
+      URL.revokeObjectURL(objectUrl);
+    }
   }
 
   function downloadBlob(blob, fileName) {
@@ -120,17 +216,26 @@
     setTimeout(() => URL.revokeObjectURL(url), 60000);
   }
 
-  const THEME_XML = xml(`<a:theme xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" name="FigureLoom"><a:themeElements><a:clrScheme name="FigureLoom"><a:dk1><a:sysClr val="windowText" lastClr="000000"/></a:dk1><a:lt1><a:sysClr val="window" lastClr="FFFFFF"/></a:lt1><a:dk2><a:srgbClr val="44546A"/></a:dk2><a:lt2><a:srgbClr val="E7E6E6"/></a:lt2><a:accent1><a:srgbClr val="4472C4"/></a:accent1><a:accent2><a:srgbClr val="ED7D31"/></a:accent2><a:accent3><a:srgbClr val="A5A5A5"/></a:accent3><a:accent4><a:srgbClr val="FFC000"/></a:accent4><a:accent5><a:srgbClr val="5B9BD5"/></a:accent5><a:accent6><a:srgbClr val="70AD47"/></a:accent6><a:hlink><a:srgbClr val="0563C1"/></a:hlink><a:folHlink><a:srgbClr val="954F72"/></a:folHlink></a:clrScheme><a:fontScheme name="FigureLoom"><a:majorFont><a:latin typeface="Aptos Display"/><a:ea typeface=""/><a:cs typeface=""/></a:majorFont><a:minorFont><a:latin typeface="Aptos"/><a:ea typeface=""/><a:cs typeface=""/></a:minorFont></a:fontScheme><a:fmtScheme name="FigureLoom"><a:fillStyleLst><a:solidFill><a:schemeClr val="phClr"/></a:solidFill><a:solidFill><a:schemeClr val="phClr"/></a:solidFill><a:solidFill><a:schemeClr val="phClr"/></a:solidFill></a:fillStyleLst><a:lnStyleLst><a:ln w="6350" cap="flat" cmpd="sng" algn="ctr"><a:solidFill><a:schemeClr val="phClr"/></a:solidFill><a:prstDash val="solid"/></a:ln><a:ln w="12700" cap="flat" cmpd="sng" algn="ctr"><a:solidFill><a:schemeClr val="phClr"/></a:solidFill><a:prstDash val="solid"/></a:ln><a:ln w="19050" cap="flat" cmpd="sng" algn="ctr"><a:solidFill><a:schemeClr val="phClr"/></a:solidFill><a:prstDash val="solid"/></a:ln></a:lnStyleLst><a:effectStyleLst><a:effectStyle><a:effectLst/></a:effectStyle><a:effectStyle><a:effectLst/></a:effectStyle><a:effectStyle><a:effectLst/></a:effectStyle></a:effectStyleLst><a:bgFillStyleLst><a:solidFill><a:schemeClr val="phClr"/></a:solidFill><a:solidFill><a:schemeClr val="phClr"/></a:solidFill><a:solidFill><a:schemeClr val="phClr"/></a:solidFill></a:bgFillStyleLst></a:fmtScheme></a:themeElements></a:theme>`);
+  const THEME_XML = xml(`<a:theme xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" name="FigureLoom"><a:themeElements><a:clrScheme name="FigureLoom"><a:dk1><a:sysClr val="windowText" lastClr="000000"/></a:dk1><a:lt1><a:sysClr val="window" lastClr="FFFFFF"/></a:lt1><a:dk2><a:srgbClr val="44546A"/></a:dk2><a:lt2><a:srgbClr val="E7E6E6"/></a:lt2><a:accent1><a:srgbClr val="4472C4"/></a:accent1><a:accent2><a:srgbClr val="ED7D31"/></a:accent2><a:accent3><a:srgbClr val="A5A5A5"/></a:accent3><a:accent4><a:srgbClr val="FFC000"/></a:accent4><a:accent5><a:srgbClr val="5B9BD5"/></a:accent5><a:accent6><a:srgbClr val="70AD47"/></a:accent6><a:hlink><a:srgbClr val="0563C1"/></a:hlink><a:folHlink><a:srgbClr val="954F72"/></a:folHlink></a:clrScheme><a:fontScheme name="FigureLoom"><a:majorFont><a:latin typeface="Aptos Display"/><a:ea typeface=""/><a:cs typeface=""/></a:majorFont><a:minorFont><a:latin typeface="Aptos"/><a:ea typeface=""/><a:cs typeface=""/></a:minorFont></a:fontScheme><a:fmtScheme name="FigureLoom"><a:fillStyleLst><a:solidFill><a:schemeClr val="phClr"/></a:solidFill></a:fillStyleLst><a:lnStyleLst><a:ln w="6350"><a:solidFill><a:schemeClr val="phClr"/></a:solidFill></a:ln></a:lnStyleLst><a:effectStyleLst><a:effectStyle><a:effectLst/></a:effectStyle></a:effectStyleLst><a:bgFillStyleLst><a:solidFill><a:schemeClr val="phClr"/></a:solidFill></a:bgFillStyleLst></a:fmtScheme></a:themeElements></a:theme>`);
   const SLIDE_MASTER_XML = xml(`<p:sldMaster xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main"><p:cSld><p:spTree><p:nvGrpSpPr><p:cNvPr id="1" name=""/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr><p:grpSpPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="0" cy="0"/><a:chOff x="0" y="0"/><a:chExt cx="0" cy="0"/></a:xfrm></p:grpSpPr></p:spTree></p:cSld><p:clrMap bg1="lt1" tx1="dk1" bg2="lt2" tx2="dk2" accent1="accent1" accent2="accent2" accent3="accent3" accent4="accent4" accent5="accent5" accent6="accent6" hlink="hlink" folHlink="folHlink"/><p:sldLayoutIdLst><p:sldLayoutId id="2147483649" r:id="rId1"/></p:sldLayoutIdLst><p:hf sldNum="0" hdr="0" ftr="0" dt="0"/><p:txStyles><p:titleStyle/><p:bodyStyle/><p:otherStyle/></p:txStyles></p:sldMaster>`);
   const SLIDE_LAYOUT_XML = xml(`<p:sldLayout xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main" type="blank" preserve="1"><p:cSld name="Blank"><p:spTree><p:nvGrpSpPr><p:cNvPr id="1" name=""/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr><p:grpSpPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="0" cy="0"/><a:chOff x="0" y="0"/><a:chExt cx="0" cy="0"/></a:xfrm></p:grpSpPr></p:spTree></p:cSld><p:clrMapOvr><a:masterClrMapping/></p:clrMapOvr></p:sldLayout>`);
 
   function slideXml(slideNumber, widthEmu, heightEmu, name) {
-    return xml(`<p:sld xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main"><p:cSld name="${escapeXml(name)}"><p:spTree><p:nvGrpSpPr><p:cNvPr id="1" name=""/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr><p:grpSpPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="0" cy="0"/><a:chOff x="0" y="0"/><a:chExt cx="0" cy="0"/></a:xfrm></p:grpSpPr><p:pic><p:nvPicPr><p:cNvPr id="2" name="FigureLoom page ${slideNumber}" descr="${escapeXml(name)}"/><p:cNvPicPr><a:picLocks noChangeAspect="1"/></p:cNvPicPr><p:nvPr/></p:nvPicPr><p:blipFill><a:blip r:embed="rId1"><a:extLst><a:ext uri="{96DAC541-7B7A-43D3-8B79-37D633B846F1}"><asvg:svgBlip xmlns:asvg="http://schemas.microsoft.com/office/drawing/2016/SVG/main" r:embed="rId2"/></a:ext></a:extLst></a:blip><a:stretch><a:fillRect/></a:stretch></p:blipFill><p:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="${widthEmu}" cy="${heightEmu}"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></p:spPr></p:pic></p:spTree></p:cSld><p:clrMapOvr><a:masterClrMapping/></p:clrMapOvr></p:sld>`);
+    return xml(`<p:sld xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main"><p:cSld name="${escapeXml(name)}"><p:spTree><p:nvGrpSpPr><p:cNvPr id="1" name=""/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr><p:grpSpPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="0" cy="0"/><a:chOff x="0" y="0"/><a:chExt cx="0" cy="0"/></a:xfrm></p:grpSpPr><p:pic><p:nvPicPr><p:cNvPr id="2" name="FigureLoom page ${slideNumber}" descr="${escapeXml(name)}"/><p:cNvPicPr><a:picLocks noChangeAspect="1"/></p:cNvPicPr><p:nvPr/></p:nvPicPr><p:blipFill><a:blip r:embed="rId1"/><a:stretch><a:fillRect/></a:stretch></p:blipFill><p:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="${widthEmu}" cy="${heightEmu}"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></p:spPr></p:pic></p:spTree></p:cSld><p:clrMapOvr><a:masterClrMapping/></p:clrMapOvr></p:sld>`);
   }
 
   function slideRelationshipsXml(slideNumber) {
     const number = String(slideNumber).padStart(3, '0');
-    return xml(`<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="../media/fallback-${number}.png"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="../media/figureloom-page-${number}.svg"/><Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/slideLayout" Target="../slideLayouts/slideLayout1.xml"/></Relationships>`);
+    return xml(`<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="../media/figureloom-page-${number}.png"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/slideLayout" Target="../slideLayouts/slideLayout1.xml"/></Relationships>`);
+  }
+
+  function containsAscii(bytes, text) {
+    const needle = new TextEncoder().encode(text);
+    outer: for (let index = 0; index <= bytes.length - needle.length; index += 1) {
+      for (let offset = 0; offset < needle.length; offset += 1) if (bytes[index + offset] !== needle[offset]) continue outer;
+      return true;
+    }
+    return false;
   }
 
   async function buildPresentationBlob(presentation) {
@@ -140,17 +245,19 @@
     const layout = presentation._layouts.get(presentation.layout) || { width:13.333333, height:8.333333 };
     const widthEmu = Math.max(1, Math.round(Number(layout.width || 13.333333) * EMU_PER_INCH));
     const heightEmu = Math.max(1, Math.round(Number(layout.height || 8.333333) * EMU_PER_INCH));
-    const pageRecords = slides.map((slide, index) => {
+    const pageRecords = [];
+    for (let index = 0; index < slides.length; index += 1) {
+      const slide = slides[index];
       const image = slide.images?.[0];
       if (!image?.data) throw new Error(`PowerPoint slide ${index + 1} did not receive its page image.`);
-      const identified = identifySvg(dataUriToText(image.data), index + 1);
-      return {
+      const raster = await rasterizeSvgData(image.data, index + 1);
+      pageRecords.push({
         index:index + 1,
         name:image.altText || slide.name || `FigureLoom page ${index + 1}`,
-        source:identified.source,
-        token:identified.token
-      };
-    });
+        bytes:raster.bytes,
+        token:raster.token
+      });
+    }
 
     const zip = new JSZip();
     const overrides = [
@@ -165,12 +272,12 @@
       '<Override PartName="/docProps/app.xml" ContentType="application/vnd.openxmlformats-officedocument.extended-properties+xml"/>',
       ...pageRecords.map(page => `<Override PartName="/ppt/slides/slide${page.index}.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.slide+xml"/>`)
     ];
-    zip.file('[Content_Types].xml', xml(`<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Default Extension="png" ContentType="image/png"/><Default Extension="svg" ContentType="image/svg+xml"/>${overrides.join('')}</Types>`));
+    zip.file('[Content_Types].xml', xml(`<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Default Extension="png" ContentType="image/png"/>${overrides.join('')}</Types>`));
     zip.file('_rels/.rels', xml('<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/extended-properties" Target="docProps/app.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties" Target="docProps/core.xml"/><Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="ppt/presentation.xml"/></Relationships>'));
 
     const timestamp = new Date().toISOString();
     zip.file('docProps/core.xml', xml(`<cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:dcmitype="http://purl.org/dc/dcmitype/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><dc:title>${escapeXml(presentation.title || 'FigureLoom')}</dc:title><dc:subject>${escapeXml(presentation.subject || 'FigureLoom PowerPoint export')}</dc:subject><dc:creator>${escapeXml(presentation.author || 'FigureLoom')}</dc:creator><cp:lastModifiedBy>FigureLoom</cp:lastModifiedBy><cp:revision>1</cp:revision><dcterms:created xsi:type="dcterms:W3CDTF">${timestamp}</dcterms:created><dcterms:modified xsi:type="dcterms:W3CDTF">${timestamp}</dcterms:modified></cp:coreProperties>`));
-    zip.file('docProps/app.xml', xml(`<Properties xmlns="http://schemas.openxmlformats.org/officeDocument/2006/extended-properties" xmlns:vt="http://schemas.openxmlformats.org/officeDocument/2006/docPropsVTypes"><Application>FigureLoom</Application><PresentationFormat>Custom</PresentationFormat><Slides>${pageRecords.length}</Slides><Notes>0</Notes><HiddenSlides>0</HiddenSlides><MMClips>0</MMClips><ScaleCrop>false</ScaleCrop><Company>${escapeXml(presentation.company || 'FigureLoom')}</Company><LinksUpToDate>false</LinksUpToDate><SharedDoc>false</SharedDoc><HyperlinksChanged>false</HyperlinksChanged><AppVersion>16.0000</AppVersion></Properties>`));
+    zip.file('docProps/app.xml', xml(`<Properties xmlns="http://schemas.openxmlformats.org/officeDocument/2006/extended-properties"><Application>FigureLoom</Application><PresentationFormat>Custom</PresentationFormat><Slides>${pageRecords.length}</Slides><Notes>0</Notes><HiddenSlides>0</HiddenSlides><MMClips>0</MMClips><ScaleCrop>false</ScaleCrop><Company>${escapeXml(presentation.company || 'FigureLoom')}</Company><LinksUpToDate>false</LinksUpToDate><SharedDoc>false</SharedDoc><HyperlinksChanged>false</HyperlinksChanged><AppVersion>16.0000</AppVersion></Properties>`));
 
     const slideIds = pageRecords.map(page => `<p:sldId id="${255 + page.index}" r:id="rId${page.index + 1}"/>`).join('');
     zip.file('ppt/presentation.xml', xml(`<p:presentation xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main" saveSubsetFonts="1" autoCompressPictures="0"><p:sldMasterIdLst><p:sldMasterId id="2147483648" r:id="rId1"/></p:sldMasterIdLst><p:sldIdLst>${slideIds}</p:sldIdLst><p:sldSz cx="${widthEmu}" cy="${heightEmu}"/><p:notesSz cx="${heightEmu}" cy="${widthEmu}"/><p:defaultTextStyle/></p:presentation>`));
@@ -183,7 +290,6 @@
       `<Relationship Id="rId${pageRecords.length + 5}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/tableStyles" Target="tableStyles.xml"/>`
     ].join('');
     zip.file('ppt/_rels/presentation.xml.rels', xml(`<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">${presentationRelationships}</Relationships>`));
-
     zip.file('ppt/theme/theme1.xml', THEME_XML);
     zip.file('ppt/slideMasters/slideMaster1.xml', SLIDE_MASTER_XML);
     zip.file('ppt/slideMasters/_rels/slideMaster1.xml.rels', xml('<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/slideLayout" Target="../slideLayouts/slideLayout1.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/theme" Target="../theme/theme1.xml"/></Relationships>'));
@@ -197,8 +303,7 @@
       const number = String(page.index).padStart(3, '0');
       zip.file(`ppt/slides/slide${page.index}.xml`, slideXml(page.index, widthEmu, heightEmu, page.name));
       zip.file(`ppt/slides/_rels/slide${page.index}.xml.rels`, slideRelationshipsXml(page.index));
-      zip.file(`ppt/media/fallback-${number}.png`, TINY_PNG_BASE64, { base64:true });
-      zip.file(`ppt/media/figureloom-page-${number}.svg`, page.source);
+      zip.file(`ppt/media/figureloom-page-${number}.png`, page.bytes);
     });
 
     const blob = await zip.generateAsync({
@@ -218,20 +323,17 @@
     for (const page of pageRecords) {
       const number = String(page.index).padStart(3, '0');
       const relationship = await archive.file(`ppt/slides/_rels/slide${page.index}.xml.rels`)?.async('text');
-      const expectedTarget = `../media/figureloom-page-${number}.svg`;
+      const expectedTarget = `../media/figureloom-page-${number}.png`;
       if (!relationship?.includes(`Target="${expectedTarget}"`)) {
-        throw new Error(`PowerPoint slide ${page.index} was not linked to its own page file.`);
+        throw new Error(`PowerPoint slide ${page.index} was not linked to its own page image.`);
       }
-      const mediaPath = `ppt/media/figureloom-page-${number}.svg`;
-      const mediaSource = await archive.file(mediaPath)?.async('text');
-      if (!mediaSource?.includes(`data-figureloom-direct-slide="${page.index}"`) || !mediaSource.includes(`data-figureloom-direct-token="${page.token}"`)) {
+      const mediaBytes = await archive.file(`ppt/media/figureloom-page-${number}.png`)?.async('uint8array');
+      if (!mediaBytes || !containsAscii(mediaBytes, page.token)) {
         throw new Error(`PowerPoint slide ${page.index} failed its direct page identity check.`);
       }
       targets.push(expectedTarget);
     }
-    if (new Set(targets).size !== pageRecords.length) {
-      throw new Error('PowerPoint attempted to reuse a page file between slides.');
-    }
+    if (new Set(targets).size !== pageRecords.length) throw new Error('PowerPoint attempted to reuse a page image between slides.');
     return { slideCount:pageRecords.length, targets };
   }
 
@@ -281,14 +383,6 @@
       if (outputType === 'blob') return blob;
       if (outputType === 'arraybuffer') return blob.arrayBuffer();
       if (outputType === 'uint8array') return new Uint8Array(await blob.arrayBuffer());
-      if (outputType === 'base64') {
-        const bytes = new Uint8Array(await blob.arrayBuffer());
-        let binary = '';
-        for (let offset = 0; offset < bytes.length; offset += 0x8000) {
-          binary += String.fromCharCode(...bytes.subarray(offset, offset + 0x8000));
-        }
-        return btoa(binary);
-      }
       return blob;
     }
     async writeFile(options = {}) {
@@ -304,6 +398,7 @@
     DirectPptxGenJS,
     buildPresentationBlob,
     validatePresentationBlob,
+    rasterizeSvgData,
     ensureJsZip
   });
 })();
