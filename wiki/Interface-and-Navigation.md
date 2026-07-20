@@ -17,6 +17,14 @@ Common controls include:
 
 On a phone, the header is deliberately compact. Less common actions move into **More** so the project name, undo, redo, and export controls remain usable.
 
+## Open project tabs
+
+Cloud projects that are open in the current window appear in a project-tab rail.
+
+Each tab shows the project title and a close **×** beside the title. The close control removes that project from the current tab rail. It does not delete the saved project from the gallery.
+
+Use the project controls when you need to reconnect, open the current project in another window, or close the current connection safely.
+
 ## Main tabs
 
 The visible tabs organize the normal editing workflow.
@@ -102,12 +110,14 @@ Typical controls include:
 
 On a phone, select an object and open **Edit**.
 
-## Bottom canvas toolbar
+## Canvas control bar
 
-The canvas toolbar keeps navigation and page controls available without occupying the main ribbon.
+The canvas control bar keeps navigation and page controls available without occupying the main ribbon.
 
 Depending on the current mode, it can include:
 
+- Pages
+- Hand tool
 - Zoom out
 - Current zoom
 - Zoom in
@@ -116,7 +126,9 @@ Depending on the current mode, it can include:
 - Navigator
 - Check
 
-The toolbar can be repositioned or collapsed in layouts that support it.
+On desktop, the entire Pages, Hand, zoom, 100 percent, Format, and Navigation bar can be dragged as one unit. Use the grip or the non-button area of the bar. Its existing collapse control still collapses and reopens the bar.
+
+Dragging or collapsing this interface bar does not move or resize the project page.
 
 ## Pro Tools
 
@@ -138,9 +150,17 @@ To leave one of these areas:
 
 ## Passive guide
 
-The passive guide explains the interface without clicking controls, moving objects, or scrolling the project for you.
+The passive guide explains the interface without clicking controls, moving objects, selecting anything, changing project data, or scrolling the project for you.
+
+The desktop guide covers the project bar, main tabs, open project tabs, Add, Illustrations, the movable canvas control bar, canvas, pages and layers, inspector, Pro Tools, Share, appearance, Help, autosave, recovery, and export.
+
+The phone guide covers the compact header, scrollable tabs, canvas, bottom dock, Tools, Pages, Edit, More, Add, Help, canvas navigation, and export.
 
 Use **Next**, **Back**, or **Close** at the bottom of the guide. On a phone, the action row stays above the browser safe area and the FigureLoom dock.
+
+## Light and dark appearance
+
+Light and dark appearance change the interface surfaces, controls, borders, and text colors. They do not automatically recolor the exported page or the artwork inside the project.
 
 ## Useful navigation habits
 
