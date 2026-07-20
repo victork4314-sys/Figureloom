@@ -40,6 +40,7 @@ jobs:
           node --check mcp-command-extensions.js
           node --check mcp-feature-bootstrap.js
           node --check mcp-feature-adapters.js
+          node --check mcp-security-overrides.js
           node --check safe-refresh.js
           node --check service-worker.js
       - name: Install MCP server dependencies
