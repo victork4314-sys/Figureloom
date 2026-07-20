@@ -1,9 +1,11 @@
 (() => {
-  if (window.__figureLoomHelpCenterInstalled) return;
+  if (window.__figureLoomHelpCenterInstalledV4) return;
+  window.__figureLoomHelpCenterInstalledV4 = true;
   window.__figureLoomHelpCenterInstalled = true;
 
   let menu = null;
   let activeButton = null;
+  let refreshQueued = false;
 
   function currentButton() {
     return document.getElementById('tourHelpButton');
@@ -87,9 +89,214 @@
     document.head.appendChild(style);
   }
 
+  function setImportant(element, property, value) {
+    element?.style?.setProperty(property, value, 'important');
+  }
+
+  function pinProjectTabClose(wrapper) {
+    if (!(wrapper instanceof Element)) return;
+    const tab = wrapper.querySelector(':scope > .project-tab');
+    const closeButton = wrapper.querySelector(':scope > .project-tab-close');
+    if (!tab || !closeButton) return;
+
+    setImportant(wrapper, 'position', 'relative');
+    setImportant(wrapper, 'display', 'block');
+    setImportant(wrapper, 'min-height', '28px');
+    setImportant(wrapper, 'overflow', 'visible');
+
+    setImportant(tab, 'box-sizing', 'border-box');
+    setImportant(tab, 'display', 'flex');
+    setImportant(tab, 'width', '100%');
+    setImportant(tab, 'height', '28px');
+    setImportant(tab, 'min-height', '28px');
+    setImportant(tab, 'padding-right', '31px');
+
+    setImportant(closeButton, 'position', 'absolute');
+    setImportant(closeButton, 'z-index', '8');
+    setImportant(closeButton, 'top', '4px');
+    setImportant(closeButton, 'right', '4px');
+    setImportant(closeButton, 'bottom', 'auto');
+    setImportant(closeButton, 'left', 'auto');
+    setImportant(closeButton, 'display', 'grid');
+    setImportant(closeButton, 'place-items', 'center');
+    setImportant(closeButton, 'width', '19px');
+    setImportant(closeButton, 'min-width', '19px');
+    setImportant(closeButton, 'max-width', '19px');
+    setImportant(closeButton, 'height', '19px');
+    setImportant(closeButton, 'min-height', '19px');
+    setImportant(closeButton, 'max-height', '19px');
+    setImportant(closeButton, 'margin', '0');
+    setImportant(closeButton, 'padding', '0');
+    setImportant(closeButton, 'transform', 'none');
+    setImportant(closeButton, 'line-height', '1');
+    setImportant(closeButton, 'opacity', '1');
+    setImportant(closeButton, 'pointer-events', 'auto');
+  }
+
+  function refreshProjectTabs(root = document) {
+    if (root instanceof Element && root.matches('.project-tab-wrap')) pinProjectTabClose(root);
+    root.querySelectorAll?.('#projectTabRail .project-tab-wrap').forEach(pinProjectTabClose);
+  }
+
+  function phoneMode() {
+    return document.documentElement.dataset.figureloomResolvedMode === 'phone';
+  }
+
+  function relabelPhoneHelp(root = document) {
+    const buttons = [];
+    if (root instanceof Element && root.matches('[data-phone-action="guide"]')) buttons.push(root);
+    root.querySelectorAll?.('[data-phone-action="guide"]').forEach(button => buttons.push(button));
+    buttons.forEach(button => {
+      button.setAttribute('aria-label', 'Open FigureLoom help');
+      button.title = 'Open FigureLoom help';
+      const label = button.querySelector('small');
+      if (label) label.textContent = 'Help';
+    });
+  }
+
+  function tourSteps() {
+    const phone = phoneMode();
+    if (phone) {
+      return [
+        { selector:'.titlebar', title:'The compact project bar', text:'Rename the project, undo or redo, and export without giving up canvas space.' },
+        { selector:'.ribbon-tabs', title:'The same editor sections', text:'The normal tabs stay horizontally scrollable. Add opens a full insertion panel while ordinary tools use phone sheets.' },
+        { selector:'#canvasStage', title:'The real page and workspace', text:'The page is the export area. Pinch to zoom, use the Hand tool to pan, and remember that zoom never creates extra page area.' },
+        { selector:'#figureloomPhoneDock', fallback:'.canvas-toolbar', title:'The phone dock', text:'Tools, Pages, Edit, and More switch between the same editor controls without changing the project.' },
+        { selector:'[data-phone-action="tools"]', fallback:'#figureloomPhoneDock', title:'Tools', text:'Tools opens the current ribbon controls in a touch-friendly sheet.' },
+        { selector:'[data-phone-action="pages"]', fallback:'#figureloomPhoneDock', title:'Pages and layers', text:'Use Pages to switch pages, manage layers, find hidden objects, and control order or visibility.' },
+        { selector:'[data-phone-action="edit"]', fallback:'#figureloomPhoneDock', title:'Edit the selection', text:'Select an object, then use Edit for exact position, size, color, opacity, and object-specific controls.' },
+        { selector:'[data-phone-action="more"]', fallback:'#figureloomPhoneDock', title:'More contains the less frequent tools', text:'Projects, Settings, Share, Account, Templates, Pro Tools, Loomy, and Help live here.' },
+        { selector:'[data-tab="insert"]', fallback:'.ribbon-tabs', title:'Add almost anything', text:'Insert text, shapes, illustrations, images, files, templates, tables, charts, equations, code windows, and more.' },
+        { selector:'[data-phone-action="guide"]', fallback:'[data-phone-action="more"]', title:'Help stays connected to the manual', text:'More → Help opens the Help center, the full manual, quick guides, and this passive tour.' },
+        { selector:'.canvas-toolbar', fallback:'#canvasStage', title:'Canvas navigation', text:'Use Pages, Hand, zoom, 100 percent, Format, and Navigator without changing the real page dimensions.' },
+        { selector:'#exportButton', title:'Export and keep a backup', text:'Export the needed format and download a complete editable project backup for important work.' }
+      ];
+    }
+
+    return [
+      { selector:'.titlebar', title:'The project bar', text:'Rename the project, watch save status, access the account, switch appearance, open Help, and export from the top line.' },
+      { selector:'.ribbon-tabs', title:'The main sections', text:'Settings, Projects, Home, Add, Illustrations, Arrange, Style, Charts, Check, and Share organize the normal workflow.' },
+      { selector:'#projectTabRail', fallback:'.document-title', title:'Open project tabs', text:'Each open cloud project has its own tab. The × sits beside its title and closes only that tab, not the saved project.' },
+      { selector:'[data-tab="insert"]', fallback:'.ribbon-tabs', title:'Add almost anything', text:'Insert text, shapes, illustrations, images, files, templates, tables, charts, equations, code windows, and more.' },
+      { selector:'[data-tab="science"]', fallback:'.ribbon-tabs', title:'Scientific illustrations', text:'Search the large illustration library. Added vectors remain editable and keep source information when available.' },
+      { selector:'.canvas-toolbar', fallback:'#canvasStage', title:'Movable canvas controls', text:'The Pages, Hand, zoom, 100 percent, Format, and Navigation bar can be dragged as one bar or collapsed.' },
+      { selector:'#canvasStage', title:'The real page and workspace', text:'Only the page is exported. Zoom and panning change the view without changing page dimensions or inventing extra area.' },
+      { selector:'.left-panel', title:'Pages and layers', text:'Switch and reorder pages, find hidden objects, rename layers, lock items, and control front-to-back order.' },
+      { selector:'.right-panel', title:'The inspector', text:'Exact position, size, color, opacity, text, image, SVG, chart, metadata, and accessibility controls appear when relevant.' },
+      { selector:'#proToolsButton', fallback:'.title-actions', title:'Pro Tools', text:'Advanced arranging, data, annotations, components, Office import, recovery, review, publishing, and science tools stay in focused workspaces.' },
+      { selector:'#collaborateRibbonButton', fallback:'.ribbon-tabs', title:'Share and collaborate', text:'Open sharing, roles, comments, and live collaboration without making an account mandatory for local work.' },
+      { selector:'#interfaceThemeToggle', fallback:'.title-actions', title:'Light and dark appearance', text:'Appearance changes the interface surfaces, not the exported page background or the colors inside your figure.' },
+      { selector:'#tourHelpButton', fallback:'.title-actions', title:'Help and the manual', text:'Help opens the complete manual, quick task guides, the visual guide, and this passive tour.' },
+      { selector:'#saveStatus', fallback:'.document-title', title:'Autosave and recovery', text:'FigureLoom keeps local autosave and recovery data. A downloaded .figureloom backup is still the safest separate copy.' },
+      { selector:'#exportButton', title:'Export and keep a backup', text:'Export the needed format, run checks before important submissions, and keep an editable project backup.' }
+    ];
+  }
+
+  function installExpandedTour() {
+    const old = document.getElementById('scicanvasTour');
+    if (old?.dataset.figureloomExpandedHelpTour === '1') return;
+    old?.remove();
+
+    const overlay = document.createElement('div');
+    overlay.id = 'scicanvasTour';
+    overlay.dataset.figureloomExpandedHelpTour = '1';
+    overlay.innerHTML = `
+      <div class="tour-shade"></div><div class="tour-highlight" aria-hidden="true"></div>
+      <div class="tour-card" role="dialog" aria-modal="false" aria-labelledby="figureloomExpandedTourTitle">
+        <div class="tour-progress"><span class="tour-counter"></span><span>Passive guide</span></div><div class="tour-progress-bar"><div class="tour-progress-fill"></div></div>
+        <h2 id="figureloomExpandedTourTitle"></h2><p class="tour-text"></p><p class="tour-passive-note">Nothing is opened, moved, selected, or scrolled by this guide.</p>
+        <div class="tour-actions"><button data-tour="close" type="button">Close</button><button data-tour="back" type="button">Back</button><button data-tour="next" class="tour-primary" type="button">Next</button></div>
+      </div>`;
+    document.body.appendChild(overlay);
+
+    const highlight = overlay.querySelector('.tour-highlight');
+    let steps = tourSteps();
+    let index = 0;
+
+    function targetFor(step) {
+      return document.querySelector(step.selector) || (step.fallback ? document.querySelector(step.fallback) : null);
+    }
+
+    function positionHighlight(target) {
+      if (!target) {
+        highlight.hidden = true;
+        return;
+      }
+      const rect = target.getBoundingClientRect();
+      const visible = rect.bottom > 0 && rect.right > 0 && rect.top < innerHeight && rect.left < innerWidth && rect.width > 2 && rect.height > 2;
+      if (!visible) {
+        highlight.hidden = true;
+        return;
+      }
+      const pad = 5;
+      const left = Math.max(4, rect.left - pad);
+      const top = Math.max(4, rect.top - pad);
+      highlight.hidden = false;
+      highlight.style.left = `${left}px`;
+      highlight.style.top = `${top}px`;
+      highlight.style.width = `${Math.max(4, Math.min(innerWidth - left - 4, rect.width + pad * 2))}px`;
+      highlight.style.height = `${Math.max(4, Math.min(innerHeight - top - 4, rect.height + pad * 2))}px`;
+    }
+
+    function show() {
+      const step = steps[index];
+      if (!step) return;
+      positionHighlight(targetFor(step));
+      overlay.querySelector('#figureloomExpandedTourTitle').textContent = step.title;
+      overlay.querySelector('.tour-text').textContent = step.text;
+      overlay.querySelector('.tour-counter').textContent = `${index + 1} of ${steps.length}`;
+      overlay.querySelector('.tour-progress-fill').style.width = `${(index + 1) / steps.length * 100}%`;
+      overlay.querySelector('[data-tour="back"]').disabled = index === 0;
+      overlay.querySelector('[data-tour="next"]').textContent = index === steps.length - 1 ? 'Done' : 'Next';
+    }
+
+    function finish(completed = false) {
+      overlay.classList.remove('open');
+      highlight.hidden = true;
+      if (completed) localStorage.setItem('scicanvas-guided-tour-v3', 'complete');
+    }
+
+    overlay.querySelector('[data-tour="close"]').addEventListener('click', () => finish(true));
+    overlay.querySelector('[data-tour="back"]').addEventListener('click', () => {
+      if (index > 0) index -= 1;
+      show();
+    });
+    overlay.querySelector('[data-tour="next"]').addEventListener('click', () => {
+      if (index >= steps.length - 1) return finish(true);
+      index += 1;
+      show();
+    });
+
+    window.openSciCanvasTour = () => {
+      steps = tourSteps();
+      index = 0;
+      overlay.classList.add('open');
+      show();
+    };
+
+    window.addEventListener('resize', () => {
+      if (overlay.classList.contains('open')) positionHighlight(targetFor(steps[index]));
+    }, { passive:true });
+  }
+
+  function refresh(root = document) {
+    prepareButton();
+    refreshProjectTabs(root);
+    relabelPhoneHelp(root);
+  }
+
+  function queueRefresh(root = document) {
+    if (refreshQueued) return;
+    refreshQueued = true;
+    requestAnimationFrame(() => {
+      refreshQueued = false;
+      refresh(root);
+    });
+  }
+
   installStyle();
   makeMenu();
-  prepareButton();
+  refresh();
 
   document.addEventListener('click', event => {
     const button = event.target instanceof Element ? event.target.closest('#tourHelpButton') : null;
@@ -97,6 +304,16 @@
     event.preventDefault();
     event.stopImmediatePropagation();
     toggle(button);
+  }, true);
+
+  window.addEventListener('click', event => {
+    if (!phoneMode()) return;
+    const guideButton = event.target instanceof Element ? event.target.closest('[data-phone-action="guide"]') : null;
+    if (!guideButton) return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    window.FigureLoomPhoneMode?.close?.({ restoreFocus:false });
+    requestAnimationFrame(() => open(currentButton()));
   }, true);
 
   document.addEventListener('pointerdown', event => {
@@ -109,8 +326,19 @@
     if (event.key === 'Escape' && menu && !menu.hidden) close({ restoreFocus:true });
   });
 
-  const observer = new MutationObserver(() => prepareButton());
+  const observer = new MutationObserver(records => {
+    records.forEach(record => record.addedNodes.forEach(node => {
+      if (node instanceof Element) queueRefresh(node);
+    }));
+  });
   observer.observe(document.documentElement, { childList:true, subtree:true });
 
-  window.FigureLoomHelpCenter = { open, close, toggle, refresh:prepareButton };
+  const installTourWhenReady = () => {
+    installExpandedTour();
+    refresh();
+  };
+  window.addEventListener('figureloom-stable-ready', installTourWhenReady);
+  setTimeout(installTourWhenReady, 180);
+
+  window.FigureLoomHelpCenter = { open, close, toggle, refresh:() => refresh() };
 })();
