@@ -127,6 +127,12 @@
     const drawer = document.getElementById('cloudGalleryDrawer');
     const card = drawer?.querySelector('#scAccountProfileCard');
     if (!card) return;
+
+    const signedIn = Boolean(activeUser);
+    card.hidden = !signedIn;
+    const accountPanel = drawer.querySelector('.cloud-account-panel');
+    if (accountPanel) accountPanel.hidden = signedIn;
+
     card.querySelector('#scProfileDisplayName').textContent = currentName();
     card.querySelector('#scProfileSubtitle').textContent = activeUser?.email || 'Local SciCanvas profile · sign in when you want cloud projects';
     renderPreview(card.querySelector('[data-sc-avatar-preview]'));
@@ -135,9 +141,7 @@
       button.setAttribute('aria-pressed', currentChoice() === id ? 'true' : 'false');
       if (id === 'initial') button.querySelector('span').textContent = initials(currentName());
     });
-    card.querySelector('#scProfileSignOut').hidden = !activeUser;
-    const accountPanel = drawer.querySelector('.cloud-account-panel');
-    if (accountPanel) accountPanel.hidden = Boolean(activeUser);
+    card.querySelector('#scProfileSignOut').hidden = !signedIn;
   }
 
   function installWelcomePicker() {
@@ -185,6 +189,7 @@
     .cloud-gallery-drawer .cloud-hero strong{font-size:18px!important;letter-spacing:-.025em}
     .cloud-gallery-drawer .cloud-account-panel{padding:15px!important;border-radius:16px!important;background:rgba(255,255,255,.82)!important;box-shadow:0 8px 24px rgba(48,67,91,.06)}
     .sc-account-profile-card{display:grid;gap:12px;margin-top:12px;padding:15px;border:1px solid rgba(109,137,157,.23);border-radius:16px;background:linear-gradient(145deg,rgba(255,255,255,.92),rgba(241,248,248,.88) 55%,rgba(246,243,250,.9));box-shadow:0 9px 28px rgba(43,62,88,.07)}
+    .sc-account-profile-card[hidden],.cloud-gallery-drawer .cloud-account-panel[hidden]{display:none!important}
     .sc-profile-summary{display:grid;grid-template-columns:50px minmax(0,1fr) auto;align-items:center;gap:11px}.sc-profile-avatar{display:grid;place-items:center;width:50px;height:50px;border-radius:16px;background:linear-gradient(145deg,#365eae,#5d91a0 56%,#8175a8);color:#fff;font-size:24px;font-weight:850;box-shadow:0 9px 20px rgba(65,105,193,.2)}
     .sc-profile-copy strong,.sc-profile-copy small{display:block}.sc-profile-copy strong{font-size:13px}.sc-profile-copy small{margin-top:3px;color:#718095;font-size:9px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.sc-profile-actions{display:flex;align-items:center;gap:7px}.sc-profile-actions button{min-width:82px!important}.sc-profile-picker-heading{display:flex;align-items:end;justify-content:space-between;gap:10px}.sc-profile-picker-heading span{font-size:10px;font-weight:800;color:#4c5e73}.sc-profile-picker-heading small{font-size:8px;color:#7d8998}
     .scientific-avatar-picker{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:7px}.scientific-avatar-picker button{display:grid!important;place-items:center;gap:3px;min-width:0!important;min-height:58px!important;padding:6px!important;border:1px solid #d2dde5!important;border-radius:12px!important;background:rgba(255,255,255,.86)!important;color:#4a5c73!important}.scientific-avatar-picker button span{font-size:20px;line-height:1}.scientific-avatar-picker button small{font-size:7px;color:#7a8797}.scientific-avatar-picker button[aria-pressed="true"]{border-color:#5f8eaa!important;background:linear-gradient(145deg,#edf8f6,#f1eff9)!important;box-shadow:0 0 0 3px rgba(95,142,170,.12)!important;color:#315c76!important}
