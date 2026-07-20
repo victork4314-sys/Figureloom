@@ -1,5 +1,6 @@
 (() => {
-  if (window.__figureLoomStableRuntime71d36dfV82) return;
+  if (window.__figureLoomStableRuntime71d36dfV83) return;
+  window.__figureLoomStableRuntime71d36dfV83 = true;
   window.__figureLoomStableRuntime71d36dfV82 = true;
   window.__figureLoomStableRuntime71d36dfV81 = true;
   window.__figureLoomStableRuntime71d36dfV80 = true;
@@ -46,7 +47,7 @@
   window.__figureLoomStableRuntime71d36dfV39 = true;
   window.__figureLoomStableRuntime71d36dfV38 = true;
 
-  const STABLE_BUILD = "stable-71d36df-locked-20260720-v82";
+  const STABLE_BUILD = "stable-71d36df-locked-20260720-v83";
   const GENERAL_ADDONS = [
     "library-more-illustrations.js",
     "library-more-templates.js",
@@ -220,7 +221,7 @@
   void Promise.all([
     Promise.all(GENERAL_ADDONS.map(loadAddon)),
     loadTextStackInOrder()
-  ]).finally(() => {
+  ]).then(() => loadAddon("final-session-polish.js")).finally(() => {
     clearTimeout(fallback);
     revealStableApp();
   });
