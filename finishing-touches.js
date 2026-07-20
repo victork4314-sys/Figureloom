@@ -62,12 +62,63 @@
   }
 
   const tourSteps = [
-    { selector:'.ribbon-tabs', title:'The main sections', text:'Insert adds objects and files, Science opens the illustration library, Design controls the canvas, and Data and Review contain specialist tools.' },
-    { selector:'#canvasStage', title:'Your canvas', text:'Pinch with two fingers to zoom. Use the Hand tool or hold Space to move around large posters.' },
-    { selector:'.left-panel', title:'Pages and layers', text:'Switch pages, reorder layers, hide items, and move or copy objects between pages.' },
-    { selector:'.right-panel', title:'Selection controls', text:'Position, size, colors, metadata, and context-specific controls appear here when an object is selected.' },
-    { selector:'#proToolsButton', fallback:'.title-actions', title:'Pro tools', text:'Advanced arranging, charts, annotations, components, review, accessibility, and publication checks stay inside one focused hub.' },
-    { selector:'#exportButton', title:'Export and backup', text:'Export SVG, PNG, PowerPoint, or the complete editable project. The Export button always stays visible in the top bar.' }
+    {
+      selector:'.ribbon-tabs',
+      title:'The main sections',
+      text:'Settings and Projects manage the workspace. Add, Illustrations, Arrange, Style, Charts, and Check organize the normal editing workflow. On a phone, the same sections stay available through the scrollable tabs and bottom dock.'
+    },
+    {
+      selector:'#projectTabRail',
+      fallback:'.document-title',
+      title:'Project name and open project tabs',
+      text:'Rename the current project at the top. Open cloud projects appear as tabs, and each tab has its own close control beside the title. Closing a tab does not silently delete the project.'
+    },
+    {
+      selector:'.ribbon-tab[data-tab="insert"]',
+      fallback:'.ribbon-tabs',
+      title:'Add objects and files',
+      text:'Add opens text, shapes, arrows, connectors, images, files, templates, tables, charts, equations, code windows, and other insertable objects. Illustrations opens the searchable science library.'
+    },
+    {
+      selector:'#canvasStage',
+      title:'Your canvas and real page area',
+      text:'The page is the exported area. The surrounding workspace is only for navigation. Pinch with two fingers to zoom, and remember that zoom changes the view rather than inventing extra page space.'
+    },
+    {
+      selector:'.canvas-toolbar',
+      fallback:'#canvasStage',
+      title:'Canvas navigation controls',
+      text:'Pages, the Hand tool, zoom, 100 percent, Format, and Navigation stay together in this bar. On supported desktop layouts the complete bar can be dragged to another position or collapsed without changing the figure.'
+    },
+    {
+      selector:'.left-panel',
+      fallback:'#figureloomPhoneDock',
+      title:'Pages and layers',
+      text:'Switch, add, duplicate, delete, and reorder pages here. Layers help select covered objects, change front-to-back order, hide items, and lock them. On a phone, open Pages from the bottom dock.'
+    },
+    {
+      selector:'.right-panel',
+      fallback:'#figureloomPhoneDock',
+      title:'Selection controls and inspector',
+      text:'Position, size, rotation, colors, opacity, text, image, chart, metadata, and accessibility controls appear here when relevant. On a phone, select an object and open Edit.'
+    },
+    {
+      selector:'#proToolsButton',
+      fallback:'.title-actions',
+      title:'Pro Tools',
+      text:'Advanced arranging, data workspaces, annotations, components, review, accessibility, publication checks, office tools, recovery, and advanced science tools stay inside one focused hub.'
+    },
+    {
+      selector:'#tourHelpButton',
+      fallback:'.title-actions',
+      title:'Help, manual, and this passive guide',
+      text:'Help opens the full manual, quick task guides, visual interface guide, and this tour. In Phone mode, open More and choose Guide. The tour only highlights existing areas and never clicks controls, opens panels, scrolls the project, or changes your work.'
+    },
+    {
+      selector:'#exportButton',
+      title:'Export, backup, and final checks',
+      text:'Export SVG, PNG, PowerPoint, or a complete editable project backup. Use Check before submission, and keep a downloaded .figureloom backup for work that matters.'
+    }
   ];
 
   function createTour() {
@@ -146,7 +197,7 @@
     help.id = 'tourHelpButton';
     help.type = 'button';
     help.textContent = '?';
-    help.title = 'Show the SciCanvas tour';
+    help.title = 'Open FigureLoom Help and the passive interface guide';
     help.addEventListener('click', window.openSciCanvasTour);
     document.querySelector('.title-actions')?.prepend(help);
 
