@@ -38,13 +38,13 @@ The bottom dock contains:
 - **Tools** for the current ribbon tools
 - **Pages** for pages and layers
 - **Edit** for the selected object's inspector
-- **More** for projects, settings, account, templates, Loomy, Pro Tools, Guide, sharing, and other less frequent actions
+- **More** for projects, settings, account, templates, Loomy, Pro Tools, Help, sharing, and other less frequent actions
 
 The dock remains available while ordinary editing sheets are open so you can move directly from Pages to Edit or Tools.
 
-## Help and Guide on a phone
+## Help on a phone
 
-Open **More**, then tap **Guide**. The phone sheet closes and the FigureLoom Help menu opens above the editor.
+Open **More**, then tap **Help**. The phone sheet closes and the FigureLoom Help menu opens above the editor.
 
 The Help menu provides:
 
@@ -54,7 +54,9 @@ The Help menu provides:
 - Visual interface guide
 - Passive interface tour
 
-The passive tour does not leave the editor or change the project. It explains the main sections, project tabs, Add and Illustrations, canvas bounds, navigation controls, Pages and Layers, the inspector, Pro Tools, Help, export, and backups.
+The passive guide does not leave the editor or change the project. Its 13 steps cover Projects, Settings, main workspaces, tools, the real page and canvas, pages and layers, the canvas control bar, the inspector, Pro Tools, Loomy, sharing, Help, and export.
+
+The guide never opens panels, moves objects, changes selections, or scrolls the project.
 
 ## Adding objects on a phone
 
