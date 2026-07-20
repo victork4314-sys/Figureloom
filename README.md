@@ -12,7 +12,7 @@ The interface should feel familiar to anyone who has used PowerPoint, Keynote, o
 
 Try it at [figureloom.org](https://figureloom.org/).
 
-Read the [complete manual and tutorials](https://github.com/victork4314-sys/Figureloom/wiki).
+Read the [hosted manual and tutorials](https://figureloom.org/wiki/#Home) or the [repository wiki](https://github.com/victork4314-sys/Figureloom/wiki).
 
 ## What it can do
 
@@ -26,7 +26,8 @@ Read the [complete manual and tutorials](https://github.com/victork4314-sys/Figu
 - SVG path editing and break-apart tools
 - World maps, country maps, study-site locators, and GeoJSON import
 - Code windows for instructions, methods, examples, and technical notes
-- PowerPoint and spreadsheet import and export tools
+- PowerPoint and spreadsheet import tools
+- Editable SVG export for one page or every project page
 - Contrast checks, tiny-text warnings, grayscale and color-vision previews, alt text, references, attribution, and journal sizing checks
 - Fullscreen multi-page presentation mode
 
@@ -34,13 +35,18 @@ Older project backups are still accepted, so updating FigureLoom does not strand
 
 ## Desktop, tablet, and phone
 
-The desktop and tablet interface keeps the full editor visible. Phone mode rearranges the same tools into touch-friendly panels so the canvas still has room to breathe.
+FigureLoom has four interface choices in Settings:
 
-Automatic mode chooses the phone interface on phone-sized touch devices. You can also force Phone or Desktop and tablet mode in Settings. Switching the interface does not create a second project format or change the contents of a figure.
+- **Automatic** chooses a layout from the device size and input type.
+- **Desktop** uses the compact mouse-and-keyboard layout.
+- **Tablet** keeps the full editor but uses roomier touch targets.
+- **Phone** uses the phone dock and sliding panels.
 
-Project tabs keep their close control beside the project title. Closing a tab does not silently delete the project. In desktop mode, the Pages, Hand, zoom, Format, and Navigation bar can be dragged as one complete bar while keeping its existing collapse control.
+Switching the interface does not create a second project format or change the contents of a figure.
 
-On a phone, open **More** and choose **Help** to open the Help center. The passive guide now covers projects, Settings, tools, canvas navigation, pages, layers, the inspector, Pro Tools, Loomy, sharing, Help, and export without opening panels or changing the project. These controls use the shared light and dark appearance settings.
+Project tabs keep their close control beside the project title. Closing a tab does not silently delete the project. On desktop and tablet, Undo and Redo sit beside Delete in the selected-object action group. On a phone, Undo and Redo remain in the compact top bar. The Pages, Hand, zoom, Format, and Navigation bar can be dragged as one complete bar on supported desktop layouts while keeping its existing collapse control.
+
+On a phone, open **More** and choose **Help** to open the Help center. The passive guide covers projects, Settings, tools, canvas navigation, pages, layers, the inspector, Pro Tools, Loomy, sharing, Help, and export without opening panels or changing the project. These controls use the shared light and dark appearance settings.
 
 ## Scientific artwork
 
@@ -58,6 +64,14 @@ The result is editable. Objects can be moved, resized, recolored, relabeled, del
 
 You can also ignore Loomy completely. The editor, drawing tools, templates, imports, and exports do not depend on it.
 
+## MCP and external assistants
+
+FigureLoom can connect the current project to an MCP-compatible external assistant from **Settings → MCP & AI access**.
+
+The hosted connection is tied to one account and one exact project. It can be read-only or full editor access, with destructive actions controlled by a separate switch. The copied connection link contains its authorization and can be revoked at any time. Successful write commands use the same history and saving paths as ordinary editor actions.
+
+MCP is optional and separate from Loomy. Ordinary FigureLoom editing does not require either feature. Read the [MCP guide](https://figureloom.org/wiki/#MCP-and-AI-Access).
+
 ## Projects and collaboration
 
 An account is optional.
@@ -70,10 +84,14 @@ Without signing in, projects can remain in browser storage. With an account, Fig
 - Named live presence and remote cursors
 - Encrypted project broadcasts and review comments
 - Conflict controls that avoid silently overwriting active work
+- Email invitations for account members
+- Expiring guest links that require only a display name, with an optional numeric PIN
+
+The project owner must be signed in and save the project to the cloud before creating a guest link. A guest does not need an email account to join through that link.
 
 Project contents are encrypted in the browser before cloud storage. Titles, ownership, timestamps, roles, and revision metadata remain visible so the gallery can function. This is application-layer encryption, not a zero-knowledge system.
 
-Deployment details are in [`docs/CLOUD_SETUP.md`](docs/CLOUD_SETUP.md).
+Deployment details are in [`docs/CLOUD_SETUP.md`](docs/CLOUD_SETUP.md) and the [self-hosting guide](https://figureloom.org/wiki/#Self-Hosting-and-Deployment).
 
 ## Privacy
 
@@ -97,7 +115,7 @@ Then open:
 http://localhost:8080/
 ```
 
-Most editor features work locally. Cloud authentication redirects need the local URL added to the Supabase allow list.
+Most editor features work locally. Cloud authentication redirects need the local URL added to the Supabase allow list. Hosted MCP, cloud projects, and live collaboration also require the configured backend services.
 
 ## Testing
 
@@ -106,12 +124,13 @@ Pull requests run syntax and browser checks for the parts of the app they touch.
 - JavaScript syntax and script wiring
 - Duplicate IDs and required assets
 - Offline cache behavior
-- Desktop and phone interface regressions
+- Desktop, tablet, and phone interface regressions
 - Phone safe areas, touch targets, zoom, panels, and Help controls
-- Light and dark runtime checks for the project tabs, Help center, and passive guide
+- Light and dark runtime checks for project tabs, the Help center, and the passive guide
 - Browser page errors, console errors, failed local scripts, and local HTTP failures
 - Visible FigureLoom branding
-- Account, gallery, collaboration, TeX, pathway, and export wiring
+- Account, gallery, guest-link collaboration, TeX, pathway, MCP, and export wiring
+- Wiki links, hosted page registration, and hosted wiki JavaScript syntax
 
 The repository still has an older validation workflow with a few legacy assumptions. New focused browser tests are used for the current phone interface and other recently rebuilt areas.
 
@@ -127,15 +146,15 @@ FigureLoom's original code and project-authored artwork are released under the *
 
 [Read the full license](LICENSE).
 
-People may use, study, modify, and share FigureLoom. When someone operates a modified version over a network, the AGPL requires that version's corresponding source code to be made available to its users.
+People may use, study, modify, and share FigureLoom. When someone operates a modified version over a network, the AGPL requires that version's corresponding source code be made available to its users.
 
 Outside asset packs keep their own licenses and attribution requirements. Read [`docs/ASSET_PACKS.md`](docs/ASSET_PACKS.md) before publishing work that uses them.
 
 ## More documentation
 
-- [Complete manual and tutorials](https://github.com/victork4314-sys/Figureloom/wiki)
+- [Hosted manual and tutorials](https://figureloom.org/wiki/#Home)
+- [MCP and AI access](https://figureloom.org/wiki/#MCP-and-AI-Access)
 - [`docs/PRO_TOOLS.md`](docs/PRO_TOOLS.md)
-- [`docs/POWERPOINT_EXPORT.md`](docs/POWERPOINT_EXPORT.md)
 - [`docs/FEATURE_AUDIT.md`](docs/FEATURE_AUDIT.md)
 - [`docs/CLOUD_SETUP.md`](docs/CLOUD_SETUP.md)
 - [`docs/ASSET_PACKS.md`](docs/ASSET_PACKS.md)
