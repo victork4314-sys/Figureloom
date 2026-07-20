@@ -1,5 +1,6 @@
 (() => {
-  if (window.__figureLoomMcpBrowserBridgeV1) return;
+  if (window.__figureLoomMcpBrowserBridgeV2) return;
+  window.__figureLoomMcpBrowserBridgeV2 = true;
   window.__figureLoomMcpBrowserBridgeV1 = true;
 
   const KEY = 'figureloom-mcp-access-v1';
@@ -8,7 +9,7 @@
     url:'ws://127.0.0.1:3210/figureloom',
     token:'',
     access:'read',
-    authorizeCurrentProject:false,
+    authorizedProjectId:'',
     allowDestructive:false
   });
 
@@ -19,8 +20,13 @@
   let sessions = [];
 
   function read() {
-    try { return { ...defaults(), ...(JSON.parse(localStorage.getItem(KEY) || '{}') || {}) }; }
-    catch { return defaults(); }
+    try {
+      const saved = JSON.parse(localStorage.getItem(KEY) || '{}') || {};
+      delete saved.authorizeCurrentProject;
+      return { ...defaults(), ...saved, authorizedProjectId:String(saved.authorizedProjectId || '') };
+    } catch {
+      return defaults();
+    }
   }
 
   function save() {
@@ -32,22 +38,39 @@
     let payload = null;
     try { payload = typeof projectData === 'function' ? projectData() : JSON.parse(snapshot()); } catch {}
     const cloudId = (() => { try { return localStorage.getItem('scicanvas-current-cloud-project-v1') || ''; } catch { return ''; } })();
+    const localId = (() => {
+      try {
+        const existing = sessionStorage.getItem('figureloom-mcp-local-project-id-v1');
+        if (existing) return existing;
+        const created = `local-${crypto.randomUUID?.() || `${Date.now()}-${Math.random().toString(16).slice(2)}`}`;
+        sessionStorage.setItem('figureloom-mcp-local-project-id-v1', created);
+        return created;
+      } catch {
+        return `local:${location.origin}:${location.pathname}`;
+      }
+    })();
     return {
-      id:cloudId || `local:${location.origin}:${location.pathname}`,
+      id:cloudId || localId,
       title:document.getElementById('documentName')?.value?.trim() || 'Untitled project',
       persisted:Boolean(cloudId),
       pageCount:Array.isArray(payload?.pages) ? payload.pages.length : 1
     };
   }
 
+  function projectAuthorized(project = currentProject()) {
+    return Boolean(settings.authorizedProjectId && settings.authorizedProjectId === project.id);
+  }
+
   function getState() {
+    const project = currentProject();
     return {
       ...settings,
       token:settings.token ? '••••••••' : '',
+      authorizeCurrentProject:projectAuthorized(project),
       connected:socket?.readyState === WebSocket.OPEN,
       status,
       sessions:[...sessions],
-      project:currentProject()
+      project
     };
   }
 
@@ -58,6 +81,7 @@
   }
 
   function hello() {
+    const project = currentProject();
     send({
       type:'browser_hello',
       protocol:1,
@@ -66,9 +90,9 @@
       access:{
         mode:settings.access === 'full' ? 'full' : 'read',
         destructive:Boolean(settings.allowDestructive),
-        currentProject:Boolean(settings.authorizeCurrentProject)
+        currentProject:projectAuthorized(project)
       },
-      project:currentProject(),
+      project,
       commands:window.FigureLoomCommands?.list?.() || []
     });
   }
@@ -81,8 +105,13 @@
       send({ type:'browser_response', requestId, ok:false, error:`Unknown FigureLoom command: ${command}` });
       return;
     }
-    if (message.workspace === 'current' && !settings.authorizeCurrentProject) {
-      send({ type:'browser_response', requestId, ok:false, error:'The current project is not authorized in FigureLoom Settings.' });
+    const project = currentProject();
+    if (message.workspace === 'current' && !projectAuthorized(project)) {
+      send({ type:'browser_response', requestId, ok:false, error:'This exact project is not authorized in FigureLoom Settings.' });
+      return;
+    }
+    if (message.projectId && message.projectId !== project.id) {
+      send({ type:'browser_response', requestId, ok:false, error:'The requested project is no longer the project authorized in FigureLoom.' });
       return;
     }
     if (commandInfo.write && settings.access !== 'full') {
@@ -97,10 +126,11 @@
       const result = await window.FigureLoomCommands.execute(command, message.args || {}, {
         source:'mcp',
         sessionId:message.sessionId || '',
+        projectId:project.id,
         readOnly:settings.access !== 'full',
         allowDestructive:Boolean(settings.allowDestructive)
       });
-      send({ type:'browser_response', requestId, ok:true, result });
+      send({ type:'browser_response', requestId, ok:true, projectId:project.id, result });
     } catch (error) {
       send({ type:'browser_response', requestId, ok:false, error:error?.message || String(error) });
     }
@@ -120,7 +150,7 @@
       save();
       return;
     }
-    if (!settings.token.trim()) {
+    if (!String(settings.token || '').trim()) {
       status = 'pairing-token-required';
       save();
       return;
@@ -184,14 +214,21 @@
 
   function set(next = {}) {
     const previous = settings;
+    const project = currentProject();
+    const authorizedProjectId = Object.prototype.hasOwnProperty.call(next, 'authorizeCurrentProject')
+      ? (next.authorizeCurrentProject ? project.id : '')
+      : settings.authorizedProjectId;
     settings = {
       ...settings,
       ...next,
       enabled:Boolean(next.enabled ?? settings.enabled),
-      authorizeCurrentProject:Boolean(next.authorizeCurrentProject ?? settings.authorizeCurrentProject),
+      token:String(next.token ?? settings.token ?? ''),
+      authorizedProjectId,
       allowDestructive:Boolean(next.allowDestructive ?? settings.allowDestructive),
       access:(next.access || settings.access) === 'full' ? 'full' : 'read'
     };
+    delete settings.authorizeCurrentProject;
+    if (settings.access !== 'full') settings.allowDestructive = false;
     save();
     const connectionChanged = previous.enabled !== settings.enabled || previous.url !== settings.url || previous.token !== settings.token;
     if (connectionChanged) connect();
@@ -207,6 +244,15 @@
     return getState();
   }
 
+  function projectChanged() {
+    const project = currentProject();
+    if (settings.authorizedProjectId && settings.authorizedProjectId !== project.id) {
+      settings.allowDestructive = false;
+      save();
+    }
+    if (socket?.readyState === WebSocket.OPEN) hello();
+  }
+
   addEventListener('figureloom-command-registry-ready', () => {
     if (socket?.readyState === WebSocket.OPEN) hello();
   });
@@ -214,6 +260,9 @@
     if (!event.detail?.write) return;
     send({ type:'state_changed', project:currentProject(), command:event.detail.name });
   });
+  addEventListener('scicanvas-cloud-opened', projectChanged);
+  addEventListener('scicanvas-cloud-saved', projectChanged);
+  addEventListener('figureloom-project-opened', projectChanged);
   addEventListener('beforeunload', () => disconnect(false));
 
   window.FigureLoomMCP = Object.freeze({ get:getState, set, connect, disconnect, revoke, send });
