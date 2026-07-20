@@ -38,6 +38,14 @@ The desktop and tablet interface keeps the full editor visible. Phone mode rearr
 
 Automatic mode chooses the phone interface on phone-sized touch devices. You can also force Phone or Desktop and tablet mode in Settings. Switching the interface does not create a second project format or change the contents of a figure.
 
+Current interface behavior includes:
+
+- Open project tabs keep their close **×** beside the project title. Closing a tab does not delete the saved project.
+- The desktop Pages, Hand, zoom, 100 percent, Format, and Navigation control bar can be dragged as one bar and can still be collapsed.
+- Phone mode keeps Help inside **More**. Pressing **Help** opens the real Help center, manual links, and passive interface guide.
+- The passive guide covers the main desktop and phone navigation areas without opening panels, moving objects, selecting anything, or scrolling the project.
+- Light and dark appearance use the same shared interface surfaces while the exported page keeps its own background and artwork colors.
+
 ## Scientific artwork
 
 FigureLoom includes original programmatic artwork and can load outside libraries such as Bioicons, Healthicons, and other compatible packs when they are needed.
@@ -103,7 +111,9 @@ Pull requests run syntax and browser checks for the parts of the app they touch.
 - Duplicate IDs and required assets
 - Offline cache behavior
 - Desktop and phone interface regressions
-- Phone safe areas, touch targets, zoom, panels, and guide controls
+- Phone safe areas, touch targets, zoom, panels, Help, and guide controls
+- Project-tab close placement and passive-guide behavior
+- Console errors and uncaught page errors in targeted desktop and phone smoke tests
 - Visible FigureLoom branding
 - Account, gallery, collaboration, TeX, pathway, and export wiring
 
@@ -121,13 +131,14 @@ FigureLoom's original code and project-authored artwork are released under the *
 
 [Read the full license](LICENSE).
 
-People may use, study, modify, and share FigureLoom. When someone operates a modified version over a network, the AGPL requires that version's corresponding source code to be made available to its users.
+People may use, study, modify, and share FigureLoom. When someone operates a modified version over a network, the AGPL requires that version's corresponding source code be made available to its users.
 
 Outside asset packs keep their own licenses and attribution requirements. Read [`docs/ASSET_PACKS.md`](docs/ASSET_PACKS.md) before publishing work that uses them.
 
 ## More documentation
 
 - [Complete manual and tutorials](https://github.com/victork4314-sys/Figureloom/wiki)
+- [Current interface update](wiki/Updates-2026-07-20.md)
 - [`docs/PRO_TOOLS.md`](docs/PRO_TOOLS.md)
 - [`docs/POWERPOINT_EXPORT.md`](docs/POWERPOINT_EXPORT.md)
 - [`docs/FEATURE_AUDIT.md`](docs/FEATURE_AUDIT.md)
