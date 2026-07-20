@@ -6,8 +6,12 @@ on:
       - 'export-tools.js'
       - 'pptx-export.js'
       - 'pptx-export-rebuilt.js'
+      - 'pptx-converter-loader.js'
+      - 'pptx-verified-writer.js'
       - 'safe-refresh.js'
+      - 'package.json'
       - 'tests/pptx-final-page.spec.js'
+      - 'tests/pptx-real-file.spec.js'
       - '.github/workflows/pptx-final-page.yml'
   workflow_dispatch:
 
@@ -29,13 +33,16 @@ jobs:
           node --check export-tools.js
           node --check pptx-export.js
           node --check pptx-export-rebuilt.js
+          node --check pptx-converter-loader.js
+          node --check pptx-verified-writer.js
           node --check tests/pptx-final-page.spec.js
+          node --check tests/pptx-real-file.spec.js
       - name: Install test dependencies
         run: npm install --no-audit --no-fund
       - name: Install Chromium
         run: npx playwright install --with-deps chromium
-      - name: Verify unique three-page and six-page exports
-        run: npx playwright test tests/pptx-final-page.spec.js --project=desktop
+      - name: Verify isolated SVG capture and the real five-page PowerPoint file
+        run: npx playwright test tests/pptx-final-page.spec.js tests/pptx-real-file.spec.js --project=desktop
       - name: Upload failure evidence
         if: failure()
         uses: actions/upload-artifact@v6
