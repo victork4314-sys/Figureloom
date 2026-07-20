@@ -1,14 +1,15 @@
 (() => {
-  if (window.__figureLoomEditableSvgPptxV1) return;
-  window.__figureLoomEditableSvgPptxV1 = true;
+  if (window.__figureLoomAllPagesSvgZipV1) return;
+  window.__figureLoomAllPagesSvgZipV1 = true;
 
-  const PPTXGEN_CDN = 'https://cdn.jsdelivr.net/gh/gitbrent/pptxgenjs/dist/pptxgen.bundle.js';
-  const EXPORT_BUTTON_ID = 'figureloomExportAllPagesPptxV5';
-  const LEGACY_BUTTON_SELECTOR = [
+  const JSZIP_CDN = 'https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js';
+  const EXPORT_BUTTON_ID = 'figureloomExportAllPagesSvgZip';
+  const LEGACY_EXPORT_SELECTOR = [
     '#figureloomExportAllPagesPptx',
     '#figureloomExportAllPagesPptxV2',
     '#figureloomExportAllPagesPptxV3',
     '#figureloomExportAllPagesPptxV4',
+    '#figureloomExportAllPagesPptxV5',
     'button[data-export="pptx"]',
     'button[data-figureloom-pptx-fixed]',
     'button[data-office-export="flat-pptx"]',
@@ -27,7 +28,9 @@
   }
 
   function waitForPaint() {
-    return new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+    return new Promise(resolve => {
+      requestAnimationFrame(() => requestAnimationFrame(() => setTimeout(resolve, 20)));
+    });
   }
 
   async function waitForEditableSvgExporter(timeout = 10000) {
@@ -36,23 +39,23 @@
       if (window.FigureLoomEditableSvgExport?.createSource) return window.FigureLoomEditableSvgExport;
       await new Promise(resolve => setTimeout(resolve, 50));
     }
-    throw new Error('The editable SVG exporter did not finish loading. Reload FigureLoom and try again.');
+    throw new Error('The Editable SVG exporter did not finish loading. Reload FigureLoom and try again.');
   }
 
-  function loadPptxGenJs() {
-    if (window.PptxGenJS) return Promise.resolve(window.PptxGenJS);
-    if (loadPptxGenJs.promise) return loadPptxGenJs.promise;
-    loadPptxGenJs.promise = new Promise((resolve, reject) => {
+  function loadJsZip() {
+    if (window.JSZip) return Promise.resolve(window.JSZip);
+    if (loadJsZip.promise) return loadJsZip.promise;
+    loadJsZip.promise = new Promise((resolve, reject) => {
       const script = document.createElement('script');
-      script.src = PPTXGEN_CDN;
+      script.src = JSZIP_CDN;
       script.async = true;
-      script.onload = () => window.PptxGenJS
-        ? resolve(window.PptxGenJS)
-        : reject(new Error('The PowerPoint converter loaded without its browser export.'));
-      script.onerror = () => reject(new Error('Could not load the PowerPoint converter. Check the connection and try again.'));
+      script.onload = () => window.JSZip
+        ? resolve(window.JSZip)
+        : reject(new Error('The SVG ZIP packer loaded incorrectly.'));
+      script.onerror = () => reject(new Error('Could not load the SVG ZIP packer. Check the connection and try again.'));
       document.head.appendChild(script);
     });
-    return loadPptxGenJs.promise;
+    return loadJsZip.promise;
   }
 
   function projectPages() {
@@ -67,20 +70,23 @@
     }];
   }
 
-  function svgDataUri(source) {
-    const bytes = new TextEncoder().encode(source);
-    let binary = '';
-    const chunkSize = 0x8000;
-    for (let offset = 0; offset < bytes.length; offset += chunkSize) {
-      binary += String.fromCharCode(...bytes.subarray(offset, offset + chunkSize));
-    }
-    return `data:image/svg+xml;base64,${btoa(binary)}`;
+  function pageFileName(index) {
+    return `page-${String(index + 1).padStart(3, '0')}.svg`;
   }
 
-  async function captureEditableSvgPages(options = {}) {
+  function zipFileName() {
+    const title = String(document.getElementById('documentName')?.value || 'FigureLoom').trim();
+    const safe = title.replace(/[\\/:*?"<>|]+/g, '-').replace(/\s+/g, ' ').trim() || 'FigureLoom';
+    return `${safe}-editable-svg-pages.zip`;
+  }
+
+  async function captureAllEditableSvgPages(options = {}) {
     if (typeof state === 'undefined') throw new Error('The editor page state is unavailable. Reload FigureLoom and try again.');
+
     const svgExporter = await waitForEditableSvgExporter();
     const pages = projectPages();
+    if (!pages.length) throw new Error('This project does not contain any pages.');
+
     const original = {
       pages:state.pages,
       activePage:state.activePage,
@@ -88,7 +94,7 @@
       selectedId:state.selectedId,
       selectedIds:Array.isArray(state.selectedIds) ? [...state.selectedIds] : null
     };
-    const captured = [];
+    const exportedPages = [];
 
     try {
       state.pages = pages;
@@ -106,13 +112,15 @@
         await waitForPaint();
 
         const source = svgExporter.createSource(Boolean(options.includeGrid));
-        if (!source || !source.includes('<svg')) throw new Error(`Editable SVG export failed on page ${index + 1}.`);
-        captured.push({
+        if (!source || !source.includes('<svg')) {
+          throw new Error(`Editable SVG export failed on page ${index + 1}.`);
+        }
+
+        exportedPages.push({
           index,
+          fileName:pageFileName(index),
           name:String(page.name || `Page ${index + 1}`),
-          notes:page.notes ? String(page.notes) : '',
-          source,
-          data:svgDataUri(source)
+          source
         });
       }
     } finally {
@@ -126,60 +134,41 @@
       window.applyPageBackground?.();
     }
 
-    if (captured.length !== pages.length) {
-      throw new Error(`Editable SVG export produced ${captured.length} of ${pages.length} pages.`);
+    if (exportedPages.length !== pages.length) {
+      throw new Error(`Editable SVG export produced ${exportedPages.length} of ${pages.length} pages.`);
     }
-    return captured;
+    return exportedPages;
   }
 
-  function presentationDimensions() {
-    const dimensions = window.currentCanvasSize?.() || {};
-    const widthMm = Number(dimensions.widthMm) || 304.8;
-    const heightMm = Number(dimensions.heightMm) || 190.5;
-    return { width:widthMm / 25.4, height:heightMm / 25.4 };
-  }
-
-  function outputFileName() {
-    if (typeof safeFileName === 'function') return safeFileName('pptx');
-    const title = String(document.getElementById('documentName')?.value || 'FigureLoom').trim();
-    return `${title.replace(/[^a-z0-9_-]+/gi, '-') || 'FigureLoom'}.pptx`;
-  }
-
-  async function buildPowerPoint(svgPages, options = {}) {
-    if (!Array.isArray(svgPages) || !svgPages.length) throw new Error('No editable SVG pages were supplied.');
-    const Pptx = await loadPptxGenJs();
-    const pptx = new Pptx();
-    const size = presentationDimensions();
-    pptx.defineLayout({ name:'FIGURELOOM_EDITABLE_SVG_PAGES', width:size.width, height:size.height });
-    pptx.layout = 'FIGURELOOM_EDITABLE_SVG_PAGES';
-    pptx.author = 'FigureLoom';
-    pptx.company = 'FigureLoom';
-    pptx.title = document.getElementById('documentName')?.value?.trim() || 'FigureLoom figure';
-    pptx.subject = 'Complete FigureLoom project from editable SVG pages';
-    pptx.lang = 'en-US';
+  async function buildSvgZipBlob(svgPages) {
+    if (!Array.isArray(svgPages) || !svgPages.length) throw new Error('No Editable SVG pages were supplied.');
+    const JSZip = await loadJsZip();
+    const zip = new JSZip();
 
     svgPages.forEach((page, index) => {
-      const slide = pptx.addSlide();
-      slide.background = { color:'FFFFFF' };
-      slide.addImage({
-        data:page.data || svgDataUri(page.source),
-        x:0,
-        y:0,
-        w:size.width,
-        h:size.height,
-        altText:page.name || `FigureLoom page ${index + 1}`
-      });
-      if (page.notes) slide.addNotes?.(page.notes);
+      zip.file(page.fileName || pageFileName(index), page.source);
     });
 
-    const slideCount = Array.isArray(pptx._slides) ? pptx._slides.length : svgPages.length;
-    if (slideCount !== svgPages.length) {
-      throw new Error(`PowerPoint conversion created ${slideCount} of ${svgPages.length} slides.`);
-    }
-    if (options.writeFile !== false) {
-      await pptx.writeFile({ fileName:options.fileName || outputFileName(), compression:true });
-    }
-    return pptx;
+    const blob = await zip.generateAsync({
+      type:'blob',
+      mimeType:'application/zip',
+      compression:'DEFLATE',
+      compressionOptions:{ level:6 }
+    });
+    if (!blob?.size) throw new Error('The Editable SVG ZIP was empty.');
+    return blob;
+  }
+
+  function downloadZip(blob) {
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = zipFileName();
+    link.style.display = 'none';
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 60000);
   }
 
   function matchingButtons() {
@@ -204,14 +193,16 @@
     });
   }
 
-  async function exportAllPages(options = {}) {
+  async function exportAllPagesAsSvgZip(options = {}) {
     if (exporting) return;
     exporting = true;
     try {
-      setProgress('Exporting editable SVG pages…', 'Running the working SVG export once per page');
-      const svgPages = await captureEditableSvgPages(options);
-      setProgress('Converting SVG pages to PowerPoint…', `${svgPages.length} pages`);
-      await buildPowerPoint(svgPages);
+      setProgress('Exporting Editable SVG pages…', 'One SVG per FigureLoom page');
+      const svgPages = await captureAllEditableSvgPages(options);
+      setProgress('Packing SVG pages…', `${svgPages.length} SVG files`);
+      const blob = await buildSvgZipBlob(svgPages);
+      setProgress('Downloading SVG pages…', `${svgPages.length} files in one ZIP`);
+      downloadZip(blob);
     } finally {
       restoreButtons();
       exporting = false;
@@ -221,17 +212,17 @@
   function installExportButton() {
     const menu = document.getElementById('exportMenu') || window.exportMenu;
     if (!menu) return false;
-    menu.querySelectorAll(LEGACY_BUTTON_SELECTOR).forEach(button => {
-      if (button.id !== EXPORT_BUTTON_ID) button.remove();
-    });
+
+    menu.querySelectorAll(LEGACY_EXPORT_SELECTOR).forEach(button => button.remove());
+
     let button = document.getElementById(EXPORT_BUTTON_ID);
     if (!button) {
       button = document.createElement('button');
       button.id = EXPORT_BUTTON_ID;
       button.type = 'button';
-      button.innerHTML = '<strong>PowerPoint (.pptx) · all pages</strong><small>Runs Editable SVG for every page, then converts them to PowerPoint</small>';
-      const svgButton = menu.querySelector('button[data-export="svg"]');
-      svgButton?.insertAdjacentElement('afterend', button);
+      button.innerHTML = '<strong>Editable SVGs · all pages (.zip)</strong><small>One working Editable SVG file for every page</small>';
+      const singleSvgButton = menu.querySelector('button[data-export="svg"]');
+      singleSvgButton?.insertAdjacentElement('afterend', button);
       if (!button.isConnected) menu.insertBefore(button, menu.firstElementChild);
     }
     return true;
@@ -253,16 +244,24 @@
     event.stopImmediatePropagation();
     document.getElementById('exportMenu')?.classList.remove('open');
     document.getElementById('officeBridgeDrawer')?.classList.remove('open');
-    exportAllPages({ includeGrid:Boolean(document.getElementById('exportGrid')?.checked) }).catch(error => {
-      console.error('FigureLoom editable-SVG PowerPoint export failed', error);
-      alert(`PowerPoint export failed: ${error.message}`);
+    exportAllPagesAsSvgZip({
+      includeGrid:Boolean(document.getElementById('exportGrid')?.checked)
+    }).catch(error => {
+      console.error('FigureLoom all-pages Editable SVG export failed', error);
+      alert(`All-pages SVG export failed: ${error.message}`);
     });
   }, true);
 
   const observer = new MutationObserver(scheduleInstall);
   observer.observe(document.body, { childList:true, subtree:true });
 
-  window.FigureLoomExportPowerPointAllPages = options => exportAllPages(options || {});
-  window.FigureLoomEditableSvgPowerPoint = Object.freeze({ captureEditableSvgPages, buildPowerPoint, exportAllPages });
+  window.FigureLoomExportAllPagesAsSvgZip = options => exportAllPagesAsSvgZip(options || {});
+  window.FigureLoomExportPowerPointAllPages = window.FigureLoomExportAllPagesAsSvgZip;
+  window.FigureLoomAllPagesSvgExport = Object.freeze({
+    captureAllEditableSvgPages,
+    buildSvgZipBlob,
+    exportAllPagesAsSvgZip
+  });
+
   installExportButton();
 })();

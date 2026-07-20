@@ -5,14 +5,15 @@ async function openApp(page) {
     localStorage.setItem('scicanvas-guided-tour-v2', 'complete');
     localStorage.setItem('scicanvas-guided-tour-v3', 'complete');
     localStorage.setItem('scicanvas-welcome-v1', 'complete');
-    localStorage.setItem('scicanvas-user-name-v1', 'Export Tester');
+    localStorage.setItem('scicanvas-user-name-v1', 'SVG ZIP Export Tester');
     localStorage.setItem('scicanvas-motion-v1', 'off');
   });
   await page.goto('/');
   await expect(page.locator('#canvas')).toBeVisible();
   await expect.poll(() => page.evaluate(() => Boolean(
     window.FigureLoomEditableSvgExport?.createSource &&
-    window.FigureLoomEditableSvgPowerPoint?.captureEditableSvgPages
+    window.FigureLoomAllPagesSvgExport?.captureAllEditableSvgPages &&
+    window.FigureLoomAllPagesSvgExport?.buildSvgZipBlob
   ))).toBe(true);
 }
 
@@ -21,8 +22,8 @@ async function addPageMarker(page, number) {
   await page.locator('#addTextButton').click();
   await page.evaluate(index => {
     const item = state.objects.at(-1);
-    item.text = `EXACT EDITABLE SVG PAGE ${index}`;
-    item.name = `Exact SVG marker ${index}`;
+    item.text = `EXACT SVG ZIP PAGE ${index}`;
+    item.name = `SVG ZIP marker ${index}`;
     item.fill = ['#b42318', '#28745f', '#2454ad'][index - 1];
     item.stroke = item.fill;
     item.x = 90 + index * 55;
@@ -33,8 +34,8 @@ async function addPageMarker(page, number) {
   }, number);
 }
 
-test('three pages run through the working editable SVG export and become three PowerPoint slides', async ({ page }, testInfo) => {
-  test.skip(testInfo.project.name !== 'desktop', 'single deterministic desktop conversion test');
+test('three project pages become three separate editable SVG files in one ZIP', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop', 'single deterministic desktop ZIP test');
   await openApp(page);
 
   for (let number = 1; number <= 3; number += 1) await addPageMarker(page, number);
@@ -44,57 +45,40 @@ test('three pages run through the working editable SVG export and become three P
       activePage:state.activePage,
       text:state.objects.at(-1)?.text || ''
     };
+
     const normalSingleSvg = window.FigureLoomEditableSvgExport.createSource(false);
-    const svgPages = await window.FigureLoomEditableSvgPowerPoint.captureEditableSvgPages({ includeGrid:false });
-
-    window.__svgPptxSlides = [];
-    window.__svgPptxWroteFile = false;
-    window.PptxGenJS = class MockPptxGenJS {
-      constructor() { this._slides = []; }
-      defineLayout() {}
-      addSlide() {
-        const slide = {
-          data:'',
-          addImage:options => { slide.data = options.data; },
-          addNotes:() => {}
-        };
-        this._slides.push(slide);
-        window.__svgPptxSlides.push(slide);
-        return slide;
-      }
-      async writeFile() { window.__svgPptxWroteFile = true; }
-    };
-
-    await window.FigureLoomEditableSvgPowerPoint.buildPowerPoint(svgPages);
-
-    const decodeSvg = data => {
-      const encoded = data.split(',')[1] || '';
-      const binary = atob(encoded);
-      const bytes = Uint8Array.from(binary, character => character.charCodeAt(0));
-      return new TextDecoder().decode(bytes);
-    };
+    const svgPages = await window.FigureLoomAllPagesSvgExport.captureAllEditableSvgPages({ includeGrid:false });
+    const zipBlob = await window.FigureLoomAllPagesSvgExport.buildSvgZipBlob(svgPages);
+    const archive = await window.JSZip.loadAsync(zipBlob);
+    const names = Object.keys(archive.files).filter(name => !archive.files[name].dir).sort();
+    const sources = [];
+    for (const name of names) sources.push(await archive.file(name).async('text'));
 
     return {
       before,
       after:{ activePage:state.activePage, text:state.objects.at(-1)?.text || '' },
       normalSingleSvg,
-      svgSources:svgPages.map(item => item.source),
-      slideSources:window.__svgPptxSlides.map(slide => decodeSvg(slide.data)),
-      wroteFile:window.__svgPptxWroteFile
+      capturedNames:svgPages.map(item => item.fileName),
+      capturedSources:svgPages.map(item => item.source),
+      zipNames:names,
+      zipSources:sources,
+      zipSize:zipBlob.size
     };
   });
 
   expect(result.after).toEqual(result.before);
-  expect(result.normalSingleSvg).toContain('EXACT EDITABLE SVG PAGE 3');
-  expect(result.svgSources).toHaveLength(3);
-  expect(result.slideSources).toHaveLength(3);
-  expect(result.wroteFile).toBe(true);
-  expect(new Set(result.svgSources).size).toBe(3);
-  expect(new Set(result.slideSources).size).toBe(3);
+  expect(result.normalSingleSvg).toContain('EXACT SVG ZIP PAGE 3');
+  expect(result.capturedNames).toEqual(['page-001.svg', 'page-002.svg', 'page-003.svg']);
+  expect(result.zipNames).toEqual(['page-001.svg', 'page-002.svg', 'page-003.svg']);
+  expect(result.capturedSources).toHaveLength(3);
+  expect(result.zipSources).toHaveLength(3);
+  expect(new Set(result.capturedSources).size).toBe(3);
+  expect(new Set(result.zipSources).size).toBe(3);
+  expect(result.zipSize).toBeGreaterThan(500);
 
   for (let number = 1; number <= 3; number += 1) {
-    expect(result.svgSources[number - 1]).toContain(`EXACT EDITABLE SVG PAGE ${number}`);
-    expect(result.slideSources[number - 1]).toBe(result.svgSources[number - 1]);
+    expect(result.capturedSources[number - 1]).toContain(`EXACT SVG ZIP PAGE ${number}`);
+    expect(result.zipSources[number - 1]).toBe(result.capturedSources[number - 1]);
   }
-  expect(result.slideSources[2]).toContain('EXACT EDITABLE SVG PAGE 3');
+  expect(result.zipSources[2]).toContain('EXACT SVG ZIP PAGE 3');
 });
