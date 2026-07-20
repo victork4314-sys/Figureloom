@@ -1,10 +1,10 @@
 (() => {
-  if (window.__figureLoomStableRuntime71d36dfV86) return;
-  for (let version = 38; version <= 86; version += 1) {
+  if (window.__figureLoomStableRuntime71d36dfV87) return;
+  for (let version = 38; version <= 87; version += 1) {
     window[`__figureLoomStableRuntime71d36dfV${version}`] = true;
   }
 
-  const STABLE_BUILD = "stable-71d36df-locked-20260720-v86";
+  const STABLE_BUILD = "stable-71d36df-locked-20260721-v87";
   const GENERAL_ADDONS = [
     "library-more-illustrations.js",
     "library-more-templates.js",
@@ -89,10 +89,10 @@
   ];
   const CRITICAL_FINAL_ADDONS = [
     "final-session-core.js",
-    "projects-tab-close-final.js"
+    "projects-tab-close-final.js",
+    "final-session-polish-v2.js"
   ];
   const DEFERRED_FINAL_ADDONS = [
-    "final-session-polish-v2.js",
     "mcp-current-screenshot.js"
   ];
 
@@ -185,12 +185,15 @@
     Promise.all(GENERAL_ADDONS.map(loadAddon)),
     loadTextStackInOrder()
   ]).then(async () => {
-    const critical = Promise.all(CRITICAL_FINAL_ADDONS.map(loadAddon));
-    const deferred = Promise.all(DEFERRED_FINAL_ADDONS.map(loadAddon));
-    await critical;
+    await Promise.all(CRITICAL_FINAL_ADDONS.map(loadAddon));
+    try { await window.FigureLoomFinalSessionPolishV2?.settleTextBounds?.(); } catch (error) {
+      console.warn("FigureLoom text bounds could not finish settling before reveal.", error);
+    }
     clearTimeout(fallback);
     revealStableApp();
-    void deferred.catch(error => console.warn("FigureLoom deferred tools finished with an error.", error));
+    void Promise.all(DEFERRED_FINAL_ADDONS.map(loadAddon)).catch(error => {
+      console.warn("FigureLoom deferred tools finished with an error.", error);
+    });
   }).catch(error => {
     console.error("FigureLoom could not finish loading the stable editor.", error);
     clearTimeout(fallback);
