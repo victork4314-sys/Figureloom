@@ -1,0 +1,41 @@
+name: PowerPoint all-pages export
+
+on:
+  pull_request:
+    paths:
+      - 'pptx-export-rebuilt.js'
+      - 'safe-refresh.js'
+      - 'tests/pptx-direct-file-export.spec.js'
+      - '.github/workflows/pptx-export.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  direct-file-export:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+      - name: Set up Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+      - name: Check export JavaScript syntax
+        run: |
+          node --check pptx-export-rebuilt.js
+          node --check tests/pptx-direct-file-export.spec.js
+      - name: Install test dependencies
+        run: npm install --no-audit --no-fund
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Verify separate page files inside PowerPoint
+        run: npx playwright test tests/pptx-direct-file-export.spec.js --project=desktop
+      - name: Upload export test results
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: pptx-export-results
+          path: test-results
+          if-no-files-found: warn
