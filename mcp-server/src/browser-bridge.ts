@@ -11,7 +11,7 @@ function secureEqual(left:string, right:string):boolean {
 export class BrowserBridgeHub {
   private readonly wss = new WebSocketServer({ noServer:true });
   private readonly connections = new Map<string,{ socket:WebSocket; info:BrowserConnectionInfo }>();
-  private readonly pending = new Map<string,{ resolve:(value:any)=>void; reject:(error:Error)=>void; timer:NodeJS.Timeout }>();
+  private readonly pending = new Map<string,{ resolve:(value:any)=>void; reject:(error:Error)=>void; timer:NodeJS.Timeout; projectId:string }>();
   private sessions:SessionInfo[]=[];
 
   constructor(readonly pairingToken:string) {
@@ -62,6 +62,7 @@ export class BrowserBridgeHub {
       if(message?.type==='browser_response'){
         const pending=this.pending.get(String(message.requestId));if(!pending)return;
         clearTimeout(pending.timer);this.pending.delete(String(message.requestId));
+        if(message.projectId&&message.projectId!==pending.projectId){pending.reject(new Error('FigureLoom changed projects before the command completed.'));return;}
         if(message.ok)pending.resolve(message.result);else pending.reject(new Error(message.error||'FigureLoom command failed.'));
       }
     });
@@ -78,7 +79,7 @@ export class BrowserBridgeHub {
 
   authorizedConnection(command:string,write:boolean,destructive:boolean):{socket:WebSocket;info:BrowserConnectionInfo}|null {
     for(const record of this.connections.values()){
-      if(!record.info.currentProject)continue;
+      if(!record.info.currentProject||!record.info.projectId)continue;
       if(write&&record.info.access!=='full')continue;
       if(destructive&&!record.info.destructive)continue;
       if(record.info.commands.length&&!record.info.commands.some(entry=>entry.name===command))continue;
@@ -93,10 +94,11 @@ export class BrowserBridgeHub {
     const record=this.authorizedConnection(command,options.write,options.destructive);
     if(!record)throw new Error(options.write?'No FigureLoom window has authorized full access to its current project.':'No FigureLoom window has authorized its current project.');
     const requestId=randomUUID();
+    const projectId=record.info.projectId;
     return new Promise((resolve,reject)=>{
       const timer=setTimeout(()=>{this.pending.delete(requestId);reject(new Error(`FigureLoom did not answer ${command} within the timeout.`));},options.timeoutMs||30000);
-      this.pending.set(requestId,{resolve,reject,timer});
-      this.send(record.socket,{type:'browser_request',requestId,sessionId,workspace:'current',command,args});
+      this.pending.set(requestId,{resolve,reject,timer,projectId});
+      this.send(record.socket,{type:'browser_request',requestId,sessionId,workspace:'current',projectId,command,args});
     });
   }
 }
