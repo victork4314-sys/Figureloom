@@ -1,0 +1,38 @@
+name: Publish FigureLoom v1.0.0
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'RELEASE_NOTES.md'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verify release files
+        run: |
+          test -s RELEASE_NOTES.md
+          node --check ai-chat-fixes.js
+          node --check loomy-mcp-note.js
+
+      - name: Publish v1.0.0
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh release view v1.0.0 >/dev/null 2>&1; then
+            echo 'FigureLoom v1.0.0 is already published.'
+            exit 0
+          fi
+          gh release create v1.0.0 \
+            --target "$GITHUB_SHA" \
+            --title 'FigureLoom v1.0.0' \
+            --notes-file RELEASE_NOTES.md \
+            --latest
