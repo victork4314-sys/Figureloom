@@ -122,10 +122,11 @@ test('Phone More Guide opens Help and the expanded passive tour without runtime 
   await expect(tour).toHaveClass(/open/);
   await expect(tour.locator('.tour-progress')).toHaveText('1 of 10');
 
-  for (let index = 1; index < 10; index += 1) {
+  for (let step = 2; step <= 10; step += 1) {
     await tour.locator('[data-tour="next"]').click();
-    if (index < 9) await expect(tour.locator('.tour-progress')).toHaveText(`${index + 1} of 10`);
+    await expect(tour.locator('.tour-progress')).toHaveText(`${step} of 10`);
   }
+  await tour.locator('[data-tour="next"]').click();
   await expect(tour).not.toHaveClass(/open/);
 
   expectNoRuntimeErrors(errors);
