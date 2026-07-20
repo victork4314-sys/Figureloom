@@ -30,6 +30,7 @@ jobs:
           node --check tests/today-ui-stability.spec.js
           node --check tests/final-session-polish.spec.js
           node --check tests/runtime-console.spec.js
+          node --check tests/text-repair-ready.spec.js
           node --check final-session-core.js
           node --check projects-tab-close-final.js
           node --check final-session-polish-v2.js
@@ -120,6 +121,7 @@ jobs:
           test -f tests/today-ui-stability.spec.js
           test -f tests/final-session-polish.spec.js
           test -f tests/runtime-console.spec.js
+          test -f tests/text-repair-ready.spec.js
           test -f supabase/schema.sql
           test -f supabase/share-links.sql
           test -f docs/CLOUD_SETUP.md
@@ -150,8 +152,8 @@ jobs:
         run: npm install --no-audit --no-fund
       - name: Install Chromium
         run: npx playwright install --with-deps chromium
-      - name: Check project tabs, bounded text repair, MCP pointer, screenshots, Phone Help, passive guide, and console
-        run: npx playwright test tests/today-ui-stability.spec.js tests/final-session-polish.spec.js tests/runtime-console.spec.js
+      - name: Check project tabs, text readiness, bounded text repair, MCP pointer, screenshots, Phone Help, passive guide, and console
+        run: npx playwright test tests/today-ui-stability.spec.js tests/text-repair-ready.spec.js tests/final-session-polish.spec.js tests/runtime-console.spec.js
       - name: Upload focused browser results and traces
         if: always()
         uses: actions/upload-artifact@v6
