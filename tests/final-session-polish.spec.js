@@ -47,7 +47,7 @@ function expectNoRuntimeErrors(errors) {
   expect(errors.consoleErrors, `Console errors:\n${errors.consoleErrors.join('\n')}`).toEqual([]);
 }
 
-test('lightweight final layer fixes both text crop axes and exposes a themed MCP screenshot pointer', async ({ page }, testInfo) => {
+test('final layer repairs text clipping without resizing boxes and keeps the MCP pointer hidden', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'desktop', 'desktop verification');
   const errors = await prepare(page);
   await expect(page.locator('html')).toHaveAttribute('data-figureloom-device-class', 'desktop');
@@ -138,10 +138,10 @@ test('lightweight final layer fixes both text crop axes and exposes a themed MCP
     return result;
   });
   expect(textMetrics.changed).toBe(true);
-  expect(textMetrics.width).toBeGreaterThan(180);
-  expect(textMetrics.height).toBeGreaterThan(35);
-  expect(textMetrics.textBoxWidth).toBe(textMetrics.width);
-  expect(textMetrics.textBoxHeight).toBe(textMetrics.height);
+  expect(textMetrics.width).toBe(180);
+  expect(textMetrics.height).toBe(35);
+  expect(textMetrics.textBoxWidth).toBeUndefined();
+  expect(textMetrics.textBoxHeight).toBeUndefined();
   expect(textMetrics.clipX).toBeLessThan(0);
   expect(textMetrics.clipY).toBeLessThan(0);
   expect(textMetrics.clipWidth).toBeGreaterThan(390);
@@ -157,12 +157,9 @@ test('lightweight final layer fixes both text crop axes and exposes a themed MCP
   await expect(cursor.locator('b')).toHaveText('Claude');
   await expect.poll(() => cursor.evaluate(node => node.dataset.agent)).toBe('claude');
   expect(await cursor.evaluate(node => node.style.getPropertyValue('--mcp-agent-color'))).toBe('#d97757');
-  const pointerStyle = await cursor.locator('.mcp-pointer').evaluate(node => ({
-    width:getComputedStyle(node).width,
-    clip:getComputedStyle(node, '::before').clipPath
-  }));
-  expect(Number.parseFloat(pointerStyle.width)).toBeGreaterThan(0);
-  expect(pointerStyle.clip).not.toBe('none');
+  await expect(cursor.locator('.mcp-pointer')).toBeHidden();
+  await expect(cursor.locator('.mcp-paw')).toBeHidden();
+  await expect(cursor.locator('.mcp-agent-label')).toBeVisible();
 
   const screenshot = await page.evaluate(async () => {
     const result = await window.FigureLoomCommands.execute('view.screenshot', { scale:.25, includeGrid:false }, {
