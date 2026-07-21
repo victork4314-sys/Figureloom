@@ -105,6 +105,8 @@ Publishing tools include:
 - Export diagnostics
 - Compatibility warnings
 
+The current visual export path uses editable SVG for the active page or every project page. Convert a checked SVG elsewhere when another file format is required.
+
 FigureLoom does not guarantee compliance with a journal, printer, or conference. Check current requirements yourself.
 
 ## Office bridge
@@ -121,6 +123,8 @@ PowerPoint import can recover many common elements such as:
 - Basic charts
 
 Spreadsheet import supports common workbook and delimited formats.
+
+The current export panel does not create a PowerPoint file. Use SVG and convert it in another application when a presentation file is required.
 
 See [Importing PowerPoint and spreadsheets](Importing-PowerPoint-and-Spreadsheets).
 
@@ -172,15 +176,31 @@ See [Accounts, cloud projects, and collaboration](Accounts-Cloud-and-Collaborati
 Collaboration tools include:
 
 - Owner, editor, reviewer, and viewer roles
-- Authenticated presence
-- Remote cursors
+- Named presence and remote cursors
 - Encrypted project broadcasts
 - Persistent review comments
-- Email-based invitations
-- Expiring role-based share links
+- Email-account invitations
+- Expiring guest links
+- Guest joining with a display name and no email account
+- Optional 4 to 12 digit guest-link PIN
 - Remote-update conflict controls
 
 Incoming edits pause while the local user is typing or dragging.
+
+## MCP and AI access
+
+MCP is configured from Settings rather than the Pro Tools hub, but it can use the normal editor and specialist commands that are registered in the open project.
+
+The hosted connection supports:
+
+- A private project-specific connection link
+- Read-only or full editor access
+- A separate destructive-action permission
+- Current command discovery
+- Normal Undo history and saving for successful writes
+- Disconnect, reconnect, and revocation
+
+MCP is optional and separate from Loomy. See [MCP and AI access](MCP-and-AI-Access).
 
 ## SVG path editor
 
@@ -193,7 +213,7 @@ It supports:
 - Editing values
 - Breaking compound SVG artwork into independent SVG objects
 
-It is not a full desktop Bézier editor.
+It is not a full desktop Bezier editor.
 
 ## TeX typesetting
 
