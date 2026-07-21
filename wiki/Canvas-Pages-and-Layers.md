@@ -27,7 +27,7 @@ Physical sizes use millimetre-aware geometry. Choose portrait or landscape as pa
 
 ## Changing page format
 
-Open **Format** or the Design page-size controls.
+Open **Format** or the page-size controls.
 
 When changing an existing page:
 
@@ -49,7 +49,7 @@ Available choices include:
 - Preset palette
 - Randomized palette
 
-Backgrounds are included in supported exports. A transparent page remains transparent in formats that support transparency.
+Backgrounds are included in supported SVG exports. A transparent page remains transparent when the receiving application preserves SVG transparency.
 
 ## Adding pages
 
@@ -84,7 +84,7 @@ Drag page thumbnails or use the available reorder controls.
 Page order affects:
 
 - Project navigation
-- PowerPoint export
+- **Export all pages as SVG**
 - Presentation mode
 - Multi-page reports
 
@@ -155,7 +155,7 @@ Layer names can also help automatic description drafting.
 
 The page can show a line or dot grid.
 
-Grid spacing can be automatic or set in physical units. The grid is an editor aid unless explicitly included in export.
+Grid spacing can be automatic or set in physical units. The grid is an editor aid unless **Include editor grid** is explicitly enabled during SVG export.
 
 Use a grid for:
 
@@ -221,6 +221,6 @@ Before presenting:
 - Use a consistent aspect ratio.
 - Make sure text is readable at the display distance.
 - Test navigation in the browser you will use.
-- Keep an exported PowerPoint or PDF produced by another tool as a fallback when required.
+- Keep the exported SVG pages or a converted static file as a fallback when required.
 
 See [Export, backup, and presentation](Export-Backup-and-Presentation).
