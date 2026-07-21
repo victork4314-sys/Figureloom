@@ -1,15 +1,51 @@
-# PowerPoint export and page backgrounds
+# PowerPoint import and SVG conversion
+
+FigureLoom can import many common PowerPoint elements, but the current finished export panel does not create a `.pptx` file.
+
+## Importing PowerPoint
+
+Use the Office import tools to open supported PowerPoint files.
+
+Common imported elements can include:
+
+- Text
+- Basic shapes
+- Images
+- Tables
+- Groups
+- Basic charts
+
+Complex slide masters, SmartArt, WordArt, animations, transitions, embedded media, nested transformations, and advanced chart features may not convert exactly. Compare every imported slide with the original.
+
+## Exporting work for PowerPoint
+
+Use one of the current SVG export paths:
+
+- **Editable SVG (per page)** for the active page
+- **Export all pages as SVG** for one editable SVG per project page
+
+Then insert or convert the checked SVG files in PowerPoint, Keynote, LibreOffice Impress, or another presentation application.
 
 ## Page backgrounds
 
-Each SciCanvas page can use an independent solid, gradient, or transparent background. Background settings are saved in the editable project and included in SVG, PNG, and PowerPoint output.
+Each FigureLoom page can use an independent solid, gradient, or transparent background. Background information is included in supported SVG output where the receiving application preserves it.
 
-Use **Design → Page background** to select colors, gradient direction, a preset, or the random palette action.
+Check the converted presentation for:
 
-## PowerPoint export
+- Slide size and aspect ratio
+- Background color or transparency
+- Font substitution
+- Text wrapping and clipping
+- Image quality
+- Gradients and effects
+- Page order
 
-Use **Export → PowerPoint · all pages**. Each SciCanvas page is rendered at high resolution and placed on a matching 12 × 7.5 inch PowerPoint slide.
+## Keep the editable source
 
-The exported `.pptx` is compatible with PowerPoint, Keynote, LibreOffice Impress, and Google Slides import. The figure on each slide is preserved visually as a high-resolution image; individual SciCanvas objects are not yet converted to native editable PowerPoint shapes.
+A presentation file is not a replacement for the editable FigureLoom project.
 
-PowerPoint generation uses the official PptxGenJS browser bundle, loaded on demand when the export action is selected.
+Keep:
+
+- The `.figureloom` project backup
+- The exported SVG pages
+- The converted presentation file when one is required
