@@ -195,9 +195,16 @@ See [Importing PowerPoint and spreadsheets](Importing-PowerPoint-and-Spreadsheet
 
 ## Export considerations
 
-Charts are included in SVG, PNG, PowerPoint, presentation mode, and project backups.
+Charts and tables are included in:
 
-Always inspect the final exported file. Text and thin lines can look different in another viewer.
+- **Editable SVG (per page)**
+- **Export all pages as SVG**
+- Presentation mode
+- Complete `.figureloom` project backups
+
+Open the exported SVG in another application and inspect axes, labels, fonts, clipping, thin lines, and embedded images.
+
+When PNG, PDF, TIFF, or PowerPoint output is required, convert the checked SVG in another trusted application and inspect the converted result again.
 
 ## Data integrity checklist
 
