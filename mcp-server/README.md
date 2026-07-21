@@ -1,16 +1,16 @@
 # FigureLoom MCP
 
-FigureLoom includes a hosted Model Context Protocol connection backed by Supabase. Normal users do not install Node.js, run terminal commands, choose a bridge address, or manage a pairing token.
+FigureLoom includes a hosted Model Context Protocol connection backed by Supabase. Normal users do not install Node.js, run terminal commands, choose a bridge address, or manage a separate pairing token.
 
 ## Connect
 
-1. Open the FigureLoom project that the AI may access.
+1. Open the FigureLoom project that the assistant may access.
 2. Sign in to the FigureLoom account.
 3. Open **Settings → MCP & AI access**.
 4. Choose **Read-only** or **Full editor access**.
 5. Enable **Allow destructive actions** only when deletion should be permitted.
 6. Press **Connect FigureLoom**.
-7. Press **Copy MCP connection link** and add that link as a remote MCP server in the compatible AI client.
+7. Press **Copy MCP connection link** and add that link as a remote MCP server in the compatible client.
 
 The copied link contains the revocable connection secret. There is no separate token or bridge address to enter. Keep the link private.
 
@@ -26,12 +26,12 @@ The FigureLoom project must remain open while an external client is actively ope
 - Destructive commands require their own explicit permission.
 - Commands expire when the editor does not answer.
 - **Revoke connection** invalidates the copied link immediately.
-- Browser writes execute through `FigureLoomCommands.execute`, including the normal undo/history path.
+- Browser writes execute through `FigureLoomCommands.execute`, including normal history and saving.
 
 ## Hosted architecture
 
 ```text
-MCP-compatible AI client
+MCP-compatible client
         ↓ Streamable HTTP
 Supabase Edge Function: figureloom-mcp
         ↓ authenticated command queue
@@ -39,14 +39,14 @@ Supabase Realtime
         ↓
 Authorized open FigureLoom project
         ↓
-FigureLoom command and history layer
+FigureLoom command, history, and save layer
 ```
 
 The hosted endpoint implements Streamable HTTP MCP. Each connection link authorizes one FigureLoom project and exposes the capabilities currently registered by that editor.
 
 ## Main tools
 
-The server uses a compact set of composable tools:
+The server uses a compact set of composable tools such as:
 
 - `get_session_access`
 - `list_commands`
@@ -87,15 +87,17 @@ The server uses a compact set of composable tools:
 
 `list_commands` exposes the editor command registry. New FigureLoom capabilities that register there can be called through `execute_command` without adding another single-purpose MCP endpoint.
 
-## Visual verification and agent presence
+## Visual verification
 
-Use `render_page` with `format: "png"` to receive a screenshot of the currently active FigureLoom page. Before capture, FigureLoom synchronizes the active page and performs one bounded text-layout pass so the image reflects the latest edits without running a permanent canvas observer. The editor command registry also exposes `view.screenshot` for clients using `list_commands` and `execute_command`.
+Use `render_page` to receive a rendered view of the currently active FigureLoom page in a supported format. Before capture, FigureLoom synchronizes the active page so the result reflects the latest project state.
 
-While an MCP client is acting, FigureLoom displays a small pointer near the area being used. The label comes from the MCP client identity when available. Claude uses orange, ChatGPT/OpenAI uses green, Gemini uses blue, Codex uses a neutral dark or light pointer, and unknown clients use the FigureLoom interface color. The pointer is informational and does not intercept clicks.
+The editor command registry also exposes current view and render commands for clients using `list_commands` and `execute_command`.
 
-## Observability and undo
+FigureLoom does not display an MCP pointer or arrow over the canvas. External activity must not intercept clicks or visually cover the project.
 
-Create and modify operations return the affected object ID and geometry:
+## Saving and undo
+
+Create and modify operations return the affected object ID and geometry where supported.
 
 ```json
 {
@@ -111,7 +113,9 @@ Create and modify operations return the affected object ID and geometry:
 }
 ```
 
-Use `get_page_state` for the complete structured object tree and `render_page` for PNG or SVG visual verification. All browser write commands use the same command and history layer as the editor UI.
+Use `get_page_state` for the structured object tree and `render_page` for visual verification.
+
+Successful browser write commands use the same command and history layer as editor actions. Before the command is reported as successful, FigureLoom synchronizes the active page and calls the normal durable save path so the edit is not left only in a pending render state.
 
 ## Revoking or disconnecting
 
@@ -123,15 +127,19 @@ Use `get_page_state` for the complete structured object tree and `render_page` f
 
 ### The Connect button asks for sign-in
 
-The hosted connection is tied to the FigureLoom account and exact project. Sign in through the account/project gallery, return to Settings, and press **Connect FigureLoom** again.
+The hosted connection is tied to the FigureLoom account and exact project. Sign in through the account or project gallery, return to Settings, and press **Connect FigureLoom** again.
 
-### The AI says the editor is offline
+### The client says the editor is offline
 
-Open the authorized FigureLoom project and press **Connect FigureLoom**. Keep that tab open while the AI is editing.
+Open the authorized FigureLoom project and press **Connect FigureLoom**. Keep that tab open while the client is editing.
 
 ### A write or delete is denied
 
 Choose **Full editor access** for writes. Deletion additionally requires **Allow destructive actions**.
+
+### An edit appears missing after reconnecting
+
+Confirm that the command reported success, the save indicator completed, and the same cloud project was reopened. Check the project state and Undo history before sending the command again.
 
 ### The copied link stopped working
 
