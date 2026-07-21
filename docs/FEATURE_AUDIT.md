@@ -1,156 +1,177 @@
-# SciCanvas feature audit
+# FigureLoom feature audit
 
-This document maps major product requirements to the current implementation. It is intentionally explicit so the repository does not claim features that are only planned.
+This document maps major product areas to the current implementation. It distinguishes working features from limitations so the repository does not claim features that are only planned or no longer exposed.
 
-## Scientific illustration library
+## Core editor
 
-- **Built-in editable scientific objects:** Implemented.
-- **Specialist search terms and organism aliases:** Implemented.
-- **Distinct built-in previews rather than repeated aliases:** Implemented.
-- **Water and wastewater vector family:** Implemented with 32 original assets.
-- **Large external scientific package:** Implemented through Bioicons with 2,829 entries.
-- **Expanded deduplicated search:** Implemented across built-in artwork, Water 32, Bioicons, Healthicons, and Tabler.
-- **Search by name/category and source metadata:** Implemented.
-- **Per-item attribution metadata:** Implemented where source metadata is available.
-- **Automatic attribution/reference collection:** Implemented.
-- **Map assets:** Implemented through Map Studio with Natural Earth boundaries and imported GeoJSON.
+- **Browser-based local-first editor:** Implemented.
+- **Editing without an account:** Implemented.
+- **Multi-page projects and layer ordering:** Implemented.
+- **Local autosave and recovery snapshots:** Implemented.
+- **Complete editable `.figureloom` backup download and import:** Implemented.
+- **Older FigureLoom backup import:** Implemented.
+- **Project tabs with close controls inside each tab:** Implemented.
+- **Light and dark appearance:** Implemented.
 
-## Asset handling and data safety
+## Interface modes
 
-- **Upload PNG, JPEG, WebP, and SVG:** Implemented.
-- **Reusable personal upload library:** Implemented with IndexedDB.
-- **Reusable editable SVG library:** Implemented beside Export.
-- **Imported SVG resize, rotation, layering, opacity, original colors, whole-object recoloring, and SVG re-export:** Implemented.
-- **SVG path-node editing and breaking imported SVGs apart:** Not implemented.
-- **Continuous autosave:** Implemented with IndexedDB and localStorage fallback.
-- **Manual and automatic recovery snapshots:** Implemented.
-- **Complete editable project download/import:** Implemented.
-- **Registered offline application shell:** Implemented.
-- **True account-based cloud backup:** Not implemented.
-- **Shared lab libraries and real-time collaboration:** Not implemented.
+- **Automatic mode:** Implemented.
+- **Desktop mode:** Implemented as the compact mouse-and-keyboard layout.
+- **Tablet mode:** Implemented as the full editor with roomier touch targets.
+- **Phone mode:** Implemented with a compact header, dock, sheets, safe areas, and full-screen task panels.
+- **Undo and Redo beside Delete on Desktop and Tablet:** Implemented.
+- **Undo and Redo in the Phone header:** Implemented.
+- **Movable desktop canvas navigation bar:** Implemented.
 
-## Canvas, navigation, and page formats
+## Objects and layout
 
-- **Optional line/dot grid:** Implemented.
-- **Adaptive physical grid spacing:** Implemented for automatic or explicit millimetre spacing.
-- **Grid and object snapping:** Implemented.
-- **Smart alignment guides:** Implemented.
-- **Move objects by dragging:** Implemented.
-- **Position and size fields:** Implemented.
-- **Eight on-canvas resize handles:** Implemented.
-- **Rotation, opacity, fill, and stroke:** Implemented.
-- **Layer visibility, locking, drag/touch reordering, and keyboard reordering:** Implemented.
-- **Undo and redo:** Implemented.
-- **Multiple pages:** Implemented.
-- **Screen, A4, A3, A2, A1, A0, square, and custom physical formats:** Implemented.
-- **Generic journal and presentation physical presets:** Implemented.
-- **Portrait/landscape geometry and millimetre SVG export:** Implemented.
-- **Format-aware PNG and 150-DPI print export:** Implemented.
-- **Per-page solid, gradient, transparent, preset, and randomized backgrounds:** Implemented.
-- **Project-only color themes and font pairs:** Implemented.
-- **Hand/Space/middle-button panning:** Implemented.
-- **Touch pinch zoom:** Implemented.
-- **Movable, dockable, closable navigator:** Implemented.
+- **Text, shapes, arrows, lines, and connectors:** Implemented.
+- **Text wrapping and editable text boxes:** Implemented.
+- **Object movement, resize, rotation, opacity, fill, and stroke:** Implemented.
+- **Shift-click, marquee, and touch multi-selection:** Implemented.
+- **Group and ungroup:** Implemented with persistent object relationships.
+- **Align and distribute:** Implemented.
+- **Grid, snapping, and smart guides:** Implemented.
+- **Anchored connectors that follow objects:** Implemented.
+- **Layer visibility, locking, naming, and reordering:** Implemented.
+- **Simple Boolean operations for native shapes:** Implemented.
+- **Full Illustrator-style vector editing:** Not claimed.
 
-## Multi-selection, grouping, and layout
+## Text, equations, and code
 
-- **Shift-click multi-selection:** Implemented.
-- **Marquee selection:** Implemented.
-- **Move and resize a selection together:** Implemented.
-- **Group and ungroup:** Implemented with persistent group relationships.
-- **Align left/center/right/top/middle/bottom:** Implemented.
-- **Equal horizontal/vertical distribution:** Implemented.
-- **Anchored object-to-object connectors:** Implemented.
-- **Simple rectangle/ellipse union, intersection, and subtraction:** Implemented as compound objects.
-- **Arbitrary imported-SVG Boolean path operations:** Not implemented.
+- **Rich text controls, Greek symbols, superscript, and subscript:** Implemented.
+- **Local WOFF, WOFF2, TTF, and OTF font import:** Implemented.
+- **MathJax TeX rendering to retained-source SVG:** Implemented.
+- **Code windows for instructions and technical examples:** Implemented.
+- **Very advanced TeX packages and arbitrary custom macros:** Limited.
+- **Portable embedding of every locally imported font across all external applications:** Not guaranteed.
 
-## Data and scientific annotations
+## Scientific illustration and maps
 
-- **CSV and tab-separated spreadsheet paste:** Implemented.
-- **Editable bar, line, scatter, box, heatmap, and table objects:** Implemented.
-- **Reopen chart/table source data by double-clicking:** Implemented.
-- **Panel labels, callouts, scale bars, measurements, grouping brackets, numbered markers, legends, and significance brackets:** Implemented.
-- **Greek symbols, superscript, subscript, and chemical-number formatting:** Implemented.
-- **Practical LaTeX-like equation commands:** Implemented as a limited browser-safe subset.
-- **Complete TeX/MathJax-quality equation engine:** Not implemented.
+- **Built-in editable scientific artwork:** Implemented.
+- **Search, aliases, categories, and metadata:** Implemented.
+- **On-demand compatible outside libraries:** Implemented where configured.
+- **Source, license, author, and attribution metadata:** Retained where available.
+- **Automatic reference collection from used assets:** Implemented where metadata exists.
+- **World and country maps:** Implemented.
+- **Study-site locators and manual markers:** Implemented.
+- **GeoJSON import:** Implemented.
+- **GIS analysis and survey-grade measurement:** Not claimed.
 
-## Components and object editing
+## SVG tools
 
-- **Save selection as reusable component:** Implemented.
-- **Insert multiple component instances:** Implemented.
-- **Update all project instances from a revised selection:** Implemented.
-- **Image horizontal/vertical flip:** Implemented.
-- **Percentage crop:** Implemented.
-- **Rectangle, rounded, and circular image masks:** Implemented.
-- **Imported SVG path-node editing:** Not implemented.
+- **SVG import and sanitization:** Implemented.
+- **Whole-object SVG recoloring where supported:** Implemented.
+- **SVG path command and coordinate editing:** Implemented.
+- **Anchor selection:** Implemented.
+- **Breaking compound SVG artwork into independent SVG objects:** Implemented.
+- **Complete desktop-class Bezier handle editing and arbitrary Boolean path operations:** Not claimed.
 
-## Review, references, and accessibility
+## Data, tables, and charts
+
+- **CSV and tab-separated paste:** Implemented.
+- **XLSX, XLS, XLSM, ODS, CSV, and TSV import:** Implemented through office and data tools.
+- **Editable tables:** Implemented.
+- **Editable bar, line, scatter, box, violin, volcano, heatmap, PCA-style, Kaplan-Meier, forest, radar, bubble, Gantt, timeline, and flow-cytometry-style starters:** Implemented.
+- **Reopening chart and table source data:** Implemented.
+- **Statistical analysis or validation:** Not claimed.
+- **Macro execution:** Not implemented by design.
+
+## Review and accessibility
 
 - **Comments attached to objects or pages:** Implemented.
 - **Resolve, reopen, navigate to, and delete comments:** Implemented.
-- **DOI, creator, URL, licence, attribution, and notes records:** Implemented.
-- **Automatic reference collection from used assets:** Implemented.
-- **Downloadable reference list:** Implemented.
-- **Named version checkpoints:** Implemented.
-- **Added/changed object comparison highlighting:** Implemented.
+- **References and attribution records:** Implemented.
+- **Named checkpoints and change highlighting:** Implemented.
 - **Overall alt text and long descriptions:** Implemented.
 - **Automatic description draft from page layers:** Implemented.
 - **Contrast and small-text checks:** Implemented.
-- **Grayscale/protanopia/deuteranopia/tritanopia previews:** Implemented as editor previews.
-- **Real-time multi-user commenting:** Not implemented.
+- **Grayscale and color-vision previews:** Implemented.
+- **Guaranteed journal or accessibility compliance:** Not claimed.
 
 ## Publication and presentation
 
-- **Generic single-column, double-column, full-page, square, 16:9, and 4:3 presets:** Implemented.
-- **Automated readiness checks:** Implemented for unresolved comments, missing alt text, off-canvas objects, small print text, broken connectors, external images, and reference workflow.
-- **Downloadable publication-readiness report:** Implemented.
+- **Generic publication and presentation page presets:** Implemented.
+- **Physical-size SVG output:** Implemented.
+- **Publication-readiness report:** Implemented.
 - **Fullscreen multi-page presentation mode:** Implemented.
-- **Journal-specific guaranteed compliance:** Not claimed; users must verify current venue rules.
+- **Starter SBGN-ML, BioPAX, and SBML pathway exchange:** Implemented and requires specialist validation.
 
-## Figure Assistant
+## Current export
 
-- **Written-description figure generation without an API:** Implemented as a private in-browser rule-based layout assistant.
-- **Search across local and expanded illustration libraries:** Implemented.
-- **Workflow, comparison, cycle, wastewater, host-pathogen, PCR, CRISPR, sequencing, biofilm, and general figures:** Implemented.
-- **Generated output remains editable:** Implemented.
-- **Flattened diffusion image generation:** Not implemented by design.
-- **Optional practical local language model:** Not implemented.
+- **Editable SVG for the active page:** Implemented.
+- **Export all pages as SVG:** Implemented with one editable SVG per page.
+- **Optional physical print dimensions:** Implemented.
+- **Optional exported editor grid:** Implemented.
+- **Complete editable `.figureloom` backup:** Implemented.
+- **Reference and attribution output:** Implemented where available.
+- **Direct PNG export in the current finished panel:** Not exposed.
+- **Direct PDF or TIFF export:** Not exposed.
+- **Direct PowerPoint export in the current finished panel:** Not exposed.
+- **External conversion from checked SVG:** Required when those formats are needed.
 
-## Text and fonts
+## PowerPoint and spreadsheet import
 
-- **Editable text content, family, size, bold, italic, and species styling:** Implemented.
-- **Searchable font catalogue:** Implemented with 38 bundled/open/system options.
-- **Local `.woff`, `.woff2`, `.ttf`, and `.otf` import:** Implemented.
-- **Project default and apply-to-all fonts:** Implemented.
-- **Embedding imported font binaries in project/PowerPoint exports:** Not implemented.
+- **PowerPoint import:** Implemented for many common elements.
+- **Spreadsheet import:** Implemented for supported workbook and delimited formats.
+- **Exact conversion of complex masters, SmartArt, WordArt, animation, transitions, media, and advanced charts:** Not guaranteed.
+- **PowerPoint import implying matching PowerPoint export:** Not claimed.
 
-## Export
+## Accounts and cloud projects
 
-- **Editable SVG export:** Implemented.
-- **Poster-ready physical-size SVG:** Implemented.
-- **Standard/high-resolution/print PNG:** Implemented.
-- **Optional exported grid:** Implemented.
-- **Complete editable `.scicanvas` project export:** Implemented.
-- **Attribution and reference reports:** Implemented.
-- **PowerPoint `.pptx` export:** Implemented with one high-resolution page image per slide.
-- **Native editable PowerPoint shapes:** Not implemented.
-- **PDF and TIFF export:** Not implemented.
-- **SBGN/BioPAX/SBML export:** Not implemented.
+- **Email and password accounts:** Implemented.
+- **Confirmation and password recovery:** Implemented.
+- **Local gallery without an account:** Implemented.
+- **Explicit encrypted cloud saves:** Implemented.
+- **Owned and shared cloud gallery:** Implemented.
+- **Owner, editor, reviewer, and viewer roles:** Implemented.
+- **Apple, Microsoft, or other social sign-in:** Not used.
+- **Zero-knowledge encryption:** Not claimed. The system uses application-layer encryption.
 
-## Interface architecture
+## Collaboration
 
-- **Microsoft-style ribbon and Keynote-style inspector:** Implemented.
-- **Simple and Advanced modes:** Implemented.
-- **Focused Pro Tools hub:** Implemented with Arrange, Data, Annotate, Components, Review, and Publish workspaces.
-- **Progressive disclosure instead of permanent control overload:** Implemented.
-- **Responsive science/upload/water drawers:** Implemented.
+- **Email-account invitations:** Implemented.
+- **Expiring guest links:** Implemented.
+- **Guest join with a display name and no email account:** Implemented when anonymous authentication is enabled.
+- **Optional 4 to 12 digit guest-link PIN:** Implemented.
+- **Named presence and remote cursors:** Implemented.
+- **Encrypted project broadcasts and persistent review comments:** Implemented.
+- **Incoming-update pause while typing or dragging:** Implemented.
+- **Owner revocation of guest links:** Implemented.
+- **Removing already downloaded files from another person's device:** Not possible.
 
-## Remaining priority areas
+## MCP and external assistants
 
-1. Browser-level automated interaction and visual-regression tests.
-2. Account-based encrypted cloud storage and shared lab workspaces.
-3. Imported SVG path-node editing and arbitrary vector Boolean operations.
-4. Native editable PowerPoint-object export.
-5. Full TeX-quality mathematics and richer gene/protein formatting rules.
-6. PDF, TIFF, SBGN, BioPAX, and SBML export.
-7. Optional small local model-assisted prompt interpretation when practical.
+- **Hosted project-specific MCP connection:** Implemented.
+- **Private remote connection link:** Implemented.
+- **Read-only and full editor access:** Implemented.
+- **Separate destructive-action permission:** Implemented.
+- **Command discovery from the open editor:** Implemented.
+- **Normal history and durable save paths for successful writes:** Implemented.
+- **Disconnect, reconnect, and revoke:** Implemented.
+- **Automatic authorization transfer when switching projects:** Not allowed by design. The old project authorization is revoked.
+- **MCP without a configured cloud backend:** Not available in the hosted workflow.
+
+## Loomy
+
+- **Editable starting layouts from written descriptions:** Implemented.
+- **Deterministic in-browser builder:** Implemented.
+- **Optional providers where configured:** Implemented according to deployment and provider availability.
+- **FigureLoom as an AI-first editor:** Not the product direction.
+- **Scientific accuracy without review:** Not claimed.
+
+## Offline behavior
+
+- **Versioned offline application shell:** Implemented.
+- **Local editing after required files are cached:** Implemented.
+- **Local autosave and backups while cloud services are unavailable:** Implemented.
+- **Cloud projects, live collaboration, hosted MCP, outside libraries, MathJax, and optional providers while fully offline:** Limited or unavailable.
+
+## Current limitations and review areas
+
+1. Direct PNG, PDF, TIFF, and PowerPoint export are not exposed in the current finished export panel.
+2. Imported fonts and complex SVG features can behave differently in another application.
+3. Complex PowerPoint files require careful comparison with the original.
+4. Statistical, GIS, image-analysis, pathway, journal, printer, and accessibility requirements must be validated in specialist tools or against current rules.
+5. Cloud security depends on correct authentication, Row Level Security, private Realtime, encryption-key handling, and deployment configuration.
+6. Browser storage is not a substitute for external `.figureloom` backups.
