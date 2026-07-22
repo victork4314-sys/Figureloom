@@ -1,0 +1,8 @@
+Say Combining the sample batches.
+Open the files batch-1.csv, batch-2.csv together.
+Add the rows from batch-3.csv.
+Remove duplicate rows using sample.
+Put the rows in order by sample.
+Show the result.
+Save the result as all-samples.csv.
+Say The combined table is ready.
