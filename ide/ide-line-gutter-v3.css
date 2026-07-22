@@ -1,0 +1,23 @@
+.editor-wrap{grid-template-columns:var(--line-number-width,52px) minmax(0,1fr)}
+.line-numbers{
+  position:relative;
+  height:100%;
+  min-height:0;
+  overflow:hidden!important;
+  padding:0!important;
+  white-space:pre;
+  font-size:15px!important;
+  line-height:1.75!important;
+}
+.line-number-content{
+  display:block;
+  min-height:100%;
+  padding:20px 12px 80px 0;
+  text-align:right;
+  will-change:transform;
+  pointer-events:none;
+}
+@media(max-width:560px){
+  .line-numbers{font-size:13px!important;line-height:1.75!important}
+  .line-number-content{padding:16px 10px 70px 0}
+}
