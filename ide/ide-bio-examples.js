@@ -4,37 +4,9 @@
   const FILES_KEY = 'figureloom-bio-ide-files-v1';
   const ACTIVE_KEY = 'figureloom-bio-ide-active-v1';
   const DELETED_KEY = 'figureloom-bio-ide-deleted-files-v1';
+  const RESTORE_KEY = 'figureloom-bio-restore-examples-v4';
+  const RESTORED_MESSAGE_KEY = 'figureloom-bio-restored-message-v1';
   const PROGRAM = 'microbiology-example.flbio';
-
-  const button = document.getElementById('exampleButton');
-  if (!button) return;
-
-  function loadStyle(href, id) {
-    if (document.getElementById(id)) return;
-    const link = document.createElement('link');
-    link.id = id;
-    link.rel = 'stylesheet';
-    link.href = href;
-    document.head.append(link);
-  }
-
-  function loadScript(src, id) {
-    if (document.getElementById(id)) return;
-    const script = document.createElement('script');
-    script.id = id;
-    script.src = src;
-    script.defer = true;
-    document.body.append(script);
-  }
-
-  loadStyle('./ide-decisions.css?v=1', 'figureloomBioDecisionsStyle');
-  loadScript('./ide-control-flow-runtime.js?v=1', 'figureloomBioControlFlowRuntime');
-  loadScript('./ide-decisions.js?v=1', 'figureloomBioDecisionsUi');
-
-  const statusNote = document.querySelector('.editor-status span:last-child');
-  if (statusNote) {
-    statusNote.textContent = 'Instructions end with a period. Decision headers end with a colon.';
-  }
 
   function makeGenome(length = 560) {
     const bases = 'ACGT';
@@ -55,9 +27,6 @@
   }
 
   const syntheticGenome = makeGenome();
-  const forwardFastq = makeFastq('read-forward', syntheticGenome, [0, 60, 120, 180, 240, 300, 360]);
-  const reverseFastq = makeFastq('read-reverse', syntheticGenome, [30, 90, 150, 210, 270, 330, 390]);
-
   const examples = {
     'example.flbio': `Say Starting the example.
 Open the file example-samples.csv.
@@ -131,19 +100,11 @@ Find plasmids in assembly/contigs.fasta into plasmids.
 
 Say The browser microbiology example is complete.
 `,
-    'forward.fastq': forwardFastq,
-    'reverse.fastq': reverseFastq,
-    'resistance-markers.fasta': `>demo-resistance-marker
-${syntheticGenome.slice(155, 205)}
-`,
-    'virulence-markers.fasta': `>demo-virulence-marker
-${syntheticGenome.slice(315, 365)}
-`,
-    'bacteria-reference.fasta': `>synthetic-bacterium
-${syntheticGenome}
->unrelated-reference
-${'T'.repeat(syntheticGenome.length)}
-`,
+    'forward.fastq': makeFastq('read-forward', syntheticGenome, [0, 60, 120, 180, 240, 300, 360]),
+    'reverse.fastq': makeFastq('read-reverse', syntheticGenome, [30, 90, 150, 210, 270, 330, 390]),
+    'resistance-markers.fasta': `>demo-resistance-marker\n${syntheticGenome.slice(155, 205)}\n`,
+    'virulence-markers.fasta': `>demo-virulence-marker\n${syntheticGenome.slice(315, 365)}\n`,
+    'bacteria-reference.fasta': `>synthetic-bacterium\n${syntheticGenome}\n>unrelated-reference\n${'T'.repeat(syntheticGenome.length)}\n`,
   };
 
   window.FigureLoomBioExampleFiles = Object.freeze({ ...examples });
@@ -166,22 +127,91 @@ ${'T'.repeat(syntheticGenome.length)}
     }
   }
 
-  let pendingWorkspace = null;
+  function preserveVisibleEditor(files) {
+    const editor = document.getElementById('programEditor');
+    const currentName = (
+      localStorage.getItem(ACTIVE_KEY)
+      || document.getElementById('programName')?.value
+      || ''
+    ).trim();
+    if (editor && currentName) files[currentName] = editor.value;
+  }
 
-  function writePendingWorkspace() {
-    if (!pendingWorkspace) return;
-    localStorage.setItem(FILES_KEY, JSON.stringify(pendingWorkspace.files));
-    localStorage.setItem(ACTIVE_KEY, pendingWorkspace.activeFile);
-    localStorage.setItem(DELETED_KEY, JSON.stringify(pendingWorkspace.deleted));
+  function restoreExamples({ preserveEditor = false } = {}) {
+    const files = readObject(FILES_KEY);
+    if (preserveEditor) preserveVisibleEditor(files);
+    Object.assign(files, examples);
+
+    const bundledNames = new Set(Object.keys(examples).map((name) => name.toLowerCase()));
+    const deleted = readDeleted().filter((name) => !bundledNames.has(name));
+
+    localStorage.setItem(FILES_KEY, JSON.stringify(files));
+    localStorage.setItem(ACTIVE_KEY, PROGRAM);
+    localStorage.setItem(DELETED_KEY, JSON.stringify(deleted));
 
     const written = readObject(FILES_KEY);
     const missing = Object.keys(examples).filter(
       (name) => typeof written[name] !== 'string' || written[name].length === 0,
     );
-    if (missing.length) {
-      throw new Error(`The example workspace was not saved: ${missing.join(', ')}`);
+    if (missing.length) throw new Error(`The example workspace was not saved: ${missing.join(', ')}`);
+  }
+
+  function setRestoreFlag() {
+    localStorage.setItem(RESTORE_KEY, '1');
+    try { sessionStorage.setItem(RESTORE_KEY, '1'); } catch {}
+  }
+
+  function hasRestoreFlag() {
+    if (localStorage.getItem(RESTORE_KEY) === '1') return true;
+    try { return sessionStorage.getItem(RESTORE_KEY) === '1'; } catch { return false; }
+  }
+
+  function clearRestoreFlag() {
+    localStorage.removeItem(RESTORE_KEY);
+    try { sessionStorage.removeItem(RESTORE_KEY); } catch {}
+  }
+
+  let restoredBeforeIde = false;
+  if (hasRestoreFlag()) {
+    try {
+      restoreExamples();
+      clearRestoreFlag();
+      localStorage.setItem(RESTORED_MESSAGE_KEY, 'Added 10 example files');
+      restoredBeforeIde = true;
+    } catch (error) {
+      clearRestoreFlag();
+      console.error(error);
+      localStorage.setItem(RESTORED_MESSAGE_KEY, 'Could not restore example files');
     }
   }
+
+  function loadStyle(href, id) {
+    if (document.getElementById(id)) return;
+    const link = document.createElement('link');
+    link.id = id;
+    link.rel = 'stylesheet';
+    link.href = href;
+    document.head.append(link);
+  }
+
+  function loadScript(src, id) {
+    if (document.getElementById(id)) return;
+    const script = document.createElement('script');
+    script.id = id;
+    script.src = src;
+    script.defer = true;
+    document.body.append(script);
+  }
+
+  loadStyle('./ide-decisions.css?v=1', 'figureloomBioDecisionsStyle');
+  loadScript('./ide-control-flow-runtime.js?v=1', 'figureloomBioControlFlowRuntime');
+  loadScript('./ide-decisions.js?v=1', 'figureloomBioDecisionsUi');
+
+  const statusNote = document.querySelector('.editor-status span:last-child');
+  if (statusNote) statusNote.textContent = 'Instructions end with a period. Decision headers end with a colon.';
+
+  const button = document.getElementById('exampleButton');
+  if (!button) return;
 
   function showInstallError(error) {
     console.error(error);
@@ -189,49 +219,34 @@ ${'T'.repeat(syntheticGenome.length)}
     if (saveStatus) saveStatus.textContent = 'Could not restore example files';
     button.disabled = false;
     button.textContent = 'Open examples';
-    window.alert(
-      'FigureLoom Bio could not restore the example files in this browser. '
-      + 'Your existing files were not removed. Try clearing site storage only if this keeps happening.',
-    );
+    window.alert('FigureLoom Bio could not restore the example files. Your existing files were not removed.');
   }
 
   function installExamples(event) {
     event.preventDefault();
     event.stopImmediatePropagation();
-
-    const files = readObject(FILES_KEY);
-    const editor = document.getElementById('programEditor');
-    const currentName = (
-      localStorage.getItem(ACTIVE_KEY)
-      || document.getElementById('programName')?.value
-      || ''
-    ).trim();
-
-    if (currentName && editor) files[currentName] = editor.value;
-    Object.assign(files, examples);
-
-    const exampleNames = new Set(Object.keys(examples).map((name) => name.toLowerCase()));
-    const deleted = readDeleted().filter((name) => !exampleNames.has(name));
-
-    pendingWorkspace = { files, deleted, activeFile: PROGRAM };
-
     button.disabled = true;
     button.textContent = 'Restoring examples…';
     const saveStatus = document.getElementById('saveStatus');
     if (saveStatus) saveStatus.textContent = 'Restoring example files';
 
     try {
-      writePendingWorkspace();
+      restoreExamples({ preserveEditor: true });
+      setRestoreFlag();
+      setTimeout(() => location.reload(), 0);
     } catch (error) {
-      pendingWorkspace = null;
+      clearRestoreFlag();
       showInstallError(error);
-      return;
     }
-
-    requestAnimationFrame(() => location.reload());
   }
 
   button.addEventListener('click', installExamples, { capture: true });
-  window.addEventListener('beforeunload', writePendingWorkspace);
-  window.addEventListener('pagehide', writePendingWorkspace);
+
+  window.addEventListener('DOMContentLoaded', () => {
+    const message = localStorage.getItem(RESTORED_MESSAGE_KEY);
+    if (!message && !restoredBeforeIde) return;
+    const saveStatus = document.getElementById('saveStatus');
+    if (saveStatus) saveStatus.textContent = message || 'Added 10 example files';
+    localStorage.removeItem(RESTORED_MESSAGE_KEY);
+  });
 })();
