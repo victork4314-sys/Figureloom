@@ -1,11 +1,15 @@
 from pathlib import Path
+import os
 import tempfile
 import unittest
+from unittest.mock import patch
 
 from figureloom_bio.errors import FigureLoomBioError
 from figureloom_bio.parser import parse
 from figureloom_bio.runtime import Runner
+from figureloom_bio.streaming_fasta import run_streaming_if_needed
 from figureloom_bio.translators import translate_source
+from figureloom_bio.workflow_expansion import normalize_streaming_instructions
 
 
 class WorkflowExpansionTests(unittest.TestCase):
@@ -41,6 +45,32 @@ class WorkflowExpansionTests(unittest.TestCase):
             Runner(program).run(parse(program.read_text(encoding="utf-8")))
             self.assertEqual(
                 (root / "merged.fasta").read_text(encoding="utf-8"),
+                ">one\nAAAA\n>two\nCCCC\n",
+            )
+
+    def test_friendly_fasta_merge_uses_disk_streaming(self) -> None:
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            (root / "one.fasta").write_text(">one\nAAAA\n", encoding="utf-8")
+            (root / "two.fasta").write_text(">two\nCCCC\n", encoding="utf-8")
+            program = root / "stream-merge.flbio"
+            program.write_text(
+                "Open the files one.fasta, two.fasta together.\n"
+                "Save the result as streamed.fasta.\n",
+                encoding="utf-8",
+            )
+            instructions = normalize_streaming_instructions(
+                parse(program.read_text(encoding="utf-8"))
+            )
+            self.assertEqual(
+                [instruction.action for instruction in instructions],
+                ["open_file", "merge_sequences", "save_result"],
+            )
+            with patch.dict(os.environ, {"FIGURELOOM_STREAM_THRESHOLD": "1"}):
+                output = run_streaming_if_needed(program.resolve(), instructions)
+            self.assertIsNotNone(output)
+            self.assertEqual(
+                (root / "streamed.fasta").read_text(encoding="utf-8"),
                 ">one\nAAAA\n>two\nCCCC\n",
             )
 
