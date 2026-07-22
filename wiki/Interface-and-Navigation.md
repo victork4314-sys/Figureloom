@@ -23,8 +23,22 @@ Common controls include:
 - Export
 - Account or profile access
 - Help access
+- FigureLoom Linux VM access
 
 On a phone, Undo and Redo also remain in the compact header. Less common actions move into **More**.
+
+## FigureLoom Linux VM button
+
+The **VM** button opens a small floating panel for the hosted FigureLoom Linux desktop. It does not replace the editor and does not change the current project. It is there for optional browser-based Linux, bioinformatics, files, and heavier tool workflows.
+
+The panel includes:
+
+- **Open public VM**, which opens `https://vm.figureloom.org/#/cast/figureloom`
+- **Open login screen**, which opens `https://vm.figureloom.org`
+- Backup login: `guest@figureloom.local` / `FigureLoom2026!`
+- A session reminder: delete the Kasm session when finished instead of only closing the tab
+
+Use the public VM link for the shared public desktop. Use the login screen for named VM accounts.
 
 ## Selected-object actions
 
