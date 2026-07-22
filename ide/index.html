@@ -15,6 +15,7 @@
   <link rel="stylesheet" href="./ide-blocks.css?v=1">
   <link rel="stylesheet" href="./ide-platform.css?v=1">
   <link rel="stylesheet" href="./ide-addon-packages.css?v=1">
+  <link rel="stylesheet" href="./ide-bio-account.css?v=1">
   <title>FigureLoom Bio IDE</title>
   <script>
     try {
@@ -28,13 +29,15 @@
   <a class="skip-link" href="#programEditor">Skip to the program</a>
 
   <header class="ide-header">
-    <a class="ide-brand" href="./" aria-label="FigureLoom Bio IDE home">
-      <img src="../figureloom-mark.svg?v=1" alt="">
-      <span>
-        <strong>FigureLoom Bio</strong>
-        <small>Plain-language IDE</small>
-      </span>
-    </a>
+    <div class="ide-brand">
+      <button id="bioAccountButton" type="button" aria-label="Sign in or open FigureLoom Bio projects">◌</button>
+      <a href="./" aria-label="FigureLoom Bio IDE home" style="text-decoration:none">
+        <span>
+          <strong>FigureLoom Bio</strong>
+          <small>Plain-language IDE</small>
+        </span>
+      </a>
+    </div>
 
     <div class="document-name">
       <input id="programName" value="example.flbio" aria-label="Program name">
@@ -64,7 +67,6 @@
       <button id="formatButton" type="button">Tidy sentences</button>
       <button id="clearResultsButton" type="button">Clear results</button>
     </div>
-    <div class="run-note" id="runNote">Build with blocks or text, add trusted biology packages, merge files, stream huge FASTA, and translate workflows.</div>
   </nav>
 
   <main class="ide-workspace">
@@ -160,6 +162,7 @@
     </div>
   </dialog>
 
+  <script src="../cloud-config.js?v=20260722-bio"></script>
   <script src="./ide-addon-runtime.js?v=1"></script>
   <script src="./ide-workflow-bridge.js?v=1"></script>
   <script src="./ide-table-merge.js?v=1"></script>
@@ -178,6 +181,8 @@
   <script src="./ide-translator.js?v=1"></script>
   <script src="./ide-addon-packages.js?v=1"></script>
   <script src="./ide-addon-compatibility.js?v=1"></script>
+  <script src="./ide-bio-examples.js?v=1"></script>
+  <script src="./ide-bio-account.js?v=1"></script>
   <script src="./ide-line-number-fix.js?v=1"></script>
   <script src="./ide-export.js?v=3"></script>
 </body>
