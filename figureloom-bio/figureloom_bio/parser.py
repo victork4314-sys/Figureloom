@@ -14,6 +14,10 @@ class Instruction:
 
 
 _PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
+    (
+        "repeat_program",
+        re.compile(r"run this program ([1-9][0-9]*) times?", re.IGNORECASE),
+    ),
     ("open_file", re.compile(r"open the file (.+)", re.IGNORECASE)),
     (
         "keep_rows",
