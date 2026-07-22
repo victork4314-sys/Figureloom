@@ -1,0 +1,18 @@
+.header-actions .secondary-link{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  line-height:1;
+  text-align:center;
+}
+
+#exportResultsButton::before{
+  content:"↓";
+  margin-right:7px;
+  color:var(--accent);
+  font-weight:900;
+}
+
+#exportResultsButton:disabled::before{
+  color:var(--muted);
+}
