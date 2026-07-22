@@ -1,8 +1,10 @@
 Use .microbiology.
 
 Say Preparing a bacterial isolate workflow.
+Open the files forward.fastq and reverse.fastq as a pair.
 Prepare bacterial reads.
-Assemble the bacterial genome from forward.fastq and reverse.fastq into assembly.
+Save the pair as clean-forward.fastq and clean-reverse.fastq.
+Assemble the bacterial genome from clean-forward.fastq and clean-reverse.fastq into assembly.
 Check the assembly assembly/contigs.fasta into assembly-quality.
 Annotate the bacterial genome assembly/contigs.fasta into annotation.
 Find resistance genes in assembly/contigs.fasta using card.
