@@ -1,0 +1,5 @@
+Say Starting the alignment.
+Run the tool minimap2 with -ax map-ont reference.fasta reads.fastq -o alignment.sam.
+Run the tool samtools with view -b alignment.sam -o alignment.bam.
+Run the tool samtools with sort alignment.bam -o sorted-alignment.bam.
+Say The alignment is ready.
