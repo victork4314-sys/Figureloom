@@ -3,6 +3,8 @@ from __future__ import annotations
 from typing import Any
 
 from .addon_packages import expand_addons
+from .control_flow import uses_control_flow
+from .control_flow_translation import translate_flow_source
 from .parser import parse
 from . import translators as translator_module
 
@@ -17,6 +19,13 @@ def install_addon_translation() -> None:
         *,
         program_name: str = "program.flbio",
     ) -> Any:
+        if uses_control_flow(source):
+            return translate_flow_source(
+                source,
+                target,
+                program_name=program_name,
+            )
+
         normalized = target.strip().lower()
         if normalized not in translator_module.TARGET_EXTENSIONS:
             supported = ", ".join(
