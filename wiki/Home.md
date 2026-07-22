@@ -23,6 +23,18 @@ The sidebar keeps the full manual organized by editing, scientific tools, files,
 - The **VM** button opens the hosted FigureLoom Linux desktop for optional browser-based Linux and bioinformatics work.
 - The focused runtime checks cover light and dark desktop and phone layouts, Help opening, project-tab close placement, failed local scripts, page errors, and console errors.
 
+## FigureLoom Linux VM tools snapshot
+
+The VM package export currently shows a broad R and bioinformatics environment. Highlights from the captured output include:
+
+- R 4.3.3 with Bioconductor and genomics packages such as Biostrings, GenomicRanges, GenomicFeatures, VariantAnnotation, Rsamtools, rtracklayer, DESeq2, edgeR, limma, SingleCellExperiment, SummarizedExperiment, phyloseq, WGCNA, GEOquery, biomaRt, GO.db, and KEGGREST
+- Single-cell and omics packages such as Seurat, SeuratObject, scater, scuttle, sctransform, monocle, metagenomeSeq, MutationalPatterns, ASCAT, DNAcopy, qvalue, EBSeq, and Wrench
+- Statistics, plotting, and reports through tidyverse, dplyr, data.table, ggplot2, ggpubr, plotly, caret, randomForest, ranger, glmnet, lme4, brms, rstan, rstanarm, rmarkdown, knitr, bookdown, shiny, openxlsx, readxl, and writexl
+- Spatial and ecology packages such as sf, terra, raster, sp, spdep, spatialreg, stars, lwgeom, maps, mapdata, mapproj, gstat, geosphere, exactextractr, vegan, ape, phangorn, and phytools
+- A partial Python package snapshot that includes unicycler, unifrac, xpore, yanosim, virtualenv, urllib3, watchdog, wxPython, xmltodict, xopen, yamlordereddictloader, zstandard, and support packages
+
+The Python package capture starts mid-list, so treat this as a visible snapshot rather than a complete Python inventory.
+
 ## Find a topic
 
 ### Core editing
