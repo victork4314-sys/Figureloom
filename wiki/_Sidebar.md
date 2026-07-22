@@ -17,6 +17,7 @@
 ### Scientific work
 
 - [FigureLoom Bio](FigureLoom-Bio)
+- [Bio add-ons and microbiology](FigureLoom-Bio#add-ons-and-domain-packages)
 - [Illustrations and maps](Scientific-Illustrations-and-Maps)
 - [Data, tables, and charts](Data-Tables-and-Charts)
 - [Equations, code, and notation](Equations-Code-and-Scientific-Notation)
