@@ -77,6 +77,21 @@ The panel includes:
 
 Please delete the Kasm session when finished. Closing the browser tab can leave the VM running and block the next person.
 
+### VM tools snapshot
+
+The current exported VM package output shows a broad R and bioinformatics environment. This is a snapshot, not a promise that every deployment will always have the exact same versions.
+
+Highlights from the captured output include:
+
+- **R and Bioconductor:** R 4.3.3, BiocManager, Biobase, BiocGenerics, Biostrings, GenomicRanges, GenomicAlignments, GenomicFeatures, VariantAnnotation, Rsamtools, rtracklayer, DESeq2, edgeR, limma, SingleCellExperiment, SummarizedExperiment, MultiAssayExperiment, phyloseq, WGCNA, GEOquery, biomaRt, GO.db, and KEGGREST
+- **Single-cell and omics work:** Seurat, SeuratObject, scater, scuttle, sctransform, monocle, HSMMSingleCell, metagenomeSeq, MutationalPatterns, ASCAT, DNAcopy, qvalue, EBSeq, HTSFilter, and Wrench
+- **Statistics and modelling:** tidyverse, dplyr, data.table, ggplot2, ggpubr, plotly, caret, randomForest, ranger, glmnet, lme4, brms, rstan, rstanarm, lavaan, vegan, ape, phangorn, and phytools
+- **Files, reports, and visualization:** rmarkdown, knitr, bookdown, openxlsx, readxl, writexl, officer, flextable, svglite, shiny, DT, htmlwidgets, Cairo, magick, pdftools, rsvg, and UpSetPlot
+- **Spatial and ecology:** sf, terra, raster, sp, spdep, spatialreg, stars, lwgeom, maps, mapdata, mapproj, gstat, geosphere, and exactextractr
+- **Python snapshot from the captured output:** unicycler, unifrac, xpore, yanosim, virtualenv, urllib3, watchdog, wxPython, xmltodict, xopen, yamlordereddictloader, zstandard, and related support packages
+
+The uploaded Python package output begins mid-list, so the Python section above should be treated as a visible snapshot rather than a complete Python inventory. For a fresh inventory, run the VM export command again and save the result as `vm-tools.txt`.
+
 ## MCP and external assistants
 
 FigureLoom can connect the current project to an MCP-compatible external assistant from **Settings → MCP & AI access**.
