@@ -37,7 +37,8 @@ if (!loader.includes('ide-control-flow-runtime.part')) {
   fail('The browser flow loader does not load the runtime parts.');
 }
 
-const examples = read('ide/ide-bio-examples.js');
+const exampleSource = read('ide/ide-bio-examples.js');
+new vm.Script(exampleSource, { filename:'ide/ide-bio-examples.js' });
 for (const marker of [
   'ide-control-flow-runtime.js',
   'ide-decisions.js',
@@ -46,19 +47,142 @@ for (const marker of [
   'forward.fastq',
   'reverse.fastq',
   'resistance-markers.fasta',
+  'virulence-markers.fasta',
   'bacteria-reference.fasta',
-  'new DataTransfer()',
-  "new File([source], name",
-  "dispatchEvent(new Event('change'",
-  'waitForImport',
+  'stopImmediatePropagation',
+  'writePendingWorkspace',
+  "addEventListener('pagehide'",
 ]) {
-  if (!examples.includes(marker)) fail(`Bio examples do not load, provide, or restore: ${marker}`);
-}
-if (examples.includes('location.reload()')) {
-  fail('Bio examples must restore files through the live IDE importer without reloading.');
-}
-if (examples.includes("localStorage.setItem(FILES_KEY")) {
-  fail('Bio examples must not overwrite the IDE workspace directly in localStorage.');
+  if (!exampleSource.includes(marker)) fail(`Bio examples do not reliably restore: ${marker}`);
 }
 
-console.log(`FigureLoom Bio flow runtime passed: ${combined.length.toLocaleString()} assembled characters across ${partNames.length} validated parts, with live example-file restoration.`);
+const storage = new Map([
+  ['figureloom-bio-ide-files-v1', JSON.stringify({
+    'my-program.flbio':'old source',
+    'forward.fastq':'stale example',
+  })],
+  ['figureloom-bio-ide-active-v1', 'my-program.flbio'],
+  ['figureloom-bio-ide-deleted-files-v1', JSON.stringify([
+    'forward.fastq',
+    'microbiology-example.flbio',
+    'keep-deleted.txt',
+  ])],
+]);
+const listeners = { click:[], beforeunload:[], pagehide:[] };
+const button = {
+  disabled:false,
+  textContent:'Open examples',
+  addEventListener(type, listener, options) {
+    if (!listeners[type]) listeners[type] = [];
+    listeners[type].push({ listener, options });
+  },
+};
+const editor = { value:'Say Preserve this program.\n' };
+const programName = { value:'my-program.flbio' };
+const saveStatus = { textContent:'' };
+const statusNote = { textContent:'' };
+const created = [];
+const document = {
+  getElementById(id) {
+    return ({
+      exampleButton:button,
+      programEditor:editor,
+      programName,
+      saveStatus,
+    })[id] || created.find(node => node.id === id) || null;
+  },
+  querySelector(selector) {
+    return selector === '.editor-status span:last-child' ? statusNote : null;
+  },
+  createElement(tag) {
+    const node = { tag };
+    created.push(node);
+    return node;
+  },
+  head:{ append() {} },
+  body:{ append() {} },
+};
+let reloaded = false;
+let alerted = false;
+const window = {
+  addEventListener(type, listener) {
+    if (!listeners[type]) listeners[type] = [];
+    listeners[type].push({ listener });
+  },
+  alert() { alerted = true; },
+};
+const localStorage = {
+  getItem(key) { return storage.has(key) ? storage.get(key) : null; },
+  setItem(key, value) { storage.set(key, String(value)); },
+};
+const context = vm.createContext({
+  console,
+  document,
+  window,
+  localStorage,
+  requestAnimationFrame(callback) { callback(); },
+  location:{ reload() { reloaded = true; } },
+});
+new vm.Script(exampleSource, { filename:'ide/ide-bio-examples.js' }).runInContext(context);
+
+const capture = listeners.click.find(entry => entry.options?.capture === true);
+if (!capture) fail('Open examples must intercept the stale basic-example handler in capture mode.');
+let prevented = false;
+let stopped = false;
+capture.listener({
+  preventDefault() { prevented = true; },
+  stopImmediatePropagation() { stopped = true; },
+});
+
+const restored = JSON.parse(storage.get('figureloom-bio-ide-files-v1'));
+const requiredExamples = [
+  'example.flbio',
+  'example-samples.csv',
+  'fastq-example.flbio',
+  'example-reads.fastq',
+  'microbiology-example.flbio',
+  'forward.fastq',
+  'reverse.fastq',
+  'resistance-markers.fasta',
+  'virulence-markers.fasta',
+  'bacteria-reference.fasta',
+];
+for (const name of requiredExamples) {
+  if (typeof restored[name] !== 'string' || restored[name].length === 0) {
+    fail(`Open examples did not restore ${name}.`);
+  }
+}
+if (restored['my-program.flbio'] !== editor.value) {
+  fail('Open examples did not preserve the current user program.');
+}
+if (storage.get('figureloom-bio-ide-active-v1') !== 'microbiology-example.flbio') {
+  fail('Open examples did not select the microbiology program.');
+}
+const deleted = JSON.parse(storage.get('figureloom-bio-ide-deleted-files-v1'));
+if (!deleted.includes('keep-deleted.txt')) {
+  fail('Open examples incorrectly restored an unrelated deleted user file.');
+}
+for (const name of requiredExamples) {
+  if (deleted.includes(name.toLowerCase())) fail(`${name} remained marked as deleted.`);
+}
+if (!prevented || !stopped || !reloaded || alerted) {
+  fail('Open examples did not complete its protected reload path.');
+}
+
+for (const name of ['forward.fastq', 'reverse.fastq']) {
+  const lines = restored[name].trim().split(/\r?\n/);
+  if (lines.length % 4 !== 0) fail(`${name} is not valid four-line FASTQ data.`);
+  for (let index = 0; index < lines.length; index += 4) {
+    if (!lines[index].startsWith('@') || lines[index + 2] !== '+') {
+      fail(`${name} contains a malformed FASTQ record.`);
+    }
+    if (lines[index + 1].length !== lines[index + 3].length) {
+      fail(`${name} contains a sequence and quality length mismatch.`);
+    }
+  }
+}
+
+console.log(
+  `FigureLoom Bio flow runtime passed: ${combined.length.toLocaleString()} assembled characters, `
+  + `${partNames.length} validated parts, and ${requiredExamples.length} persistent example files.`,
+);
