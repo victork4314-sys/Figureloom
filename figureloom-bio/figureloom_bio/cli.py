@@ -5,6 +5,7 @@ from pathlib import Path
 import sys
 
 from .addon_packages import addon_catalog, expand_addons, get_addon
+from .control_flow import run_flow_program, uses_control_flow
 from .errors import FigureLoomBioError
 from .parser import parse
 from .runtime import Runner
@@ -24,13 +25,16 @@ def run_program(path: Path, *, allow_tools: bool = False) -> int:
         return 1
 
     try:
-        instructions = expand_addons(parse(source))
-        streaming_instructions = normalize_streaming_instructions(instructions)
-        output = run_streaming_if_needed(path.resolve(), streaming_instructions)
-        if output is None:
-            runner = Runner(path.resolve())
-            runner.allow_external_tools = allow_tools
-            output = runner.run(instructions)
+        if uses_control_flow(source):
+            output = run_flow_program(path, source, allow_tools=allow_tools)
+        else:
+            instructions = expand_addons(parse(source))
+            streaming_instructions = normalize_streaming_instructions(instructions)
+            output = run_streaming_if_needed(path.resolve(), streaming_instructions)
+            if output is None:
+                runner = Runner(path.resolve())
+                runner.allow_external_tools = allow_tools
+                output = runner.run(instructions)
     except FigureLoomBioError as error:
         print(error.plain_message(), file=sys.stderr)
         return 1
