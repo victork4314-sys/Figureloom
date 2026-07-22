@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "figureloom-bio"
+version = "0.1.0"
+description = "A plain-English programming language for biology and scientific data."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "AGPL-3.0-or-later" }
+authors = [{ name = "FigureLoom" }]
+dependencies = []
+
+[project.scripts]
+flbio = "figureloom_bio.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["figureloom_bio*"]
