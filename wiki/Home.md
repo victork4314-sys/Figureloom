@@ -22,6 +22,7 @@ The sidebar keeps the full manual organized by editing, scientific tools, files,
 - A project can be connected to a compatible external assistant from **Settings → MCP & AI access**. Connections are project-specific, revocable, and can be read-only or full access.
 - The **VM** button opens the hosted FigureLoom Linux desktop for optional browser-based Linux and bioinformatics work.
 - The focused runtime checks cover light and dark desktop and phone layouts, Help opening, project-tab close placement, failed local scripts, page errors, and console errors.
+- The FigureLoom Bio IDE supports ordinary text, guided forms, and editable sentence blocks that produce the same downloadable `.flbio` program.
 
 ## FigureLoom Linux VM tools snapshot
 
@@ -50,6 +51,7 @@ The Python package capture starts mid-list, so treat this as a visible snapshot 
 
 ### Scientific tools
 
+- [FigureLoom Bio](FigureLoom-Bio)
 - [Scientific illustrations and maps](Scientific-Illustrations-and-Maps)
 - [Data, tables, and charts](Data-Tables-and-Charts)
 - [Equations, code, and scientific notation](Equations-Code-and-Scientific-Notation)
