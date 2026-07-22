@@ -1,0 +1,11 @@
+Run this program 10 times.
+
+Say Cleaning the reads.
+Open the file example-reads.fastq.
+Keep reads with average quality at least 20.
+Remove reads shorter than 8 bases.
+Trim 2 bases from the start.
+Count the reads.
+Calculate the GC content.
+Save the reads as cleaned-reads.fastq.
+Say The reads are ready.
