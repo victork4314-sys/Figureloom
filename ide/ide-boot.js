@@ -38,13 +38,23 @@ sample-05,control,failed
     localStorage.setItem(FILES_KEY, JSON.stringify(files));
 
     const savedActive = localStorage.getItem(ACTIVE_KEY) || '';
-    const savedActiveIsProgram =
-      savedActive.toLowerCase().endsWith('.flbio') &&
-      typeof files[savedActive] === 'string';
+    const savedActiveExists = typeof files[savedActive] === 'string';
+    const savedActiveIsProgram = savedActiveExists && savedActive.toLowerCase().endsWith('.flbio');
+    const activeName = (!localStorage.getItem(EXAMPLE_READY_KEY) || !savedActiveIsProgram)
+      ? EXAMPLE_PROGRAM
+      : savedActive;
 
-    if (!localStorage.getItem(EXAMPLE_READY_KEY) || !savedActiveIsProgram) {
-      localStorage.setItem(ACTIVE_KEY, EXAMPLE_PROGRAM);
-      localStorage.setItem(EXAMPLE_READY_KEY, '1');
-    }
+    localStorage.setItem(ACTIVE_KEY, activeName);
+    localStorage.setItem(EXAMPLE_READY_KEY, '1');
+
+    // The main IDE saves the current editor before switching files. On first load the
+    // textarea used to be empty, which overwrote the saved program during refresh.
+    // Preload the saved active file so the first save can never erase it.
+    const editor = document.getElementById('programEditor');
+    const programName = document.getElementById('programName');
+    const activeFileLabel = document.getElementById('activeFileLabel');
+    if (editor) editor.value = files[activeName] || '';
+    if (programName) programName.value = activeName;
+    if (activeFileLabel) activeFileLabel.textContent = activeName;
   } catch {}
 })();
