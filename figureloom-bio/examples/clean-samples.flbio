@@ -1,0 +1,10 @@
+Say Starting the analysis.
+
+Open the file samples.csv.
+Keep only rows marked treated under condition.
+Remove rows marked failed under status.
+Count the rows.
+Show the result.
+Save the result as clean-samples.csv.
+
+Say The analysis is finished.
