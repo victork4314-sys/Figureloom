@@ -24,9 +24,22 @@ jobs:
           node scripts/validate-bio-control-flow.mjs
 
       - name: Run control flow tests
+        id: flow_tests
+        shell: bash
         run: |
+          set +e
           cd figureloom-bio
-          python3 -m unittest discover -s tests -p 'test_control_flow.py' -v
+          python3 -m unittest discover -s tests -p 'test_control_flow.py' -v 2>&1 | tee ../control-flow-test.log
+          status=${PIPESTATUS[0]}
+          exit "$status"
+
+      - name: Upload control flow test log
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: control-flow-test-log
+          path: control-flow-test.log
+          if-no-files-found: error
 
       - name: Run complete FigureLoom Bio tests
         run: |
