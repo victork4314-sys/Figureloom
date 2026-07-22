@@ -1,0 +1,16 @@
+Run this program 10 times.
+
+Say Starting the FASTQ cleanup.
+
+Open the file reads.fastq.
+Check the quality.
+Remove reads with low quality.
+Remove reads shorter than 50 bases.
+Remove adapter sequences.
+Cut 10 bases from the beginning of each read.
+Cut 5 bases from the end of each read.
+Check the quality again.
+Show the quality report.
+Save the result as clean-reads.fastq.
+
+Say The FASTQ cleanup is finished.
