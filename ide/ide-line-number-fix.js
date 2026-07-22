@@ -3,6 +3,8 @@
   const editor = document.getElementById('programEditor');
   const numbers = document.getElementById('lineNumbers');
   const activeFile = document.getElementById('activeFileLabel');
+  const bioManualLink = document.querySelector('.blocks-header-actions a');
+  if (bioManualLink) bioManualLink.href = '../wiki/#FigureLoom-Bio';
   if (!editor || !numbers) return;
 
   let previousValue = null;
