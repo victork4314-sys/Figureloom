@@ -13,6 +13,7 @@
   <link rel="stylesheet" href="./ide-builder.css?v=2">
   <link rel="stylesheet" href="./ide-line-number-fix.css?v=1">
   <link rel="stylesheet" href="./ide-blocks.css?v=1">
+  <link rel="stylesheet" href="./ide-platform.css?v=1">
   <title>FigureLoom Bio IDE</title>
   <script>
     try {
@@ -53,7 +54,7 @@
       <button id="newButton" type="button">New</button>
       <button id="openButton" type="button">Open</button>
       <button id="saveButton" type="button">Save</button>
-      <input id="filePicker" type="file" accept=".flbio,.csv,.tsv,.txt,.fa,.fasta,.fna,.ffn,.faa,.frn,.fq,.fastq" multiple hidden>
+      <input id="filePicker" type="file" accept=".flbio,.csv,.tsv,.txt,.fa,.fasta,.fna,.ffn,.faa,.frn,.fq,.fastq,.fa.gz,.fasta.gz,.fna.gz,.ffn.gz,.faa.gz,.frn.gz,.fq.gz,.fastq.gz" multiple hidden>
     </div>
     <div class="tool-group">
       <span class="tool-label">Program</span>
@@ -62,7 +63,7 @@
       <button id="formatButton" type="button">Tidy sentences</button>
       <button id="clearResultsButton" type="button">Clear results</button>
     </div>
-    <div class="run-note" id="runNote">Build with sentence blocks or text, then run table, FASTA, FASTQ, and paired-read workflows here.</div>
+    <div class="run-note" id="runNote">Build with sentence blocks or text, stream huge sequence files, merge data, and translate workflows here.</div>
   </nav>
 
   <main class="ide-workspace">
@@ -159,13 +160,18 @@
   </dialog>
 
   <script src="./ide-app-v2.js?v=1"></script>
+  <script src="./ide-large-storage.js?v=1"></script>
+  <script src="./ide-stream-runner.js?v=1"></script>
+  <script src="./ide-table-merge.js?v=1"></script>
   <script src="./ide-approved-common.js?v=1"></script>
   <script src="./ide-sequence-management.js?v=1"></script>
   <script src="./ide-approved-sequence.js?v=1"></script>
   <script src="./ide-approved-fastq.js?v=1"></script>
   <script src="./ide-approved-builder.js?v=1"></script>
   <script src="./ide-blocks.js?v=1"></script>
+  <script src="./ide-platform-blocks.js?v=1"></script>
   <script src="./ide-ipad-block-drag.js?v=1"></script>
+  <script src="./ide-translator.js?v=1"></script>
   <script src="./ide-line-number-fix.js?v=1"></script>
   <script src="./ide-export.js?v=3"></script>
 </body>
