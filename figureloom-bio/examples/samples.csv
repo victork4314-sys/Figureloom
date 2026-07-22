@@ -1,0 +1,5 @@
+sample,condition,status
+sample-01,treated,passed
+sample-02,control,passed
+sample-03,treated,failed
+sample-04,treated,passed
