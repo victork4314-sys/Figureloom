@@ -8,9 +8,9 @@
   <link rel="canonical" href="https://figureloom.org/ide/">
   <link rel="icon" href="/favicon.ico?v=20260719-final" type="image/x-icon">
   <link rel="stylesheet" href="./ide.css?v=2">
-  <link rel="stylesheet" href="./ide-enhancements.css?v=3">
-  <link rel="stylesheet" href="./ide-export.css?v=1">
-  <link rel="stylesheet" href="./ide-builder.css?v=1">
+  <link rel="stylesheet" href="./ide-enhancements.css?v=4">
+  <link rel="stylesheet" href="./ide-export.css?v=2">
+  <link rel="stylesheet" href="./ide-builder.css?v=2">
   <title>FigureLoom Bio IDE</title>
   <script>
     try {
@@ -51,15 +51,16 @@
       <button id="newButton" type="button">New</button>
       <button id="openButton" type="button">Open</button>
       <button id="saveButton" type="button">Save</button>
-      <input id="filePicker" type="file" accept=".flbio,.csv,.tsv,.txt" multiple hidden>
+      <input id="filePicker" type="file" accept=".flbio,.csv,.tsv,.txt,.fa,.fasta,.fna,.ffn,.faa,.frn,.fq,.fastq" multiple hidden>
     </div>
     <div class="tool-group">
       <span class="tool-label">Program</span>
+      <button id="exampleButton" type="button">Open examples</button>
       <button id="builderButton" type="button">Build program</button>
       <button id="formatButton" type="button">Tidy sentences</button>
       <button id="clearResultsButton" type="button">Clear results</button>
     </div>
-    <div class="run-note" id="runNote">Build downloadable programs, repeat them, and run table workflows directly in this browser.</div>
+    <div class="run-note" id="runNote">Build and download real programs, repeat them, and run table, FASTA, and FASTQ workflows here.</div>
   </nav>
 
   <main class="ide-workspace">
@@ -67,7 +68,7 @@
       <div class="panel-heading">
         <div>
           <h2>Files</h2>
-          <p>The real filenames are used whenever a program needs more than one file.</p>
+          <p>Programs, input files, and generated results appear here immediately.</p>
         </div>
         <button id="addFileButton" class="small-button" type="button" aria-label="Open files">+</button>
       </div>
@@ -114,7 +115,7 @@
       <header class="builder-header">
         <div>
           <h2 id="builderTitle">Build a FigureLoom Bio program</h2>
-          <p>Add ordinary instructions, choose how many times to run them, then use or download the real `.flbio` file.</p>
+          <p>Start with a ready workflow or assemble ordinary instructions, then use or download the real `.flbio` file.</p>
         </div>
         <button id="builderClose" class="builder-close" type="button" aria-label="Close program builder">×</button>
       </header>
@@ -123,7 +124,19 @@
           <label><span>Program filename</span><input id="builderName" value="new-program.flbio"></label>
           <label><span>Run the program</span><input id="builderRuns" type="number" min="1" max="100" value="1"></label>
         </div>
-        <p class="builder-repeat-note">A number above 1 adds a normal sentence such as “Run this program 10 times.” Saved results are numbered automatically.</p>
+        <div class="builder-preset-row">
+          <label>
+            <span>Start with</span>
+            <select id="builderPreset">
+              <option value="blank">Blank program</option>
+              <option value="fastq">FASTQ quality cleaning</option>
+              <option value="fasta">FASTA preparation</option>
+              <option value="table">Table cleaning</option>
+            </select>
+          </label>
+          <button id="builderLoadPreset" type="button">Load starter</button>
+        </div>
+        <p class="builder-repeat-note">Set the run count to 10 and the downloaded program begins with “Run this program 10 times.” Saved files are numbered automatically.</p>
         <ol id="builderSteps" class="builder-steps"></ol>
         <div class="builder-add-box">
           <div class="builder-add-row">
@@ -143,16 +156,7 @@
     </div>
   </dialog>
 
-  <script src="./ide-boot.js?v=3"></script>
-  <script src="./ide.js?v=2"></script>
-  <script src="./ide-file-actions.js?v=1"></script>
-  <script src="./ide-import.js?v=1"></script>
-  <script src="./ide-repeat.js?v=1"></script>
-  <script src="./ide-table-commands.js?v=1"></script>
-  <script src="./ide-persistence.js?v=1"></script>
-  <script src="./ide-enhancements.js?v=2"></script>
-  <script src="./ide-export.js?v=2"></script>
-  <script src="./ide-builder.js?v=1"></script>
-  <script src="./ide-line-numbers.js?v=1"></script>
+  <script src="./ide-app-v2.js?v=1"></script>
+  <script src="./ide-export.js?v=3"></script>
 </body>
 </html>
