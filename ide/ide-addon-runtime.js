@@ -14,6 +14,7 @@
     'epidemiology','machinelearning','crispr','nanopore','illumina','rnaseq','16s','blast','alphafold'
   ]);
   let bypass = false;
+  let retryingRun = false;
 
   const quote = (value) => {
     const text = String(value).trim();
@@ -27,13 +28,7 @@
   function expandMicrobiology(sentence) {
     let match;
     if (/^(?:prepare|clean) (?:the )?bacterial(?: illumina)? reads$/i.test(sentence) || /^prepare reads for bacterial analysis$/i.test(sentence)) {
-      return [
-        'Check the quality.',
-        'Remove adapter sequences.',
-        'Remove reads with low quality.',
-        'Remove reads shorter than 50 bases.',
-        'Check the quality again.'
-      ];
+      return ['Check the quality.','Remove adapter sequences.','Remove reads with low quality.','Remove reads shorter than 50 bases.','Check the quality again.'];
     }
     match = sentence.match(/^(?:assemble|build) (?:the |a )?bacterial genome from (.+?) and (.+?) into (.+)$/i);
     if (match) return [`Run the tool spades.py with --isolate -1 ${quote(match[1])} -2 ${quote(match[2])} -o ${quote(match[3])}.`];
@@ -64,18 +59,11 @@
     const output = [];
     let changed = false;
     const lines = String(source).split(/\r?\n/);
-
     for (let index = 0; index < lines.length; index += 1) {
       const raw = lines[index];
       const trimmed = raw.trim();
-      if (!trimmed || trimmed.startsWith('#')) {
-        output.push(raw);
-        continue;
-      }
-      if (!trimmed.endsWith('.')) {
-        output.push(raw);
-        continue;
-      }
+      if (!trimmed || trimmed.startsWith('#')) { output.push(raw); continue; }
+      if (!trimmed.endsWith('.')) { output.push(raw); continue; }
       const sentence = trimmed.slice(0, -1).trim();
       const use = declaration(sentence);
       if (use) {
@@ -86,7 +74,6 @@
         changed = true;
         continue;
       }
-
       const expanded = expandMicrobiology(sentence);
       if (expanded) {
         if (!active.has('microbiology')) {
@@ -98,7 +85,6 @@
       }
       output.push(raw);
     }
-
     return { source:output.join('\n'), changed };
   }
 
@@ -116,21 +102,16 @@
     status.className = 'status-pill error';
   }
 
-  function rerun(target) {
+  function rerunTranslation(target) {
     let compiled;
-    try {
-      compiled = compile(editor.value);
-    } catch (error) {
-      showError(error);
-      return;
-    }
+    try { compiled = compile(editor.value); }
+    catch (error) { showError(error); return; }
     if (!compiled.changed) {
       bypass = true;
       target.click();
       bypass = false;
       return;
     }
-
     const original = editor.value;
     const start = editor.selectionStart;
     const end = editor.selectionEnd;
@@ -144,21 +125,54 @@
     });
   }
 
+  function flowWillHandle() {
+    return Boolean(window.FigureLoomBioFlow?.usesAdvancedRuntime?.(editor.value));
+  }
+  function waitForFlowAndRetry() {
+    if (retryingRun) return;
+    retryingRun = true;
+    status.textContent = 'Starting browser analysis';
+    status.className = 'status-pill running';
+    let attempts = 0;
+    const retry = () => {
+      attempts += 1;
+      if (flowWillHandle()) {
+        retryingRun = false;
+        runButton.click();
+        return;
+      }
+      if (attempts < 30) setTimeout(retry, 50);
+      else {
+        retryingRun = false;
+        showError(new Error('The browser analysis layer did not load. Refresh FigureLoom Bio and try again.'));
+      }
+    };
+    setTimeout(retry, 0);
+  }
+
   window.addEventListener('click', (event) => {
     if (bypass) return;
     const target = event.target instanceof Element ? event.target.closest('#runButton,#translateProgramButton') : null;
     if (!target || !/(?:\.microbiology|bacterial|resistance genes|virulence genes|plasmids|identify the organism)/i.test(editor.value)) return;
+    if (target.id === 'runButton') {
+      if (flowWillHandle()) return;
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      waitForFlowAndRetry();
+      return;
+    }
     event.preventDefault();
     event.stopImmediatePropagation();
-    rerun(target);
+    rerunTranslation(target);
   }, true);
 
   document.addEventListener('keydown', (event) => {
     if (bypass || !(event.ctrlKey || event.metaKey) || event.key !== 'Enter') return;
     if (!/(?:\.microbiology|bacterial|resistance genes|virulence genes|plasmids|identify the organism)/i.test(editor.value)) return;
+    if (flowWillHandle()) return;
     event.preventDefault();
     event.stopImmediatePropagation();
-    rerun(runButton);
+    waitForFlowAndRetry();
   }, true);
 
   window.FigureLoomBioAddons = { compile };

@@ -1,32 +1,47 @@
 (() => {
   'use strict';
-
   const button = document.getElementById('exampleButton');
-  const editor = document.getElementById('programEditor');
-  const nameInput = document.getElementById('programName');
-  const newButton = document.getElementById('newButton');
-  if (!button || !editor || !nameInput || !newButton) return;
+  if (!button) return;
 
-  const MICROBIOLOGY_NAME = 'microbiology-example.flbio';
-  const MICROBIOLOGY_SOURCE = `Use .microbiology.\n\nSay Preparing a bacterial isolate workflow.\nOpen the files forward.fastq and reverse.fastq as a pair.\nPrepare bacterial reads.\nSave the pair as clean-forward.fastq and clean-reverse.fastq.\nAssemble the bacterial genome from clean-forward.fastq and clean-reverse.fastq into assembly.\nCheck the assembly assembly/contigs.fasta into assembly-quality.\nAnnotate the bacterial genome assembly/contigs.fasta into annotation.\nFind resistance genes in assembly/contigs.fasta using card.\nFind virulence genes in assembly/contigs.fasta.\nFind plasmids in assembly/contigs.fasta into plasmids.\nSay The bacterial genome workflow is ready.\n`;
-
-  function hasExample() {
-    return [...document.querySelectorAll('.file-item[data-file]')]
-      .some((item) => item.dataset.file?.toLowerCase() === MICROBIOLOGY_NAME);
+  function loadStyle(href, id) {
+    if (document.getElementById(id)) return;
+    const link = document.createElement('link');
+    link.id = id;
+    link.rel = 'stylesheet';
+    link.href = href;
+    document.head.append(link);
   }
-
-  function installExample() {
-    if (hasExample()) {
-      document.querySelector(`.file-item[data-file="${MICROBIOLOGY_NAME}"]`)?.click();
-      return;
-    }
-
-    newButton.click();
-    nameInput.value = MICROBIOLOGY_NAME;
-    nameInput.dispatchEvent(new Event('change', { bubbles: true }));
-    editor.value = MICROBIOLOGY_SOURCE;
-    editor.dispatchEvent(new Event('input', { bubbles: true }));
+  function loadScript(src, id) {
+    if (document.getElementById(id)) return;
+    const script = document.createElement('script');
+    script.id = id;
+    script.src = src;
+    script.defer = true;
+    document.body.append(script);
   }
-
-  button.addEventListener('click', () => requestAnimationFrame(installExample));
+  loadStyle('./ide-decisions.css?v=1', 'figureloomBioDecisionsStyle');
+  loadScript('./ide-control-flow-runtime.js?v=1', 'figureloomBioControlFlowRuntime');
+  loadScript('./ide-decisions.js?v=1', 'figureloomBioDecisionsUi');
+  const statusNote = document.querySelector('.editor-status span:last-child');
+  if (statusNote) statusNote.textContent = 'Instructions end with a period. Decision headers end with a colon.';
+  const FILES_KEY = 'figureloom-bio-ide-files-v1';
+  const ACTIVE_KEY = 'figureloom-bio-ide-active-v1';
+  const PROGRAM = 'microbiology-example.flbio';
+  const examples = {
+    [PROGRAM]: 'Use .microbiology.\n\nSay Preparing the browser microbiology example.\nOpen the files forward.fastq and reverse.fastq as a pair.\nPrepare bacterial reads.\nMake sure at least 4 reads remain.\nCall the result clean reads.\nSave the pair as clean-forward.fastq and clean-reverse.fastq.\n\nAssemble the bacterial genome from clean-forward.fastq and clean-reverse.fastq into assembly.\nCall the result bacterial assembly.\n\nIf the assembly has more than 4 contigs:\n    Show a warning saying The small browser assembly is fragmented.\nOtherwise:\n    Say The small browser assembly is compact.\n\nCheck the assembly assembly/contigs.fasta into assembly-quality.\nAnnotate the bacterial genome assembly/contigs.fasta into annotation.\nFind resistance genes in assembly/contigs.fasta using resistance-markers.\n\nIf resistance genes were found:\n    Show a warning saying A local resistance marker matched. Review the marker table.\nOtherwise:\n    Say No local resistance marker matched.\n\nFind virulence genes in assembly/contigs.fasta.\nIdentify the organism in clean-forward.fastq using bacteria-reference.\nFind plasmids in assembly/contigs.fasta into plasmids.\nSay The browser microbiology example is complete.\n',
+    'forward.fastq': '@read-01/1\nACGTTGCAACGTTGCAACGTTGCAATGGCTGCTGCTGCTGCTGCTGCTGCTGCTGCTGCTGCTGCTGCTGCTGCTGCTGCTGCTGCTGCT\n+\nIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII\n@read-02/1\nGCTGCTGCTGCTGCTGCTGCTGCTGCTGCTGCTGCTGCTGCTGCTGCTGCTGCTGCTGCTGCTGCTGCTGCTGCTGCTGCTGCTGCTTAA\n+\nIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII\n@read-03/1\nGCTGCTGCTGCTGCTGCTGCTGCTGCTGCTGCTGCTGCTGCTTAAACGTACGTGGTACCGTTAGCGTACGATCGTACGATGCTAGCTAGG\n+\nIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII\n@read-04/1\nACGTACGTGGTACCGTTAGCGTACGATCGTACGATGCTAGCTAGGCTAACCGGTTATGAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\n+\nIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII\n@read-05/1\nCTAACCGGTTATGAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\n+\nIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII\n@read-06/1\nAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAATAGTTGACCGGATCCGATGCTAGCTA\n+\nIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII\n@read-07/1\nAAAAAAAAAAAAAAAAAAATAGTTGACCGGATCCGATGCTAGCTAGCATCGATCGTAGCTAGCATGCTAGCTAGCATATGGGAGGAGGAG\n+\nIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII\n@read-08/1\nGCATCGATCGTAGCTAGCATGCTAGCTAGCATATGGGAGGAGGAGGAGGAGGAGGAGGAGGAGGAGGAGGAGGAGGAGGAGGAGGAGGAG\n+\nIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII\n',
+    'reverse.fastq': '@read-01/2\nCAATGGCTGCTGCTGCTGCTGCTGCTGCTGCTGCTGCTGCTGCTGCTGCTGCTGCTGCTGCTGCTGCTGCTGCTGCTGCTGCTGCTGCTG\n+\nIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII\n@read-02/2\nCTGCTGCTGCTGCTGCTGCTGCTGCTGCTGCTGCTGCTGCTGCTGCTGCTGCTGCTGCTGCTGCTTAAACGTACGTGGTACCGTTAGCGT\n+\nIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII\n@read-03/2\nCTGCTGCTGCTGCTGCTGCTTAAACGTACGTGGTACCGTTAGCGTACGATCGTACGATGCTAGCTAGGCTAACCGGTTATGAAAAAAAAA\n+\nIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII\n@read-04/2\nACGATCGTACGATGCTAGCTAGGCTAACCGGTTATGAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\n+\nIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII\n@read-05/2\nAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAATAG\n+\nIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII\n@read-06/2\nAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAATAGTTGACCGGATCCGATGCTAGCTAGCATCGATCGTAGCTAGCATGC\n+\nIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII\n@read-07/2\nTTGACCGGATCCGATGCTAGCTAGCATCGATCGTAGCTAGCATGCTAGCTAGCATATGGGAGGAGGAGGAGGAGGAGGAGGAGGAGGAGG\n+\nIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII\n@read-08/2\nTAGCTAGCATATGGGAGGAGGAGGAGGAGGAGGAGGAGGAGGAGGAGGAGGAGGAGGAGGAGGAGGAGGAGGAGGAGGAGGAGGAGGAGG\n+\nIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII\n',
+    'resistance-markers.fasta': '>demo-resistance-marker\nTGCTGCTTAAACGTACGTGGTACCGTTAGCGTACGATCGT\n',
+    'virulence-markers.fasta': '>demo-virulence-marker\nAGCATGCTAGCTAGCATATGGGAGGAGGAGGAGGAGGAGG\n',
+    'bacteria-reference.fasta': '>synthetic-bacterium\nACGTTGCAACGTTGCAACGTTGCAATGGCTGCTGCTGCTGCTGCTGCTGCTGCTGCTGCTGCTGCTGCTGCTGCTGCTGCTGCTGCTGCTGCTGCTGCTGCTGCTGCTGCTGCTGCTGCTGCTGCTGCTGCTTAAACGTACGTGGTACCGTTAGCGTACGATCGTACGATGCTAGCTAGGCTAACCGGTTATGAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAATAGTTGACCGGATCCGATGCTAGCTAGCATCGATCGTAGCTAGCATGCTAGCTAGCATATGGGAGGAGGAGGAGGAGGAGGAGGAGGAGGAGGAGGAGGAGGAGGAGGAGGAGGAGGAGGAGGAGGAGGAGGAGGAGGAGGAGGAGGAGGAGGAGGAGGAGGATGAACGTTGCAACGTTGCAACGTTGCA\n>unrelated-reference\nTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT\n'
+  };
+  function install() {
+    let files = {};
+    try { files = JSON.parse(localStorage.getItem(FILES_KEY) || '{}') || {}; } catch { files = {}; }
+    Object.assign(files, examples);
+    localStorage.setItem(FILES_KEY, JSON.stringify(files));
+    localStorage.setItem(ACTIVE_KEY, PROGRAM);
+    location.reload();
+  }
+  button.addEventListener('click', () => requestAnimationFrame(install));
 })();
