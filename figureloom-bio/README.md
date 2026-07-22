@@ -13,10 +13,23 @@ Save the result as clean-samples.csv.
 
 The language uses normal sentences and normal periods. The difficult machinery stays underneath.
 
-## Current working commands
+## Repeating and building programs
+
+```flbio
+Run this program 10 times.
+
+Open the file reads.fastq.
+Remove reads with low quality.
+Save the result as clean-reads.fastq.
+```
+
+The repeat sentence goes at the beginning. Saved results are numbered automatically, such as `clean-reads-1.fastq` through `clean-reads-10.fastq`, so one run does not overwrite another.
+
+The browser IDE at `figureloom.org/ide` includes a program builder. It can add individual instructions or complete FASTA, FASTQ, paired FASTQ, and DNA-to-protein workflows. The result can be used immediately in the IDE or downloaded as a real `.flbio` file.
+
+## Table instructions
 
 ```text
-Run this program 10 times.
 Open the file samples.csv.
 Keep only rows marked treated under condition.
 Remove rows marked failed under status.
@@ -31,18 +44,53 @@ Combine it with metadata.csv using sample.
 Change control to untreated under condition.
 Count the rows.
 Show the result.
-Show the file.
 Save the result as clean-samples.csv.
-Say Starting the analysis.
 ```
 
-When one file is open, later instructions refer to it as **the file** or **the result**. When a workflow uses more than one file, the language uses the real filenames so the instructions remain obvious.
+## FASTA and sequence instructions
 
-`Run this program 10 times.` goes at the beginning. Everything after it runs ten times. Saved files are numbered automatically, such as `clean-samples-1.csv` through `clean-samples-10.csv`, so one run does not overwrite another.
+```text
+Open the file sequences.fasta.
+Count the sequences.
+Keep only sequences longer than 500 bases.
+Remove sequences shorter than 100 bases.
+Remove sequences containing N.
+Keep only sequences containing ATG.
+Use the sequence named sample-17.
+Convert the DNA to RNA.
+Convert the RNA to DNA.
+Find the reverse complement.
+Translate the DNA into protein.
+Show the first 10 sequences.
+Save the result as clean-sequences.fasta.
+```
 
-Combining a second table keeps the current rows and adds matching information from the other file. Rows without a match stay in the result with empty added values.
+## FASTQ instructions
 
-## Run the example
+```text
+Open the file reads.fastq.
+Check the quality.
+Show the quality report.
+Remove reads with low quality.
+Remove reads shorter than 50 bases.
+Remove adapter sequences.
+Cut 10 bases from the beginning of each read.
+Cut 5 bases from the end of each read.
+Check the quality again.
+Save the result as clean-reads.fastq.
+```
+
+Paired reads stay matched:
+
+```text
+Open the files forward.fastq and reverse.fastq as a pair.
+Remove reads with low quality.
+Save the pair as clean-forward.fastq and clean-reverse.fastq.
+```
+
+The current low-quality default is an average Phred quality below 20. Adapter removal uses common Illumina adapter sequences. These defaults stay underneath the plain sentences.
+
+## Run the command-line engine
 
 FigureLoom Bio currently needs Python 3.10 or newer.
 
@@ -52,28 +100,17 @@ python -m pip install -e .
 flbio run examples/clean-samples.flbio
 ```
 
-The same table and repeat commands also run directly in the browser IDE at `figureloom.org/ide`. The IDE includes a program builder that creates a real downloadable `.flbio` file from ordinary instruction forms.
-
-The result is shown in separate, spacious sections. Raw technical output is not mixed into the useful result.
-
 ## What works now
 
-- Reading `.flbio` instructions as full sentences.
-- Requiring a normal period after every instruction.
-- Repeating a complete program and numbering its saved outputs.
+- Plain `.flbio` sentence programs with normal periods.
+- Repeating a complete program and numbering single or paired outputs.
 - Building and downloading programs in the browser IDE.
-- Opening CSV and TSV files.
-- Keeping and removing matching rows.
-- Choosing and renaming columns.
-- Sorting rows naturally, including numerical sorting.
-- Removing duplicate rows.
-- Filling empty values.
-- Changing matching values.
-- Combining matching information from another table.
-- Counting rows.
-- Showing a readable table.
-- Saving CSV and TSV results.
-- Printing simple messages.
+- Opening, cleaning, combining, showing, and saving CSV and TSV tables.
+- Opening, filtering, converting, translating, showing, and saving FASTA sequences.
+- Opening single or paired FASTQ files.
+- Quality reports, low-quality filtering, length filtering, adapter removal, and end trimming.
+- Saving single and paired FASTQ results.
 - Plain errors that point to the sentence that needs fixing.
+- A synchronized IDE file panel and continuous line numbers.
 
-Sequence, FASTQ, comparison, queue, and deeper IDE support come next without making the visible language more complicated.
+Comparison, queues, local tools, and deeper Linux integration come next without making the visible language more complicated.
