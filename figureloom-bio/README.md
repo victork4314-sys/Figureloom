@@ -13,6 +13,36 @@ Save the result as clean-samples.csv.
 
 The language uses normal sentences and normal periods. The difficult machinery stays underneath.
 
+## Add-ons for specialist biology
+
+The shared core stays small. Domain packages add specialist sentences, synonyms, blocks, documentation, and translation recipes.
+
+```flbio
+Use .microbiology.
+
+Open the files forward.fastq and reverse.fastq as a pair.
+Prepare bacterial reads.
+Save the pair as clean-forward.fastq and clean-reverse.fastq.
+Assemble the bacterial genome from clean-forward.fastq and clean-reverse.fastq into assembly.
+```
+
+The `.microbiology` package is the first ready add-on. It includes readable workflows for bacterial read preparation, isolate assembly, assembly quality, annotation, resistance genes, virulence genes, taxonomy, and plasmids. Its tool-backed sentences expand through the guarded installed-tool gateway, so they require explicit permission when run locally:
+
+```bash
+flbio run examples/microbiology-bacterial-genome.flbio --allow-tools
+```
+
+List the full package catalog or inspect one package:
+
+```bash
+flbio addons
+flbio addons .microbiology
+```
+
+The IDE includes a searchable Add-ons window, microbiology sentence blocks, and deterministic autocomplete. Type the beginning of a package sentence, use the arrow keys, and press Tab to complete it. Adding a package block also adds `Use .microbiology.` to the program when needed.
+
+`.genomics` is part of core. Names such as `.virology`, `.mycology`, `.metagenomics`, `.phylogenetics`, `.singlecell`, `.crispr`, `.nanopore`, `.16s`, and `.alphafold` are reserved in the catalog but stay marked planned until their commands, translations, documentation, and tests are ready.
+
 ## Reusable programs
 
 Put this sentence at the beginning to run the whole program more than once.
@@ -133,7 +163,7 @@ flbio run examples/clean-samples.flbio
 flbio run examples/clean-fastq.flbio
 ```
 
-The same table, FASTA, FASTQ, paired FASTQ, comparison, and repeat commands run directly in the browser IDE at `figureloom.org/ide`.
+The same table, FASTA, FASTQ, paired FASTQ, comparison, repeat, package, and translation commands run directly in the browser IDE at `figureloom.org/ide` when they do not require an installed system tool.
 
 The result is shown in separate, spacious sections. Raw technical output is not mixed into the useful result.
 
@@ -150,7 +180,9 @@ The result is shown in separate, spacious sections. Raw technical output is not 
 - Single and paired FASTQ workflows that stay matched.
 - Converting DNA and RNA, reverse complements, and protein translation.
 - Calculating GC content and comparing named sequences.
+- Huge FASTA streaming, file merging, and workflow translation.
+- A trusted add-on registry with `.microbiology`, blocks, synonyms, and autocomplete.
 - Plain errors that point to the sentence that needs fixing.
 - Continuous line numbers and an immediately refreshed file panel in the IDE.
 
-Server queues and larger remote jobs come later without making the visible language more complicated.
+Server queues and larger remote jobs can expand without making the visible language more complicated.
