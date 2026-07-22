@@ -1,8 +1,8 @@
 (() => {
-  if (window.__figureloomVmAccessInstalledV5) return;
-  window.__figureloomVmAccessInstalledV5 = true;
+  if (window.__figureloomVmAccessInstalledV6) return;
+  window.__figureloomVmAccessInstalledV6 = true;
 
-  const VERSION = '5';
+  const VERSION = '6';
   const LOGIN_URL = 'https://vm.figureloom.org';
   const PUBLIC_URL = 'https://vm.figureloom.org/#/cast/figureloom';
 
@@ -93,7 +93,7 @@
           <p>Please delete your Kasm session when finished. Closing the browser tab may leave the VM running and block the next person.</p>
           <label class="vm-access-check">
             <input type="checkbox">
-            <span>I understand and will delete the VM session when I’m done.</span>
+            <span>I pinky promise I will delete the VM session when I’m done.</span>
           </label>
         </div>
       </section>
@@ -143,9 +143,9 @@
       color: var(--figureloom-ui-text, #253044) !important;
       box-shadow: none !important;
       font: inherit !important;
-      font-size: 12px !important;
-      font-weight: 750 !important;
-      letter-spacing: 0 !important;
+      font-size: inherit !important;
+      font-weight: inherit !important;
+      letter-spacing: normal !important;
       line-height: 1 !important;
       white-space: nowrap !important;
     }
