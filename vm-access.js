@@ -1,8 +1,8 @@
 (() => {
-  if (window.__figureloomVmAccessInstalledV4) return;
-  window.__figureloomVmAccessInstalledV4 = true;
+  if (window.__figureloomVmAccessInstalledV5) return;
+  window.__figureloomVmAccessInstalledV5 = true;
 
-  const VERSION = '4';
+  const VERSION = '5';
   const LOGIN_URL = 'https://vm.figureloom.org';
   const PUBLIC_URL = 'https://vm.figureloom.org/#/cast/figureloom';
 
@@ -265,10 +265,10 @@
       justify-content: center;
       min-height: 40px;
       padding: 9px 12px;
-      border: 1px solid var(--figureloom-ui-line, #bcd4ce);
+      border: 1px solid #2f7468;
       border-radius: 10px;
-      background: var(--figureloom-ui-soft, #f4faf8);
-      color: var(--figureloom-ui-accent-strong, #195c51) !important;
+      background: #2f7468;
+      color: #ffffff !important;
       box-shadow: none;
       text-align: center;
       text-decoration: none;
@@ -278,13 +278,16 @@
     }
 
     .vm-access-link-primary {
-      border-color: var(--figureloom-ui-accent, #2f7468);
-      background: var(--figureloom-ui-accent, #2f7468);
+      border-color: #2f7468;
+      background: #2f7468;
       color: #ffffff !important;
     }
 
     .vm-access-link:hover,
     .vm-access-link:focus-visible {
+      border-color: #195c51;
+      background: #195c51;
+      color: #ffffff !important;
       transform: translateY(-1px);
       outline: none;
       box-shadow: 0 8px 18px rgba(15, 23, 42, .12);
@@ -336,10 +339,17 @@
       background: var(--figureloom-ui-soft, #303735);
     }
 
-    html[data-figureloom-theme="dark"] #figureloomVmPanel .vm-access-link:not(.vm-access-link-primary) {
-      border-color: var(--figureloom-ui-line, #4b5a55);
-      background: var(--figureloom-ui-soft, #303735);
-      color: var(--figureloom-ui-text, #eef7f4) !important;
+    html[data-figureloom-theme="dark"] #figureloomVmPanel .vm-access-link {
+      border-color: #2f7468;
+      background: #2f7468;
+      color: #ffffff !important;
+    }
+
+    html[data-figureloom-theme="dark"] #figureloomVmPanel .vm-access-link:hover,
+    html[data-figureloom-theme="dark"] #figureloomVmPanel .vm-access-link:focus-visible {
+      border-color: #3f8c7d;
+      background: #3f8c7d;
+      color: #ffffff !important;
     }
 
     @media (max-width: 820px) {
