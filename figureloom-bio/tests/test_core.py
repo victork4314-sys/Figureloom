@@ -65,6 +65,32 @@ class FigureLoomBioCoreTests(unittest.TestCase):
                 self.assertIn(f"Run {number} of 3", output)
             self.assertFalse((root / "clean.csv").exists())
 
+    def test_program_can_repeat_fastq_and_number_outputs(self) -> None:
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            (root / "reads.fastq").write_text(
+                "@good\nACGTACGT\n+\nIIIIIIII\n"
+                "@bad\nACGT\n+\n!!!!\n",
+                encoding="utf-8",
+            )
+            program = root / "repeat-fastq.flbio"
+            program.write_text(
+                "Run this program 3 times.\n\n"
+                "Open the file reads.fastq.\n"
+                "Keep reads with average quality at least 20.\n"
+                "Trim 2 bases from the start.\n"
+                "Save the reads as clean.fastq.\n",
+                encoding="utf-8",
+            )
+
+            Runner(program).run(parse(program.read_text(encoding="utf-8")))
+
+            for number in range(1, 4):
+                self.assertEqual(
+                    (root / f"clean-{number}.fastq").read_text(encoding="utf-8"),
+                    "@good\nGTACGT\n+\nIIIIII\n",
+                )
+
     def test_repeat_instruction_must_be_first(self) -> None:
         instructions = parse(
             "Say Starting.\n"
@@ -146,6 +172,91 @@ class FigureLoomBioCoreTests(unittest.TestCase):
                 (root / "smallest.csv").read_text(encoding="utf-8"),
                 "sample,age\nyoung,9\nmiddle,20\nold,100\n",
             )
+
+    def test_fasta_workflow_filters_transforms_and_saves(self) -> None:
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            (root / "sequences.fasta").write_text(
+                ">alpha first\nATGCGTAA\n"
+                ">beta\nNNATG\n"
+                ">tiny\nAT\n",
+                encoding="utf-8",
+            )
+            program = root / "sequences.flbio"
+            program.write_text(
+                "Open the file sequences.fasta.\n"
+                "Keep sequences at least 5 bases long.\n"
+                "Keep sequences containing ATG.\n"
+                "Find the reverse complement.\n"
+                "Calculate the GC content.\n"
+                "Count the sequences.\n"
+                "Save the sequences as cleaned.fasta.\n",
+                encoding="utf-8",
+            )
+
+            output = Runner(program).run(parse(program.read_text(encoding="utf-8"))).render()
+
+            self.assertIn("Sequences\n\n2", output)
+            self.assertIn("GC content", output)
+            self.assertEqual(
+                (root / "cleaned.fasta").read_text(encoding="utf-8"),
+                ">alpha first\nTTACGCAT\n"
+                ">beta\nCATNN\n",
+            )
+
+    def test_translate_and_compare_sequences(self) -> None:
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            (root / "coding.fasta").write_text(
+                ">same\nATGGCC\n>changed\nATGAAA\n",
+                encoding="utf-8",
+            )
+            (root / "reference.fasta").write_text(
+                ">same\nATGGCC\n>changed\nATGAAG\n",
+                encoding="utf-8",
+            )
+            compare_program = root / "compare.flbio"
+            compare_program.write_text(
+                "Open the file coding.fasta.\n"
+                "Compare the sequences with reference.fasta.\n",
+                encoding="utf-8",
+            )
+
+            output = Runner(compare_program).run(
+                parse(compare_program.read_text(encoding="utf-8"))
+            ).render()
+
+            self.assertIn("Exact matches\n1", output)
+            self.assertIn("83.33", output)
+
+            translate_program = root / "translate.flbio"
+            translate_program.write_text(
+                "Open the file coding.fasta.\n"
+                "Translate the sequences.\n"
+                "Save the sequences as proteins.fasta.\n",
+                encoding="utf-8",
+            )
+            Runner(translate_program).run(
+                parse(translate_program.read_text(encoding="utf-8"))
+            )
+            self.assertEqual(
+                (root / "proteins.fasta").read_text(encoding="utf-8"),
+                ">same\nMA\n>changed\nMK\n",
+            )
+
+    def test_fastq_quality_requires_fastq(self) -> None:
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            (root / "sequences.fasta").write_text(">one\nACGT\n", encoding="utf-8")
+            program = root / "bad.flbio"
+            program.write_text(
+                "Open the file sequences.fasta.\n"
+                "Keep reads with average quality at least 20.\n",
+                encoding="utf-8",
+            )
+
+            with self.assertRaisesRegex(FigureLoomBioError, "FASTQ quality"):
+                Runner(program).run(parse(program.read_text(encoding="utf-8")))
 
     def test_instruction_keeps_periods_inside_filename(self) -> None:
         instruction = parse("Open the file samples.csv.")[0]
