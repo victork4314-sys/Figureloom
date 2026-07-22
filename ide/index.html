@@ -11,6 +11,8 @@
   <link rel="stylesheet" href="./ide-enhancements.css?v=4">
   <link rel="stylesheet" href="./ide-export.css?v=2">
   <link rel="stylesheet" href="./ide-builder.css?v=2">
+  <link rel="stylesheet" href="./ide-line-number-fix.css?v=1">
+  <link rel="stylesheet" href="./ide-blocks.css?v=1">
   <title>FigureLoom Bio IDE</title>
   <script>
     try {
@@ -60,7 +62,7 @@
       <button id="formatButton" type="button">Tidy sentences</button>
       <button id="clearResultsButton" type="button">Clear results</button>
     </div>
-    <div class="run-note" id="runNote">Build and download real programs, repeat them, and run table, FASTA, and FASTQ workflows here.</div>
+    <div class="run-note" id="runNote">Build with sentence blocks or text, then run table, FASTA, FASTQ, and paired-read workflows here.</div>
   </nav>
 
   <main class="ide-workspace">
@@ -158,9 +160,12 @@
 
   <script src="./ide-app-v2.js?v=1"></script>
   <script src="./ide-approved-common.js?v=1"></script>
+  <script src="./ide-sequence-management.js?v=1"></script>
   <script src="./ide-approved-sequence.js?v=1"></script>
   <script src="./ide-approved-fastq.js?v=1"></script>
   <script src="./ide-approved-builder.js?v=1"></script>
+  <script src="./ide-blocks.js?v=1"></script>
+  <script src="./ide-line-number-fix.js?v=1"></script>
   <script src="./ide-export.js?v=3"></script>
 </body>
 </html>
