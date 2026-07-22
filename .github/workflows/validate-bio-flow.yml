@@ -23,6 +23,11 @@ jobs:
           node --check scripts/validate-bio-control-flow.mjs
           node scripts/validate-bio-control-flow.mjs
 
+      - name: Run control flow tests
+        run: |
+          cd figureloom-bio
+          python3 -m unittest discover -s tests -p 'test_control_flow.py' -v
+
       - name: Run complete FigureLoom Bio tests
         run: |
           cd figureloom-bio
