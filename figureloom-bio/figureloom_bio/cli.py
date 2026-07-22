@@ -9,6 +9,7 @@ from .parser import parse
 from .runtime import Runner
 from .streaming_fasta import run_streaming_if_needed
 from .translators import TARGET_LABELS, default_output_path, translate_source
+from .workflow_expansion import normalize_streaming_instructions
 
 
 def run_program(path: Path, *, allow_tools: bool = False) -> int:
@@ -23,7 +24,8 @@ def run_program(path: Path, *, allow_tools: bool = False) -> int:
 
     try:
         instructions = parse(source)
-        output = run_streaming_if_needed(path.resolve(), instructions)
+        streaming_instructions = normalize_streaming_instructions(instructions)
+        output = run_streaming_if_needed(path.resolve(), streaming_instructions)
         if output is None:
             runner = Runner(path.resolve())
             runner.allow_external_tools = allow_tools
