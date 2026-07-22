@@ -22,15 +22,25 @@ for (const stale of ['writePendingWorkspace',"addEventListener('pagehide'","addE
   if (source.includes(stale)) fail(`Example installer still uses ${stale}`);
 }
 
+const guardSource = read('ide/ide-bio-example-run-guard.js');
+new vm.Script(guardSource, { filename:'ide-bio-example-run-guard.js' });
+for (const marker of ['repairBundledInputs','fastqCount','FigureLoomBioExampleFiles','microbiology-example.flbio']) {
+  if (!guardSource.includes(marker)) fail(`Example run guard missing ${marker}`);
+}
+
 const html = read('ide/index.html');
 const examplesAt = html.indexOf('ide-bio-examples.js?v=4');
+const guardAt = html.indexOf('ide-bio-example-run-guard.js?v=1');
 const ideAt = html.indexOf('ide-app-v2.js');
-if (examplesAt < 0 || ideAt < 0 || examplesAt > ideAt) fail('Examples must load before the IDE.');
+if (examplesAt < 0 || guardAt < 0 || ideAt < 0 || examplesAt > guardAt || guardAt > ideAt) {
+  fail('Examples and the run guard must load before the IDE in that order.');
+}
 
 const F='figureloom-bio-ide-files-v1';
 const A='figureloom-bio-ide-active-v1';
 const D='figureloom-bio-ide-deleted-files-v1';
 const R='figureloom-bio-restore-examples-v4';
+const PROGRAM='microbiology-example.flbio';
 const storage = new Map([
   [F, JSON.stringify({'my-program.flbio':'old','forward.fastq':'stale'})],
   [A, 'my-program.flbio'],
@@ -65,7 +75,7 @@ function load() {
     location:{reload(){ reloaded=true; }},
   });
   new vm.Script(source, { filename:'ide-bio-examples.js' }).runInContext(context);
-  return { listeners, editor, reloaded:()=>reloaded, alerted:()=>alerted };
+  return { listeners, editor, window, reloaded:()=>reloaded, alerted:()=>alerted };
 }
 
 const first = load();
@@ -82,23 +92,67 @@ storage.set(A, 'my-program.flbio');
 storage.set(D, JSON.stringify(['forward.fastq','microbiology-example.flbio','keep-deleted.txt']));
 
 // The second load restores examples before ide-app-v2.js can read the workspace.
-load();
-const files = JSON.parse(storage.get(F));
-const required = ['example.flbio','example-samples.csv','fastq-example.flbio','example-reads.fastq','microbiology-example.flbio','forward.fastq','reverse.fastq','resistance-markers.fasta','virulence-markers.fasta','bacteria-reference.fasta'];
+const second = load();
+let files = JSON.parse(storage.get(F));
+const required = ['example.flbio','example-samples.csv','fastq-example.flbio','example-reads.fastq',PROGRAM,'forward.fastq','reverse.fastq','resistance-markers.fasta','virulence-markers.fasta','bacteria-reference.fasta'];
 for (const name of required) if (!files[name]) fail(`Pre-boot restore missed ${name}`);
 if (files['my-program.flbio'] !== first.editor.value) fail('User program was not preserved.');
-if (storage.get(A) !== 'microbiology-example.flbio') fail('Microbiology example was not selected.');
-const deleted = JSON.parse(storage.get(D));
+if (storage.get(A) !== PROGRAM) fail('Microbiology example was not selected.');
+let deleted = JSON.parse(storage.get(D));
 if (!deleted.includes('keep-deleted.txt')) fail('Unrelated deleted file was restored.');
 for (const name of required) if (deleted.includes(name.toLowerCase())) fail(`${name} stayed deleted.`);
 if (storage.has(R) || session.has(R)) fail('Restore flag was not cleared.');
 
-for (const name of ['forward.fastq','reverse.fastq']) {
-  const lines=files[name].trim().split(/\r?\n/);
-  if (lines.length % 4) fail(`${name} is malformed.`);
+function validFastqCount(text) {
+  const lines=text.trim().split(/\r?\n/);
+  if (!lines.length || lines.length % 4) return -1;
   for (let i=0;i<lines.length;i+=4) {
-    if (!lines[i].startsWith('@') || lines[i+2] !== '+' || lines[i+1].length !== lines[i+3].length) fail(`${name} has an invalid record.`);
+    if (!lines[i].startsWith('@') || lines[i+2] !== '+' || lines[i+1].length !== lines[i+3].length) return -1;
   }
+  return lines.length / 4;
+}
+for (const name of ['forward.fastq','reverse.fastq']) {
+  if (validFastqCount(files[name]) < 1) fail(`${name} has an invalid record.`);
 }
 
-console.log(`FigureLoom Bio passed: ${combined.length.toLocaleString()} runtime characters and ${required.length} pre-boot-restored examples.`);
+// Reproduce the user's live state: visible example files from different generations.
+files['user-notes.txt']='keep me';
+files['forward.fastq']='@old-forward\nACGT\n+\nIIII\n';
+files['reverse.fastq']='@old-reverse-1\nACGT\n+\nIIII\n@old-reverse-2\nTGCA\n+\nIIII\n';
+delete files['resistance-markers.fasta'];
+storage.set(F, JSON.stringify(files));
+storage.set(A, PROGRAM);
+storage.set(D, JSON.stringify(['resistance-markers.fasta','keep-deleted.txt']));
+
+const guardListeners={ click:[], keydown:[] };
+const guardDocument={
+  getElementById(id){ return ({programName:{value:PROGRAM},saveStatus:{textContent:''}})[id] || null; },
+  addEventListener(type,listener,options){ (guardListeners[type] ||= []).push({listener,options}); },
+};
+const guardWindow={
+  FigureLoomBioExampleFiles:second.window.FigureLoomBioExampleFiles,
+  addEventListener(type,listener,options){ (guardListeners[type] ||= []).push({listener,options}); },
+};
+const guardContext=vm.createContext({
+  console,
+  document:guardDocument,
+  window:guardWindow,
+  localStorage:storageApi(storage),
+  Element:class Element {},
+  Object, JSON, String, Set,
+});
+new vm.Script(guardSource, { filename:'ide-bio-example-run-guard.js' }).runInContext(guardContext);
+if (!guardWindow.FigureLoomBioExampleGuard.repairBundledInputs()) fail('The stale example pair was not repaired.');
+
+files=JSON.parse(storage.get(F));
+const forwardCount=validFastqCount(files['forward.fastq']);
+const reverseCount=validFastqCount(files['reverse.fastq']);
+if (forwardCount < 1 || forwardCount !== reverseCount) fail('The repaired example FASTQ files are not a matching valid pair.');
+for (const name of ['resistance-markers.fasta','virulence-markers.fasta','bacteria-reference.fasta']) {
+  if (!files[name]) fail(`The run guard did not restore ${name}.`);
+}
+if (files['user-notes.txt'] !== 'keep me') fail('The run guard changed an unrelated user file.');
+deleted=JSON.parse(storage.get(D));
+if (!deleted.includes('keep-deleted.txt') || deleted.includes('resistance-markers.fasta')) fail('The run guard changed the wrong deleted-file flags.');
+
+console.log(`FigureLoom Bio passed: ${combined.length.toLocaleString()} runtime characters, ${required.length} pre-boot examples, and a self-repaired paired-read fixture.`);
