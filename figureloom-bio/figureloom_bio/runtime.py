@@ -16,22 +16,73 @@ class Table:
 
 
 class Runner:
+    MAX_REPEATS = 1000
+
     def __init__(self, program_path: Path) -> None:
         self.program_path = program_path
         self.folder = program_path.parent
         self.file_name: str | None = None
         self.table: Table | None = None
         self.output = PlainOutput()
+        self.run_number = 1
+        self.total_runs = 1
 
     def run(self, instructions: list[Instruction]) -> PlainOutput:
-        for instruction in instructions:
-            try:
-                self._run_instruction(instruction)
-            except FigureLoomBioError as error:
-                if error.line_number is None:
-                    error.line_number = instruction.line_number
-                raise
+        repeat_count, program = self._prepare_repetition(instructions)
+        self.total_runs = repeat_count
+
+        for run_number in range(1, repeat_count + 1):
+            self.run_number = run_number
+            self.file_name = None
+            self.table = None
+            if repeat_count > 1:
+                self.output.add(f"Run {run_number} of {repeat_count}", "Starting")
+
+            for instruction in program:
+                try:
+                    self._run_instruction(instruction)
+                except FigureLoomBioError as error:
+                    if error.line_number is None:
+                        error.line_number = instruction.line_number
+                    raise
+
         return self.output
+
+    def _prepare_repetition(
+        self, instructions: list[Instruction]
+    ) -> tuple[int, list[Instruction]]:
+        repeat_instructions = [
+            instruction
+            for instruction in instructions
+            if instruction.action == "repeat_program"
+        ]
+        if not repeat_instructions:
+            return 1, instructions
+        if len(repeat_instructions) > 1:
+            raise FigureLoomBioError(
+                "Use only one instruction that says how many times to run the program.",
+                line_number=repeat_instructions[1].line_number,
+            )
+        repeat_instruction = repeat_instructions[0]
+        if instructions[0] is not repeat_instruction:
+            raise FigureLoomBioError(
+                "Put the repeat instruction at the beginning of the program.",
+                line_number=repeat_instruction.line_number,
+            )
+
+        repeat_count = int(repeat_instruction.values[0])
+        if repeat_count > self.MAX_REPEATS:
+            raise FigureLoomBioError(
+                f"This program can run at most {self.MAX_REPEATS:,} times at once.",
+                line_number=repeat_instruction.line_number,
+            )
+        program = instructions[1:]
+        if not program:
+            raise FigureLoomBioError(
+                "Add at least one instruction after the repeat sentence.",
+                line_number=repeat_instruction.line_number,
+            )
+        return repeat_count, program
 
     def _run_instruction(self, instruction: Instruction) -> None:
         action = instruction.action
@@ -155,7 +206,10 @@ class Runner:
         numeric = bool(values) and all(self._is_number(value) for value in values)
 
         if numeric:
-            nonempty.sort(key=lambda row: float(str(row.get(actual, "")).strip()), reverse=largest_first)
+            nonempty.sort(
+                key=lambda row: float(str(row.get(actual, "")).strip()),
+                reverse=largest_first,
+            )
         else:
             nonempty.sort(
                 key=lambda row: str(row.get(actual, "")).casefold(),
@@ -195,7 +249,11 @@ class Runner:
             if key and key not in matches:
                 matches[key] = row
 
-        new_columns = [column for column in other.columns if column != right_key and column not in table.columns]
+        new_columns = [
+            column
+            for column in other.columns
+            if column != right_key and column not in table.columns
+        ]
         table.columns.extend(new_columns)
 
         for row in table.rows:
@@ -218,7 +276,8 @@ class Runner:
 
     def _save_result(self, name: str) -> None:
         table = self._need_table()
-        path = self._path(name)
+        output_name = self._numbered_output_name(name)
+        path = self._path(output_name)
         if path.suffix.lower() not in {".csv", ".tsv"}:
             raise FigureLoomBioError(
                 f"I cannot save the result as {name}.\n\n"
@@ -230,7 +289,16 @@ class Runner:
             writer = csv.DictWriter(handle, fieldnames=table.columns, delimiter=delimiter)
             writer.writeheader()
             writer.writerows(table.rows)
-        self.output.add("Saved the result", name)
+        self.output.add("Saved the result", output_name)
+
+    def _numbered_output_name(self, name: str) -> str:
+        if self.total_runs <= 1:
+            return name
+        path = Path(name)
+        suffix = path.suffix
+        stem = path.name[: -len(suffix)] if suffix else path.name
+        numbered = f"{stem}-{self.run_number}{suffix}"
+        return str(path.with_name(numbered))
 
     def _path(self, name: str) -> Path:
         path = Path(name).expanduser()
