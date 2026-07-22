@@ -62,7 +62,7 @@
       <button id="formatButton" type="button">Tidy sentences</button>
       <button id="clearResultsButton" type="button">Clear results</button>
     </div>
-    <div class="run-note" id="runNote">Build with sentence blocks or text, then run table, FASTA, FASTQ, and paired-read workflows here.</div>
+    <div class="run-note" id="runNote">Build with blocks or text, then run tables, FASTA, huge streamed FASTA, FASTQ, and paired-read workflows here.</div>
   </nav>
 
   <main class="ide-workspace">
@@ -158,6 +158,8 @@
     </div>
   </dialog>
 
+  <script src="./ide-large-fasta-worker-route.js?v=1"></script>
+  <script src="./ide-large-file-vault.js?v=1"></script>
   <script src="./ide-app-v2.js?v=1"></script>
   <script src="./ide-approved-common.js?v=1"></script>
   <script src="./ide-sequence-management.js?v=1"></script>
@@ -165,6 +167,7 @@
   <script src="./ide-approved-fastq.js?v=1"></script>
   <script src="./ide-approved-builder.js?v=1"></script>
   <script src="./ide-blocks.js?v=1"></script>
+  <script src="./ide-genomics-blocks.js?v=1"></script>
   <script src="./ide-ipad-block-drag.js?v=1"></script>
   <script src="./ide-line-number-fix.js?v=1"></script>
   <script src="./ide-export.js?v=3"></script>

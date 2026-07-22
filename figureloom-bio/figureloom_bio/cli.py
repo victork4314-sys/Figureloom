@@ -7,6 +7,7 @@ import sys
 from .errors import FigureLoomBioError
 from .parser import parse
 from .runtime import Runner
+from .streaming_fasta import run_streaming_if_needed
 
 
 def run_program(path: Path) -> int:
@@ -21,7 +22,9 @@ def run_program(path: Path) -> int:
 
     try:
         instructions = parse(source)
-        output = Runner(path.resolve()).run(instructions)
+        output = run_streaming_if_needed(path.resolve(), instructions)
+        if output is None:
+            output = Runner(path.resolve()).run(instructions)
     except FigureLoomBioError as error:
         print(error.plain_message(), file=sys.stderr)
         return 1
