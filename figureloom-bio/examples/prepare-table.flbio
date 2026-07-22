@@ -1,0 +1,13 @@
+Say Preparing the sample information.
+
+Open the file samples.csv.
+Remove duplicate rows using sample.
+Replace empty values under status with unknown.
+Change control to untreated under condition.
+Keep only the columns sample, condition, and status.
+Rename the column condition to group.
+Put the rows in order by sample.
+Show the result.
+Save the result as prepared-samples.csv.
+
+Say The sample information is ready.

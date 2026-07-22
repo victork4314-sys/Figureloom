@@ -23,6 +23,42 @@ _PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
         "remove_rows",
         re.compile(r"remove rows marked (.+) under ([^.,]+)", re.IGNORECASE),
     ),
+    (
+        "keep_columns",
+        re.compile(r"keep only the columns (.+)", re.IGNORECASE),
+    ),
+    (
+        "rename_column",
+        re.compile(r"rename the column (.+?) to (.+)", re.IGNORECASE),
+    ),
+    (
+        "order_rows",
+        re.compile(r"put the rows in order by (.+)", re.IGNORECASE),
+    ),
+    (
+        "largest_first",
+        re.compile(r"put the largest (.+) first", re.IGNORECASE),
+    ),
+    (
+        "smallest_first",
+        re.compile(r"put the smallest (.+) first", re.IGNORECASE),
+    ),
+    (
+        "remove_duplicates",
+        re.compile(r"remove duplicate rows using (.+)", re.IGNORECASE),
+    ),
+    (
+        "replace_empty",
+        re.compile(r"replace empty values under (.+?) with (.+)", re.IGNORECASE),
+    ),
+    (
+        "combine_file",
+        re.compile(r"combine it with (.+) using ([^.,]+)", re.IGNORECASE),
+    ),
+    (
+        "change_value",
+        re.compile(r"change (.+?) to (.+?) under ([^.,]+)", re.IGNORECASE),
+    ),
     ("count_rows", re.compile(r"count the rows", re.IGNORECASE)),
     ("show_result", re.compile(r"show the result", re.IGNORECASE)),
     ("show_file", re.compile(r"show the file", re.IGNORECASE)),
