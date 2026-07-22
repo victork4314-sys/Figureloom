@@ -6,175 +6,185 @@
   const formatButton = document.getElementById('formatButton');
   if (!editor || !activeFile || !formatButton) return;
 
-  const STORAGE_KEY = 'figureloom-bio-enabled-addons-v1';
-  const packages = [
-    { name:'microbiology', title:'Microbiology', icon:'🦠', status:'ready', version:'0.1.0', description:'Bacterial read preparation, isolate assembly, assembly quality, annotation, resistance, virulence, taxonomy, and plasmids.' },
-    { name:'genomics', title:'Genomics', icon:'🧬', status:'core', version:'core', description:'Sequence and genome commands already included in FigureLoom Bio core.' },
-    { name:'virology', title:'Virology', icon:'🦠', status:'planned', description:'Viral assembly, consensus, annotation, and lineage workflows.' },
-    { name:'mycology', title:'Mycology', icon:'🍄', status:'planned', description:'Fungal assembly, annotation, typing, and comparative workflows.' },
-    { name:'transcriptomics', title:'Transcriptomics', icon:'🧬', status:'planned', description:'RNA-seq quantification, expression, splicing, and isoforms.' },
-    { name:'proteomics', title:'Proteomics', icon:'🧪', status:'planned', description:'Peptides, domains, localization, and mass spectrometry.' },
-    { name:'metagenomics', title:'Metagenomics', icon:'🌍', status:'planned', description:'Taxonomy, abundance, host removal, binning, and MAGs.' },
-    { name:'phylogenetics', title:'Phylogenetics', icon:'🌳', status:'planned', description:'Alignments, trees, bootstrap support, rooting, and clades.' },
-    { name:'singlecell', title:'Single cell', icon:'🔬', status:'planned', description:'Cell QC, normalization, clustering, integration, and marker genes.' },
-    { name:'statistics', title:'Statistics', icon:'📊', status:'planned', description:'Tests, models, confidence intervals, and resampling.' },
-    { name:'visualization', title:'Visualization', icon:'📈', status:'planned', description:'Heatmaps, volcano plots, PCA, UMAP, genome views, and figures.' },
-    { name:'chemistry', title:'Chemistry', icon:'⚗️', status:'planned', description:'Concentrations, dilution, buffers, pH, and reaction planning.' },
-    { name:'laboratory', title:'Laboratory', icon:'🧫', status:'planned', description:'PCR, media, library preparation, incubation, and protocol records.' },
-    { name:'clinical', title:'Clinical', icon:'❤️', status:'planned', description:'Samples, phenotypes, variants, resistance, and protected metadata.' },
-    { name:'epidemiology', title:'Epidemiology', icon:'🗺️', status:'planned', description:'Outbreaks, lineages, transmission, geography, and timelines.' },
-    { name:'machinelearning', title:'Machine learning', icon:'🤖', status:'planned', description:'Training, validation, prediction, and feature importance.' },
-    { name:'crispr', title:'CRISPR', icon:'✂️', status:'planned', description:'Guide design, off-target checks, and editing summaries.' },
-    { name:'nanopore', title:'Nanopore', icon:'🧵', status:'planned', description:'Long-read QC, filtering, assembly, polishing, and methylation.' },
-    { name:'illumina', title:'Illumina', icon:'💠', status:'planned', description:'Short-read QC, trimming, lane merging, and library recipes.' },
-    { name:'rnaseq', title:'RNA-seq', icon:'🧬', status:'planned', description:'Opinionated RNA-seq workflows built on transcriptomics.' },
-    { name:'16s', title:'16S', icon:'🦠', status:'planned', description:'Amplicon denoising, taxonomy, diversity, and abundance.' },
-    { name:'blast', title:'BLAST', icon:'🔎', status:'planned', description:'Local and remote similarity searches with readable reports.' },
-    { name:'alphafold', title:'AlphaFold', icon:'🧩', status:'planned', description:'Structure prediction preparation, execution, and confidence reports.' }
-  ];
-
   const field = (name, placeholder) => ({ name, placeholder });
-  const templates = [
-    { id:'useMicrobiology', label:'Use the microbiology add-on', pattern:/^(?:Use|Load|Enable|Install)(?: the)? \.?microbiology(?: add-on| package)?\.$/i, parts:['Use .microbiology.'], keywords:'install enable load package' },
-    { id:'prepareBacterialReads', label:'Prepare bacterial reads', pattern:/^(?:Prepare|Clean) (?:the )?bacterial(?: Illumina)? reads\.$/i, parts:['Prepare bacterial reads.'], keywords:'clean illumina quality adapters trim' },
-    { id:'assembleBacterialPair', label:'Assemble a bacterial genome from paired reads', pattern:/^(?:Assemble|Build) (?:the |a )?bacterial genome from (.+?) and (.+?) into (.+)\.$/i, parts:['Assemble the bacterial genome from ',field('forward','forward.fastq'),' and ',field('reverse','reverse.fastq'),' into ',field('folder','assembly'),'.'], keywords:'spades paired isolate build' },
-    { id:'assembleBacterialSingle', label:'Assemble a bacterial genome from one read file', pattern:/^(?:Assemble|Build) (?:the |a )?bacterial genome from (.+?) into (.+)\.$/i, parts:['Assemble the bacterial genome from ',field('reads','reads.fastq'),' into ',field('folder','assembly'),'.'], keywords:'spades single isolate build' },
-    { id:'checkBacterialAssembly', label:'Check a bacterial assembly', pattern:/^(?:Check|Evaluate|Assess) (?:the )?(?:bacterial )?assembly (.+?) into (.+)\.$/i, parts:['Check the assembly ',field('assembly','assembly/contigs.fasta'),' into ',field('folder','assembly-quality'),'.'], keywords:'quast quality evaluate assess' },
-    { id:'annotateBacterialGenome', label:'Annotate a bacterial genome', pattern:/^(?:Annotate (?:the |a )?bacterial genome|Find genes in (?:the )?bacterial genome) (.+?) into (.+)\.$/i, parts:['Annotate the bacterial genome ',field('assembly','assembly/contigs.fasta'),' into ',field('folder','annotation'),'.'], keywords:'prokka genes annotation' },
-    { id:'findResistance', label:'Find antimicrobial resistance genes', pattern:/^(?:Find resistance genes in (.+?) using (.+)|Screen (.+?) for resistance genes using (.+))\.$/i, parts:['Find resistance genes in ',field('assembly','assembly/contigs.fasta'),' using ',field('database','card'),'.'], keywords:'abricate amr antimicrobial card resfinder' },
-    { id:'findVirulence', label:'Find virulence genes', pattern:/^(?:Find virulence genes in (.+)|Screen (.+) for virulence genes)\.$/i, parts:['Find virulence genes in ',field('assembly','assembly/contigs.fasta'),'.'], keywords:'abricate vfdb virulence' },
-    { id:'classifyMicrobe', label:'Identify an organism from reads', pattern:/^(?:Identify (?:the )?organism in (.+?) using (.+)|Classify (.+?) using (.+))\.$/i, parts:['Identify the organism in ',field('reads','reads.fastq'),' using ',field('database','kraken-db'),'.'], keywords:'kraken taxonomy classify organism species' },
-    { id:'findPlasmids', label:'Find plasmids in an assembly', pattern:/^(?:Find plasmids in (.+?) into (.+)|Reconstruct plasmids from (.+?) into (.+))\.$/i, parts:['Find plasmids in ',field('assembly','assembly/contigs.fasta'),' into ',field('folder','plasmids'),'.'], keywords:'mob suite recon plasmid' }
+  const microbiology = [
+    { id:'prepareBacterialReads', theme:'Microbiology', label:'Prepare bacterial reads', pattern:/^(?:Prepare|Clean) (?:the )?bacterial(?: Illumina)? reads\.$/i, parts:['Prepare bacterial reads.'], keywords:'clean illumina quality adapters trim' },
+    { id:'assembleBacterialPair', theme:'Microbiology', label:'Assemble a bacterial genome from paired reads', pattern:/^(?:Assemble|Build) (?:the |a )?bacterial genome from (.+?) and (.+?) into (.+)\.$/i, parts:['Assemble the bacterial genome from ',field('forward','forward.fastq'),' and ',field('reverse','reverse.fastq'),' into ',field('folder','assembly'),'.'], keywords:'spades paired isolate build' },
+    { id:'assembleBacterialSingle', theme:'Microbiology', label:'Assemble a bacterial genome from one read file', pattern:/^(?:Assemble|Build) (?:the |a )?bacterial genome from (.+?) into (.+)\.$/i, parts:['Assemble the bacterial genome from ',field('reads','reads.fastq'),' into ',field('folder','assembly'),'.'], keywords:'spades single isolate build' },
+    { id:'checkBacterialAssembly', theme:'Microbiology', label:'Check a bacterial assembly', pattern:/^(?:Check|Evaluate|Assess) (?:the )?(?:bacterial )?assembly (.+?) into (.+)\.$/i, parts:['Check the assembly ',field('assembly','assembly/contigs.fasta'),' into ',field('folder','assembly-quality'),'.'], keywords:'quast quality evaluate assess' },
+    { id:'annotateBacterialGenome', theme:'Microbiology', label:'Annotate a bacterial genome', pattern:/^(?:Annotate (?:the |a )?bacterial genome|Find genes in (?:the )?bacterial genome) (.+?) into (.+)\.$/i, parts:['Annotate the bacterial genome ',field('assembly','assembly/contigs.fasta'),' into ',field('folder','annotation'),'.'], keywords:'prokka genes annotation' },
+    { id:'findResistance', theme:'Microbiology', label:'Find antimicrobial resistance genes', pattern:/^(?:Find resistance genes in (.+?) using (.+)|Screen (.+?) for resistance genes using (.+))\.$/i, parts:['Find resistance genes in ',field('assembly','assembly/contigs.fasta'),' using ',field('database','card'),'.'], keywords:'abricate amr antimicrobial card resfinder' },
+    { id:'findVirulence', theme:'Microbiology', label:'Find virulence genes', pattern:/^(?:Find virulence genes in (.+)|Screen (.+) for virulence genes)\.$/i, parts:['Find virulence genes in ',field('assembly','assembly/contigs.fasta'),'.'], keywords:'abricate vfdb virulence' },
+    { id:'classifyMicrobe', theme:'Microbiology', label:'Identify an organism from reads', pattern:/^(?:Identify (?:the )?organism in (.+?) using (.+)|Classify (.+?) using (.+))\.$/i, parts:['Identify the organism in ',field('reads','reads.fastq'),' using ',field('database','kraken-db'),'.'], keywords:'kraken taxonomy classify organism species' },
+    { id:'findPlasmids', theme:'Microbiology', label:'Find plasmids in an assembly', pattern:/^(?:Find plasmids in (.+?) into (.+)|Reconstruct plasmids from (.+?) into (.+))\.$/i, parts:['Find plasmids in ',field('assembly','assembly/contigs.fasta'),' into ',field('folder','plasmids'),'.'], keywords:'mob suite recon plasmid' }
   ];
 
-  function enabledSet() {
-    try {
-      const parsed = JSON.parse(localStorage.getItem(STORAGE_KEY) || '["microbiology"]');
-      return new Set(Array.isArray(parsed) ? parsed : ['microbiology']);
-    } catch {
-      return new Set(['microbiology']);
-    }
+  const flowStarters = [
+    { theme:'Results', label:'Name the current result', source:'Call the result clean reads.', keywords:'name result reuse' },
+    { theme:'Decisions', label:'If and Otherwise', source:'If fewer than 100 reads remain:\n    Show a warning saying Very few reads remain.\nOtherwise:\n    Say The read count is acceptable.', keywords:'if otherwise condition branch' },
+    { theme:'Decisions', label:'Combine conditions', source:'If the average quality is above 20 and not the result is empty:\n    Say The reads passed both checks.', keywords:'and or not condition' },
+    { theme:'Checks', label:'Require a condition', source:'Make sure at least 100 reads remain.', keywords:'check require stop' },
+    { theme:'Checks', label:'Show a warning', source:'Show a warning saying This sample needs review.', keywords:'warning review' },
+    { theme:'Samples', label:'Run once for every sample', source:'Open all FASTQ files as samples.\n\nFor every sample in samples:\n    Open the sample.\n    Prepare bacterial reads.\n    Save the reads as {sample}-clean.fastq.', keywords:'loop every files batch' },
+    { theme:'Samples', label:'Continue with the next sample', source:'Continue with the next sample.', keywords:'skip continue loop' },
+    { theme:'Samples', label:'Mark a sample for review', source:'Mark the sample for review.', keywords:'review flag sample' },
+    { theme:'Recipes', label:'Make a reusable recipe', source:'Make a recipe called Prepare bacterial sample:\n    Prepare bacterial reads.\n    Count the reads.\n\nUse the recipe Prepare bacterial sample.', keywords:'recipe reusable workflow' },
+    { theme:'Program', label:'Stop the program', source:'Stop the program.', keywords:'stop end' }
+  ];
+
+  const defaultSentence = (item) => item.parts.map((part) => typeof part === 'string' ? part : part.placeholder).join('');
+
+  function insertSource(source) {
+    const start = editor.selectionStart;
+    const end = editor.selectionEnd;
+    const before = editor.value.slice(0, start);
+    const after = editor.value.slice(end);
+    const prefix = before && !before.endsWith('\n') ? '\n' : '';
+    const suffix = after && !after.startsWith('\n') ? '\n' : '';
+    const inserted = `${prefix}${source}${suffix}`;
+    editor.value = `${before}${inserted}${after}`;
+    const cursor = before.length + inserted.length;
+    editor.setSelectionRange(cursor, cursor);
+    editor.dispatchEvent(new Event('input', { bubbles:true }));
+    editor.focus();
   }
 
-  function saveEnabled(value) {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify([...value]));
-  }
-
-  let enabled = enabledSet();
   const button = document.createElement('button');
-  button.id = 'addonsButton';
+  button.id = 'sentenceLibraryButton';
   button.type = 'button';
-  button.textContent = 'Add-ons';
+  button.textContent = 'Sentences';
+  button.title = 'Search every built-in FigureLoom Bio sentence by theme';
   const translate = document.getElementById('translateProgramButton');
   formatButton.parentElement?.insertBefore(button, translate || formatButton);
 
   const dialog = document.createElement('dialog');
-  dialog.id = 'addonsDialog';
+  dialog.id = 'sentenceLibraryDialog';
   dialog.className = 'addons-dialog';
   dialog.innerHTML = `
     <div class="addons-shell">
       <header class="addons-header">
-        <div><span>Language packages</span><h2>FigureLoom Bio add-ons</h2><p>Keep the core language small. Add the biology your lab actually needs.</p></div>
-        <button class="addons-close" type="button" aria-label="Close add-ons">×</button>
+        <div><span>Built into the language</span><h2>FigureLoom Bio sentence library</h2><p>Everything is included. Search ordinary instructions or browse them by theme, then add one directly to the open program.</p></div>
+        <button class="addons-close" type="button" aria-label="Close sentence library">×</button>
       </header>
       <div class="addons-toolbar">
-        <label><span>Find an add-on</span><input class="addons-search" type="search" placeholder="Microbiology, Nanopore, CRISPR..."></label>
-        <div><strong class="addons-installed-count"></strong><span> ready packages stay local and trusted.</span></div>
+        <label><span>Find a sentence</span><input class="addons-search" type="search" placeholder="Quality, RNA, resistance, sample loop..."></label>
+        <label class="addons-theme-label"><span>Theme</span><select class="addons-theme"><option value="">All themes</option></select></label>
+        <div><strong class="addons-installed-count"></strong><span> built-in sentences</span></div>
       </div>
       <div class="addons-grid"></div>
-      <footer><span>Add-ons add sentences, blocks, synonyms, and translation recipes. They do not silently run tools.</span><button class="addons-done primary-button" type="button">Done</button></footer>
+      <footer><span>No installing, enabling, package declarations, or separate versions. Every listed sentence belongs to the same language.</span><button class="addons-done primary-button" type="button">Done</button></footer>
     </div>`;
   document.body.append(dialog);
 
   const grid = dialog.querySelector('.addons-grid');
   const search = dialog.querySelector('.addons-search');
+  const themeSelect = dialog.querySelector('.addons-theme');
   const count = dialog.querySelector('.addons-installed-count');
 
-  function statusLabel(pkg) {
-    if (pkg.status === 'core') return 'Included in core';
-    if (pkg.status === 'planned') return 'Planned';
-    return enabled.has(pkg.name) ? 'Installed' : 'Add to IDE';
+  function coreEntries() {
+    const entries = [];
+    document.querySelectorAll('#blocksPaletteList .blocks-palette-group').forEach((group) => {
+      const theme = group.querySelector('h3')?.textContent?.trim() || 'Other';
+      group.querySelectorAll(':scope > button.palette-block').forEach((sourceButton) => {
+        if (sourceButton.dataset.builtinMicrobiology === 'true') return;
+        entries.push({
+          theme,
+          label:sourceButton.textContent.trim(),
+          source:'',
+          keywords:sourceButton.dataset.search || '',
+          add:() => sourceButton.click()
+        });
+      });
+    });
+    return entries;
+  }
+
+  function allEntries() {
+    return [
+      ...coreEntries(),
+      ...microbiology.map((item) => ({
+        theme:item.theme,
+        label:item.label,
+        source:defaultSentence(item),
+        keywords:item.keywords,
+        add:() => insertSource(defaultSentence(item))
+      })),
+      ...flowStarters.map((item) => ({ ...item, add:() => insertSource(item.source) }))
+    ];
+  }
+
+  function refreshThemes(entries) {
+    const current = themeSelect.value;
+    const themes = [...new Set(entries.map((entry) => entry.theme))].sort((a, b) => a.localeCompare(b));
+    themeSelect.replaceChildren(new Option('All themes', ''));
+    themes.forEach((theme) => themeSelect.append(new Option(theme, theme)));
+    if (themes.includes(current)) themeSelect.value = current;
   }
 
   function renderCatalog() {
-    grid.replaceChildren();
+    const entries = allEntries();
+    refreshThemes(entries);
     const wanted = search.value.trim().toLowerCase();
-    let visible = 0;
-    for (const pkg of packages) {
-      const haystack = `${pkg.name} ${pkg.title} ${pkg.description}`.toLowerCase();
-      if (wanted && !haystack.includes(wanted)) continue;
-      visible += 1;
+    const selectedTheme = themeSelect.value;
+    const visible = entries.filter((entry) => {
+      if (selectedTheme && entry.theme !== selectedTheme) return false;
+      const haystack = `${entry.theme} ${entry.label} ${entry.source} ${entry.keywords}`.toLowerCase();
+      return !wanted || haystack.includes(wanted);
+    });
+
+    grid.replaceChildren();
+    visible.forEach((entry) => {
       const card = document.createElement('article');
-      card.className = `addon-card status-${pkg.status}${enabled.has(pkg.name) ? ' installed' : ''}`;
-      card.innerHTML = `<div class="addon-card-icon" aria-hidden="true">${pkg.icon}</div><div class="addon-card-copy"><div class="addon-card-title"><h3>${pkg.title}</h3><code>.${pkg.name}</code></div><p>${pkg.description}</p><div class="addon-card-meta"><span>${pkg.status === 'ready' ? `v${pkg.version}` : pkg.status}</span></div></div>`;
-      const action = document.createElement('button');
-      action.type = 'button';
-      action.textContent = statusLabel(pkg);
-      action.disabled = pkg.status !== 'ready';
-      action.className = pkg.status === 'ready' && enabled.has(pkg.name) ? 'installed-button' : '';
-      if (pkg.status === 'ready') {
-        action.addEventListener('click', () => {
-          if (enabled.has(pkg.name)) enabled.delete(pkg.name); else enabled.add(pkg.name);
-          saveEnabled(enabled);
-          renderCatalog();
-          refreshPalette();
-          updateSuggestions();
-        });
-      }
-      card.append(action);
+      card.className = 'addon-card sentence-card';
+      card.innerHTML = '<div class="addon-card-icon" aria-hidden="true"></div><div class="addon-card-copy"><div class="addon-card-title"><h3></h3><code></code></div><p></p><div class="addon-card-meta"><span>Included</span></div></div>';
+      card.querySelector('.addon-card-icon').textContent = entry.theme === 'Microbiology' ? '🦠' : '•';
+      card.querySelector('h3').textContent = entry.label;
+      card.querySelector('code').textContent = entry.theme;
+      card.querySelector('p').textContent = entry.source || 'Add this built-in sentence block to the open program.';
+      const add = document.createElement('button');
+      add.type = 'button';
+      add.textContent = 'Add';
+      add.addEventListener('click', () => {
+        entry.add();
+        add.textContent = 'Added';
+        setTimeout(() => { add.textContent = 'Add'; }, 800);
+      });
+      card.append(add);
       grid.append(card);
-    }
-    if (!visible) {
+    });
+
+    if (!visible.length) {
       const empty = document.createElement('div');
       empty.className = 'addons-empty';
-      empty.textContent = 'No add-ons match that search.';
+      empty.textContent = 'No built-in sentences match that search.';
       grid.append(empty);
     }
-    count.textContent = `${enabled.size.toLocaleString()} installed`;
+    count.textContent = entries.length.toLocaleString();
   }
 
-  const defaultSentence = (item) => item.parts.map((part) => typeof part === 'string' ? part : part.placeholder).join('');
   const root = () => document.getElementById('blockEditor');
-  const declarationPattern = /^(?:Use|Load|Enable|Install)(?: the)? \.?microbiology(?: add-on| package)?\.$/im;
-
-  function ensureDeclaration() {
-    if (declarationPattern.test(editor.value)) return 0;
-    const prefix = 'Use .microbiology.\n\n';
-    editor.value = `${prefix}${editor.value}`;
-    return prefix.length;
-  }
-
-  function addTemplate(item) {
-    const declarationOffset = item.id === 'useMicrobiology' ? 0 : ensureDeclaration();
-    if (item.id === 'useMicrobiology' && declarationPattern.test(editor.value)) return;
-    const current = editor.value.trimEnd();
-    editor.value = `${current}${current ? '\n' : ''}${defaultSentence(item)}\n`;
-    editor.dispatchEvent(new Event('input', { bubbles:true }));
-    root()?.querySelector('#blocksReload')?.click();
-    requestAnimationFrame(() => root()?.querySelector('#blocksWorkspace')?.lastElementChild?.scrollIntoView({ block:'nearest', behavior:'smooth' }));
-    if (declarationOffset) editor.setSelectionRange(editor.value.length, editor.value.length);
-  }
 
   function refreshPalette() {
     const palette = root()?.querySelector('#blocksPaletteList');
-    if (!palette) return;
-    const existing = palette.querySelector('[data-addon-microbiology]');
-    if (!enabled.has('microbiology')) { existing?.remove(); return; }
-    if (existing) return;
+    if (!palette || palette.querySelector('[data-builtin-microbiology]')) return;
     const group = document.createElement('section');
     group.className = 'blocks-palette-group';
-    group.dataset.addonMicrobiology = 'true';
+    group.dataset.builtinMicrobiology = 'true';
     group.dataset.category = 'microbiology';
     const heading = document.createElement('h3');
-    heading.textContent = '🦠 Microbiology add-on';
+    heading.textContent = 'Microbiology';
     group.append(heading);
-    for (const item of templates) {
+    for (const item of microbiology) {
       const add = document.createElement('button');
       add.type = 'button';
       add.className = 'palette-block category-microbiology';
+      add.dataset.builtinMicrobiology = 'true';
       add.dataset.search = `microbiology ${item.label} ${item.keywords}`.toLowerCase();
       add.textContent = item.label;
-      add.addEventListener('click', () => addTemplate(item));
+      add.addEventListener('click', () => {
+        insertSource(defaultSentence(item));
+        root()?.querySelector('#blocksReload')?.click();
+      });
       group.append(add);
     }
     palette.append(group);
@@ -187,16 +197,15 @@
   function enhanceBlocks() {
     const blockDialog = root();
     if (!blockDialog) return;
-    for (const original of blockDialog.querySelectorAll('.program-block-custom:not([data-addon-enhanced])')) {
-      const item = templates.find((candidate) => candidate.pattern.test(original.value.trim()));
+    for (const original of blockDialog.querySelectorAll('.program-block-custom:not([data-builtin-enhanced])')) {
+      const item = microbiology.find((candidate) => candidate.pattern.test(original.value.trim()));
       if (!item) continue;
       const match = original.value.trim().match(item.pattern);
       if (!match) continue;
       const block = original.closest('.program-block');
       const sentence = original.parentElement;
-      if (!block || !sentence) continue;
-      original.dataset.addonEnhanced = 'true';
       original.hidden = true;
+      original.dataset.builtinEnhanced = 'true';
       block.classList.remove('category-other');
       block.classList.add('category-microbiology');
       const visual = document.createElement('div');
@@ -228,11 +237,7 @@
     }
   }
 
-  const suggestionEntries = templates.map((item) => ({
-    item,
-    sentence:defaultSentence(item),
-    search:`${item.label} ${item.keywords} ${defaultSentence(item)}`.toLowerCase()
-  }));
+  const suggestionEntries = microbiology.map((item) => ({ item, sentence:defaultSentence(item), search:`${item.label} ${item.keywords} ${defaultSentence(item)}`.toLowerCase() }));
   const suggestionBox = document.createElement('div');
   suggestionBox.className = 'addon-suggestions';
   suggestionBox.hidden = true;
@@ -250,7 +255,7 @@
   }
 
   function updateSuggestions() {
-    if (!enabled.has('microbiology') || !/\.flbio(?:\.txt)?$/i.test(activeFile.textContent.trim())) {
+    if (!/\.flbio(?:\.txt)?$/i.test(activeFile.textContent.trim())) {
       suggestionBox.hidden = true;
       return;
     }
@@ -271,7 +276,11 @@
       const option = document.createElement('button');
       option.type = 'button';
       option.className = index === suggestionIndex ? 'active' : '';
-      option.innerHTML = `<strong>${entry.item.label}</strong><span>${entry.sentence}</span>`;
+      const strong = document.createElement('strong');
+      strong.textContent = entry.item.label;
+      const span = document.createElement('span');
+      span.textContent = entry.sentence;
+      option.append(strong, span);
       option.addEventListener('mousedown', (event) => event.preventDefault());
       option.addEventListener('click', () => acceptSuggestion(index));
       suggestionBox.append(option);
@@ -286,12 +295,7 @@
     const before = editor.value.slice(0, line.start);
     const after = editor.value.slice(line.end);
     editor.value = `${before}${entry.sentence}${after}`;
-    let cursor = before.length + entry.sentence.length;
-    if (entry.item.id !== 'useMicrobiology' && !declarationPattern.test(editor.value)) {
-      const prefix = 'Use .microbiology.\n\n';
-      editor.value = `${prefix}${editor.value}`;
-      cursor += prefix.length;
-    }
+    const cursor = before.length + entry.sentence.length;
     editor.setSelectionRange(cursor, cursor);
     editor.dispatchEvent(new Event('input', { bubbles:true }));
     suggestionBox.hidden = true;
@@ -325,13 +329,18 @@
   observer.observe(document.body, { childList:true, subtree:true });
 
   const close = () => dialog.close?.();
-  button.addEventListener('click', () => { renderCatalog(); dialog.showModal?.(); search.focus(); });
+  button.addEventListener('click', () => {
+    renderCatalog();
+    dialog.showModal?.();
+    search.focus();
+  });
   dialog.querySelector('.addons-close').addEventListener('click', close);
   dialog.querySelector('.addons-done').addEventListener('click', close);
   dialog.addEventListener('click', (event) => { if (event.target === dialog) close(); });
   search.addEventListener('input', renderCatalog);
+  themeSelect.addEventListener('change', renderCatalog);
 
-  renderCatalog();
   refreshPalette();
   enhanceBlocks();
+  window.FigureLoomBioSentenceLibrary = { render:renderCatalog, entries:allEntries };
 })();
