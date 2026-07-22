@@ -40,6 +40,39 @@ class FigureLoomBioCoreTests(unittest.TestCase):
                 "one,treated,passed\n",
             )
 
+    def test_program_can_repeat_and_number_outputs(self) -> None:
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            (root / "samples.csv").write_text(
+                "sample,status\none,passed\ntwo,failed\n", encoding="utf-8"
+            )
+            program = root / "repeat.flbio"
+            program.write_text(
+                "Run this program 3 times.\n\n"
+                "Open the file samples.csv.\n"
+                "Keep only rows marked passed under status.\n"
+                "Save the result as clean.csv.\n",
+                encoding="utf-8",
+            )
+
+            output = Runner(program).run(parse(program.read_text(encoding="utf-8"))).render()
+
+            for number in range(1, 4):
+                self.assertEqual(
+                    (root / f"clean-{number}.csv").read_text(encoding="utf-8"),
+                    "sample,status\none,passed\n",
+                )
+                self.assertIn(f"Run {number} of 3", output)
+            self.assertFalse((root / "clean.csv").exists())
+
+    def test_repeat_instruction_must_be_first(self) -> None:
+        instructions = parse(
+            "Say Starting.\n"
+            "Run this program 2 times.\n"
+        )
+        with self.assertRaisesRegex(FigureLoomBioError, "beginning"):
+            Runner(Path("analysis.flbio")).run(instructions)
+
     def test_table_preparation_sentences_run_together(self) -> None:
         with tempfile.TemporaryDirectory() as folder:
             root = Path(folder)
