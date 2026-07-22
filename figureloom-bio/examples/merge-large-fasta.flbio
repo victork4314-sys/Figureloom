@@ -1,0 +1,8 @@
+Say Starting the large FASTA merge.
+Open the large file chromosome-1.fasta.gz.
+Merge the result with chromosome-2.fasta.gz.
+Remove sequences containing NNNNN.
+Keep only sequences longer than 1000 bases.
+Calculate the GC content.
+Save the result as merged-clean.fasta.gz.
+Say The large FASTA merge is finished.
