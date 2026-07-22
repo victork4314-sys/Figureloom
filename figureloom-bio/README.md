@@ -13,6 +13,18 @@ Save the result as clean-samples.csv.
 
 The language uses normal sentences and normal periods. The difficult machinery stays underneath.
 
+## Text, forms, and sentence blocks
+
+The browser IDE at `figureloom.org/ide` offers three ways to create the same real `.flbio` program:
+
+- Write the sentences directly.
+- Use the quick program builder.
+- Press **Blocks** and assemble colored sentence blocks with editable words, filenames, names, and numbers.
+
+Blocks are not a separate language. They turn back into the exact ordinary sentences shown in the text editor, and they download as the same `.flbio` file. Existing text programs can be opened as blocks. Sentences that are not recognized yet stay as custom blocks instead of being removed.
+
+The complete guide and full command list are in the regular FigureLoom manual under **FigureLoom Bio**.
+
 ## Reusable programs
 
 Put this sentence at the beginning to run the whole program more than once.
@@ -22,8 +34,6 @@ Run this program 10 times.
 ```
 
 Everything after it runs ten times. Saved files are numbered automatically, such as `clean-reads-1.fastq` through `clean-reads-10.fastq`, so one run does not overwrite another. Paired results number both files while keeping every pair matched.
-
-The browser IDE includes a program builder. It has table starters plus the approved FASTA, FASTQ, and paired FASTQ starters. It can set the repeat count, use the program immediately, or download the real `.flbio` file.
 
 ## Table commands
 
@@ -52,21 +62,36 @@ Combining a second table keeps the current rows and adds matching information fr
 ```text
 Open the file sequences.fasta.
 Count the sequences.
+Count the bases.
+Show the sequence names.
+Show the first 10 sequences.
+Show the sequence lengths.
+Find the shortest sequence.
+Find the longest sequence.
 Keep only sequences longer than 500 bases.
 Remove sequences shorter than 100 bases.
 Remove sequences containing N.
 Keep only sequences containing ATG.
 Use the sequence named sample-17.
+Remove the sequence named sample-18.
+Rename the sequence sample-17 to chosen.
+Add run- to the start of every sequence name.
+Add -clean to the end of every sequence name.
+Remove duplicate sequences.
+Put the shortest sequences first.
+Put the longest sequences first.
+Keep bases 10 to 100.
 Convert the DNA to RNA.
 Convert the RNA to DNA.
 Find the reverse complement.
 Translate the DNA into protein.
-Show the first 10 sequences.
+Calculate the GC content.
+Compare the sequences with reference.fasta.
 Show the result.
 Save the result as clean-sequences.fasta.
 ```
 
-The language also supports counting bases, showing sequence names, calculating GC content, and comparing named sequences with another FASTA or FASTQ file.
+The new organization instructions work with one FASTA or FASTQ file. Paired reads keep using the paired workflow so their matching order cannot be accidentally broken.
 
 ## FASTQ commands
 
@@ -74,6 +99,8 @@ The language also supports counting bases, showing sequence names, calculating G
 Open the file reads.fastq.
 Check the quality.
 Show the quality report.
+Keep reads with average quality at least 20.
+Remove reads with average quality below 20.
 Remove reads with low quality.
 Remove reads shorter than 50 bases.
 Remove adapter sequences.
@@ -133,7 +160,7 @@ flbio run examples/clean-samples.flbio
 flbio run examples/clean-fastq.flbio
 ```
 
-The same table, FASTA, FASTQ, paired FASTQ, comparison, and repeat commands run directly in the browser IDE at `figureloom.org/ide`.
+The same table, FASTA, FASTQ, paired FASTQ, comparison, repeat, and sequence-organization commands run directly in the browser IDE.
 
 The result is shown in separate, spacious sections. Raw technical output is not mixed into the useful result.
 
@@ -142,15 +169,16 @@ The result is shown in separate, spacious sections. Raw technical output is not 
 - Reading `.flbio` instructions as full sentences.
 - Requiring a normal period after every instruction.
 - Repeating a complete program and numbering single or paired saved outputs.
-- Building, using, and downloading real programs in the browser IDE.
+- Writing programs as text, quick forms, or reversible sentence blocks.
 - Opening CSV, TSV, FASTA, and FASTQ files.
 - Cleaning, sorting, combining, and saving tables.
 - Filtering sequences and reads by length, motif, and FASTQ quality.
+- Selecting, renaming, ordering, slicing, and deduplicating sequences.
 - Quality reports, common adapter removal, and read-end cutting.
 - Single and paired FASTQ workflows that stay matched.
 - Converting DNA and RNA, reverse complements, and protein translation.
 - Calculating GC content and comparing named sequences.
 - Plain errors that point to the sentence that needs fixing.
-- Continuous line numbers and an immediately refreshed file panel in the IDE.
+- A full line-number gutter and an immediately refreshed file panel in the IDE.
 
 Server queues and larger remote jobs come later without making the visible language more complicated.
