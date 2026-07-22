@@ -72,6 +72,43 @@ html[data-figureloom-theme="dark"]{
   font-size:10px;
 }
 
+.file-row{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) 30px;
+  align-items:center;
+  gap:5px;
+  min-width:0;
+}
+
+.file-row .file-item{
+  min-width:0;
+}
+
+.file-delete-button{
+  width:30px;
+  min-height:30px;
+  padding:0;
+  border-color:transparent;
+  background:transparent;
+  color:var(--muted);
+  font-size:18px;
+  line-height:1;
+  opacity:.55;
+}
+
+.file-row:hover .file-delete-button,
+.file-delete-button:focus-visible{
+  opacity:1;
+}
+
+.file-delete-button:hover{
+  border-color:color-mix(in srgb,var(--danger) 45%,var(--line));
+  background:var(--danger-soft);
+  color:var(--danger);
+  box-shadow:none;
+}
+
 @media(max-width:560px){
   .syntax-highlight{padding:16px 14px 70px;font-size:13px}
+  .file-delete-button{opacity:1}
 }
