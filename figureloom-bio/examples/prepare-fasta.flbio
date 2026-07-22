@@ -1,0 +1,8 @@
+Say Preparing the sequences.
+Open the file example-sequences.fasta.
+Keep sequences at least 5 bases long.
+Remove sequences containing N.
+Calculate the GC content.
+Find the reverse complement.
+Show the sequences.
+Save the sequences as prepared-sequences.fasta.
