@@ -22,6 +22,10 @@ jobs:
             echo "Checking $file"
             node --check "$file"
           done
+          for file in ide/*.js; do
+            echo "Checking $file"
+            node --check "$file"
+          done
           node --check wiki/wiki.js
           node --check scripts/validate-help-center.mjs
           node --check scripts/validate-wiki.mjs
@@ -33,6 +37,11 @@ jobs:
           node --check final-session-core.js
           node --check final-session-polish-v2.js
           node --check mcp-current-screenshot.js
+
+      - name: Run FigureLoom Bio tests
+        run: |
+          cd figureloom-bio
+          python3 -m unittest discover -s tests -v
 
       - name: Check required application files
         run: |
