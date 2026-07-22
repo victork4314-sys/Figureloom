@@ -1,0 +1,7 @@
+Say Preparing the reads.
+Open the file reads.fastq.
+Remove reads shorter than 50 bases.
+Remove reads with low quality.
+Save the result as clean-reads.fastq.
+Run the tool fastqc with clean-reads.fastq --outdir quality-report.
+Say The workflow is finished.
