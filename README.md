@@ -28,6 +28,7 @@ Read the [hosted manual and tutorials](https://figureloom.org/wiki/#Home) or the
 - Code windows for instructions, methods, examples, and technical notes
 - PowerPoint and spreadsheet import tools
 - Editable SVG export for one page or every project page
+- Optional FigureLoom Linux VM access for browser-based bioinformatics and Linux desktop work
 - Contrast checks, tiny-text warnings, grayscale and color-vision previews, alt text, references, attribution, and journal sizing checks
 - Fullscreen multi-page presentation mode
 
@@ -63,6 +64,18 @@ Loomy is a small helper for getting a first draft onto the canvas. You can descr
 The result is editable. Objects can be moved, resized, recolored, relabeled, deleted, or rearranged like anything else in the editor.
 
 You can also ignore Loomy completely. The editor, drawing tools, templates, imports, and exports do not depend on it.
+
+## FigureLoom Linux VM
+
+The **VM** button in the top bar opens a small access panel for the hosted FigureLoom Linux desktop. It is separate from the figure editor and is meant for bioinformatics, file work, and heavier Linux workflows that do not belong inside the canvas.
+
+The panel includes:
+
+- Public VM: `https://vm.figureloom.org/#/cast/figureloom`
+- Login screen: `https://vm.figureloom.org`
+- Backup guest login: `guest@figureloom.local` / `FigureLoom2026!`
+
+Please delete the Kasm session when finished. Closing the browser tab can leave the VM running and block the next person.
 
 ## MCP and external assistants
 
@@ -115,7 +128,7 @@ Then open:
 http://localhost:8080/
 ```
 
-Most editor features work locally. Cloud authentication redirects need the local URL added to the Supabase allow list. Hosted MCP, cloud projects, and live collaboration also require the configured backend services.
+Most editor features work locally. Cloud authentication redirects need the local URL added to the Supabase allow list. Hosted MCP, cloud projects, live collaboration, and the hosted Linux VM also require the configured backend services.
 
 ## Testing
 
@@ -129,7 +142,7 @@ Pull requests run syntax and browser checks for the parts of the app they touch.
 - Light and dark runtime checks for project tabs, the Help center, and the passive guide
 - Browser page errors, console errors, failed local scripts, and local HTTP failures
 - Visible FigureLoom branding
-- Account, gallery, guest-link collaboration, TeX, pathway, MCP, and export wiring
+- Account, gallery, guest-link collaboration, TeX, pathway, MCP, VM access, and export wiring
 - Wiki links, hosted page registration, and hosted wiki JavaScript syntax
 
 The repository still has an older validation workflow with a few legacy assumptions. New focused browser tests are used for the current phone interface and other recently rebuilt areas.
