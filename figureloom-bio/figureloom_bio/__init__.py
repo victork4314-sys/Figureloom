@@ -19,6 +19,6 @@ install_workflow_expansion(Runner)
 install_addon_packages(Runner)
 install_addon_translation()
 
-__version__ = "0.5.0"
+__version__ = "0.6.0"
 
 __all__ = ["Runner", "__version__"]
