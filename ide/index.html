@@ -4,13 +4,15 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#0c2e28">
-  <meta name="description" content="Write and run FigureLoom Bio programs using ordinary English instructions.">
+  <meta name="description" content="Write and run FigureLoom Bio programs using ordinary English instructions or sentence blocks.">
   <link rel="canonical" href="https://figureloom.org/ide/">
   <link rel="icon" href="/favicon.ico?v=20260719-final" type="image/x-icon">
   <link rel="stylesheet" href="./ide.css?v=2">
   <link rel="stylesheet" href="./ide-enhancements.css?v=4">
   <link rel="stylesheet" href="./ide-export.css?v=2">
   <link rel="stylesheet" href="./ide-builder.css?v=2">
+  <link rel="stylesheet" href="./ide-line-gutter-v3.css?v=1">
+  <link rel="stylesheet" href="./ide-blocks.css?v=1">
   <title>FigureLoom Bio IDE</title>
   <script>
     try {
@@ -39,7 +41,7 @@
 
     <div class="header-actions">
       <button id="themeButton" class="icon-button" type="button" aria-label="Switch appearance">◐</button>
-      <a class="secondary-link" href="../wiki/" target="_blank" rel="noreferrer">Manual</a>
+      <a class="secondary-link" href="../wiki/FigureLoom-Bio" target="_blank" rel="noreferrer">Bio manual</a>
       <a class="secondary-link" href="../" target="_blank" rel="noreferrer">FigureLoom</a>
       <button id="runButton" class="primary-button" type="button">Run</button>
     </div>
@@ -60,7 +62,7 @@
       <button id="formatButton" type="button">Tidy sentences</button>
       <button id="clearResultsButton" type="button">Clear results</button>
     </div>
-    <div class="run-note" id="runNote">Build and download real programs, repeat them, and run table, FASTA, and FASTQ workflows here.</div>
+    <div class="run-note" id="runNote">Write normally or build with sentence blocks, then run table, FASTA, and FASTQ workflows here.</div>
   </nav>
 
   <main class="ide-workspace">
@@ -157,6 +159,11 @@
   </dialog>
 
   <script src="./ide-app-v2.js?v=1"></script>
+  <script src="./ide-sequence-expansion-core.js?v=1"></script>
+  <script src="./ide-sequence-expansion.js?v=1"></script>
+  <script src="./ide-line-gutter-v3.js?v=1"></script>
+  <script src="./ide-block-definitions.js?v=1"></script>
+  <script src="./ide-blocks.js?v=1"></script>
   <script src="./ide-export.js?v=3"></script>
 </body>
 </html>
