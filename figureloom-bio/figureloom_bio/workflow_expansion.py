@@ -19,6 +19,8 @@ EXTRA_PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
     ("run_tool", re.compile(r"run the tool ([^ ]+) with (.+)", re.IGNORECASE)),
 )
 EXTRA_ACTIONS = {action for action, _ in EXTRA_PATTERNS}
+FASTA_SUFFIXES = {".fa", ".fasta", ".fna", ".ffn", ".faa", ".frn"}
+TABLE_SUFFIXES = {".csv", ".tsv"}
 
 
 def install_workflow_expansion(runner_class: type[Any]) -> None:
@@ -82,6 +84,56 @@ def install_workflow_expansion(runner_class: type[Any]) -> None:
     runner_class.__init__ = init
     runner_class._run_instruction = run_instruction
     runner_class._workflow_expansion_installed = True
+
+
+def normalize_streaming_instructions(instructions: list[Instruction]) -> list[Instruction]:
+    """Map friendly FASTA multi-file sentences onto the existing streaming engine.
+
+    The established disk-backed streaming runner understands ``open_file`` and
+    ``merge_sequences``. This keeps it authoritative while allowing the newer,
+    friendlier multi-file forms to trigger the same safe path for huge FASTA data.
+    Table and FASTQ instructions are deliberately left unchanged.
+    """
+    normalized: list[Instruction] = []
+    current_kind: str | None = None
+
+    for instruction in instructions:
+        action = instruction.action
+        values = instruction.values
+
+        if action == "open_file":
+            current_kind = _file_kind(values[0])
+            normalized.append(instruction)
+            continue
+
+        if action in {"open_files_together", "merge_files"}:
+            names = _natural_list(values[0])
+            kinds = {_file_kind(name) for name in names}
+            if len(names) >= 2 and kinds == {"fasta"}:
+                normalized.append(Instruction("open_file", instruction.line_number, (names[0],)))
+                normalized.extend(
+                    Instruction("merge_sequences", instruction.line_number, (name,))
+                    for name in names[1:]
+                )
+                current_kind = "fasta"
+                continue
+            current_kind = next(iter(kinds)) if len(kinds) == 1 else None
+            normalized.append(instruction)
+            continue
+
+        if action == "merge_result" and current_kind == "fasta" and _file_kind(values[0]) == "fasta":
+            normalized.append(Instruction("merge_sequences", instruction.line_number, values))
+            continue
+
+        if action == "merge_sequences":
+            if current_kind is None:
+                current_kind = _file_kind(values[0])
+            normalized.append(instruction)
+            continue
+
+        normalized.append(instruction)
+
+    return normalized
 
 
 def _merge_current(
@@ -171,3 +223,17 @@ def _natural_list(text: str) -> list[str]:
         left, right = cleaned.rsplit(" and ", 1)
         cleaned = f"{left}, {right}"
     return [part.strip() for part in cleaned.split(",") if part.strip()]
+
+
+def _file_kind(name: str) -> str | None:
+    lower = name.lower()
+    if lower.endswith(".gz"):
+        lower = lower[:-3]
+    suffix = "." + lower.rsplit(".", 1)[-1] if "." in lower else ""
+    if suffix in FASTA_SUFFIXES:
+        return "fasta"
+    if suffix in TABLE_SUFFIXES:
+        return "table"
+    if suffix in {".fq", ".fastq"}:
+        return "fastq"
+    return None
