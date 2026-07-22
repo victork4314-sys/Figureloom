@@ -1,0 +1,10 @@
+Say Starting the example.
+
+Open the file example-samples.csv.
+Keep only rows marked treated under condition.
+Remove rows marked failed under status.
+Count the rows.
+Show the result.
+Save the result as example-result.csv.
+
+Say The example is finished.

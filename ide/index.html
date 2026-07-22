@@ -7,7 +7,8 @@
   <meta name="description" content="Write and run FigureLoom Bio programs using ordinary English instructions.">
   <link rel="canonical" href="https://figureloom.org/ide/">
   <link rel="icon" href="/favicon.ico?v=20260719-final" type="image/x-icon">
-  <link rel="stylesheet" href="./ide.css?v=1">
+  <link rel="stylesheet" href="./ide.css?v=2">
+  <link rel="stylesheet" href="./ide-enhancements.css?v=2">
   <title>FigureLoom Bio IDE</title>
   <script>
     try {
@@ -30,7 +31,7 @@
     </a>
 
     <div class="document-name">
-      <input id="programName" value="clean-samples.flbio" aria-label="Program name">
+      <input id="programName" value="example.flbio" aria-label="Program name">
       <span id="saveStatus">Saved in this browser</span>
     </div>
 
@@ -55,7 +56,7 @@
       <button id="formatButton" type="button">Tidy sentences</button>
       <button id="clearResultsButton" type="button">Clear results</button>
     </div>
-    <div class="run-note" id="runNote">The first table commands run directly in this browser.</div>
+    <div class="run-note" id="runNote">The example and the first table commands run directly in this browser.</div>
   </nav>
 
   <main class="ide-workspace">
@@ -74,7 +75,7 @@
       <div class="panel-topbar">
         <div class="file-tab active">
           <span class="file-dot"></span>
-          <span id="activeFileLabel">clean-samples.flbio</span>
+          <span id="activeFileLabel">example.flbio</span>
         </div>
         <span class="language-label">FigureLoom Bio</span>
       </div>
@@ -98,13 +99,15 @@
       </div>
       <div id="results" class="results-list" aria-live="polite">
         <section class="empty-results">
-          <strong>Nothing has run yet.</strong>
-          <span>Press Run to see the result here.</span>
+          <strong>The example is ready.</strong>
+          <span>Press Run to try it.</span>
         </section>
       </div>
     </aside>
   </main>
 
-  <script src="./ide.js?v=1"></script>
+  <script src="./ide-boot.js?v=2"></script>
+  <script src="./ide.js?v=2"></script>
+  <script src="./ide-enhancements.js?v=2"></script>
 </body>
 </html>
