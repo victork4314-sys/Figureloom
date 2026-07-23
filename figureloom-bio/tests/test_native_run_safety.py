@@ -30,6 +30,14 @@ class NativeRunSafetyTests(unittest.TestCase):
         self.assertIn("traceback.format_exc()", source)
         self.assertIn("Your program and workspace files were not deleted", source)
 
+    def test_chained_internal_error_does_not_look_like_a_normal_language_error(self) -> None:
+        source = SAFETY.read_text(encoding="utf-8")
+        self.assertIn("cause = error.__cause__", source)
+        self.assertIn("cause is not None", source)
+        self.assertIn("not isinstance(cause, FigureLoomBioError)", source)
+        self.assertIn("_unexpected_run_message(cause, details_path)", source)
+        self.assertIn("error.plain_message()", source)
+
     def test_installed_self_test_shows_and_paints_the_final_window(self) -> None:
         source = SAFETY.read_text(encoding="utf-8")
         self.assertIn("def painted_self_test() -> int", source)
