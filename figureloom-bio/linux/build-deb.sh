@@ -57,7 +57,7 @@ Section: science
 Priority: optional
 Architecture: all
 Maintainer: FigureLoom
-Depends: python3 (>= 3.10), python3-venv, python3-tk, git, tar, xdg-utils
+Depends: python3 (>= 3.10), python3-venv, python3-tk, git, tar, xdg-utils, libglib2.0-bin
 Recommends: chromium | chromium-browser | firefox | firefox-esr
 Homepage: https://figureloom.org/ide/
 Description: FigureLoom Bio desktop installer
@@ -73,8 +73,8 @@ SOURCE_ROOT="/usr/share/figureloom-bio/source"
 
 valid_user() {
   local candidate="${1:-}"
-  [[ -n "$candidate" && "$candidate" != root ]] || return 1
-  getent passwd "$candidate" | awk -F: '$3 >= 1000 && $3 < 60000 && $7 !~ /(nologin|false)$/ { found=1 } END { exit found ? 0 : 1 }'
+  [[ -n "$candidate" ]] || return 1
+  getent passwd "$candidate" | awk -F: '($3 == 0 || ($3 >= 1000 && $3 < 60000)) && $7 !~ /(nologin|false)$/ { found=1 } END { exit found ? 0 : 1 }'
 }
 
 user_from_uid() {
@@ -127,6 +127,11 @@ detect_target_user() {
     return 0
   fi
 
+  if [[ "${HOME:-}" == /root || -d /root/Desktop ]] && valid_user root; then
+    printf '%s\n' root
+    return 0
+  fi
+
   return 1
 }
 
@@ -160,7 +165,7 @@ case "${1:-}" in
       /usr/share/applications/figureloom-bio-ide.desktop \
       /usr/share/applications/figureloom-bio-test.desktop \
       /usr/share/applications/figureloom-bio-installer.desktop
-    for home in /home/*; do
+    for home in /root /home/*; do
       [[ -d "$home/Desktop" ]] || continue
       rm -f \
         "$home/Desktop/FigureLoom Bio IDE.desktop" \
@@ -179,7 +184,7 @@ find "$PACKAGE_DIR/usr/share/figureloom-bio/source" -type f -exec chmod 0644 {} 
 chmod 0755 \
   "$PACKAGE_DIR/usr/share/figureloom-bio/source/figureloom-bio/linux/build-deb.sh" \
   "$PACKAGE_DIR/usr/share/figureloom-bio/source/figureloom-bio/linux/install-workspace.sh" \
-  "$PACKAGE_DIR/usr/share/figureloom-bio/source/figureloom-bio/linux/install-linux.sh" \
+  "$PACKAGE_DIR/usr/share/figureloom-bio/source/figureloom-bio/linux/install-ilinux.sh" \
   "$PACKAGE_DIR/usr/share/figureloom-bio/source/figureloom-bio/linux/update-worker.sh" \
   "$PACKAGE_DIR/usr/share/figureloom-bio/source/figureloom-bio/linux/installer-window.py"
 

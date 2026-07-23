@@ -60,6 +60,7 @@ missing=()
 command -v python3 >/dev/null 2>&1 || missing+=(python3)
 command -v git >/dev/null 2>&1 || missing+=(git)
 command -v tar >/dev/null 2>&1 || missing+=(tar)
+command -v gio >/dev/null 2>&1 || missing+=(libglib2.0-bin)
 install_missing_packages "${missing[@]}"
 
 missing=()
@@ -252,9 +253,46 @@ chmod 0755 \
   /usr/share/applications/figureloom-bio-test.desktop \
   /usr/share/applications/figureloom-bio-installer.desktop
 
+run_for_desktop_user() {
+  local owner="$1"
+  shift
+  if [[ -z "$owner" || "$owner" == root ]]; then
+    "$@"
+    return
+  fi
+  runuser -u "$owner" -- "$@"
+}
+
+mark_launcher_trusted() {
+  local home="$1"
+  local owner="$2"
+  local launcher="$3"
+  local uid=""
+  local runtime=""
+
+  chmod 0755 "$launcher"
+  command -v gio >/dev/null 2>&1 || return 0
+
+  uid="$(id -u "${owner:-root}" 2>/dev/null || printf '0')"
+  runtime="/run/user/$uid"
+
+  if [[ -S "$runtime/bus" ]]; then
+    if run_for_desktop_user "$owner" env \
+      HOME="$home" \
+      XDG_RUNTIME_DIR="$runtime" \
+      DBUS_SESSION_BUS_ADDRESS="unix:path=$runtime/bus" \
+      gio set "$launcher" metadata::trusted true >/dev/null 2>&1; then
+      return 0
+    fi
+  fi
+
+  run_for_desktop_user "$owner" env HOME="$home" \
+    gio set "$launcher" metadata::trusted true >/dev/null 2>&1 || true
+}
+
 install_desktop() {
   local home="$1"
-  local owner="${2:-}"
+  local owner="${2:-root}"
   local desktop="$home/Desktop"
   local ide_icon="$desktop/FigureLoom Bio IDE.desktop"
   local test_icon="$desktop/Test FigureLoom Bio.desktop"
@@ -268,9 +306,13 @@ install_desktop() {
   "$VENV_DIR/bin/flbio" test-files "$test_folder" >/dev/null
   chmod -R a+rX "$test_folder"
   if [[ -n "$owner" ]]; then
+    chown "$owner":"$owner" "$desktop" 2>/dev/null || true
     chown "$owner":"$owner" "$ide_icon" "$test_icon" "$installer_icon" 2>/dev/null || true
     chown -R "$owner":"$owner" "$test_folder" 2>/dev/null || true
   fi
+  mark_launcher_trusted "$home" "$owner" "$ide_icon"
+  mark_launcher_trusted "$home" "$owner" "$test_icon"
+  mark_launcher_trusted "$home" "$owner" "$installer_icon"
 }
 
 if [[ -n "$TARGET_USER" ]] && id "$TARGET_USER" >/dev/null 2>&1; then
