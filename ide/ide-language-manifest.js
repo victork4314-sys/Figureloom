@@ -30,13 +30,18 @@
     return manifest;
   }
 
-  function loadCanonicalCatalogUi() {
-    if (document.getElementById('figureloomBioLanguageCatalogUi')) return;
+  function loadModule(id, src) {
+    if (document.getElementById(id)) return;
     const script = document.createElement('script');
-    script.id = 'figureloomBioLanguageCatalogUi';
-    script.src = './ide-language-catalog-ui.js?v=1';
+    script.id = id;
+    script.src = src;
     script.defer = true;
     document.body.append(script);
+  }
+
+  function loadCanonicalLanguageUi() {
+    loadModule('figureloomBioLanguageCatalogUi', './ide-language-catalog-ui.js?v=1');
+    loadModule('figureloomBioLanguageBlocksUi', './ide-language-blocks-ui.js?v=1');
   }
 
   window.FigureLoomBioLanguageReady = fetch(source, { cache:'no-store' })
@@ -61,8 +66,8 @@
     });
 
   if (document.readyState === 'complete') {
-    queueMicrotask(loadCanonicalCatalogUi);
+    queueMicrotask(loadCanonicalLanguageUi);
   } else {
-    window.addEventListener?.('load', loadCanonicalCatalogUi, { once:true });
+    window.addEventListener?.('load', loadCanonicalLanguageUi, { once:true });
   }
 })();
