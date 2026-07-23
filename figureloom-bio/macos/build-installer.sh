@@ -33,16 +33,14 @@ rm -rf "$BUILD_ROOT"
 mkdir -p "$APP_BUILD" "$WORK_ROOT" "$SPEC_ROOT" "$PKG_ROOT" "$SCRIPTS_ROOT" "$OUTPUT_DIR" "$ICONSET"
 
 python3 -m pip install --disable-pip-version-check --upgrade pip
-python3 -m pip install --disable-pip-version-check pyinstaller "$ROOT_DIR/figureloom-bio"
+python3 -m pip install --disable-pip-version-check pyinstaller PySide6 "$ROOT_DIR/figureloom-bio"
 
 make_icon() {
   local size="$1"
   local scale="$2"
   local pixels=$((size * scale))
   local suffix=""
-  if [[ "$scale" == 2 ]]; then
-    suffix="@2x"
-  fi
+  if [[ "$scale" == 2 ]]; then suffix="@2x"; fi
   sips -z "$pixels" "$pixels" "$ICON_PNG" --out "$ICONSET/icon_${size}x${size}${suffix}.png" >/dev/null
 }
 for size in 16 32 128 256 512; do
@@ -54,27 +52,22 @@ iconutil -c icns "$ICONSET" -o "$ICON_ICNS"
 build_app() {
   local name="$1"
   local entry="$2"
-  local include_ide="${3:-0}"
   local safe_name
   safe_name="$(printf '%s' "$name" | tr -cs 'A-Za-z0-9' '-')"
-  local args=(
-    --noconfirm
-    --clean
-    --onefile
-    --windowed
-    --name "$name"
-    --icon "$ICON_ICNS"
-    --paths "$ROOT_DIR/figureloom-bio"
-    --collect-data figureloom_bio
-    --add-data "$ICON_PNG:assets"
-    --distpath "$APP_BUILD"
-    --workpath "$WORK_ROOT/$safe_name"
-    --specpath "$SPEC_ROOT"
-  )
-  if [[ "$include_ide" == 1 ]]; then
-    args+=(--add-data "$ROOT_DIR/ide:ide")
-  fi
-  python3 -m PyInstaller "${args[@]}" "$ROOT_DIR/$entry"
+  python3 -m PyInstaller \
+    --noconfirm \
+    --clean \
+    --onefile \
+    --windowed \
+    --name "$name" \
+    --icon "$ICON_ICNS" \
+    --paths "$ROOT_DIR/figureloom-bio" \
+    --collect-data figureloom_bio \
+    --add-data "$ICON_PNG:assets" \
+    --distpath "$APP_BUILD" \
+    --workpath "$WORK_ROOT/$safe_name" \
+    --specpath "$SPEC_ROOT" \
+    "$ROOT_DIR/$entry"
   codesign --force --deep --sign - "$APP_BUILD/$name.app"
 }
 
@@ -93,9 +86,14 @@ python3 -m PyInstaller \
   "$ROOT_DIR/figureloom-bio/platform/flbio_entry.py"
 codesign --force --sign - "$APP_BUILD/flbio"
 
-build_app "FigureLoom Bio IDE" "figureloom-bio/platform/ide_entry.py" 1
+build_app "FigureLoom Bio IDE" "figureloom-bio/platform/ide_entry.py"
 build_app "Test FigureLoom Bio" "figureloom-bio/platform/test_entry.py"
 build_app "Install or Update FigureLoom Bio" "figureloom-bio/platform/manager_entry.py"
+
+if find "$APP_BUILD" -type f \( -iname '*.html' -o -iname '*.htm' -o -iname '*.js' -o -iname '*.mjs' \) -print -quit | grep -q .; then
+  echo "The macOS desktop build contains forbidden web-interface files." >&2
+  exit 1
+fi
 
 mkdir -p \
   "$PKG_ROOT/Applications" \
@@ -123,36 +121,26 @@ ln -s ../libexec/figureloom-bio/flbio "$PKG_ROOT/usr/local/bin/flbio"
 cp "$ROOT_DIR/figureloom-bio/macos/scripts/postinstall" "$SCRIPTS_ROOT/postinstall"
 chmod 0755 "$SCRIPTS_ROOT/postinstall"
 
-# Keep every FigureLoom Bio app fixed under /Applications. Component packages
-# otherwise consider app bundles relocatable and may update the temporary build
-# copies instead of installing the applications where users expect them.
 pkgbuild --analyze --root "$PKG_ROOT" "$COMPONENT_PLIST"
 python3 - "$COMPONENT_PLIST" <<'PY'
 from pathlib import Path
 import plistlib
 import sys
-
 path = Path(sys.argv[1])
-with path.open("rb") as handle:
+with path.open('rb') as handle:
     components = plistlib.load(handle)
-
 fixed = []
 for component in components:
-    bundle_path = str(component.get("RootRelativeBundlePath", ""))
-    normalized_path = bundle_path.removeprefix("./")
-    if normalized_path.startswith("Applications/") and normalized_path.endswith(".app"):
-        component["BundleIsRelocatable"] = False
-        component["BundleIsVersionChecked"] = False
-        component["BundleOverwriteAction"] = "upgrade"
+    bundle_path = str(component.get('RootRelativeBundlePath', ''))
+    normalized_path = bundle_path.removeprefix('./')
+    if normalized_path.startswith('Applications/') and normalized_path.endswith('.app'):
+        component['BundleIsRelocatable'] = False
+        component['BundleIsVersionChecked'] = False
+        component['BundleOverwriteAction'] = 'upgrade'
         fixed.append(normalized_path)
-
 if len(fixed) != 3:
-    raise SystemExit(
-        "Expected three FigureLoom Bio applications in the component plist, "
-        f"found {len(fixed)}: {fixed}; raw components: {components}"
-    )
-
-with path.open("wb") as handle:
+    raise SystemExit(f'Expected three FigureLoom Bio applications, found {len(fixed)}: {fixed}')
+with path.open('wb') as handle:
     plistlib.dump(components, handle, fmt=plistlib.FMT_XML, sort_keys=False)
 PY
 
