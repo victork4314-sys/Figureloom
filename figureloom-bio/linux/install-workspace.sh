@@ -15,6 +15,9 @@ IDE_LAUNCHER="/usr/local/bin/figureloom-bio-ide"
 TEST_LAUNCHER="/usr/local/bin/figureloom-bio-test"
 INSTALLER_LAUNCHER="/usr/local/bin/figureloom-bio-installer"
 UPDATE_WORKER="/usr/local/libexec/figureloom-bio-update"
+ICON_SOURCE="$SOURCE_DIR/figureloom-bio/linux/assets/figureloom-bio.png"
+ICON_DIR="/usr/share/icons/hicolor/256x256/apps"
+ICON_PATH="$ICON_DIR/figureloom-bio.png"
 TARGET_USER="${FIGURELOOM_TARGET_USER:-${SUDO_USER:-}}"
 PACKAGE_INSTALL="${FIGURELOOM_PACKAGE_INSTALL:-0}"
 NO_APT="${FIGURELOOM_NO_APT:-0}"
@@ -25,6 +28,10 @@ if [[ ! -f "$SOURCE_DIR/figureloom-bio/pyproject.toml" || ! -f "$SOURCE_DIR/ide/
 fi
 if [[ ! -f "$SOURCE_DIR/figureloom-bio/linux/installer-window.py" || ! -f "$SOURCE_DIR/figureloom-bio/linux/update-worker.sh" ]]; then
   echo "The FigureLoom Bio installer-window files are missing from: $SOURCE_DIR" >&2
+  exit 1
+fi
+if [[ ! -f "$ICON_SOURCE" ]]; then
+  echo "The FigureLoom Bio icon is missing from: $ICON_SOURCE" >&2
   exit 1
 fi
 
@@ -193,6 +200,13 @@ exit "$status"
 EOF
 chmod 0755 "$TEST_LAUNCHER"
 
+echo "PROGRESS 54 Installing the FigureLoom Bio application icon"
+mkdir -p "$ICON_DIR"
+install -m 0644 "$ICON_SOURCE" "$ICON_PATH"
+if command -v gtk-update-icon-cache >/dev/null 2>&1; then
+  gtk-update-icon-cache -q /usr/share/icons/hicolor >/dev/null 2>&1 || true
+fi
+
 echo "PROGRESS 58 Adding desktop and application-menu icons"
 mkdir -p /usr/share/applications
 cat > /usr/share/applications/figureloom-bio-ide.desktop <<EOF
@@ -202,7 +216,7 @@ Version=1.0
 Name=FigureLoom Bio IDE
 Comment=Write and run plain-English biology programs
 Exec=$IDE_LAUNCHER
-Icon=$SITE_DIR/favicon.ico
+Icon=figureloom-bio
 Terminal=false
 Categories=Development;Science;Education;
 StartupNotify=true
@@ -215,7 +229,7 @@ Version=1.0
 Name=Test FigureLoom Bio
 Comment=Run the automatic FigureLoom Bio installation test
 Exec=$TEST_LAUNCHER
-Icon=$SITE_DIR/favicon.ico
+Icon=figureloom-bio
 Terminal=true
 Categories=Development;Science;Education;
 StartupNotify=true
@@ -228,7 +242,7 @@ Version=1.0
 Name=Install or Update FigureLoom Bio
 Comment=Install, update, repair, and test FigureLoom Bio
 Exec=$INSTALLER_LAUNCHER
-Icon=$SITE_DIR/favicon.ico
+Icon=figureloom-bio
 Terminal=false
 Categories=Development;Science;Education;
 StartupNotify=true

@@ -156,6 +156,7 @@ case "${1:-}" in
       /usr/local/bin/figureloom-bio-test \
       /usr/local/bin/figureloom-bio-installer \
       /usr/local/libexec/figureloom-bio-update \
+      /usr/share/icons/hicolor/256x256/apps/figureloom-bio.png \
       /usr/share/applications/figureloom-bio-ide.desktop \
       /usr/share/applications/figureloom-bio-test.desktop \
       /usr/share/applications/figureloom-bio-installer.desktop
