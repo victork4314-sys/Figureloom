@@ -70,7 +70,7 @@ def render() -> str:
     lines.extend([
         "## Installed-tool commands",
         "",
-        "Tool-backed microbiology sentences and the general `Run the tool ...` sentence require **Allow installed tools** in the desktop IDE or `--allow-tools` in the terminal. The corresponding scientific program must also be installed on the computer. The exhaustive audit verifies that each sentence parses, dispatches to the correct tool and arguments, and handles its expected files; it does not claim to replace validation of the external scientific software itself.",
+        "Approved microbiology sentences use fixed, validated command shapes. The general `Run the tool ...` sentence requires **Allow installed tools** in the desktop IDE or `--allow-tools` in the terminal. The requested program must also be installed on the computer.",
         "",
         "See [Install FigureLoom Bio](FigureLoom-Bio-Easy-Install) for the desktop downloads and [FigureLoom Bio](FigureLoom-Bio) for tutorials and complete workflow examples.",
         "",
