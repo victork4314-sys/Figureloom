@@ -13,6 +13,35 @@
   if (!grid || !search || !themeSelect || !count) return;
 
   let manifest = null;
+  let aliases = [];
+
+  const THEME_BY_ACTION = Object.freeze({
+    say:'program', show_warning:'program',
+    open_file:'files', show_file:'files', show_result:'files', save_file:'files',
+    check_file:'files', count_file:'files', copy_file:'files', rename_file:'files',
+    keep_rows:'tables', remove_rows:'tables', keep_columns:'tables', order_rows:'tables',
+    largest_first:'tables', smallest_first:'tables', remove_duplicates:'tables', replace_empty:'tables',
+    keep_min_length:'sequences', remove_shorter:'sequences', keep_strict_length:'sequences',
+    find_open_reading_frames:'sequences', find_palindromes:'sequences',
+    find_repeated_sequences:'sequences', join_sequences:'sequences',
+    compare_current_sequences:'alignment', show_alignment:'alignment',
+    read_statistic:'fastq', check_quality:'fastq', show_quality_report:'fastq',
+    remove_low_quality_default:'fastq', trim_start:'fastq', trim_end:'fastq',
+    builtin_microbiology_prepare_reads:'microbiology', assemble_current_bacterial_genome:'microbiology',
+    annotate_current_file:'microbiology', find_resistance_current_file:'microbiology',
+    find_virulence_current_file:'microbiology', identify_current_file:'microbiology',
+    find_plasmids_current_file:'microbiology',
+    find_variants:'variants', show_variants:'variants',
+    find_genes:'genes', show_genes:'genes',
+    find_signal_peptides:'proteins', find_transmembrane_regions:'proteins',
+    find_pcr_primers:'pcr', check_primers:'pcr', show_primers:'pcr',
+    build_phylogenetic_tree:'phylogenetics', show_tree:'phylogenetics',
+    summary_statistic:'statistics', calculate_minimum:'statistics', calculate_maximum:'statistics',
+    normalize_counts:'statistics', compare_groups:'statistics', permutation_p_value:'statistics',
+    histogram:'figures', create_histogram:'figures', bar_chart:'figures', create_bar_chart:'figures',
+    scatter_plot:'figures', create_scatter_plot:'figures', grouped_box_plot:'figures', box_plot:'figures',
+    heat_map_columns:'figures', heat_map:'figures', pca_plot:'figures', volcano_plot:'figures',
+  });
 
   function insertSource(source) {
     const start = editor.selectionStart;
@@ -35,33 +64,51 @@
 
   function icon(themeId) {
     return ({
-      program:'▶',
-      files:'📁',
-      tables:'▦',
-      sequences:'🧬',
-      fastq:'≋',
-      microbiology:'🦠',
-      decisions:'◆',
-      tools:'⌘',
+      program:'▶', files:'📁', tables:'▦', sequences:'🧬', fastq:'≋',
+      microbiology:'🦠', alignment:'⇄', variants:'◇', genes:'⌁', proteins:'∿',
+      pcr:'◎', phylogenetics:'⑂', statistics:'∑', figures:'▥', decisions:'◆', tools:'⌘',
     })[themeId] || '•';
   }
 
   function refreshThemes() {
     const current = themeSelect.value;
     themeSelect.replaceChildren(new Option('All themes', ''));
-    for (const theme of manifest.themes) {
-      themeSelect.append(new Option(theme.title, theme.id));
-    }
+    for (const theme of manifest.themes) themeSelect.append(new Option(theme.title, theme.id));
     if (manifest.themes.some((theme) => theme.id === current)) themeSelect.value = current;
+  }
+
+  function aliasCommands(api) {
+    const canonical = new Set(manifest.commands.map((command) => command.example.toLowerCase()));
+    const output = [];
+    for (const rule of api.rules) {
+      const theme = THEME_BY_ACTION[rule.action] || 'program';
+      for (const [index, example] of (rule.examples || []).entries()) {
+        if (canonical.has(String(example).toLowerCase())) continue;
+        output.push(Object.freeze({
+          id:`wording-${rule.id}-${index + 1}`,
+          theme,
+          example:String(example),
+          aliasRule:rule.id,
+          acceptedForm:true,
+        }));
+      }
+    }
+    return output;
+  }
+
+  function commands() {
+    return manifest ? [...manifest.commands, ...aliases] : [];
   }
 
   function render() {
     if (!manifest) return;
     const wanted = search.value.trim().toLowerCase();
     const selectedTheme = themeSelect.value;
-    const visible = manifest.commands.filter((command) => {
+    const all = commands();
+    const visible = all.filter((command) => {
       if (selectedTheme && command.theme !== selectedTheme) return false;
-      const haystack = `${command.id} ${themeTitle(command.theme)} ${command.example}`.toLowerCase();
+      const wording = command.acceptedForm ? 'accepted wording natural words synonym' : 'canonical';
+      const haystack = `${command.id} ${themeTitle(command.theme)} ${command.example} ${wording}`.toLowerCase();
       return !wanted || haystack.includes(wanted);
     });
 
@@ -70,11 +117,13 @@
       const card = document.createElement('article');
       card.className = 'addon-card sentence-card';
       card.dataset.languageCommand = command.id;
-      card.innerHTML = '<div class="addon-card-icon" aria-hidden="true"></div><div class="addon-card-copy"><div class="addon-card-title"><h3></h3><code></code></div><p></p><div class="addon-card-meta"><span>Included</span></div></div>';
+      if (command.acceptedForm) card.dataset.acceptedWording = 'true';
+      card.innerHTML = '<div class="addon-card-icon" aria-hidden="true"></div><div class="addon-card-copy"><div class="addon-card-title"><h3></h3><code></code></div><p></p><div class="addon-card-meta"><span></span></div></div>';
       card.querySelector('.addon-card-icon').textContent = icon(command.theme);
       card.querySelector('h3').textContent = command.example.replace(/[.:]$/, '');
       card.querySelector('code').textContent = themeTitle(command.theme);
       card.querySelector('p').textContent = command.example;
+      card.querySelector('.addon-card-meta span').textContent = command.acceptedForm ? 'Accepted wording' : 'Included';
       const add = document.createElement('button');
       add.type = 'button';
       add.textContent = 'Add';
@@ -93,7 +142,7 @@
       empty.textContent = 'No built-in sentences match that search.';
       grid.append(empty);
     }
-    count.textContent = manifest.commands.length.toLocaleString();
+    count.textContent = all.length.toLocaleString();
   }
 
   function scheduleRender() {
@@ -110,4 +159,13 @@
     render();
     dialog.dataset.canonicalLanguageCatalog = 'true';
   });
+
+  const aliasReady = window.FigureLoomBioLanguageAliasesReady;
+  if (aliasReady) {
+    aliasReady.then((api) => {
+      aliases = aliasCommands(api);
+      render();
+      dialog.dataset.exhaustiveLanguageVocabulary = 'true';
+    });
+  }
 })();

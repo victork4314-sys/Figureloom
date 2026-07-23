@@ -24,6 +24,10 @@ jobs:
           node --check ide/ide-decision-core.js
           node --check ide/ide-current-file-language.js
           node --check ide/ide-language-manifest.js
+          node --check ide/ide-language-aliases.js
+          node --check ide/ide-generated-current-file.js
+          node --check ide/ide-language-translation-bridge.js
+          node --check ide/ide-language-highlighter.js
           node --check ide/ide-language-catalog-ui.js
           node --check ide/ide-language-blocks-ui.js
           node --check ide/ide-analysis-language.js
@@ -38,6 +42,7 @@ jobs:
           node --check scripts/validate-bio-current-file.mjs
           node --check scripts/validate-bio-current-file-runtime.mjs
           node --check scripts/validate-bio-language-manifest.mjs
+          node --check scripts/validate-bio-language-aliases.mjs
           node --check scripts/validate-bio-statement-registry.mjs
           node --check scripts/validate-bio-analysis-language.mjs
           node --check scripts/validate-bio-complete-language.mjs
@@ -49,6 +54,9 @@ jobs:
 
       - name: Validate shared language manifest
         run: node scripts/validate-bio-language-manifest.mjs
+
+      - name: Validate every accepted browser wording and execution family
+        run: node scripts/validate-bio-language-aliases.mjs
 
       - name: Validate completed documentation and wiki sync
         run: node scripts/validate-bio-documentation.mjs
@@ -102,6 +110,11 @@ jobs:
         run: |
           cd figureloom-bio
           python3 -m unittest discover -s tests -p 'test_control_flow.py' -v
+
+      - name: Run exhaustive accepted-language tests
+        run: |
+          cd figureloom-bio
+          python3 -m unittest discover -s tests -p 'test_language_aliases.py' -v
 
       - name: Run completed terminal language tests
         run: |

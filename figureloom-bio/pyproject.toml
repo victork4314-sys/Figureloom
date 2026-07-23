@@ -19,4 +19,4 @@ flbio = "figureloom_bio.cli:main"
 include = ["figureloom_bio*"]
 
 [tool.setuptools.package-data]
-figureloom_bio = ["language_manifest.json"]
+figureloom_bio = ["language_manifest.json", "language_aliases.json"]
