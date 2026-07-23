@@ -1,0 +1,49 @@
+#!/bin/bash
+set -euo pipefail
+
+valid_user() {
+  local candidate="${1:-}"
+  [[ -n "$candidate" && "$candidate" != "_mbsetupuser" && "$candidate" != "loginwindow" ]] || return 1
+  id "$candidate" >/dev/null 2>&1
+}
+
+TARGET_USER="${FIGURELOOM_TARGET_USER:-${SUDO_USER:-}}"
+if ! valid_user "$TARGET_USER"; then
+  TARGET_USER="$(stat -f '%Su' /dev/console 2>/dev/null || true)"
+fi
+if ! valid_user "$TARGET_USER"; then
+  TARGET_USER="root"
+fi
+
+if [[ "$TARGET_USER" == root ]]; then
+  TARGET_HOME="/var/root"
+else
+  TARGET_HOME="$(dscl . -read "/Users/$TARGET_USER" NFSHomeDirectory 2>/dev/null | awk '{print $2}')"
+  [[ -n "$TARGET_HOME" ]] || TARGET_HOME="/Users/$TARGET_USER"
+fi
+DESKTOP="$TARGET_HOME/Desktop"
+TEST_FOLDER="$DESKTOP/FigureLoom Bio Test Files"
+mkdir -p "$DESKTOP"
+
+ln -sfn "/Applications/FigureLoom Bio IDE.app" "$DESKTOP/FigureLoom Bio IDE.app"
+ln -sfn "/Applications/Test FigureLoom Bio.app" "$DESKTOP/Test FigureLoom Bio.app"
+ln -sfn "/Applications/Install or Update FigureLoom Bio.app" "$DESKTOP/Install or Update FigureLoom Bio.app"
+
+run_as_user() {
+  if [[ "$TARGET_USER" == root ]]; then
+    HOME="$TARGET_HOME" "$@"
+  else
+    sudo -u "$TARGET_USER" HOME="$TARGET_HOME" "$@"
+  fi
+}
+
+run_as_user /usr/local/bin/flbio test-files "$TEST_FOLDER"
+run_as_user /usr/local/bin/flbio doctor
+run_as_user /usr/local/bin/flbio quick-test "$TEST_FOLDER"
+
+chown -h "$TARGET_USER":staff \
+  "$DESKTOP/FigureLoom Bio IDE.app" \
+  "$DESKTOP/Test FigureLoom Bio.app" \
+  "$DESKTOP/Install or Update FigureLoom Bio.app" 2>/dev/null || true
+chown -R "$TARGET_USER":staff "$TEST_FOLDER" 2>/dev/null || true
+exit 0
