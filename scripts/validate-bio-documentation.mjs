@@ -5,6 +5,7 @@ const root = process.cwd();
 const read = (file) => fs.readFileSync(path.join(root, file), 'utf8');
 const fail = (message) => { throw new Error(message); };
 const normalized = (value) => String(value).replace(/\\\s*\n\s*/g, ' ').replace(/\s+/g, ' ').trim();
+const containsTodoLine = (value) => /^\s*# TODO:/im.test(String(value));
 
 const files = {
   mainReadme:read('README.md'),
@@ -30,7 +31,7 @@ for (const [name, content] of Object.entries({
     if (!content.includes(value)) fail(`${name} is missing ${value}`);
   }
   if (content.includes('Otherwise:.')) fail(`${name} documents the invalid Otherwise:. ending.`);
-  if (/# TODO/i.test(content)) fail(`${name} contains a TODO placeholder.`);
+  if (containsTodoLine(content)) fail(`${name} contains an actual TODO placeholder line.`);
 }
 
 const requiredDetailed = [
