@@ -61,6 +61,11 @@ class DesktopToolsTests(unittest.TestCase):
         with TemporaryDirectory() as temporary:
             py_compile.compile(installer, cfile=str(Path(temporary) / "installer-window.pyc"), doraise=True)
 
+    def test_linux_icon_asset_exists(self) -> None:
+        icon = Path(__file__).resolve().parents[1] / "linux" / "assets" / "figureloom-bio.png"
+        self.assertTrue(icon.is_file())
+        self.assertGreater(icon.stat().st_size, 0)
+
     def test_workspace_installer_creates_manager_launcher(self) -> None:
         root = Path(__file__).resolve().parents[2]
         linux = root / "figureloom-bio" / "linux"
@@ -73,6 +78,9 @@ class DesktopToolsTests(unittest.TestCase):
         self.assertIn("figureloom-bio-installer", installer)
         self.assertIn("figureloom-bio-update", installer)
         self.assertIn("FIGURELOOM_PACKAGE_INSTALL", installer)
+        self.assertIn("figureloom-bio/linux/assets/figureloom-bio.png", installer)
+        self.assertEqual(installer.count("Icon=figureloom-bio"), 3)
+        self.assertNotIn("Icon=$SITE_DIR/favicon.ico", installer)
         self.assertNotIn("kasm-default-profile", installer)
         self.assertNotIn('chown -R "$owner":"$owner" "$desktop"', installer)
         self.assertFalse((linux / "install-kasm-image.sh").exists())
@@ -83,6 +91,7 @@ class DesktopToolsTests(unittest.TestCase):
         self.assertIn("Package: $PACKAGE_NAME", package_builder)
         self.assertIn("FigureLoom-Bio-Installer.deb", package_builder)
         self.assertIn("FIGURELOOM_PACKAGE_INSTALL=1", package_builder)
+        self.assertIn("/usr/share/icons/hicolor/256x256/apps/figureloom-bio.png", package_builder)
         self.assertIn(DOWNLOAD_URL, documentation)
         self.assertIn(DOWNLOAD_URL, easy_install)
         self.assertIn("Download FigureLoom Bio", easy_install)
