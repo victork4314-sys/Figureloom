@@ -43,7 +43,6 @@ jobs:
           node --check scripts/validate-bio-current-file-runtime.mjs
           node --check scripts/validate-bio-language-manifest.mjs
           node --check scripts/validate-bio-language-aliases.mjs
-          node --check scripts/validate-bio-language-aliases-detailed.mjs
           node --check scripts/validate-bio-statement-registry.mjs
           node --check scripts/validate-bio-analysis-language.mjs
           node --check scripts/validate-bio-complete-language.mjs
@@ -57,17 +56,7 @@ jobs:
         run: node scripts/validate-bio-language-manifest.mjs
 
       - name: Validate every accepted browser wording and execution family
-        run: |
-          set -o pipefail
-          node scripts/validate-bio-language-aliases-detailed.mjs 2>&1 | tee language-alias-browser.log
-
-      - name: Upload exhaustive browser vocabulary output
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: language-alias-browser-log
-          path: language-alias-browser.log
-          if-no-files-found: error
+        run: node scripts/validate-bio-language-aliases.mjs
 
       - name: Validate completed documentation and wiki sync
         run: node scripts/validate-bio-documentation.mjs
@@ -124,17 +113,8 @@ jobs:
 
       - name: Run exhaustive accepted-language tests
         run: |
-          set -o pipefail
           cd figureloom-bio
-          python3 -m unittest discover -s tests -p 'test_language_aliases.py' -v 2>&1 | tee ../language-alias-terminal.log
-
-      - name: Upload exhaustive terminal vocabulary output
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: language-alias-terminal-log
-          path: language-alias-terminal.log
-          if-no-files-found: error
+          python3 -m unittest discover -s tests -p 'test_language_aliases.py' -v
 
       - name: Run completed terminal language tests
         run: |
@@ -148,14 +128,5 @@ jobs:
 
       - name: Run complete FigureLoom Bio tests
         run: |
-          set -o pipefail
           cd figureloom-bio
-          python3 -m unittest discover -s tests -v 2>&1 | tee ../figureloom-bio-complete-tests.log
-
-      - name: Upload complete FigureLoom Bio test output
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: figureloom-bio-complete-tests-log
-          path: figureloom-bio-complete-tests.log
-          if-no-files-found: error
+          python3 -m unittest discover -s tests -v
