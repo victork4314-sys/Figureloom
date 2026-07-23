@@ -17,7 +17,7 @@ class PlatformInstallerTests(unittest.TestCase):
             *sorted((self.root / "figureloom-bio" / "platform").glob("*_entry.py")),
             self.root / "figureloom-bio" / "scripts" / "build-platform-icons.py",
         ]
-        self.assertGreaterEqual(len(files), 10)
+        self.assertGreaterEqual(len(files), 13)
         for path in files:
             with self.subTest(path=path.name):
                 py_compile.compile(path, doraise=True)
@@ -30,6 +30,7 @@ class PlatformInstallerTests(unittest.TestCase):
         macos = (self.root / "figureloom-bio" / "macos" / "build-installer.sh").read_text(encoding="utf-8")
 
         self.assertIn("run_native_ide", entry)
+        self.assertIn("install_native_account", entry)
         self.assertIn("PySide6", native)
         self.assertIn("native_self_test", native)
         self.assertIn("QT_QPA_PLATFORM", native)
@@ -61,6 +62,27 @@ class PlatformInstallerTests(unittest.TestCase):
         self.assertIn('"browser_server": False', native)
         self.assertIn('"bundled_web_interface": False', native)
 
+    def test_native_account_has_local_and_encrypted_cloud_parity(self) -> None:
+        account = (self.root / "figureloom-bio" / "figureloom_bio" / "native_account.py").read_text(encoding="utf-8")
+        cloud = (self.root / "figureloom-bio" / "figureloom_bio" / "native_cloud.py").read_text(encoding="utf-8")
+        entry = (self.root / "figureloom-bio" / "platform" / "ide_entry.py").read_text(encoding="utf-8")
+        for feature in (
+            "sign_in", "create_account", "forgot_password", "sign_out",
+            "save_device", "save_cloud", "save_cloud_as", "refresh_cloud",
+            "open_local", "delete_local", "open_cloud", "delete_cloud",
+            "local_gallery", "cloud_gallery",
+        ):
+            self.assertIn(f'"{feature}"', account)
+        self.assertIn("get_bio_project_key", cloud)
+        self.assertIn("AESGCM", cloud)
+        self.assertIn('"activeFile"', cloud)
+        self.assertIn('"deleted": []', cloud)
+        self.assertIn("revision", cloud)
+        self.assertIn("SessionStore", cloud)
+        self.assertIn("install_runtime_fixes", entry)
+        for forbidden in ("QWebEngine", "QWebView", "WebView", "<html", "javascript:"):
+            self.assertNotIn(forbidden, account + cloud + entry)
+
     def test_platform_icon_is_wired_into_windows_and_macos(self) -> None:
         icon = self.root / "figureloom-bio" / "linux" / "assets" / "figureloom-bio.png"
         windows_build = (self.root / "figureloom-bio" / "windows" / "build-installer.ps1").read_text(encoding="utf-8")
@@ -85,6 +107,7 @@ class PlatformInstallerTests(unittest.TestCase):
         for name in ("flbio", "FigureLoom Bio IDE", "Test FigureLoom Bio", "Install or Update FigureLoom Bio"):
             self.assertIn(name, build + setup)
         self.assertIn("PySide6", build)
+        self.assertIn("cryptography", build)
         self.assertIn("quick-test", setup)
         self.assertIn("FigureLoom Bio Test Files", setup)
         self.assertIn("PrivilegesRequired=lowest", setup)
@@ -95,6 +118,7 @@ class PlatformInstallerTests(unittest.TestCase):
         self.assertIn("Apple-Silicon", build)
         self.assertIn("Intel", build)
         self.assertIn("PySide6", build)
+        self.assertIn("cryptography", build)
         for name in ("FigureLoom Bio IDE", "Test FigureLoom Bio", "Install or Update FigureLoom Bio"):
             self.assertIn(name, build)
             self.assertIn(name, postinstall)
