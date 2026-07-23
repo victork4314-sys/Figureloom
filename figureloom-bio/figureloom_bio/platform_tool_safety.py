@@ -9,6 +9,27 @@ def install_platform_tool_safety(platform_tools_module: Any) -> None:
     if getattr(platform_tools_module, "_figureloom_painted_tool_tests_installed", False):
         return
 
+    manager_class = platform_tools_module.ManagerWindow
+    if not getattr(manager_class, "_figureloom_safe_installer_handoff", False):
+        original_download_finished = manager_class._download_finished
+        original_thread_finished = manager_class._download_thread_finished
+
+        def safe_download_finished(self: Any, success: bool, message: str, path: str) -> None:
+            self._figureloom_close_after_installer = False
+            original_download_finished(self, success, message, path)
+            if success and self.status.objectName() == "success":
+                self._figureloom_close_after_installer = True
+
+        def safe_thread_finished(self: Any) -> None:
+            original_thread_finished(self)
+            if getattr(self, "_figureloom_close_after_installer", False):
+                self._figureloom_close_after_installer = False
+                platform_tools_module.QTimer.singleShot(0, self.close)
+
+        manager_class._download_finished = safe_download_finished
+        manager_class._download_thread_finished = safe_thread_finished
+        manager_class._figureloom_safe_installer_handoff = True
+
     def painted_test_window_self_test() -> int:
         app = platform_tools_module.application()
         window = platform_tools_module.TestWindow(auto_run=False)
