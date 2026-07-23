@@ -3,9 +3,15 @@ import path from 'node:path';
 
 const root = process.cwd();
 const read = (file) => fs.readFileSync(path.join(root, file), 'utf8');
-const fail = (message) => { throw new Error(message); };
 const normalized = (value) => String(value).replace(/\\\s*\n\s*/g, ' ').replace(/\s+/g, ' ').trim();
-const containsTodoLine = (value) => /^\s*# TODO:/im.test(String(value));
+const containsTodoLine = (value) => /^\s*#\s*TODO\b/im.test(String(value));
+const errors = [];
+const requireText = (name, content, value) => {
+  if (!content.includes(value)) errors.push(`${name} is missing ${value}`);
+};
+const requireNormalized = (name, content, value) => {
+  if (!normalized(content).includes(normalized(value))) errors.push(`${name} is missing ${value}`);
+};
 
 const files = {
   mainReadme:read('README.md'),
@@ -27,11 +33,9 @@ for (const [name, content] of Object.entries({
   packageReadme:files.packageReadme,
   wiki:files.wiki,
 })) {
-  for (const value of requiredEverywhere) {
-    if (!content.includes(value)) fail(`${name} is missing ${value}`);
-  }
-  if (content.includes('Otherwise:.')) fail(`${name} documents the invalid Otherwise:. ending.`);
-  if (containsTodoLine(content)) fail(`${name} contains an actual TODO placeholder line.`);
+  for (const value of requiredEverywhere) requireText(name, content, value);
+  if (content.includes('Otherwise:.')) errors.push(`${name} documents the invalid Otherwise:. ending.`);
+  if (containsTodoLine(content)) errors.push(`${name} contains an actual TODO placeholder line.`);
 }
 
 const requiredDetailed = [
@@ -45,38 +49,39 @@ const requiredDetailed = [
   'Find PCR primers.',
   'Translate a program',
   '--to powershell',
-  'seqkit fastp spades quast prokka abricate kraken2 mob_suite',
 ];
 for (const [name, content] of Object.entries({ packageReadme:files.packageReadme, wiki:files.wiki })) {
-  const comparable = normalized(content);
-  for (const value of requiredDetailed) {
-    if (!comparable.includes(normalized(value))) fail(`${name} is missing ${value}`);
+  for (const value of requiredDetailed) requireNormalized(name, content, value);
+  for (const tool of ['seqkit','fastp','spades','quast','prokka','abricate','kraken2','mob_suite']) {
+    requireText(name, content, tool);
   }
 }
 
 for (const target of ['python','r','bash','snakemake','nextflow','julia','ruby','perl','powershell']) {
-  if (!files.packageReadme.includes(`--to ${target}`)) fail(`The package README is missing ${target} translation.`);
-  if (!files.wiki.includes(`--to ${target}`)) fail(`The wiki is missing ${target} translation.`);
+  requireText('packageReadme', files.packageReadme, `--to ${target}`);
+  requireText('wiki', files.wiki, `--to ${target}`);
 }
 
 if (!/\['Scientific work','FigureLoom-Bio','FigureLoom Bio'\]/.test(files.wikiRuntime)) {
-  fail('The hosted Help center does not register the FigureLoom Bio manual.');
+  errors.push('The hosted Help center does not register the FigureLoom Bio manual.');
 }
 if (!files.wikiRuntime.includes("fetch(`./${slug}.md`")) {
-  fail('The hosted Help center is not loading the canonical Markdown pages.');
+  errors.push('The hosted Help center is not loading the canonical Markdown pages.');
 }
-if (!files.wikiSync.includes("cp wiki/*.md .wiki-repository/")) {
-  fail('The GitHub wiki sync does not copy the canonical Markdown pages.');
+if (!files.wikiSync.includes('cp wiki/*.md .wiki-repository/')) {
+  errors.push('The GitHub wiki sync does not copy the canonical Markdown pages.');
 }
-if (!files.wikiSync.includes("${{ github.repository }}.wiki.git")) {
-  fail('The GitHub wiki sync does not target the repository wiki.');
+if (!files.wikiSync.includes('${{ github.repository }}.wiki.git')) {
+  errors.push('The GitHub wiki sync does not target the repository wiki.');
 }
 
-for (const content of [files.packageReadme, files.wiki]) {
-  if (!content.includes('There is not a PyPI release yet.')) {
-    fail('The installation guide falsely implies that a PyPI release exists.');
-  }
-  if (!content.includes('the file')) fail('The current-result wording is missing.');
+for (const [name, content] of Object.entries({ packageReadme:files.packageReadme, wiki:files.wiki })) {
+  requireText(name, content, 'There is not a PyPI release yet.');
+  requireText(name, content, 'the file');
+}
+
+if (errors.length) {
+  throw new Error(`FigureLoom Bio documentation validation found ${errors.length} problem(s):\n- ${errors.join('\n- ')}`);
 }
 
 console.log('FigureLoom Bio documentation passed across the main README, package README, hosted manual, and GitHub wiki sync.');
