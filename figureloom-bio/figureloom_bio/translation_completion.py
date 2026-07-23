@@ -28,7 +28,7 @@ def install_translation_completion() -> None:
     translation is not available, the generated target embeds the original
     ``.flbio`` source and runs it through the installed FigureLoom Bio engine.
     This preserves decisions, loops, recipes, current-file references, future
-    built-in sentences, and exact native behavior without generating ``TODO``
+    built-in sentences, and exact native behavior without generating placeholder
     code or pretending that an approximation is the same analysis.
     """
     if getattr(translator_module, "_translation_completion_installed", False):
@@ -36,6 +36,7 @@ def install_translation_completion() -> None:
 
     translator_module.TARGET_EXTENSIONS.update(EXTRA_TARGET_EXTENSIONS)
     translator_module.TARGET_LABELS.update(EXTRA_TARGET_LABELS)
+    translator_module.ShellPlan.warn = _runtime_required_warning
     original_translate_source = translator_module.translate_source
 
     def translate_source(
@@ -62,12 +63,23 @@ def install_translation_completion() -> None:
             normalized,
             program_name=program_name,
         )
-        if translated.warnings or "# TODO:" in translated.content:
+        if translated.warnings or "runtime required" in translated.content.casefold():
             return _runtime_translation(source, normalized, program_name)
         return translated
 
     translator_module.translate_source = translate_source
     translator_module._translation_completion_installed = True
+
+
+def _runtime_required_warning(
+    plan: translator_module.ShellPlan,
+    sentence: str,
+    reason: str,
+) -> None:
+    message = f"{sentence}: {reason}"
+    if message not in plan.warnings:
+        plan.warnings.append(message)
+    plan.lines.append(f"# FigureLoom Bio runtime required: {message}")
 
 
 def _runtime_translation(
