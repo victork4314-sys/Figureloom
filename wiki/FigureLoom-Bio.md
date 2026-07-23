@@ -1,57 +1,105 @@
 # FigureLoom Bio
 
-FigureLoom Bio is a plain-language programming system for tables, FASTA, FASTQ, paired reads, and larger genomics workflows. A program is a `.flbio` file made from ordinary instructions.
+FigureLoom Bio is a plain-English programming language for biological files, scientific tables, sequence analysis, microbiology workflows, statistics, and figures. Programs use the `.flbio` extension and can run in the browser IDE or from the terminal.
 
 ```flbio
-Open the file reads.fastq.
-Check the quality.
-Remove reads with low quality.
-Remove reads shorter than 50 bases.
-Save the result as clean-reads.fastq.
+Say Starting the bacterial genome analysis.
+
+Open the files forward.fastq and reverse.fastq as a pair.
+Check the file.
+Prepare bacterial reads.
+Make sure at least 4 reads remain.
+Save the file as clean-reads.fastq.
+
+Assemble the bacterial genome.
+Check the file.
+
+If the assembly has more than 4 contigs:
+    Show a warning saying The assembly is fragmented.
+Otherwise:
+    Say The assembly is compact.
+
+Annotate the file.
+Find resistance genes in the file.
+
+If resistance genes were found:
+    Show a warning saying Resistance genes were found.
+Otherwise:
+    Say No resistance genes were found.
+
+Show the file.
+Say The analysis is complete.
 ```
 
-The same program can be edited as text or with visual sentence blocks in the [FigureLoom Bio IDE](https://figureloom.org/ide/).
+The visible language stays simple. File handling, validation, statistics, plotting, optional command-line tools, and workflow translation stay underneath.
 
 ## Start in the browser IDE
 
-1. Open the FigureLoom Bio IDE.
-2. Press **Open examples** to load working examples, or press **Open** to add your own files.
-3. Open a `.flbio` program from the Files panel.
-4. Press **Blocks** to build visually, or edit the sentences directly.
-5. Press **Run** or **Run blocks**.
-6. Read the separate result cards on the right.
-7. Press **Export results** to download a standalone HTML report.
-8. Generated CSV, TSV, FASTA, and FASTQ files appear in Files.
+Open [FigureLoom Bio](https://figureloom.org/ide/).
 
-## Text and blocks are the same program
+1. Press **Open examples** to load the working example files, or press **Open** to add your own files.
+2. Open or create a `.flbio` program in the Files panel.
+3. Write ordinary instructions, press **Sentences** to browse the complete language, or press **Blocks** to build the same program visually.
+4. Press **Run**.
+5. Read the separate result cards on the right.
+6. Open generated CSV, TSV, FASTA, FASTQ, Newick, and SVG files from the Files panel.
+7. Press **Translate** to create another language or workflow file.
+8. Press **Export results** to download a standalone HTML report.
 
-The block editor does not create a second language. Every block is one real FigureLoom Bio sentence.
-
-```text
-Open the file [ reads.fastq ] .
-```
-
-That block writes this sentence into the open `.flbio` file:
-
-```flbio
-Open the file reads.fastq.
-```
-
-Changing a filename, number, column name, motif, or sequence name inside a block updates the text program immediately. Existing text programs can be opened as blocks. Unknown future sentences are preserved as custom blocks instead of being deleted.
-
-Blocks can be searched, added, edited, dragged into a new order, moved with the arrow controls, duplicated, and deleted. On iPad, drag from the large `⋮⋮` handle with a finger or Apple Pencil. The **Run blocks** button runs the same text program shown in the normal editor.
+The text editor, Blocks editor, and Sentences library use one canonical language catalog. A visual block writes a real `.flbio` sentence. It does not create a second format.
 
 ## Language rules
 
 - Put one instruction on each line.
-- End every instruction with a normal period.
+- End every normal instruction with a period.
+- End decision, loop, and recipe headers with a colon.
+- Never put a period after a colon. `Otherwise:` is correct; `Otherwise:.` is not.
+- Indent the contents of decisions, loops, and recipes with four spaces.
 - Blank lines are allowed.
-- A line beginning with `#` is a comment and is not run.
-- Filenames include their extension, such as `samples.csv`, `reads.fastq`, or `sequences.fasta`.
-- The repeat instruction must be the first instruction.
-- Table instructions need an open CSV or TSV table.
-- Sequence instructions need an open FASTA or FASTQ file.
-- Paired FASTQ instructions need a pair opened with the paired-file sentence.
+- A line beginning with `#` is a comment.
+- Include file extensions such as `.csv`, `.fastq`, `.fasta`, `.nwk`, or `.svg` when naming saved files.
+- The current result is called **the file**.
+- Everything belongs to one built-in language. There are no add-ons, packages, or activation sentences inside a program.
+
+```flbio
+If the result is not empty:
+    Show the file.
+Otherwise:
+    Show a warning saying The file is empty.
+```
+
+## The file
+
+`The file` means whatever result FigureLoom Bio is currently working on. It may be a table, FASTA file, FASTQ file, paired reads, alignment, variant table, gene table, tree, or another generated result.
+
+```flbio
+Open the file reads.fastq.
+Check the file.
+Prepare bacterial reads.
+Count the file.
+Show the file.
+Save the file as clean-reads.fastq.
+```
+
+When the current result is paired reads, this sentence:
+
+```flbio
+Save the file as clean-reads.fastq.
+```
+
+creates:
+
+```text
+clean-reads-forward.fastq
+clean-reads-reverse.fastq
+```
+
+Named results remain available when a program needs to keep more than one result:
+
+```flbio
+Call the result clean reads.
+Use the result clean reads.
+```
 
 ## Repeat a complete program
 
@@ -59,32 +107,223 @@ Blocks can be searched, added, edited, dragged into a new order, moved with the 
 Run this program 10 times.
 ```
 
-Put this sentence first. Everything after it runs ten times. Saved files are numbered automatically, such as `clean-reads-1.fastq` through `clean-reads-10.fastq`.
+Put this instruction first. Everything after it runs ten times. Saved files are numbered automatically so one run cannot overwrite another. Paired results number both files while keeping the pairs matched.
 
-The browser IDE allows up to 100 repeats in one run. The command-line engine allows up to 1,000.
+## Install the terminal engine
 
-## File and message commands
+FigureLoom Bio requires Python 3.10 or newer and Git for Git-based installs. `pipx` is recommended because it creates an isolated environment and makes `flbio` available as a normal command.
+
+There is not a PyPI release yet. The pinned command below installs the tested 0.7.0 code snapshot. The current-version command follows the repository’s `main` branch.
+
+### Windows PowerShell
+
+Install Python and Git first, then open PowerShell.
+
+```powershell
+py -m pip install --user pipx
+py -m pipx ensurepath
+```
+
+Close and reopen PowerShell. Install the pinned tested snapshot:
+
+```powershell
+pipx install "git+https://github.com/victork4314-sys/Figureloom.git@3508ad3ef9073a1c5bbd9fa03765260369784d61#subdirectory=figureloom-bio"
+flbio doctor
+```
+
+Install the current GitHub version instead:
+
+```powershell
+pipx install "git+https://github.com/victork4314-sys/Figureloom.git#subdirectory=figureloom-bio"
+flbio doctor
+```
+
+Open the browser IDE:
+
+```powershell
+Start-Process "https://figureloom.org/ide/"
+```
+
+### macOS Terminal
+
+With Homebrew installed:
+
+```bash
+brew install python git pipx
+pipx ensurepath
+```
+
+Close and reopen Terminal. Install the pinned tested snapshot:
+
+```bash
+pipx install "git+https://github.com/victork4314-sys/Figureloom.git@3508ad3ef9073a1c5bbd9fa03765260369784d61#subdirectory=figureloom-bio"
+flbio doctor
+```
+
+Install the current GitHub version instead:
+
+```bash
+pipx install "git+https://github.com/victork4314-sys/Figureloom.git#subdirectory=figureloom-bio"
+flbio doctor
+```
+
+Open the browser IDE:
+
+```bash
+open https://figureloom.org/ide/
+```
+
+### Ubuntu or Debian Linux
+
+```bash
+sudo apt update
+sudo apt install -y python3 python3-venv git pipx
+pipx ensurepath
+```
+
+Close and reopen the terminal. Install the pinned tested snapshot:
+
+```bash
+pipx install "git+https://github.com/victork4314-sys/Figureloom.git@3508ad3ef9073a1c5bbd9fa03765260369784d61#subdirectory=figureloom-bio"
+flbio doctor
+```
+
+Install the current GitHub version instead:
+
+```bash
+pipx install "git+https://github.com/victork4314-sys/Figureloom.git#subdirectory=figureloom-bio"
+flbio doctor
+```
+
+Open the browser IDE:
+
+```bash
+xdg-open https://figureloom.org/ide/
+```
+
+### Install from a local clone
+
+```bash
+git clone https://github.com/victork4314-sys/Figureloom.git
+cd Figureloom
+pipx install ./figureloom-bio
+flbio doctor
+```
+
+For development, use an editable virtual environment:
+
+```bash
+cd Figureloom/figureloom-bio
+python3 -m venv .venv
+. .venv/bin/activate
+python -m pip install -e .
+flbio doctor
+```
+
+Windows PowerShell activates that environment with:
+
+```powershell
+.\.venv\Scripts\Activate.ps1
+```
+
+## Verify, update, and uninstall
+
+Verify the installation and inspect the built-in catalog:
+
+```bash
+flbio doctor
+flbio sentences
+flbio sentences alignment
+flbio sentences statistics
+flbio sentences figures
+```
+
+A current-branch pipx installation remembers its Git source. Reinstall it to fetch and rebuild the current repository version:
+
+```bash
+pipx reinstall figureloom-bio
+flbio doctor
+```
+
+A pinned installation stays pinned. Move it to the current GitHub version with:
+
+```bash
+pipx uninstall figureloom-bio
+pipx install "git+https://github.com/victork4314-sys/Figureloom.git#subdirectory=figureloom-bio"
+flbio doctor
+```
+
+Uninstall:
+
+```bash
+pipx uninstall figureloom-bio
+```
+
+Uninstalling the command-line engine does not delete `.flbio` programs or result files.
+
+## Run a program
+
+Place a `.flbio` program and its input files in the same folder, then run:
+
+```bash
+flbio run program.flbio
+```
+
+Native commands run without extra permission. A sentence that launches an installed system tool requires explicit permission:
+
+```bash
+flbio run bacterial-analysis.flbio --allow-tools
+```
+
+Without `--allow-tools`, FigureLoom Bio stops and explains which command requested local tool access.
+
+## Optional bioinformatics tools
+
+The built-in table, sequence, FASTQ, alignment, variant, gene, primer, tree, statistics, and SVG-figure operations do not need outside programs.
+
+Tool-backed microbiology workflows can use:
+
+- `seqkit`
+- `fastp`
+- `spades.py` from SPAdes
+- `quast.py` from QUAST
+- `prokka`
+- `abricate`
+- `kraken2`
+- `mob_recon` from MOB-suite
+
+Install them in a conda-compatible environment on Linux or macOS:
+
+```bash
+conda create -n figureloom-bio-tools -c conda-forge -c bioconda \
+  seqkit fastp spades quast prokka abricate kraken2 mob_suite
+conda activate figureloom-bio-tools
+flbio doctor
+```
+
+The same package names work with `mamba` or `micromamba`. Native Windows users should use WSL or the FigureLoom Linux VM for tools without a normal Windows build.
+
+## File and table commands
 
 ```flbio
 Open the file samples.csv.
-Open the file sequences.fasta.
-Open the file reads.fastq.
-Open the files forward.fastq and reverse.fastq as a pair.
-Say Starting the analysis.
+Open the files first.fasta and second.fasta together.
+Merge the files first.fasta and second.fasta.
+Merge the result with more.fasta.
+Add the rows from more-samples.csv.
+Copy the file as backup.csv.
+Rename the file to renamed.csv.
+List the files.
 ```
-
-`Open the file ...` accepts CSV, TSV, FASTA, and FASTQ. The paired form requires two FASTQ files with the same number of reads.
-
-## Table commands
 
 ```flbio
 Keep only rows marked treated under condition.
 Remove rows marked failed under status.
-Keep only the columns sample, condition, and status.
+Keep only the columns sample, condition, and score.
 Rename the column condition to group.
 Put the rows in order by age.
-Put the largest age first.
-Put the smallest age first.
+Put the largest score first.
+Put the smallest score first.
 Remove duplicate rows using sample.
 Replace empty values under status with unknown.
 Combine it with metadata.csv using sample.
@@ -94,30 +333,16 @@ Show the result.
 Save the result as clean-samples.csv.
 ```
 
-### What the table commands do
-
-- **Keep only rows marked** keeps exact matches under the named column.
-- **Remove rows marked** removes exact matches.
-- **Keep only the columns** keeps the listed columns in that order.
-- **Rename the column** changes one column name.
-- **Put the rows in order by** sorts text naturally and numbers numerically.
-- **Put the largest or smallest first** controls the direction.
-- **Remove duplicate rows using** keeps the first row for each value.
-- **Replace empty values** fills blank cells under one column.
-- **Combine it with** keeps current rows and adds matching information from another table.
-- **Change** replaces one exact value under one column.
-
 CSV output uses `.csv`. Tab-separated output uses `.tsv`.
 
 ## FASTA and general sequence commands
 
 ```flbio
+Open the file sequences.fasta.
 Count the sequences.
 Count the bases.
 Show the sequence names.
 Show the first 10 sequences.
-Show the sequences.
-Show the result.
 Keep only sequences longer than 500 bases.
 Keep sequences at least 100 bases long.
 Remove sequences shorter than 100 bases.
@@ -131,181 +356,48 @@ Add -clean to the end of every sequence name.
 Remove duplicate sequences.
 Put the shortest sequences first.
 Put the longest sequences first.
-Show the sequence lengths.
-Find the shortest sequence.
-Find the longest sequence.
 Keep bases 1 to 100.
 Convert the DNA to RNA.
 Convert the RNA to DNA.
 Find the reverse complement.
-Translate the DNA into protein.
-Calculate the GC content.
-Compare the sequences with reference.fasta.
-Save the sequences as prepared-sequences.fasta.
-Save the result as prepared-sequences.fasta.
-```
-
-### Length wording
-
-These instructions are deliberately different:
-
-```flbio
-Keep only sequences longer than 500 bases.
-Keep sequences at least 500 bases long.
-```
-
-The first keeps lengths above 500. The second includes sequences exactly 500 bases long.
-
-`Keep bases 1 to 100.` uses one-based positions and includes both endpoints. FASTQ quality characters are cut to the same range.
-
-`Remove duplicate sequences.` compares sequence letters and keeps the first copy. Names do not need to match.
-
-`Compare the sequences with ...` matches records by sequence name and reports identity and exact matches.
-
-Accepted equivalent forms include:
-
-```flbio
-Convert the sequences to RNA.
-Convert the sequences to DNA.
 Translate the sequences.
-Keep sequences containing ATG.
-Save the sequences as result.fasta.
-```
-
-## Genomics and larger FASTA commands
-
-```flbio
-Merge the sequences with more-sequences.fasta.
+Calculate the GC content.
 Calculate sequence statistics.
 Validate the sequences.
 Remove gaps from the sequences.
-Keep sequences with names containing chromosome.
-Remove sequences with names containing unplaced.
 Make duplicate sequence names unique.
 Remove sequences containing ambiguous bases.
 Keep sequences with at most 10 ambiguous bases.
 Split the sequences into files with 1000 sequences each as chunk.fasta.
+Save the file as prepared-sequences.fasta.
 ```
 
-### Merging sequence files
+`Keep only sequences longer than 500 bases.` excludes sequences exactly 500 bases long. `Keep sequences at least 500 bases long.` includes them.
 
-`Merge the sequences with ...` appends the records from the named file to the current sequence result. Records keep their original order.
+`Keep bases 1 to 100.` uses one-based positions and includes both endpoints. FASTQ quality characters are cut to the same range.
 
-In normal mode, FASTA can be merged with FASTA. FASTQ can be merged with FASTQ while preserving quality scores. A FASTQ result cannot be merged with FASTA unless the files are first saved or converted to a compatible FASTA workflow.
-
-Several files can be merged in one program:
+## Sequence discovery
 
 ```flbio
-Open the file chromosome-1.fasta.
-Merge the sequences with chromosome-2.fasta.
-Merge the sequences with chromosome-3.fasta.
-Make duplicate sequence names unique.
-Calculate sequence statistics.
-Save the result as combined-genome.fasta.
+Find repeated sequences.
+Find palindromes.
+Find start codons.
+Find stop codons.
+Find open reading frames.
+Join the sequences.
 ```
 
-### Sequence statistics
+These commands create real result tables or sequence results. They do not merely print that an analysis was requested.
 
-`Calculate sequence statistics.` reports:
-
-- Number of sequences.
-- Total bases.
-- Shortest sequence length.
-- Longest sequence length.
-- Average sequence length.
-- N50.
-- L50.
-- GC percentage.
-- Number of ambiguous bases.
-
-N50 is the sequence length at which sequences of that length or longer contain at least half of all bases. L50 is the number of longest sequences needed to reach that halfway point.
-
-### Sequence validation
-
-`Validate the sequences.` reports empty sequences, duplicate names, gap characters, and unrecognized characters. It does not silently change the data.
-
-`Remove gaps from the sequences.` removes `-` and `.` characters. For FASTQ, matching quality characters are removed at the same positions.
-
-### Name and ambiguity filters
-
-Name filters are case-insensitive and check the sequence name before the first space in the FASTA or FASTQ header.
-
-`Make duplicate sequence names unique.` keeps the first name and gives later copies numbered suffixes such as `sample-2` and `sample-3`.
-
-Ambiguous-base filters treat letters outside `A`, `C`, `G`, `T`, and `U` as ambiguous. This includes `N` and other IUPAC ambiguity letters.
-
-### Splitting sequence files
+## FASTQ and paired reads
 
 ```flbio
-Split the sequences into files with 1000 sequences each as chunk.fasta.
-```
-
-This creates `chunk-part-1.fasta`, `chunk-part-2.fasta`, and so on. Repeated programs include the run number too, so files cannot overwrite each other.
-
-## Huge FASTA files in the browser
-
-FASTA files of 2 MB or larger use the browser large-file vault automatically. The threshold is intentionally low so the safe path is tested on ordinary devices as well as genuinely huge datasets.
-
-The large-file vault:
-
-- Stores the original `File` or `Blob` in IndexedDB instead of copying the entire file into `localStorage`.
-- Requests persistent browser storage when supported.
-- Shows the file size in the Files panel.
-- Gives large files and generated large outputs their own download button.
-- Runs the workflow in a background Web Worker so the interface remains responsive.
-- Streams records one at a time instead of creating one giant array of every sequence.
-- Writes large output incrementally through browser file storage when supported.
-
-A browser huge-FASTA workflow can look like this:
-
-```flbio
-Say Combining the genome pieces.
-Open the file chromosome-1.fasta.
-Merge the sequences with chromosome-2.fasta.
-Merge the sequences with chromosome-3.fasta.
-Remove sequences with names containing unplaced.
-Keep only sequences longer than 1000 bases.
-Make duplicate sequence names unique.
-Calculate sequence statistics.
-Validate the sequences.
-Save the result as combined-genome.fasta.
-Say The genome file is ready.
-```
-
-In huge-file browser mode, put filters and transformations before reports, splitting, and saving. This allows FigureLoom Bio to make one streaming pass through the final pipeline.
-
-A single enormous sequence still has to fit in memory as one record. For example, one chromosome is assembled before that record is transformed or written, but all chromosomes are not held in memory together.
-
-Commands that require globally rearranging every record, such as sorting millions of sequences by length, are not streaming-safe yet. Use normal mode for smaller data, split the file first, or use the FigureLoom queue or VM when that integration is available.
-
-Browser storage capacity depends on the device and browser. FigureLoom Bio checks the estimated free space before importing large files. Deleting a large file from Files also removes it from the vault.
-
-## Huge FASTA files from the command line
-
-The command-line engine automatically switches to disk-backed streaming when at least one FASTA input is 64 MB or larger.
-
-It uses temporary FASTA spools on disk so reports such as counts and statistics do not consume the pipeline. The final saved result remains available to later instructions.
-
-The threshold can be changed for testing or specialized systems:
-
-```bash
-FIGURELOOM_STREAM_THRESHOLD=1048576 flbio run genome-workflow.flbio
-```
-
-The number is measured in bytes. Small programs continue to use the existing in-memory runner.
-
-## FASTQ commands
-
-```flbio
-Count the reads.
-Show the reads.
+Open the file reads.fastq.
 Check the quality.
-Check the quality again.
 Show the quality report.
-Remove reads with low quality.
 Keep reads with average quality at least 20.
 Remove reads with average quality below 20.
-Keep reads at least 50 bases long.
+Remove reads with low quality.
 Remove reads shorter than 50 bases.
 Remove adapter sequences.
 Cut 10 bases from the beginning of each read.
@@ -313,186 +405,303 @@ Cut 5 bases from the end of each read.
 Trim 5 bases from the start.
 Trim 5 bases from the end.
 Save the reads as clean-reads.fastq.
-Save the result as clean-reads.fastq.
 ```
-
-FASTQ quality uses standard Phred+33 characters.
-
-`Remove reads with low quality.` uses an average quality threshold of 20. Explicit quality instructions can choose another threshold.
-
-`Remove adapter sequences.` recognizes common Illumina adapter sequences and cuts sequence and quality at the first adapter position.
-
-The **cut** and **trim** forms are both accepted. The sequence and quality string remain the same length.
-
-## Paired FASTQ commands
 
 ```flbio
 Open the files forward.fastq and reverse.fastq as a pair.
-Check the quality.
-Show the quality report.
+Check the file.
 Remove reads with low quality.
 Remove reads shorter than 50 bases.
 Remove adapter sequences.
-Cut 10 bases from the beginning of each read.
-Cut 5 bases from the end of each read.
-Show the result.
+Show the quality report.
 Save the pair as clean-forward.fastq and clean-reverse.fastq.
 ```
 
-Paired reads are filtered and cut together. A pair is kept only when both reads pass the active filter. Saving a pair numbers both files during repeated runs.
+Paired reads are filtered and cut together. A pair stays only when both reads pass the active filter.
 
-Sequence-name editing, sequence sorting, and base-range commands currently work on one open FASTA or FASTQ file, not on a paired result.
-
-## Result commands
+## Microbiology
 
 ```flbio
-Count the rows.
-Count the sequences.
-Count the reads.
-Count the bases.
-Show the result.
-Show the file.
-Show the sequences.
-Show the reads.
-Show the sequence names.
-Show the sequence lengths.
-Show the first 10 sequences.
-Show the quality report.
-Calculate sequence statistics.
-Validate the sequences.
-Save the result as result.csv.
-Save the sequences as result.fasta.
-Save the reads as result.fastq.
-Save the pair as forward-result.fastq and reverse-result.fastq.
+Open the files forward.fastq and reverse.fastq as a pair.
+Prepare bacterial reads.
+Assemble the bacterial genome.
+Check the file.
+Annotate the file.
+Find resistance genes in the file.
+Find virulence genes in the file.
+Identify the organism in the file using bacteria-reference.
+Find plasmids in the file.
 ```
 
-The filename determines the output format. Use `.csv` or `.tsv` for tables, a FASTA extension for FASTA, and `.fastq` or `.fq` for FASTQ.
+The browser includes small local methods for the bundled microbiology example. Larger or publication-scale workflows can translate or run the established installed tools with `--allow-tools`.
 
-## Supported extensions
-
-### Programs
-
-- `.flbio`
-
-### Tables
-
-- `.csv`
-- `.tsv`
-
-### FASTA
-
-- `.fasta`
-- `.fa`
-- `.fna`
-- `.ffn`
-- `.faa`
-- `.frn`
-
-### FASTQ
-
-- `.fastq`
-- `.fq`
-
-## Complete examples
-
-### Table preparation
-
-```flbio
-Open the file samples.csv.
-Remove duplicate rows using sample.
-Replace empty values under status with unknown.
-Change control to untreated under condition.
-Combine it with metadata.csv using sample.
-Keep only the columns sample, condition, status, and lab.
-Put the rows in order by sample.
-Show the result.
-Save the result as prepared-samples.csv.
-```
-
-### FASTA preparation
+## Alignment and variants
 
 ```flbio
 Open the file sequences.fasta.
-Remove duplicate sequences.
-Remove sequences containing N.
-Keep only sequences longer than 500 bases.
-Put the longest sequences first.
-Show the sequence lengths.
-Calculate the GC content.
-Save the result as prepared-sequences.fasta.
+Compare the sequences.
+Show the alignment.
+Save the alignment as aligned.fasta.
+Find variants.
+Count the variants.
+Show the variants.
+Save the variants as variants.csv.
 ```
 
-### Genomics-scale FASTA preparation
+The built-in comparison aligns the first two sequences in the current file. The variant table records real mismatch and gap positions derived from that alignment.
+
+## Genes and proteins
 
 ```flbio
-Open the file assembly-part-1.fasta.
-Merge the sequences with assembly-part-2.fasta.
-Merge the sequences with assembly-part-3.fasta.
-Remove gaps from the sequences.
-Make duplicate sequence names unique.
-Remove sequences containing ambiguous bases.
-Keep only sequences longer than 1000 bases.
-Calculate sequence statistics.
-Validate the sequences.
-Save the result as clean-assembly.fasta.
+Open the file genome.fasta.
+Find genes.
+Count the genes.
+Show the genes.
+Save the genes as genes.csv.
+
+Open the file proteins.fasta.
+Find signal peptides.
+
+Open the file proteins.fasta.
+Find transmembrane regions.
 ```
 
-### Repeated FASTQ cleanup
+Gene and protein-region commands create real result tables. Reopen the protein file before a second protein scan because the first scan changes the current result to a table.
+
+## PCR primers
 
 ```flbio
-Run this program 10 times.
+Open the file genome.fasta.
+Find PCR primers.
+Check the primers.
+Show the primers.
+```
 
-Say Starting the FASTQ cleanup.
+Primer discovery creates candidate primer rows. Checking reports basic length, GC, melting-temperature, and pairing information from those candidates.
+
+## Phylogenetic trees
+
+```flbio
+Open the file sequences.fasta.
+Build a phylogenetic tree.
+Show the tree.
+Save the tree as tree.nwk.
+```
+
+The saved file is real Newick text ending with a semicolon.
+
+## Statistics
+
+```flbio
+Open the file measurements.csv.
+Calculate the average of score.
+Calculate the median of score.
+Calculate the standard deviation of score.
+Calculate the confidence interval of score.
+Calculate the p value for score between treated and control under group.
+```
+
+The p value uses a real permutation comparison. The confidence interval uses a 95 percent normal approximation around the mean.
+
+The earlier `under` forms remain supported:
+
+```flbio
+Calculate the average under score.
+Calculate the median under score.
+Calculate the standard deviation under score.
+Calculate the minimum under score.
+Calculate the maximum under score.
+Normalize the counts under count.
+Compare treated and control under group.
+```
+
+Group comparison ignores text metadata columns and compares every genuinely numeric measurement column.
+
+## Figures
+
+```flbio
+Create a histogram of score.
+Create a bar chart of group.
+Create a scatter plot of time and score.
+Create a box plot of score.
+Create a heat map.
+Create a PCA plot.
+Create a volcano plot using effect and p_value.
+```
+
+Every figure command creates a real SVG file in the browser Files panel or beside the terminal program.
+
+The earlier `from` forms are also supported:
+
+```flbio
+Create a histogram from score.
+Create a bar chart from sample and score.
+Create a scatter plot from time and score.
+Create a box plot from score.
+```
+
+## Decisions
+
+```flbio
+If the result is empty:
+    Show a warning saying No result was produced.
+Otherwise if the row count is below 10:
+    Show a warning saying Very little data remains.
+Otherwise:
+    Say The result is ready.
+```
+
+Other decision conditions include read, sequence, row, contig, and base counts; average quality; GC content; file existence; resistance, virulence, and plasmid findings; and sample-name checks.
+
+`Otherwise:` must follow its matching `If` block directly at the same indentation level.
+
+## Sample loops
+
+```flbio
+Open all FASTQ files as samples.
+
+For every sample in samples:
+    Open the sample.
+    Check the file.
+    Remove reads with low quality.
+    Save the result using the sample name.
+```
+
+Inside a sample loop:
+
+```flbio
+Skip this sample.
+Continue with the next sample.
+Mark the sample for review.
+```
+
+## Recipes
+
+```flbio
+Make a recipe called Clean reads:
+    Check the quality.
+    Remove reads with low quality.
+    Remove adapter sequences.
+
 Open the file reads.fastq.
-Check the quality.
-Remove reads with low quality.
-Remove reads shorter than 50 bases.
-Remove adapter sequences.
-Cut 10 bases from the beginning of each read.
-Cut 5 bases from the end of each read.
-Check the quality again.
-Show the quality report.
-Save the result as clean-reads.fastq.
-Say The FASTQ cleanup is finished.
+Use the recipe Clean reads.
+Save the file as clean-reads.fastq.
 ```
 
-## Run a program from the command line
+A recipe is part of the same `.flbio` program. It is not an add-on or installed package.
 
-FigureLoom Bio needs Python 3.10 or newer.
+## Translate a program
+
+The browser Translate window and terminal support the same nine targets:
 
 ```bash
-cd figureloom-bio
-python -m pip install -e .
-flbio run examples/clean-samples.flbio
+flbio translate program.flbio --to python
+flbio translate program.flbio --to r
+flbio translate program.flbio --to bash
+flbio translate program.flbio --to snakemake
+flbio translate program.flbio --to nextflow
+flbio translate program.flbio --to julia
+flbio translate program.flbio --to ruby
+flbio translate program.flbio --to perl
+flbio translate program.flbio --to powershell
 ```
 
-The command-line engine reads input files beside the `.flbio` program unless a complete path is written.
+Simple instructions use direct target rules where the meaning can be preserved exactly. Decisions, loops, recipes, current-file shorthand, and specialized native commands can be emitted as runnable wrappers around the embedded `.flbio` program. Generated files contain no `# TODO` placeholders and block headers remain exactly as written.
 
-## Errors
+## Huge FASTA files in the browser
 
-Errors point to the sentence that needs attention. Common causes are:
+Large FASTA files use the browser large-file vault and a background Worker path. The browser stores the original `File` or `Blob` in IndexedDB instead of copying the entire file into normal local storage.
 
-- A missing period.
-- A filename that is not present.
-- A column or sequence name that does not exist.
-- A table instruction used on a sequence file.
-- A FASTQ quality instruction used on FASTA.
-- A paired result saved with the single-file sentence.
-- An ending base smaller than the starting base.
-- Too little browser storage for an imported large file.
-- A global operation used with a huge streamed FASTA file.
+The large-file path:
 
-The error stays in Results and does not silently change input files.
+- Requests persistent storage when supported.
+- Shows file size in the Files panel.
+- Gives large files and outputs a download control.
+- Streams records rather than creating one array containing the whole file.
+- Keeps the interface responsive while the Worker runs.
 
-## Current limits and expansion roadmap
+A single enormous sequence must still fit in memory as one record. Browser storage capacity depends on the device and browser.
 
-- The browser result preview shows up to 100 records, but saved output keeps the complete result.
-- Huge browser mode currently streams FASTA. Huge FASTQ streaming is a later expansion.
-- Globally sorting or comparing every record in a huge dataset requires disk indexes or the future queue and VM integration.
-- Translation uses the standard genetic code from the first base and ignores an incomplete final codon.
-- Translating FASTQ removes quality scores, so translated output must be saved as FASTA.
-- Alignment, read mapping, assembly, k-mer analysis, GFF/GTF and BED annotation, VCF variants, phylogenetics, taxonomy, expression matrices, and external command containers are planned as separate language modules. They will reuse the same text and block system rather than becoming a different interface.
+## Huge FASTA files from the terminal
 
----
+The terminal engine automatically switches to disk-backed streaming when a FASTA input reaches the configured threshold. Change the threshold for testing:
 
-*Dedicated to Adriana M. K.*
+```bash
+FIGURELOOM_STREAM_THRESHOLD=1048576 flbio run genome-workflow.flbio
+```
+
+The number is measured in bytes.
+
+## Errors and troubleshooting
+
+### The IDE colors a line but Run rejects it
+
+That is a parity bug, not user error. Current releases test every canonical sentence against the runtime routes. Report the exact sentence and line number if it happens again.
+
+### A block header asks for a period
+
+Block headers end in `:`. Refresh the IDE and confirm the line is exactly like:
+
+```flbio
+Otherwise:
+```
+
+### `flbio` is not found
+
+Close and reopen the terminal after `pipx ensurepath`, then run:
+
+```bash
+pipx list
+```
+
+### An installed tool is missing
+
+Run:
+
+```bash
+flbio doctor
+```
+
+Activate the conda environment containing the optional tools, then retry with `--allow-tools`.
+
+### A command needs a table or sequence file
+
+Open the required input again before the command. Analyses often turn the current result into a table, so a later sequence analysis may need:
+
+```flbio
+Open the file sequences.fasta.
+```
+
+### Translation uses a wrapper
+
+That is deliberate when a direct target rewrite would change the program’s meaning. The wrapper is executable and preserves the original `.flbio` semantics.
+
+## Testing guarantees
+
+The release workflow checks:
+
+- JavaScript syntax and script loading.
+- The canonical language manifest and punctuation rules.
+- The exact current-file program that previously failed on `Check the file.`.
+- Decisions loading before and after asynchronous runtime startup.
+- The real browser Run-button route.
+- The completed alignment, variants, genes, proteins, PCR, trees, statistics, normalization, group comparison, and SVG-figure language.
+- All nine translator targets and the absence of placeholder output.
+- The complete Python test suite.
+
+A sentence is not considered complete merely because it appears in Sentences or Blocks. Its parser or runtime path must pass the automated release tests.
+
+## Development
+
+```bash
+git clone https://github.com/victork4314-sys/Figureloom.git
+cd Figureloom/figureloom-bio
+python3 -m venv .venv
+. .venv/bin/activate
+python -m pip install -e .
+python -m unittest discover -s tests -v
+```
+
+## License
+
+FigureLoom Bio is part of FigureLoom and is released under the GNU Affero General Public License v3.0 only.
