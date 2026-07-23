@@ -3,6 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 import os
 import shutil
+import traceback
 
 try:
     import pwd
@@ -142,6 +143,32 @@ def _check_output(path: Path) -> None:
         raise FigureLoomBioError(f"The quick test did not create a valid-looking tree in {path.name}.")
 
 
+def _failure_report(error: BaseException) -> str:
+    if isinstance(error, FigureLoomBioError):
+        reason = error.plain_message()
+        next_step = (
+            "Read the named line or missing result above, correct that instruction or file, then run the test again."
+        )
+    elif isinstance(error, OSError):
+        reason = str(error).strip() or "The computer could not read or write a required test file."
+        next_step = (
+            "Close other copies of FigureLoom Bio, make sure the Desktop is writable, then run the test again."
+        )
+    else:
+        reason = "The real language test hit an unexpected internal error instead of finishing."
+        next_step = (
+            "Run Install or update to repair the desktop files, then run the test again. "
+            "The technical details were saved in TEST-DETAILS.txt."
+        )
+    detail = str(error).strip() or error.__class__.__name__
+    return (
+        "FIGURELOOM BIO QUICK TEST FAILED\n\n"
+        f"What happened\n{reason}\n\n"
+        f"What to do\n{next_step}\n\n"
+        f"Details\n{error.__class__.__name__}: {detail}\n"
+    )
+
+
 def run_quick_test(destination: Path | None = None) -> tuple[bool, str, Path]:
     folder = create_test_files(destination)
     for name in EXPECTED_OUTPUTS:
@@ -171,10 +198,10 @@ def run_quick_test(destination: Path | None = None) -> tuple[bool, str, Path]:
             raise FigureLoomBioError(
                 "The quick test was missing these results: " + ", ".join(missing)
             )
-    except (FigureLoomBioError, OSError, ValueError) as error:
-        message = error.plain_message() if isinstance(error, FigureLoomBioError) else str(error)
-        report = "FIGURELOOM BIO QUICK TEST FAILED\n\n" + message + "\n"
+    except Exception as error:
+        report = _failure_report(error)
         (folder / "TEST-RESULT.txt").write_text(report, encoding="utf-8")
+        (folder / "TEST-DETAILS.txt").write_text(traceback.format_exc(), encoding="utf-8")
         return False, report, folder
 
     report = (
@@ -187,6 +214,10 @@ def run_quick_test(destination: Path | None = None) -> tuple[bool, str, Path]:
         f"Test folder: {folder}\n"
     )
     (folder / "TEST-RESULT.txt").write_text(report, encoding="utf-8")
+    try:
+        (folder / "TEST-DETAILS.txt").unlink()
+    except FileNotFoundError:
+        pass
     return True, report, folder
 
 
