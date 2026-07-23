@@ -11,10 +11,12 @@ const requireNormalized = (name, content, value) => { if (!normalized(content).i
 const files = {
   mainReadme: read('README.md'),
   packageReadme: read('figureloom-bio/README.md'),
+  linuxReadme: read('figureloom-bio/linux/README.md'),
   wiki: read('wiki/FigureLoom-Bio.md'),
   easyInstall: read('wiki/FigureLoom-Bio-Easy-Install.md'),
   sidebar: read('wiki/_Sidebar.md'),
   wikiRuntime: read('wiki/wiki.js'),
+  wikiIndex: read('wiki/index.html'),
   wikiSync: read('.github/workflows/sync-wiki.yml'),
 };
 
@@ -25,15 +27,25 @@ for (const [name, content] of Object.entries({ mainReadme: files.mainReadme, pac
 }
 
 const easyCommand = 'curl -fsSL https://raw.githubusercontent.com/victork4314-sys/Figureloom/main/figureloom-bio/linux/install-linux.sh | sudo bash';
-for (const [name, content] of Object.entries({ mainReadme: files.mainReadme, packageReadme: files.packageReadme, wiki: files.wiki, easyInstall: files.easyInstall })) {
+for (const [name, content] of Object.entries({ mainReadme: files.mainReadme, packageReadme: files.packageReadme, wiki: files.wiki })) {
   requireNormalized(name, content, easyCommand);
   requireText(name, content, 'Install or Update FigureLoom Bio');
   requireText(name, content, 'FigureLoom Bio Test Files');
 }
 
-for (const value of ['Test FigureLoom Bio', 'flbio quick-test', 'EVERY QUICK TEST PASSED.', 'running Kasm workspace']) requireText('easyInstall', files.easyInstall, value);
+const installerDownload = 'https://github.com/victork4314-sys/Figureloom/releases/download/figureloom-bio-installer/FigureLoom-Bio-Installer.deb';
+for (const [name, content] of Object.entries({ easyInstall: files.easyInstall, linuxReadme: files.linuxReadme })) {
+  requireText(name, content, installerDownload);
+  requireText(name, content, 'Download FigureLoom Bio');
+  requireText(name, content, 'FigureLoom-Bio-Installer.deb');
+  requireText(name, content, 'Install or Update FigureLoom Bio');
+  requireText(name, content, 'FigureLoom Bio Test Files');
+}
+
+for (const value of ['Test FigureLoom Bio', 'EVERY QUICK TEST PASSED.', 'running workspace', 'Nothing is preinstalled into or baked into the Kasm image']) requireText('easyInstall', files.easyInstall, value);
 requireText('sidebar', files.sidebar, '[Install FigureLoom Bio](FigureLoom-Bio-Easy-Install)');
 requireText('wikiRuntime', files.wikiRuntime, "['Scientific work','FigureLoom-Bio-Easy-Install','Install FigureLoom Bio']");
+requireText('wikiIndex', files.wikiIndex, 'a[href*="FigureLoom-Bio-Installer.deb"]');
 
 const detailed = [
   'pipx install "git+https://github.com/victork4314-sys/Figureloom.git#subdirectory=figureloom-bio"',
@@ -64,4 +76,4 @@ if (!files.wikiSync.includes('cp wiki/*.md .wiki-repository/')) errors.push('The
 if (!files.wikiSync.includes('${{ github.repository }}.wiki.git')) errors.push('The GitHub wiki sync does not target the repository wiki.');
 
 if (errors.length) throw new Error(`FigureLoom Bio documentation validation found ${errors.length} problem(s):\n- ${errors.join('\n- ')}`);
-console.log('FigureLoom Bio documentation matches the live graphical Linux and Kasm installer.');
+console.log('FigureLoom Bio documentation matches the downloadable Linux and Kasm installer.');

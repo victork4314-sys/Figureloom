@@ -16,6 +16,8 @@ TEST_LAUNCHER="/usr/local/bin/figureloom-bio-test"
 INSTALLER_LAUNCHER="/usr/local/bin/figureloom-bio-installer"
 UPDATE_WORKER="/usr/local/libexec/figureloom-bio-update"
 TARGET_USER="${FIGURELOOM_TARGET_USER:-${SUDO_USER:-}}"
+PACKAGE_INSTALL="${FIGURELOOM_PACKAGE_INSTALL:-0}"
+NO_APT="${FIGURELOOM_NO_APT:-0}"
 
 if [[ ! -f "$SOURCE_DIR/figureloom-bio/pyproject.toml" || ! -f "$SOURCE_DIR/ide/index.html" ]]; then
   echo "I could not find the FigureLoom source at: $SOURCE_DIR" >&2
@@ -30,6 +32,11 @@ install_missing_packages() {
   local packages=("$@")
   if [[ ${#packages[@]} -eq 0 ]]; then
     return 0
+  fi
+  if [[ "$NO_APT" == 1 ]]; then
+    printf 'These required Linux pieces are missing: %s\n' "${packages[*]}" >&2
+    echo "Install them with the normal system package installer, then open the FigureLoom Bio package again." >&2
+    exit 1
   fi
   if ! command -v apt-get >/dev/null 2>&1; then
     printf 'These required Linux pieces are missing: %s\n' "${packages[*]}" >&2
@@ -49,7 +56,11 @@ command -v tar >/dev/null 2>&1 || missing+=(tar)
 install_missing_packages "${missing[@]}"
 
 missing=()
-python3 -c 'import venv' >/dev/null 2>&1 || missing+=(python3-venv)
+VENV_PROBE="$(mktemp -d)"
+if ! python3 -m venv "$VENV_PROBE" >/dev/null 2>&1; then
+  missing+=(python3-venv)
+fi
+rm -rf "$VENV_PROBE"
 python3 -c 'import tkinter' >/dev/null 2>&1 || missing+=(python3-tk)
 install_missing_packages "${missing[@]}"
 
@@ -64,19 +75,35 @@ for candidate in chromium chromium-browser google-chrome google-chrome-stable fi
     break
   fi
 done
+if [[ -z "$BROWSER" ]] && command -v xdg-open >/dev/null 2>&1; then
+  BROWSER="$(command -v xdg-open)"
+  BROWSER_KIND="xdg-open"
+fi
 if [[ -z "$BROWSER" ]]; then
-  echo "A desktop browser is required for the local IDE window." >&2
-  echo "Install Chromium, Google Chrome, Firefox, or Firefox ESR, then run the installer again." >&2
+  echo "A desktop browser or xdg-open is required for the local IDE window." >&2
   exit 1
 fi
 
 echo "PROGRESS 18 Installing or updating FigureLoom Bio"
-if [[ ! -x "$VENV_DIR/bin/python" ]]; then
+if [[ "$PACKAGE_INSTALL" == 1 ]]; then
   rm -rf "$VENV_DIR"
-  python3 -m venv "$VENV_DIR"
+  mkdir -p "$VENV_DIR/bin" "$VENV_DIR/lib"
+  cp -a "$SOURCE_DIR/figureloom-bio/figureloom_bio" "$VENV_DIR/lib/"
+  cat > "$VENV_DIR/bin/flbio" <<EOF
+#!/usr/bin/env bash
+set -euo pipefail
+export PYTHONPATH="$VENV_DIR/lib\${PYTHONPATH:+:\$PYTHONPATH}"
+exec python3 -m figureloom_bio.cli "\$@"
+EOF
+  chmod 0755 "$VENV_DIR/bin/flbio"
+else
+  if [[ ! -x "$VENV_DIR/bin/python" ]]; then
+    rm -rf "$VENV_DIR"
+    python3 -m venv "$VENV_DIR"
+  fi
+  "$VENV_DIR/bin/python" -m pip install --quiet --upgrade pip
+  "$VENV_DIR/bin/python" -m pip install --quiet --upgrade "$SOURCE_DIR/figureloom-bio"
 fi
-"$VENV_DIR/bin/python" -m pip install --quiet --upgrade pip
-"$VENV_DIR/bin/python" -m pip install --quiet --upgrade "$SOURCE_DIR/figureloom-bio"
 ln -sfn "$VENV_DIR/bin/flbio" /usr/local/bin/flbio
 
 echo "PROGRESS 38 Installing the local IDE"
@@ -135,6 +162,9 @@ BROWSER="$BROWSER"
 BROWSER_KIND="$BROWSER_KIND"
 if [[ "\$BROWSER_KIND" == firefox ]]; then
   exec "\$BROWSER" --new-window "\$URL"
+fi
+if [[ "\$BROWSER_KIND" == xdg-open ]]; then
+  exec "\$BROWSER" "\$URL"
 fi
 FLAGS=(--no-first-run --disable-session-crashed-bubble --disable-features=Translate --app="\$URL")
 if [[ \${EUID:-\$(id -u)} -eq 0 ]]; then
@@ -229,13 +259,13 @@ install_desktop() {
   fi
 }
 
-if [[ -n "$TARGET_USER" && "$TARGET_USER" != root ]]; then
+if [[ -n "$TARGET_USER" ]] && id "$TARGET_USER" >/dev/null 2>&1; then
   USER_HOME="$(getent passwd "$TARGET_USER" | cut -d: -f6)"
   if [[ -n "$USER_HOME" ]]; then
     install_desktop "$USER_HOME" "$TARGET_USER"
   fi
 else
-  install_desktop /root
+  echo "No desktop user was detected. The application-menu launchers were installed system-wide."
 fi
 
 echo "PROGRESS 78 Running a real language test"

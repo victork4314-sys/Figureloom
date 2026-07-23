@@ -1,0 +1,84 @@
+name: Build FigureLoom Bio installer
+
+on:
+  pull_request:
+    paths:
+      - 'figureloom-bio/**'
+      - 'ide/**'
+      - 'wiki/FigureLoom-Bio-Easy-Install.md'
+      - 'wiki/index.html'
+      - 'scripts/validate-bio-documentation.mjs'
+      - '.github/workflows/build-bio-installer.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'figureloom-bio/**'
+      - 'ide/**'
+      - 'wiki/FigureLoom-Bio-Easy-Install.md'
+      - 'wiki/index.html'
+      - 'scripts/validate-bio-documentation.mjs'
+      - '.github/workflows/build-bio-installer.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  installer:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Build downloadable installer
+        run: |
+          version="$(python3 - <<'PY'
+          import tomllib
+          with open('figureloom-bio/pyproject.toml', 'rb') as handle:
+              print(tomllib.load(handle)['project']['version'])
+          PY
+          )"
+          export FIGURELOOM_DEB_VERSION="${version}+git${GITHUB_SHA::7}"
+          bash figureloom-bio/linux/build-deb.sh dist
+          test -s dist/FigureLoom-Bio-Installer.deb
+          dpkg-deb --info dist/FigureLoom-Bio-Installer.deb
+          dpkg-deb --contents dist/FigureLoom-Bio-Installer.deb | grep 'usr/share/figureloom-bio/source/ide/index.html'
+          dpkg-deb --contents dist/FigureLoom-Bio-Installer.deb | grep 'usr/share/figureloom-bio/source/figureloom-bio/figureloom_bio/cli.py'
+
+      - name: Install the exact downloaded package
+        run: |
+          sudo env SUDO_USER="$USER" \
+            apt-get install --no-install-recommends -y ./dist/FigureLoom-Bio-Installer.deb
+          test -x /usr/local/bin/flbio
+          test -x /usr/local/bin/figureloom-bio-installer
+          test -x /usr/local/bin/figureloom-bio-ide
+          test -x /usr/local/bin/figureloom-bio-test
+          test -x /usr/local/libexec/figureloom-bio-update
+          test -f "$HOME/Desktop/Install or Update FigureLoom Bio.desktop"
+          test -f "$HOME/Desktop/FigureLoom Bio IDE.desktop"
+          test -f "$HOME/Desktop/Test FigureLoom Bio.desktop"
+          test -f "$HOME/Desktop/FigureLoom Bio Test Files/quick-test.flbio"
+          flbio doctor
+          flbio quick-test /tmp/figureloom-deb-install-test
+
+      - name: Upload installer artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: FigureLoom-Bio-Installer
+          path: dist/FigureLoom-Bio-Installer.deb
+          if-no-files-found: error
+
+      - name: Publish download-button installer
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag="figureloom-bio-installer"
+          file="dist/FigureLoom-Bio-Installer.deb"
+          notes="Download FigureLoom-Bio-Installer.deb, open it, and approve the normal Linux installation prompt. Nothing is preinstalled into the Kasm image."
+          if gh release view "$tag" >/dev/null 2>&1; then
+            gh release upload "$tag" "$file" --clobber
+            gh release edit "$tag" --latest --title "FigureLoom Bio Linux Installer" --notes "$notes"
+          else
+            gh release create "$tag" "$file" --latest --title "FigureLoom Bio Linux Installer" --notes "$notes"
+          fi
