@@ -77,8 +77,15 @@ jobs:
 
       - name: Install and test the exact Apple Silicon package
         run: |
+          exec > >(tee "$RUNNER_TEMP/figureloom-apple-silicon-install-test.log") 2>&1
+          set -x
           printf '%s\n' "$USER" | sudo tee /var/tmp/figureloom-bio-target-user >/dev/null
-          sudo installer -pkg dist/FigureLoom-Bio-Installer-macOS-Apple-Silicon.pkg -target /
+          set +e
+          sudo installer -verboseR -pkg dist/FigureLoom-Bio-Installer-macOS-Apple-Silicon.pkg -target /
+          install_status=$?
+          set -e
+          sudo tail -n 400 /var/log/install.log > "$RUNNER_TEMP/figureloom-apple-silicon-system-installer.log" 2>&1 || true
+          test "$install_status" -eq 0
           test -x /usr/local/bin/flbio
           test -d '/Applications/FigureLoom Bio IDE.app'
           test -d '/Applications/Test FigureLoom Bio.app'
@@ -86,6 +93,16 @@ jobs:
           /usr/local/bin/flbio doctor
           /usr/local/bin/flbio quick-test "$RUNNER_TEMP/figureloom-bio-macos-arm-test"
           test -f "$HOME/Desktop/FigureLoom Bio Test Files/quick-test.flbio"
+
+      - name: Upload Apple Silicon install trace
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: FigureLoom-Bio-Apple-Silicon-Install-Trace
+          path: |
+            ${{ runner.temp }}/figureloom-apple-silicon-install-test.log
+            ${{ runner.temp }}/figureloom-apple-silicon-system-installer.log
+          if-no-files-found: warn
 
       - name: Upload Apple Silicon installer
         uses: actions/upload-artifact@v6
@@ -112,8 +129,15 @@ jobs:
 
       - name: Install and test the exact Intel package
         run: |
+          exec > >(tee "$RUNNER_TEMP/figureloom-intel-install-test.log") 2>&1
+          set -x
           printf '%s\n' "$USER" | sudo tee /var/tmp/figureloom-bio-target-user >/dev/null
-          sudo installer -pkg dist/FigureLoom-Bio-Installer-macOS-Intel.pkg -target /
+          set +e
+          sudo installer -verboseR -pkg dist/FigureLoom-Bio-Installer-macOS-Intel.pkg -target /
+          install_status=$?
+          set -e
+          sudo tail -n 400 /var/log/install.log > "$RUNNER_TEMP/figureloom-intel-system-installer.log" 2>&1 || true
+          test "$install_status" -eq 0
           test -x /usr/local/bin/flbio
           test -d '/Applications/FigureLoom Bio IDE.app'
           test -d '/Applications/Test FigureLoom Bio.app'
@@ -121,6 +145,16 @@ jobs:
           /usr/local/bin/flbio doctor
           /usr/local/bin/flbio quick-test "$RUNNER_TEMP/figureloom-bio-macos-intel-test"
           test -f "$HOME/Desktop/FigureLoom Bio Test Files/quick-test.flbio"
+
+      - name: Upload Intel install trace
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: FigureLoom-Bio-Intel-Install-Trace
+          path: |
+            ${{ runner.temp }}/figureloom-intel-install-test.log
+            ${{ runner.temp }}/figureloom-intel-system-installer.log
+          if-no-files-found: warn
 
       - name: Upload Intel installer
         uses: actions/upload-artifact@v6
