@@ -228,6 +228,10 @@
 
   function temporarilyNormalize() {
     const original = editor.value;
+    // The complete runtime owns the final language pipeline. Running this old
+    // partial normalizer first can misidentify a newly generated figure as the
+    // previously open table and rewrite Save/Check/Count to the wrong object.
+    if (window.FigureLoomBioFlow?.usesAdvancedRuntime?.(original)) return;
     const normalized = normalizeSource(original);
     if (normalized === original) return;
     const start = editor.selectionStart;
