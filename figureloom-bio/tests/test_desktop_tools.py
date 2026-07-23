@@ -41,7 +41,7 @@ class DesktopToolsTests(unittest.TestCase):
         if bash is None:
             self.skipTest("bash is not installed")
         linux = Path(__file__).resolve().parents[1] / "linux"
-        for name in ("install-workspace.sh", "install-linux.sh", "install-kasm-image.sh", "update-worker.sh"):
+        for name in ("install-workspace.sh", "install-linux.sh", "update-worker.sh"):
             with self.subTest(name=name):
                 subprocess.run(
                     [bash, "-n", str(linux / name)],
@@ -60,6 +60,7 @@ class DesktopToolsTests(unittest.TestCase):
         self.assertIn("Install or Update FigureLoom Bio.desktop", installer)
         self.assertIn("figureloom-bio-installer", installer)
         self.assertIn("figureloom-bio-update", installer)
+        self.assertNotIn("kasm-default-profile", installer)
         self.assertNotIn('chown -R "$owner":"$owner" "$desktop"', installer)
 
 
