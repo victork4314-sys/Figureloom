@@ -11,6 +11,7 @@
     ['Editor basics','Text-Shapes-Arrows-and-Connectors','Text, shapes, arrows, and connectors'],
     ['Editor basics','Images-SVG-and-Uploads','Images, SVG, and uploads'],
     ['Scientific work','FigureLoom-Bio','FigureLoom Bio'],
+    ['Scientific work','FigureLoom-Bio-Command-Reference','Complete Bio command reference'],
     ['Scientific work','FigureLoom-Bio-Easy-Install','Install FigureLoom Bio'],
     ['Scientific work','Scientific-Illustrations-and-Maps','Scientific illustrations and maps'],
     ['Scientific work','Data-Tables-and-Charts','Data, tables, and charts'],
@@ -102,7 +103,7 @@
 
   function safeUrl(raw) {
     const value = String(raw || '').trim();
-    if (/^(https?:|mailto:|tel:|\/|\.\/|\.\.\/|#)/i.test(value)) return value;
+    if (/^(https?:|mailto:|tel:|\/|\.\/|\.\.\/#?)/i.test(value) || value.startsWith('#')) return value;
     return `#${value.replace(/\.md$/i, '')}`;
   }
 

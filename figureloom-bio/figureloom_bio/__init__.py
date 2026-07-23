@@ -21,6 +21,7 @@ from .generated_file_language import install_generated_file_language
 from .paired_length_parity import install_paired_length_parity
 from .language_label_parity import install_language_label_parity
 from .language_source_parity import install_language_source_parity
+from .language_execution_parity import install_language_execution_parity
 
 install_runtime_extensions(Runner)
 install_repeat_reset(Runner)
@@ -42,6 +43,7 @@ install_generated_file_language(Runner)
 install_paired_length_parity(Runner)
 install_language_label_parity()
 install_language_source_parity()
+install_language_execution_parity()
 
 __version__ = "0.8.0"
 

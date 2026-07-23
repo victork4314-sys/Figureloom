@@ -1,0 +1,55 @@
+name: Audit every FigureLoom Bio sentence
+
+on:
+  pull_request:
+    paths:
+      - 'figureloom-bio/**'
+      - 'scripts/generate-bio-command-reference.py'
+      - 'wiki/FigureLoom-Bio-Command-Reference.md'
+      - '.github/workflows/audit-bio-vocabulary.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'figureloom-bio/**'
+      - 'scripts/generate-bio-command-reference.py'
+      - 'wiki/FigureLoom-Bio-Command-Reference.md'
+      - '.github/workflows/audit-bio-vocabulary.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  every_sentence:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Execute every documented and accepted sentence
+        id: audit
+        shell: bash
+        run: |
+          set +e
+          cd figureloom-bio
+          python3 -m unittest tests.test_every_language_sentence_executes -v 2>&1 | tee "$RUNNER_TEMP/figureloom-bio-language-audit.txt"
+          status=${PIPESTATUS[0]}
+          echo "status=$status" >> "$GITHUB_OUTPUT"
+          exit 0
+
+      - name: Generate complete command reference
+        run: python3 scripts/generate-bio-command-reference.py --output "$RUNNER_TEMP/FigureLoom-Bio-Command-Reference.md"
+
+      - name: Upload complete language audit and generated reference
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: FigureLoom-Bio-Every-Sentence-Audit
+          path: |
+            ${{ runner.temp }}/figureloom-bio-language-audit.txt
+            ${{ runner.temp }}/FigureLoom-Bio-Command-Reference.md
+          if-no-files-found: error
+
+      - name: Fail when any sentence did not execute
+        if: steps.audit.outputs.status != '0'
+        run: exit 1
