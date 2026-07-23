@@ -1,23 +1,9 @@
-from figureloom_bio import native_ide
+from figureloom_bio import native_account, native_ide
+from figureloom_bio.native_account_runtime import install_runtime_fixes
 
 
-_original_feature_names = native_ide.NativeIdeWindow.feature_names
-
-
-def _feature_names_with_editor_modes(self) -> set[str]:
-    names = set(_original_feature_names(self))
-    labels = {
-        self.tabs.tabText(index).strip().casefold()
-        for index in range(self.tabs.count())
-    }
-    if "text" in labels:
-        names.add("text_mode")
-    if "blocks" in labels:
-        names.add("blocks_mode")
-    return names
-
-
-native_ide.NativeIdeWindow.feature_names = _feature_names_with_editor_modes
+install_runtime_fixes(native_account)
+native_account.install_native_account(native_ide)
 
 
 if __name__ == "__main__":
