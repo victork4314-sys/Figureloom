@@ -30,6 +30,16 @@ class NativeRunSafetyTests(unittest.TestCase):
         self.assertIn("traceback.format_exc()", source)
         self.assertIn("Your program and workspace files were not deleted", source)
 
+    def test_installed_self_test_shows_and_paints_the_final_window(self) -> None:
+        source = SAFETY.read_text(encoding="utf-8")
+        self.assertIn("def painted_self_test() -> int", source)
+        self.assertIn("window.show()", source)
+        self.assertGreaterEqual(source.count("app.processEvents()"), 3)
+        self.assertIn("window.editor.viewport().update()", source)
+        self.assertIn("window.editor.line_number_area.update()", source)
+        self.assertIn("window.isVisible()", source)
+        self.assertIn("native_ide_module.native_self_test = painted_self_test", source)
+
     def test_safety_is_installed_after_final_ui_wrapping(self) -> None:
         entry = ENTRY.read_text(encoding="utf-8")
         account = entry.index("native_account.install_native_account(native_ide)")
