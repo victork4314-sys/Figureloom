@@ -41,6 +41,20 @@ def _unexpected_run_message(error: BaseException, details_path: Path | None) -> 
     )
 
 
+def _foreground_colors(editor: Any) -> set[str]:
+    colors: set[str] = set()
+    block = editor.document().firstBlock()
+    while block.isValid():
+        layout = block.layout()
+        if layout is not None:
+            for item in layout.formats():
+                color = item.format.foreground().color()
+                if color.isValid():
+                    colors.add(color.name())
+        block = block.next()
+    return colors
+
+
 def install_native_run_safety(native_ide_module: Any) -> None:
     """Keep worker errors, startup paint, and window closing from crashing the IDE."""
 
@@ -100,6 +114,8 @@ def install_native_run_safety(native_ide_module: Any) -> None:
         app = QApplication.instance() or QApplication([native_ide_module.APP_NAME, "--self-test"])
         with native_ide_module.tempfile_workspace() as workspace:
             window = native_ide_module.NativeIdeWindow(workspace)
+            window.editor.setPlainText("Open the file samples.csv.")
+            window.editor.highlighter.rehighlight()
             window.show()
             app.processEvents()
             window.editor.viewport().update()
@@ -107,6 +123,22 @@ def install_native_run_safety(native_ide_module: Any) -> None:
             app.processEvents()
             if not window.isVisible():
                 raise RuntimeError("The final native IDE window did not become visible during its startup test.")
+
+            highlighter = window.editor.highlighter
+            expected_colors = {
+                highlighter.command.foreground().color().name(),
+                highlighter.file.foreground().color().name(),
+                highlighter.word.foreground().color().name(),
+                highlighter.punctuation.foreground().color().name(),
+            }
+            actual_colors = _foreground_colors(window.editor)
+            missing_colors = sorted(expected_colors - actual_colors)
+            if missing_colors:
+                raise RuntimeError(
+                    "The final native editor did not paint all accepted-instruction token colors: "
+                    + ", ".join(missing_colors)
+                )
+
             window.close()
             app.processEvents()
         return original_self_test()
