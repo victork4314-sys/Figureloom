@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from difflib import SequenceMatcher
 import re
+import sys
 from typing import Any
 
 from . import parser as parser_module
@@ -99,6 +100,37 @@ def _unknown_message(source: str, error: FigureLoomBioError) -> FigureLoomBioErr
     return FigureLoomBioError(message, line_number=line_number)
 
 
+def _route_existing_parse_imports(original_parse: Any, wrapped_parse: Any) -> tuple[str, ...]:
+    """Replace stale ``from parser import parse`` references already loaded in memory.
+
+    FigureLoom Bio installs its language in layers. Some runtime modules are loaded
+    before the final diagnostics layer and therefore hold the old function object.
+    Updating only ``parser.parse`` makes direct parser tests pass while the IDE still
+    calls the old generic error path. Route every genuine parser-function reference
+    inside this package to the final wrapper so the editor, terminal, quick test,
+    control flow, and streaming paths all behave the same way.
+    """
+
+    routed: list[str] = []
+    for name, module in tuple(sys.modules.items()):
+        if not name.startswith("figureloom_bio") or module is None:
+            continue
+        namespace = getattr(module, "__dict__", None)
+        if not isinstance(namespace, dict):
+            continue
+        candidate = namespace.get("parse")
+        if candidate is wrapped_parse:
+            continue
+        if candidate is original_parse or (
+            callable(candidate)
+            and getattr(candidate, "__module__", "") == "figureloom_bio.parser"
+            and getattr(candidate, "__name__", "") == "parse"
+        ):
+            namespace["parse"] = wrapped_parse
+            routed.append(name)
+    return tuple(sorted(set(routed)))
+
+
 def install_language_diagnostics() -> None:
     if getattr(parser_module, "_language_diagnostics_installed", False):
         return
@@ -122,6 +154,11 @@ def install_language_diagnostics() -> None:
             raise _unknown_message(source, error) from error
 
     parser_module.parse = parse_with_diagnostics
+    parser_module._language_diagnostics_original_parse = original_parse
+    parser_module._language_diagnostics_routed_modules = _route_existing_parse_imports(
+        original_parse,
+        parse_with_diagnostics,
+    )
     parser_module._language_diagnostics_installed = True
 
 
@@ -135,9 +172,26 @@ def language_diagnostics_self_test() -> dict[str, Any]:
             raise RuntimeError("The unknown-instruction explanation is incomplete.")
     else:
         raise RuntimeError("An unknown instruction was accepted.")
+
+    # These are the real non-UI execution paths used by the desktop IDE and test app.
+    # They must not retain the parser function that existed before diagnostics loaded.
+    from . import desktop_tools, native_core
+
+    stale = [
+        name
+        for name, candidate in (
+            ("desktop quick test", desktop_tools.parse),
+            ("native IDE runtime", native_core.parse),
+        )
+        if candidate is not parser_module.parse
+    ]
+    if stale:
+        raise RuntimeError("Detailed diagnostics did not reach: " + ", ".join(stale))
+
     return {
         "known_typo_resolved": True,
         "unknown_instruction_explained": True,
+        "runtime_references_routed": True,
     }
 
 
