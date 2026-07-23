@@ -1,0 +1,204 @@
+name: Audit FigureLoom Bio install cycles
+
+on:
+  pull_request:
+    paths:
+      - 'figureloom-bio/**'
+      - '.github/workflows/audit-bio-install-cycles.yml'
+      - '.github/workflows/build-bio-installer.yml'
+      - '.github/workflows/build-bio-cross-platform-installers.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'figureloom-bio/**'
+      - '.github/workflows/audit-bio-install-cycles.yml'
+      - '.github/workflows/build-bio-installer.yml'
+      - '.github/workflows/build-bio-cross-platform-installers.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  linux_cycle:
+    name: Linux previous → upgrade → repair → remove → reinstall
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Build candidate package
+        run: |
+          version="$(python3 - <<'PY'
+          import tomllib
+          with open('figureloom-bio/pyproject.toml', 'rb') as handle:
+              print(tomllib.load(handle)['project']['version'])
+          PY
+          )"
+          export FIGURELOOM_DEB_VERSION="${version}+cycle${GITHUB_SHA::7}"
+          bash figureloom-bio/linux/build-deb.sh dist
+          test -s dist/FigureLoom-Bio-Installer.deb
+
+      - name: Exercise complete Linux install cycle
+        run: |
+          set -euo pipefail
+          previous="$RUNNER_TEMP/FigureLoom-Bio-Previous.deb"
+          curl --fail --location --retry 3 \
+            'https://github.com/victork4314-sys/Figureloom/releases/download/figureloom-bio-installer/FigureLoom-Bio-Installer.deb' \
+            --output "$previous"
+
+          sudo env SUDO_USER="$USER" apt-get install --no-install-recommends -y "$previous"
+          project_dir="$HOME/Documents/FigureLoom Bio Projects"
+          mkdir -p "$project_dir"
+          printf 'Open the file samples.csv.\nCount the rows.\n' > "$project_dir/upgrade-survival.flbio"
+
+          sudo env SUDO_USER="$USER" apt-get install --no-install-recommends -y ./dist/FigureLoom-Bio-Installer.deb
+          sudo env SUDO_USER="$USER" apt-get install --reinstall --no-install-recommends -y ./dist/FigureLoom-Bio-Installer.deb
+
+          test -f "$project_dir/upgrade-survival.flbio"
+          test "$(find "$HOME/Desktop" -maxdepth 1 -name 'FigureLoom Bio IDE.desktop' | wc -l)" -eq 1
+          test "$(find "$HOME/Desktop" -maxdepth 1 -name 'Test FigureLoom Bio.desktop' | wc -l)" -eq 1
+          test "$(find "$HOME/Desktop" -maxdepth 1 -name 'Install or Update FigureLoom Bio.desktop' | wc -l)" -eq 1
+          flbio doctor
+          flbio quick-test "$RUNNER_TEMP/figureloom-linux-upgrade-test"
+
+          sudo apt-get remove -y figureloom-bio-desktop
+          test ! -e /usr/local/bin/flbio
+          test ! -e /usr/local/bin/figureloom-bio-ide
+          test -f "$project_dir/upgrade-survival.flbio"
+
+          sudo env SUDO_USER="$USER" apt-get install --no-install-recommends -y ./dist/FigureLoom-Bio-Installer.deb
+          test -x /usr/local/bin/flbio
+          test -x /usr/local/bin/figureloom-bio-ide
+          test -f "$project_dir/upgrade-survival.flbio"
+          flbio doctor
+          flbio quick-test "$RUNNER_TEMP/figureloom-linux-reinstall-test"
+
+  windows_cycle:
+    name: Windows previous → upgrade → repair → uninstall → reinstall
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+
+      - name: Build candidate installer
+        shell: pwsh
+        run: ./figureloom-bio/windows/build-installer.ps1 -OutputDir "$env:GITHUB_WORKSPACE\dist"
+
+      - name: Exercise complete Windows install cycle
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $candidate = "$env:GITHUB_WORKSPACE\dist\FigureLoom-Bio-Installer.exe"
+          $previous = "$env:RUNNER_TEMP\FigureLoom-Bio-Previous.exe"
+          Invoke-WebRequest -Uri 'https://github.com/victork4314-sys/Figureloom/releases/download/figureloom-bio-windows-installer/FigureLoom-Bio-Installer.exe' -OutFile $previous
+
+          Start-Process -FilePath $previous -ArgumentList '/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART' -Wait
+          $projectDir = Join-Path ([Environment]::GetFolderPath('MyDocuments')) 'FigureLoom Bio Projects'
+          New-Item -ItemType Directory -Force -Path $projectDir | Out-Null
+          $sentinel = Join-Path $projectDir 'upgrade-survival.flbio'
+          Set-Content -Path $sentinel -Value "Open the file samples.csv.`nCount the rows.`n"
+
+          Start-Process -FilePath $candidate -ArgumentList '/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART' -Wait
+          Start-Process -FilePath $candidate -ArgumentList '/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART' -Wait
+
+          $app = Join-Path $env:LOCALAPPDATA 'Programs\FigureLoom Bio'
+          if (-not (Test-Path $sentinel)) { throw 'A user project was lost during upgrade or repair.' }
+          foreach ($file in @('flbio.exe','FigureLoom Bio IDE.exe','Test FigureLoom Bio.exe','Install or Update FigureLoom Bio.exe')) {
+            if (-not (Test-Path (Join-Path $app $file))) { throw "$file was not installed." }
+          }
+          $pathEntries = @(([Environment]::GetEnvironmentVariable('Path', 'User') -split ';') | Where-Object {
+            $_.TrimEnd('\\') -ieq $app.TrimEnd('\\')
+          })
+          if ($pathEntries.Count -ne 1) { throw "FigureLoom Bio appeared $($pathEntries.Count) times in the user PATH after repair." }
+
+          $native = Start-Process -FilePath "$app\FigureLoom Bio IDE.exe" -ArgumentList '--self-test' -Wait -PassThru
+          if ($native.ExitCode -ne 0) { throw "Native IDE self-test failed with exit code $($native.ExitCode)." }
+          & "$app\flbio.exe" doctor
+          & "$app\flbio.exe" quick-test "$env:RUNNER_TEMP\figureloom-windows-upgrade-test"
+          if ($LASTEXITCODE -ne 0) { throw 'Language quick test failed after upgrade.' }
+
+          $uninstaller = Get-ChildItem -Path $app -Filter 'unins*.exe' | Select-Object -First 1
+          if (-not $uninstaller) { throw 'Windows uninstaller was not installed.' }
+          Start-Process -FilePath $uninstaller.FullName -ArgumentList '/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART' -Wait
+          if (Test-Path $app) { throw 'Application folder remained after uninstall.' }
+          if (-not (Test-Path $sentinel)) { throw 'Uninstall removed a user project.' }
+          $pathAfter = @(([Environment]::GetEnvironmentVariable('Path', 'User') -split ';') | Where-Object {
+            $_.TrimEnd('\\') -ieq $app.TrimEnd('\\')
+          })
+          if ($pathAfter.Count -ne 0) { throw 'Uninstall left FigureLoom Bio in the user PATH.' }
+
+          Start-Process -FilePath $candidate -ArgumentList '/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART' -Wait
+          if (-not (Test-Path "$app\flbio.exe")) { throw 'Fresh reinstall did not restore flbio.exe.' }
+          if (-not (Test-Path $sentinel)) { throw 'Fresh reinstall removed a user project.' }
+          $nativeAgain = Start-Process -FilePath "$app\FigureLoom Bio IDE.exe" -ArgumentList '--self-test' -Wait -PassThru
+          if ($nativeAgain.ExitCode -ne 0) { throw "Native IDE self-test failed after reinstall with exit code $($nativeAgain.ExitCode)." }
+          & "$app\flbio.exe" quick-test "$env:RUNNER_TEMP\figureloom-windows-reinstall-test"
+          if ($LASTEXITCODE -ne 0) { throw 'Language quick test failed after fresh reinstall.' }
+
+  macos_cycle:
+    name: macOS ${{ matrix.label }} previous → upgrade → repair
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: macos-15
+            arch: arm64
+            label: Apple Silicon
+            filename: Apple-Silicon
+          - runner: macos-15-intel
+            arch: x86_64
+            label: Intel
+            filename: Intel
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+
+      - name: Build candidate package
+        env:
+          FIGURELOOM_MAC_ARCH_LABEL: ${{ matrix.arch }}
+        run: bash figureloom-bio/macos/build-installer.sh dist
+
+      - name: Exercise complete macOS install and repair cycle
+        env:
+          PACKAGE_FILE: FigureLoom-Bio-Installer-macOS-${{ matrix.filename }}.pkg
+        run: |
+          set -euo pipefail
+          previous="$RUNNER_TEMP/FigureLoom-Bio-Previous.pkg"
+          candidate="$GITHUB_WORKSPACE/dist/$PACKAGE_FILE"
+          curl --fail --location --retry 3 \
+            "https://github.com/victork4314-sys/Figureloom/releases/download/figureloom-bio-macos-installer/$PACKAGE_FILE" \
+            --output "$previous"
+
+          printf '%s\n' "$USER" | sudo tee /var/tmp/figureloom-bio-target-user >/dev/null
+          sudo installer -pkg "$previous" -target /
+
+          project_dir="$HOME/Documents/FigureLoom Bio Projects"
+          mkdir -p "$project_dir"
+          printf 'Open the file samples.csv.\nCount the rows.\n' > "$project_dir/upgrade-survival.flbio"
+
+          sudo installer -pkg "$candidate" -target /
+          sudo rm -f /usr/local/bin/flbio
+          test ! -e /usr/local/bin/flbio
+          sudo installer -pkg "$candidate" -target /
+
+          test -x /usr/local/bin/flbio
+          test -f "$project_dir/upgrade-survival.flbio"
+          test "$(find /Applications -maxdepth 1 -name 'FigureLoom Bio IDE.app' | wc -l | tr -d ' ')" -eq 1
+          test "$(find /Applications -maxdepth 1 -name 'Test FigureLoom Bio.app' | wc -l | tr -d ' ')" -eq 1
+          test "$(find /Applications -maxdepth 1 -name 'Install or Update FigureLoom Bio.app' | wc -l | tr -d ' ')" -eq 1
+          pkgutil --pkg-info org.figureloom.bio
+          QT_QPA_PLATFORM=offscreen '/Applications/FigureLoom Bio IDE.app/Contents/MacOS/FigureLoom Bio IDE' --self-test
+          /usr/local/bin/flbio doctor
+          /usr/local/bin/flbio quick-test "$RUNNER_TEMP/figureloom-macos-cycle-test"
