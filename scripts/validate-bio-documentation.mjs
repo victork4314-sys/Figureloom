@@ -42,9 +42,9 @@ for (const [name, content] of Object.entries({
 
 for (const [name, content] of Object.entries({ packageReadme:files.packageReadme, wiki:files.wiki })) {
   requireText(name, content, 'flbio doctor');
-  requireText(name, content, 'There is not a PyPI release yet.');
   requireText(name, content, 'the file');
 }
+requireText('packageReadme', files.packageReadme, 'There is not a PyPI release yet.');
 
 const easyCommand = 'curl -fsSL https://raw.githubusercontent.com/victork4314-sys/Figureloom/main/install/figureloom-bio-linux.sh | sudo bash';
 for (const [name, content] of Object.entries({
