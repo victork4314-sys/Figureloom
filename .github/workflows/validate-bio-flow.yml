@@ -124,8 +124,17 @@ jobs:
 
       - name: Run exhaustive accepted-language tests
         run: |
+          set -o pipefail
           cd figureloom-bio
-          python3 -m unittest discover -s tests -p 'test_language_aliases.py' -v
+          python3 -m unittest discover -s tests -p 'test_language_aliases.py' -v 2>&1 | tee ../language-alias-terminal.log
+
+      - name: Upload exhaustive terminal vocabulary output
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: language-alias-terminal-log
+          path: language-alias-terminal.log
+          if-no-files-found: error
 
       - name: Run completed terminal language tests
         run: |
