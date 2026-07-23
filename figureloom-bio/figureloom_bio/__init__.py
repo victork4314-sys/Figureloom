@@ -11,6 +11,7 @@ from .addon_packages import install_addon_packages
 from .addon_translation import install_addon_translation
 from .current_file_language import install_current_file_language
 from .current_file_translation import install_current_file_translation
+from .translation_completion import install_translation_completion
 
 install_runtime_extensions(Runner)
 install_repeat_reset(Runner)
@@ -22,6 +23,7 @@ install_addon_packages(Runner)
 install_current_file_language(Runner)
 install_addon_translation()
 install_current_file_translation()
+install_translation_completion()
 
 __version__ = "0.7.0"
 
