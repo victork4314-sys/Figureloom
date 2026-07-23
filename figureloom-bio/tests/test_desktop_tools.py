@@ -6,6 +6,7 @@ import shutil
 import subprocess
 from tempfile import TemporaryDirectory
 import unittest
+from unittest.mock import patch
 
 from figureloom_bio.desktop_tools import (
     EXPECTED_OUTPUTS,
@@ -46,6 +47,7 @@ class DesktopToolsTests(unittest.TestCase):
             self.assertIn("QUICK TEST PASSED", report)
             self.assertIn("volcano plot", report.casefold())
             self.assertTrue((folder / "TEST-RESULT.txt").is_file())
+            self.assertFalse((folder / "TEST-DETAILS.txt").exists())
             for name in EXPECTED_OUTPUTS:
                 with self.subTest(name=name):
                     path = folder / name
@@ -55,6 +57,21 @@ class DesktopToolsTests(unittest.TestCase):
             self.assertTrue((folder / "quick-histogram.svg").read_text(encoding="utf-8").lstrip().startswith("<svg"))
             self.assertTrue((folder / "quick-volcano.svg").read_text(encoding="utf-8").lstrip().startswith("<svg"))
             self.assertTrue((folder / "quick-tree.nwk").read_text(encoding="utf-8").strip().endswith(";"))
+
+    def test_unexpected_quick_test_error_returns_a_simple_report_and_details_file(self) -> None:
+        with TemporaryDirectory() as temporary:
+            destination = Path(temporary) / "test-files"
+            with patch("figureloom_bio.desktop_tools.Runner", side_effect=RuntimeError("forced test failure")):
+                success, report, folder = run_quick_test(destination)
+            self.assertFalse(success)
+            self.assertIn("QUICK TEST FAILED", report)
+            self.assertIn("What happened", report)
+            self.assertIn("What to do", report)
+            self.assertIn("unexpected internal error", report)
+            self.assertIn("RuntimeError: forced test failure", report)
+            self.assertEqual((folder / "TEST-RESULT.txt").read_text(encoding="utf-8"), report)
+            details = (folder / "TEST-DETAILS.txt").read_text(encoding="utf-8")
+            self.assertIn("RuntimeError: forced test failure", details)
 
     def test_linux_install_scripts_have_valid_bash_syntax(self) -> None:
         bash = shutil.which("bash")
