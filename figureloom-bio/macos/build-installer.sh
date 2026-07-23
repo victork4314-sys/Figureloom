@@ -33,7 +33,7 @@ rm -rf "$BUILD_ROOT"
 mkdir -p "$APP_BUILD" "$WORK_ROOT" "$SPEC_ROOT" "$PKG_ROOT" "$SCRIPTS_ROOT" "$OUTPUT_DIR" "$ICONSET"
 
 python3 -m pip install --disable-pip-version-check --upgrade pip
-python3 -m pip install --disable-pip-version-check pyinstaller PySide6 "$ROOT_DIR/figureloom-bio"
+python3 -m pip install --disable-pip-version-check pyinstaller PySide6 cryptography "$ROOT_DIR/figureloom-bio"
 
 make_icon() {
   local size="$1"
