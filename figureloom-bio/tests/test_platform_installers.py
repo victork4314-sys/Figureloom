@@ -49,7 +49,7 @@ class PlatformInstallerTests(unittest.TestCase):
         self.assertIn("macos-15", workflow)
         self.assertIn("macos-15-intel", workflow)
         self.assertIn("Start-Process", workflow)
-        self.assertEqual(workflow.count("installer -pkg"), 2)
+        self.assertEqual(workflow.count(" -pkg dist/FigureLoom-Bio-Installer-macOS-"), 2)
         self.assertIn("figureloom-bio-windows-installer", workflow)
         self.assertIn("figureloom-bio-macos-installer", workflow)
 
