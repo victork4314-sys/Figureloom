@@ -21,6 +21,8 @@ native_widgets.DARK.setdefault("panel_2", native_widgets.DARK["editor_gutter"])
 install_exact_web_syntax()
 install_native_stability(native_ide)
 
-
+# run_stable_ide adds startup reporting, then delegates to
+# native_ide.run_native_ide so the existing native runtime and every function
+# remain authoritative.
 if __name__ == "__main__":
     raise SystemExit(run_stable_ide(native_ide))
