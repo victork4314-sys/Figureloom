@@ -1,21 +1,25 @@
 from __future__ import annotations
 
-from io import BytesIO
 from pathlib import Path
 import importlib.util
 import json
 import tempfile
 import unittest
-import urllib.error
 
 from figureloom_bio.native_cloud import CloudClient, SessionStore, encryption_self_test
 from figureloom_bio.native_core import NativeWorkspace
 
 
+TEST_USER = {
+    "id": "11111111-1111-1111-1111-111111111111",
+    "email": "scientist@example.com",
+    "user_metadata": {"full_name": "Example Scientist", "avatar_symbol": "dna"},
+}
+
+
 class FakeResponse:
-    def __init__(self, payload, status: int = 200) -> None:
+    def __init__(self, payload) -> None:
         self.payload = payload
-        self.status = status
 
     def __enter__(self):
         return self
@@ -42,12 +46,10 @@ class FakeOpener:
                 "access_token": "access-token",
                 "refresh_token": "refresh-token",
                 "expires_in": 3600,
-                "user": {
-                    "id": "11111111-1111-1111-1111-111111111111",
-                    "email": "scientist@example.com",
-                    "user_metadata": {"full_name": "Example Scientist", "avatar_symbol": "dna"},
-                },
+                "user": TEST_USER,
             })
+        if url.endswith("/auth/v1/user") and method == "GET":
+            return FakeResponse(TEST_USER)
         if "/rest/v1/bio_projects?select=id,title,updated_at,revision" in url and method == "GET":
             return FakeResponse([{
                 "id": "22222222-2222-2222-2222-222222222222",
