@@ -4,15 +4,13 @@ FigureLoom Bio is **not preinstalled into the Kasm image**. There is no Kasm ima
 
 A user installs it only when they choose to, either on a normal Ubuntu or Debian desktop or from inside their own running Kasm desktop session.
 
-## One pasted command
+## Download the installer
 
-Run this in the Linux terminal:
+[Download FigureLoom Bio](https://github.com/victork4314-sys/Figureloom/releases/download/figureloom-bio-installer/FigureLoom-Bio-Installer.deb)
 
-```bash
-curl -fsSL https://raw.githubusercontent.com/victork4314-sys/Figureloom/main/figureloom-bio/linux/install-linux.sh | sudo bash
-```
+Open `FigureLoom-Bio-Installer.deb` and approve the normal Linux installation prompt. The package contains the current engine, local IDE, desktop launchers, and test files, so it does not fetch a second installer during installation.
 
-Inside Kasm, open the terminal in the running workspace and use the same command. It installs FigureLoom Bio only into that Linux environment. It does not rebuild, replace, or modify the Kasm Docker image.
+Inside Kasm, download and open the same file inside the running workspace. It installs FigureLoom Bio only into that Linux environment. It does not rebuild, replace, or modify the Kasm Docker image.
 
 The first install adds:
 
@@ -23,7 +21,7 @@ The first install adds:
 - `flbio test-files` to recreate the folder;
 - `flbio quick-test` to run the automatic test.
 
-After the first command, ordinary users can double-click **Install or Update FigureLoom Bio** instead of pasting commands again.
+After the package is installed, ordinary users can double-click **Install or Update FigureLoom Bio** for later updates or repairs.
 
 ## Installer window
 
@@ -41,6 +39,14 @@ The language itself still has one built-in capability list. This installer does 
 
 ## What the installer checks
 
-Before reporting success, it checks the required Linux pieces, installs FigureLoom Bio in its isolated environment, copies the local IDE, creates all three desktop launchers, creates the test folder, runs `flbio doctor`, and executes `flbio quick-test`.
+Before reporting success, it checks the required Linux pieces, installs FigureLoom Bio, copies the local IDE, creates all three desktop launchers, creates the test folder, runs `flbio doctor`, and executes `flbio quick-test`.
 
-A desktop browser is required for the local IDE window. Chromium, Google Chrome, Firefox, and Firefox ESR are supported. Optional external bioinformatics programs are not silently installed.
+A desktop browser is required for the local IDE window. Chromium, Google Chrome, Firefox, Firefox ESR, or the normal Linux default-browser handler are supported. Optional external bioinformatics programs are not silently installed.
+
+## Terminal fallback
+
+The downloadable `.deb` package is the normal installation method. The older one-command installer remains only as a fallback for a Linux desktop that cannot open Debian packages:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/victork4314-sys/Figureloom/main/figureloom-bio/linux/install-linux.sh | sudo bash
+```
