@@ -16,19 +16,26 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
 
-      - name: Check browser decision runtime
+      - name: Check browser JavaScript syntax
         run: |
           node --check ide/ide-control-flow-runtime.js
           node --check ide/ide-decisions.js
           node --check ide/ide-addon-runtime.js
+          node --check ide/ide-approved-common.js
           node --check ide/ide-addon-packages.js
           node --check ide/ide-builtin-language-support.js
           node --check scripts/validate-bio-control-flow.mjs
           node --check scripts/validate-bio-browser-example.mjs
           node --check scripts/validate-bio-runtime-race.mjs
-          node scripts/validate-bio-control-flow.mjs
-          node scripts/validate-bio-browser-example.mjs
-          node scripts/validate-bio-runtime-race.mjs
+
+      - name: Validate browser control flow
+        run: node scripts/validate-bio-control-flow.mjs
+
+      - name: Run bundled microbiology example
+        run: node scripts/validate-bio-browser-example.mjs
+
+      - name: Reproduce delayed runtime loading
+        run: node scripts/validate-bio-runtime-race.mjs
 
       - name: Run control flow tests
         run: |
