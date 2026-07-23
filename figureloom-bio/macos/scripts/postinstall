@@ -41,17 +41,12 @@ echo "FigureLoom Bio desktop folder: $DESKTOP"
 /bin/ln -sfn "/Applications/Test FigureLoom Bio.app" "$DESKTOP/Test FigureLoom Bio.app"
 /bin/ln -sfn "/Applications/Install or Update FigureLoom Bio.app" "$DESKTOP/Install or Update FigureLoom Bio.app"
 
-run_as_user() {
-  if [[ "$TARGET_USER" == root ]]; then
-    /usr/bin/env HOME="$TARGET_HOME" "$@"
-  else
-    /usr/bin/sudo -u "$TARGET_USER" /usr/bin/env HOME="$TARGET_HOME" "$@"
-  fi
-}
-
-run_as_user /usr/local/bin/flbio test-files "$TEST_FOLDER"
-run_as_user /usr/local/bin/flbio doctor
-run_as_user /usr/local/bin/flbio quick-test "$TEST_FOLDER"
+/usr/bin/env HOME="$TARGET_HOME" TMPDIR=/private/tmp \
+  /usr/local/bin/flbio test-files "$TEST_FOLDER"
+/usr/bin/env HOME="$TARGET_HOME" TMPDIR=/private/tmp \
+  /usr/local/bin/flbio doctor
+/usr/bin/env HOME="$TARGET_HOME" TMPDIR=/private/tmp \
+  /usr/local/bin/flbio quick-test "$TEST_FOLDER"
 
 /bin/chown -h "$TARGET_USER:$TARGET_GROUP" \
   "$DESKTOP/FigureLoom Bio IDE.app" \
