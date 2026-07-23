@@ -1,0 +1,225 @@
+name: Patch FigureLoom Bio install docs
+
+on:
+  push:
+    branches: [agent/figureloom-bio-desktop-ide-installer]
+    paths: [.github/workflows/patch-bio-install-docs.yml]
+
+permissions:
+  contents: write
+
+jobs:
+  update_docs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          ref: agent/figureloom-bio-desktop-ide-installer
+
+      - name: Put the easy installer first in every guide
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          def replace_section(path_name: str, start: str, end: str, replacement: str) -> None:
+              path = Path(path_name)
+              text = path.read_text(encoding="utf-8")
+              if start not in text or end not in text:
+                  raise SystemExit(f"Could not find documentation section in {path_name}")
+              before, rest = text.split(start, 1)
+              _, after = rest.split(end, 1)
+              path.write_text(before + replacement.rstrip() + "\n\n" + end + after, encoding="utf-8")
+
+          root_install = r'''### Install FigureLoom Bio
+
+          **Linux and Kasm have the easiest installation.** Paste this once:
+
+          ```bash
+          curl -fsSL https://raw.githubusercontent.com/victork4314-sys/Figureloom/main/install/figureloom-bio-linux.sh | sudo bash
+          ```
+
+          It adds the terminal engine, local visual IDE, already-unzipped test files, and four desktop items:
+
+          - **Install or Update FigureLoom Bio**
+          - **FigureLoom Bio IDE**
+          - **FigureLoom Bio Test Files**
+          - **Run FigureLoom Bio Quick Test**
+
+          After the first installation, updates and repairs happen in the setup window. It checks Python, Git, the local app browser, the engine, IDE, tests, and optional bioinformatics tools. Missing required pieces are installed automatically, while existing scientific tools are left alone.
+
+          In a Kasm image, run the same command from the image-building server console. No user session needs to be running. New sessions receive the launchers and test folder through the Kasm default profile.
+
+          The manual `pipx` route is still available in [`figureloom-bio/README.md`](figureloom-bio/README.md). The visual installer and Kasm instructions are in the [easy install guide](https://figureloom.org/wiki/#FigureLoom-Bio-Easy-Install).
+
+          Run or translate a program from a terminal:
+
+          ```bash
+          flbio run program.flbio
+          flbio translate program.flbio --to python
+          flbio sentences
+          ```
+
+          Tool-backed microbiology workflows require explicit permission:
+
+          ```bash
+          flbio run bacterial-analysis.flbio --allow-tools
+          ```'''
+
+          package_install = r'''## Easy Linux and Kasm installation
+
+          Paste this once in a Linux terminal or the Kasm image-building server console:
+
+          ```bash
+          curl -fsSL https://raw.githubusercontent.com/victork4314-sys/Figureloom/main/install/figureloom-bio-linux.sh | sudo bash
+          ```
+
+          The installer adds:
+
+          - the `flbio` terminal engine;
+          - the local FigureLoom Bio IDE;
+          - the **Install or Update FigureLoom Bio** setup window;
+          - an already-unzipped **FigureLoom Bio Test Files** folder;
+          - a one-click quick test.
+
+          The setup window shows what is present, what is missing, and whether optional advanced tools are available. Press **Install** or **Update / Repair**. When it finishes, use **Open IDE**, **Open Test Files**, or **Run Quick Test** from the same window.
+
+          The installer does not reinstall the large bioinformatics collection when those tools are already available.
+
+          ### Kasm images
+
+          Run the command while building the Kasm image. A live user workspace is not needed. The installer writes the launchers and test folder to `/home/kasm-default-profile/Desktop`, `/etc/skel/Desktop`, and existing user desktops under `/home`.
+
+          Save or commit the image after installation, then select that image for the FigureLoom Linux workspace.
+
+          ### Windows PowerShell
+
+          Install Python and Git, then run:
+
+          ```powershell
+          py -m pip install --user pipx
+          py -m pipx ensurepath
+          pipx install "git+https://github.com/victork4314-sys/Figureloom.git#subdirectory=figureloom-bio"
+          flbio doctor
+          ```
+
+          Open the hosted visual IDE with:
+
+          ```powershell
+          Start-Process "https://figureloom.org/ide/"
+          ```
+
+          ### macOS Terminal
+
+          With Homebrew installed:
+
+          ```bash
+          brew install python git pipx
+          pipx ensurepath
+          pipx install "git+https://github.com/victork4314-sys/Figureloom.git#subdirectory=figureloom-bio"
+          flbio doctor
+          ```
+
+          Open the hosted visual IDE with:
+
+          ```bash
+          open https://figureloom.org/ide/
+          ```
+
+          ### Manual Linux command-line installation
+
+          The desktop installer is recommended. For a command-line-only installation:
+
+          ```bash
+          sudo apt update
+          sudo apt install -y python3 python3-venv git pipx
+          pipx ensurepath
+          pipx install "git+https://github.com/victork4314-sys/Figureloom.git#subdirectory=figureloom-bio"
+          flbio doctor
+          ```
+
+          ### Install from a local clone
+
+          ```bash
+          git clone https://github.com/victork4314-sys/Figureloom.git
+          cd Figureloom
+          pipx install ./figureloom-bio
+          flbio doctor
+          ```
+
+          For an editable development environment:
+
+          ```bash
+          cd Figureloom/figureloom-bio
+          python3 -m venv .venv
+          . .venv/bin/activate
+          python -m pip install -e .
+          flbio doctor
+          ```
+
+          ### Verify the installation
+
+          The easiest check is the **Run FigureLoom Bio Quick Test** desktop item. Its final line should say:
+
+          ```text
+          EVERY QUICK TEST PASSED.
+          ```
+
+          Terminal checks are also available:
+
+          ```bash
+          flbio doctor
+          flbio sentences
+          flbio sentences statistics
+          flbio sentences figures
+          ```
+
+          ### Update, repair, or uninstall
+
+          On Linux or Kasm, double-click **Install or Update FigureLoom Bio** and press **Update / Repair**. Pasting the first-install command again does the same thing.
+
+          For a `pipx` installation:
+
+          ```bash
+          pipx reinstall figureloom-bio
+          flbio doctor
+          ```
+
+          Remove a `pipx` installation with:
+
+          ```bash
+          pipx uninstall figureloom-bio
+          ```
+
+          Uninstalling the engine does not delete `.flbio` programs or result files.'''
+
+          wiki_install = package_install.replace("## Easy Linux and Kasm installation", "## Install FigureLoom Bio")
+
+          replace_section(
+              "README.md",
+              "### Install FigureLoom Bio",
+              "## Desktop, tablet, and phone",
+              root_install,
+          )
+          replace_section(
+              "figureloom-bio/README.md",
+              "## Install the command-line engine",
+              "## Optional bioinformatics tools",
+              package_install,
+          )
+          replace_section(
+              "wiki/FigureLoom-Bio.md",
+              "## Install the command-line engine",
+              "## Optional bioinformatics tools",
+              wiki_install,
+          )
+          PY
+
+      - name: Commit the documentation
+        run: |
+          git config user.name "FigureLoom Docs"
+          git config user.email "actions@users.noreply.github.com"
+          git add README.md figureloom-bio/README.md wiki/FigureLoom-Bio.md
+          git diff --cached --check
+          git commit -m "Document the graphical FigureLoom Bio installer"
+          git push origin HEAD:agent/figureloom-bio-desktop-ide-installer
