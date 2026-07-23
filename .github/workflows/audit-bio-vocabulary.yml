@@ -1,0 +1,28 @@
+name: Audit every FigureLoom Bio sentence
+
+on:
+  pull_request:
+    paths:
+      - 'figureloom-bio/**'
+      - '.github/workflows/audit-bio-vocabulary.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'figureloom-bio/**'
+      - '.github/workflows/audit-bio-vocabulary.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  every_sentence:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Execute every documented and accepted sentence
+        run: |
+          cd figureloom-bio
+          python3 -m unittest tests.test_every_language_sentence_executes -v
