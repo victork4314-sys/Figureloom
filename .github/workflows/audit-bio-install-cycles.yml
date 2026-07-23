@@ -35,7 +35,7 @@ jobs:
               print(tomllib.load(handle)['project']['version'])
           PY
           )"
-          export FIGURELOOM_DEB_VERSION="${version}+cycle${GITHUB_SHA::7}"
+          export FIGURELOOM_DEB_VERSION="${version}+zzcycle${GITHUB_SHA::7}"
           bash figureloom-bio/linux/build-deb.sh dist
           test -s dist/FigureLoom-Bio-Installer.deb
 
