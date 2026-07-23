@@ -44,9 +44,13 @@ jobs:
           node --check scripts/validate-bio-translator.mjs
           node --check scripts/validate-bio-decision-core.mjs
           node --check scripts/validate-bio-runtime-race.mjs
+          node --check scripts/validate-bio-documentation.mjs
 
       - name: Validate shared language manifest
         run: node scripts/validate-bio-language-manifest.mjs
+
+      - name: Validate completed documentation and wiki sync
+        run: node scripts/validate-bio-documentation.mjs
 
       - name: Validate registered language handlers
         run: node scripts/validate-bio-statement-registry.mjs
