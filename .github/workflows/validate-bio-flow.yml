@@ -133,7 +133,7 @@ jobs:
 
       - name: Rehearse clean Linux desktop installation
         run: |
-          browser="$(command -v chromium || command -v chromium-browser || command -v google-chrome || command -v google-chrome-stable || true)"
+          browser="$(command -v chromium || command -v chromium-browser || command -v google-chrome || command -v google-chrome-stable || command -v firefox || command -v firefox-esr || true)"
           test -n "$browser"
           sudo env \
             FIGURELOOM_SOURCE_DIR="$GITHUB_WORKSPACE" \
@@ -141,8 +141,11 @@ jobs:
             FIGURELOOM_APP_DIR=/opt/figureloom-desktop-ci \
             SUDO_USER="$USER" \
             bash figureloom-bio/linux/install-workspace.sh
+          test -x /usr/local/bin/figureloom-bio-installer
+          test -x /usr/local/libexec/figureloom-bio-update
           test -x /usr/local/bin/figureloom-bio-ide
           test -x /usr/local/bin/figureloom-bio-test
+          test -f "$HOME/Desktop/Install or Update FigureLoom Bio.desktop"
           test -f "$HOME/Desktop/FigureLoom Bio IDE.desktop"
           test -f "$HOME/Desktop/Test FigureLoom Bio.desktop"
           test -f "$HOME/Desktop/FigureLoom Bio Test Files/quick-test.flbio"
