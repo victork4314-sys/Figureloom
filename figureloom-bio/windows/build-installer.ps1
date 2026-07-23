@@ -22,7 +22,7 @@ New-Item -ItemType Directory -Force -Path $AppBuild, $WorkRoot, $SpecRoot, $Outp
 
 & $Python -m pip install --disable-pip-version-check --upgrade pip
 $PackageRoot = Join-Path $RepoRoot "figureloom-bio"
-& $Python -m pip install --disable-pip-version-check pyinstaller pillow PySide6 $PackageRoot
+& $Python -m pip install --disable-pip-version-check pyinstaller pillow PySide6 cryptography $PackageRoot
 & $Python (Join-Path $RepoRoot "figureloom-bio\scripts\build-platform-icons.py") $IconPng $IconIco
 
 $Version = & $Python -c "import tomllib; print(tomllib.load(open(r'$RepoRoot\figureloom-bio\pyproject.toml','rb'))['project']['version'])"
