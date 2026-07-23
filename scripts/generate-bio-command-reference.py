@@ -49,12 +49,7 @@ def render() -> str:
         accepted = alternatives_by_theme.get(theme.id, [])
         if not commands and not accepted:
             continue
-        lines.extend([
-            f"## {theme.title}",
-            "",
-            theme.description,
-            "",
-        ])
+        lines.extend([f"## {theme.title}", ""])
         if commands:
             lines.extend(["### Main sentences", ""])
             for command in commands:
