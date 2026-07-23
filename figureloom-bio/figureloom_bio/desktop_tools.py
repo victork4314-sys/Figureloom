@@ -22,6 +22,8 @@ Calculate the median of score.
 Normalize the counts under count.
 Create a histogram of score.
 Save the file as quick-histogram.svg.
+Create a volcano plot using effect and p_value.
+Save the file as quick-volcano.svg.
 
 Open the file sequences.fasta.
 Align the sequences.
@@ -40,11 +42,11 @@ Count the reads.
 Say The FigureLoom Bio quick test is complete.
 """
 
-MEASUREMENTS = """sample,group,score,count
-sample-a,treated,10,100
-sample-b,treated,12,120
-sample-c,control,4,40
-sample-d,control,6,60
+MEASUREMENTS = """sample,group,score,count,effect,p_value
+sample-a,treated,10,100,2.4,0.001
+sample-b,treated,12,120,1.2,0.04
+sample-c,control,4,40,-1.8,0.006
+sample-d,control,6,60,-0.4,0.4
 """
 
 SEQUENCES = """>sample-one
@@ -82,6 +84,7 @@ Manual IDE check:
 3. Select quick-test.flbio and the three data files in this folder.
 4. Press Run.
 5. The results should appear in separate readable sections.
+6. The test should create histogram, volcano plot, alignment, and tree files.
 
 You can recreate this entire folder at any time with:
 
@@ -90,6 +93,7 @@ You can recreate this entire folder at any time with:
 
 EXPECTED_OUTPUTS = (
     "quick-histogram.svg",
+    "quick-volcano.svg",
     "quick-alignment.fasta",
     "quick-tree.nwk",
 )
@@ -155,6 +159,7 @@ def run_quick_test(destination: Path | None = None) -> tuple[bool, str, Path]:
         required_sections = (
             "Average of score",
             "Median of score",
+            "Volcano plot",
             "Alignment",
             "Phylogenetic tree",
             "Average read quality",
@@ -176,7 +181,8 @@ def run_quick_test(destination: Path | None = None) -> tuple[bool, str, Path]:
         "FIGURELOOM BIO QUICK TEST PASSED\n\n"
         "The language opened CSV, FASTA, and FASTQ data.\n"
         "It calculated statistics and read quality.\n"
-        "It created a real SVG figure, alignment, and phylogenetic tree.\n"
+        "It created real histogram and volcano plot SVG figures.\n"
+        "It created a real alignment and phylogenetic tree.\n"
         "No TODO or placeholder output was found.\n\n"
         f"Test folder: {folder}\n"
     )
