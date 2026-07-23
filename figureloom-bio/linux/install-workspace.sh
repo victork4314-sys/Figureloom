@@ -10,39 +10,76 @@ SOURCE_DIR="${FIGURELOOM_SOURCE_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../.."
 VENV_DIR="${FIGURELOOM_VENV_DIR:-/opt/figureloom-bio}"
 APP_DIR="${FIGURELOOM_APP_DIR:-/opt/figureloom-desktop}"
 SITE_DIR="$APP_DIR/site"
+INSTALLER_DIR="$APP_DIR/installer"
 IDE_LAUNCHER="/usr/local/bin/figureloom-bio-ide"
 TEST_LAUNCHER="/usr/local/bin/figureloom-bio-test"
+INSTALLER_LAUNCHER="/usr/local/bin/figureloom-bio-installer"
+UPDATE_WORKER="/usr/local/libexec/figureloom-bio-update"
+TARGET_USER="${FIGURELOOM_TARGET_USER:-${SUDO_USER:-}}"
 
 if [[ ! -f "$SOURCE_DIR/figureloom-bio/pyproject.toml" || ! -f "$SOURCE_DIR/ide/index.html" ]]; then
   echo "I could not find the FigureLoom source at: $SOURCE_DIR" >&2
   exit 1
 fi
-
-if ! command -v python3 >/dev/null 2>&1; then
-  echo "Python 3 is required but was not found." >&2
+if [[ ! -f "$SOURCE_DIR/figureloom-bio/linux/installer-window.py" || ! -f "$SOURCE_DIR/figureloom-bio/linux/update-worker.sh" ]]; then
+  echo "The FigureLoom Bio installer-window files are missing from: $SOURCE_DIR" >&2
   exit 1
 fi
 
+install_missing_packages() {
+  local packages=("$@")
+  if [[ ${#packages[@]} -eq 0 ]]; then
+    return 0
+  fi
+  if ! command -v apt-get >/dev/null 2>&1; then
+    printf 'These required Linux pieces are missing: %s\n' "${packages[*]}" >&2
+    echo "This installer can add them automatically on Ubuntu or Debian systems with apt-get." >&2
+    exit 1
+  fi
+  echo "Installing only the missing Linux pieces: ${packages[*]}"
+  apt-get update -qq
+  DEBIAN_FRONTEND=noninteractive apt-get install -y -qq "${packages[@]}"
+}
+
+echo "PROGRESS 5 Checking required Linux pieces"
+missing=()
+command -v python3 >/dev/null 2>&1 || missing+=(python3)
+command -v git >/dev/null 2>&1 || missing+=(git)
+command -v tar >/dev/null 2>&1 || missing+=(tar)
+install_missing_packages "${missing[@]}"
+
+missing=()
+python3 -c 'import venv' >/dev/null 2>&1 || missing+=(python3-venv)
+python3 -c 'import tkinter' >/dev/null 2>&1 || missing+=(python3-tk)
+install_missing_packages "${missing[@]}"
+
 BROWSER=""
-for candidate in chromium chromium-browser google-chrome google-chrome-stable; do
+BROWSER_KIND="chromium"
+for candidate in chromium chromium-browser google-chrome google-chrome-stable firefox firefox-esr; do
   if command -v "$candidate" >/dev/null 2>&1; then
     BROWSER="$(command -v "$candidate")"
+    case "$candidate" in
+      firefox|firefox-esr) BROWSER_KIND="firefox" ;;
+    esac
     break
   fi
 done
 if [[ -z "$BROWSER" ]]; then
-  echo "Chromium or Google Chrome is required for the desktop IDE window." >&2
+  echo "A desktop browser is required for the local IDE window." >&2
+  echo "Install Chromium, Google Chrome, Firefox, or Firefox ESR, then run the installer again." >&2
   exit 1
 fi
 
-echo "[1/5] Installing FigureLoom Bio..."
-rm -rf "$VENV_DIR"
-python3 -m venv "$VENV_DIR"
+echo "PROGRESS 18 Installing or updating FigureLoom Bio"
+if [[ ! -x "$VENV_DIR/bin/python" ]]; then
+  rm -rf "$VENV_DIR"
+  python3 -m venv "$VENV_DIR"
+fi
 "$VENV_DIR/bin/python" -m pip install --quiet --upgrade pip
-"$VENV_DIR/bin/python" -m pip install --quiet "$SOURCE_DIR/figureloom-bio"
+"$VENV_DIR/bin/python" -m pip install --quiet --upgrade "$SOURCE_DIR/figureloom-bio"
 ln -sfn "$VENV_DIR/bin/flbio" /usr/local/bin/flbio
 
-echo "[2/5] Installing the local IDE..."
+echo "PROGRESS 38 Installing the local IDE"
 rm -rf "$SITE_DIR"
 mkdir -p "$SITE_DIR"
 (
@@ -50,6 +87,17 @@ mkdir -p "$SITE_DIR"
   tar --exclude=.git --exclude=node_modules --exclude='*.pyc' --exclude=__pycache__ -cf - .
 ) | tar -C "$SITE_DIR" -xf -
 chmod -R a+rX "$APP_DIR"
+
+mkdir -p "$INSTALLER_DIR" /usr/local/libexec
+install -m 0755 "$SOURCE_DIR/figureloom-bio/linux/installer-window.py" "$INSTALLER_DIR/installer-window.py"
+install -m 0755 "$SOURCE_DIR/figureloom-bio/linux/update-worker.sh" "$UPDATE_WORKER"
+
+cat > "$INSTALLER_LAUNCHER" <<EOF
+#!/usr/bin/env bash
+set -euo pipefail
+exec python3 "$INSTALLER_DIR/installer-window.py"
+EOF
+chmod 0755 "$INSTALLER_LAUNCHER"
 
 cat > "$IDE_LAUNCHER" <<EOF
 #!/usr/bin/env bash
@@ -84,6 +132,10 @@ if ! server_ready; then
 fi
 
 BROWSER="$BROWSER"
+BROWSER_KIND="$BROWSER_KIND"
+if [[ "\$BROWSER_KIND" == firefox ]]; then
+  exec "\$BROWSER" --new-window "\$URL"
+fi
 FLAGS=(--no-first-run --disable-session-crashed-bubble --disable-features=Translate --app="\$URL")
 if [[ \${EUID:-\$(id -u)} -eq 0 ]]; then
   FLAGS+=(--no-sandbox)
@@ -111,7 +163,7 @@ exit "$status"
 EOF
 chmod 0755 "$TEST_LAUNCHER"
 
-echo "[3/5] Adding desktop and application-menu icons..."
+echo "PROGRESS 58 Adding desktop and application-menu icons"
 mkdir -p /usr/share/applications
 cat > /usr/share/applications/figureloom-bio-ide.desktop <<EOF
 [Desktop Entry]
@@ -138,20 +190,42 @@ Terminal=true
 Categories=Development;Science;Education;
 StartupNotify=true
 EOF
-chmod 0755 /usr/share/applications/figureloom-bio-ide.desktop /usr/share/applications/figureloom-bio-test.desktop
+
+cat > /usr/share/applications/figureloom-bio-installer.desktop <<EOF
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=Install or Update FigureLoom Bio
+Comment=Install, update, repair, and test FigureLoom Bio
+Exec=$INSTALLER_LAUNCHER
+Icon=$SITE_DIR/favicon.ico
+Terminal=false
+Categories=Development;Science;Education;
+StartupNotify=true
+EOF
+chmod 0755 \
+  /usr/share/applications/figureloom-bio-ide.desktop \
+  /usr/share/applications/figureloom-bio-test.desktop \
+  /usr/share/applications/figureloom-bio-installer.desktop
 
 install_desktop() {
   local home="$1"
   local owner="${2:-}"
   local desktop="$home/Desktop"
+  local ide_icon="$desktop/FigureLoom Bio IDE.desktop"
+  local test_icon="$desktop/Test FigureLoom Bio.desktop"
+  local installer_icon="$desktop/Install or Update FigureLoom Bio.desktop"
+  local test_folder="$desktop/FigureLoom Bio Test Files"
   mkdir -p "$desktop"
-  cp /usr/share/applications/figureloom-bio-ide.desktop "$desktop/FigureLoom Bio IDE.desktop"
-  cp /usr/share/applications/figureloom-bio-test.desktop "$desktop/Test FigureLoom Bio.desktop"
-  chmod 0755 "$desktop/FigureLoom Bio IDE.desktop" "$desktop/Test FigureLoom Bio.desktop"
-  "$VENV_DIR/bin/flbio" test-files "$desktop/FigureLoom Bio Test Files" >/dev/null
-  chmod -R a+rX "$desktop/FigureLoom Bio Test Files"
+  cp /usr/share/applications/figureloom-bio-ide.desktop "$ide_icon"
+  cp /usr/share/applications/figureloom-bio-test.desktop "$test_icon"
+  cp /usr/share/applications/figureloom-bio-installer.desktop "$installer_icon"
+  chmod 0755 "$ide_icon" "$test_icon" "$installer_icon"
+  "$VENV_DIR/bin/flbio" test-files "$test_folder" >/dev/null
+  chmod -R a+rX "$test_folder"
   if [[ -n "$owner" ]]; then
-    chown -R "$owner":"$owner" "$desktop" 2>/dev/null || true
+    chown "$owner":"$owner" "$ide_icon" "$test_icon" "$installer_icon" 2>/dev/null || true
+    chown -R "$owner":"$owner" "$test_folder" 2>/dev/null || true
   fi
 }
 
@@ -161,20 +235,21 @@ fi
 if [[ -d /home/kasm-user ]]; then
   install_desktop /home/kasm-user kasm-user
 fi
-if [[ -n "${SUDO_USER:-}" && "${SUDO_USER}" != root ]]; then
-  USER_HOME="$(getent passwd "$SUDO_USER" | cut -d: -f6)"
+if [[ -n "$TARGET_USER" && "$TARGET_USER" != root ]]; then
+  USER_HOME="$(getent passwd "$TARGET_USER" | cut -d: -f6)"
   if [[ -n "$USER_HOME" ]]; then
-    install_desktop "$USER_HOME" "$SUDO_USER"
+    install_desktop "$USER_HOME" "$TARGET_USER"
   fi
 fi
 
-echo "[4/5] Running a real language test..."
+echo "PROGRESS 78 Running a real language test"
 TEST_DIR="$(mktemp -d)"
 trap 'rm -rf "$TEST_DIR"' EXIT
 "$VENV_DIR/bin/flbio" doctor
 "$VENV_DIR/bin/flbio" quick-test "$TEST_DIR"
 
-echo "[5/5] FigureLoom Bio desktop installation is ready."
+echo "PROGRESS 100 FigureLoom Bio desktop installation is ready"
+echo "Desktop icon: Install or Update FigureLoom Bio"
 echo "Desktop icon: FigureLoom Bio IDE"
 echo "Desktop icon: Test FigureLoom Bio"
 echo "Desktop folder: FigureLoom Bio Test Files"
