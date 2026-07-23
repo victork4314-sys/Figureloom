@@ -74,19 +74,25 @@ The command-line engine translates `.flbio` programs to Python, R, Bash, Snakema
 
 ### Install FigureLoom Bio
 
-There is not a PyPI release yet. The pinned command installs the tested 0.7.0 code snapshot with `pipx`:
+**Linux and Kasm use the easy desktop installer.** Open a terminal in the Linux desktop or in your running Kasm workspace and paste this once:
 
 ```bash
-pipx install "git+https://github.com/victork4314-sys/Figureloom.git@3508ad3ef9073a1c5bbd9fa03765260369784d61#subdirectory=figureloom-bio"
-flbio doctor
+curl -fsSL https://raw.githubusercontent.com/victork4314-sys/Figureloom/main/figureloom-bio/linux/install-linux.sh | sudo bash
 ```
 
-Install the current GitHub version:
+The first installation adds:
 
-```bash
-pipx install "git+https://github.com/victork4314-sys/Figureloom.git#subdirectory=figureloom-bio"
-flbio doctor
-```
+- **Install or Update FigureLoom Bio** on the desktop and application menu;
+- **FigureLoom Bio IDE** as a local standalone app window;
+- **Test FigureLoom Bio**;
+- an already-unzipped **FigureLoom Bio Test Files** folder;
+- `flbio quick-test` and `flbio test-files` in the terminal.
+
+After that, double-click **Install or Update FigureLoom Bio** for updates or repairs. The window checks the required Linux pieces, installs only what is missing, runs `flbio doctor`, and can open the IDE, open the test files, or run the real quick test.
+
+Inside Kasm, run the command in the workspace terminal. It is user-installed and does not rebuild or replace the Kasm Docker image.
+
+Windows, macOS, development, and command-line-only instructions remain in [`figureloom-bio/README.md`](figureloom-bio/README.md). The short visual guide is in the [easy installer page](https://figureloom.org/wiki/#FigureLoom-Bio-Easy-Install).
 
 Run or translate a program:
 
@@ -101,8 +107,6 @@ Tool-backed microbiology workflows require explicit permission:
 ```bash
 flbio run bacterial-analysis.flbio --allow-tools
 ```
-
-The complete Windows, macOS, Linux, update, uninstall, optional-tool, troubleshooting, and language guide is in [`figureloom-bio/README.md`](figureloom-bio/README.md) and the [FigureLoom Bio manual](https://figureloom.org/wiki/#FigureLoom-Bio).
 
 ## Desktop, tablet, and phone
 

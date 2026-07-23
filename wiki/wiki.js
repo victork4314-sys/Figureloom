@@ -11,6 +11,7 @@
     ['Editor basics','Text-Shapes-Arrows-and-Connectors','Text, shapes, arrows, and connectors'],
     ['Editor basics','Images-SVG-and-Uploads','Images, SVG, and uploads'],
     ['Scientific work','FigureLoom-Bio','FigureLoom Bio'],
+    ['Scientific work','FigureLoom-Bio-Easy-Install','Install FigureLoom Bio'],
     ['Scientific work','Scientific-Illustrations-and-Maps','Scientific illustrations and maps'],
     ['Scientific work','Data-Tables-and-Charts','Data, tables, and charts'],
     ['Scientific work','Equations-Code-and-Scientific-Notation','Equations, code, and scientific notation'],

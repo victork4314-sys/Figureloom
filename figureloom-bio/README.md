@@ -88,36 +88,59 @@ The browser IDE includes:
 
 The editor does not color a sentence as valid unless the release tests also exercise its parser or runtime path. The same catalog drives Sentences, Blocks, terminal help, documentation, and parity tests.
 
-## Install the command-line engine
+## Easy Linux and Kasm installation
 
-FigureLoom Bio requires Python 3.10 or newer and Git for Git-based installs. `pipx` is recommended because it installs the `flbio` command in an isolated environment.
+Open a terminal in Ubuntu, Debian, FigureLoom Linux, or your running Kasm workspace and paste this once:
 
-There is not a PyPI release yet. The pinned command below installs the tested 0.7.0 code snapshot. The current-version command follows the repository’s `main` branch.
+```bash
+curl -fsSL https://raw.githubusercontent.com/victork4314-sys/Figureloom/main/figureloom-bio/linux/install-linux.sh | sudo bash
+```
+
+FigureLoom Bio is installed only when the user chooses to install it. The command does not rebuild, replace, or modify the Kasm Docker image.
+
+The first installation creates:
+
+- **Install or Update FigureLoom Bio** on the desktop and application menu;
+- **FigureLoom Bio IDE** as a local standalone app window;
+- **Test FigureLoom Bio** on the desktop;
+- an already-unzipped **FigureLoom Bio Test Files** folder;
+- `flbio test-files` to recreate the test folder;
+- `flbio quick-test` to run the automatic test.
+
+### Installer window
+
+Double-click **Install or Update FigureLoom Bio** after the first installation. The window can install, update, or repair FigureLoom Bio; add only missing basic Linux pieces; open the local IDE; open the unzipped test folder; and run the real test suite.
+
+The automatic test covers CSV, FASTA, FASTQ, figures, alignment, and a phylogenetic tree. A successful run ends with:
+
+```text
+EVERY QUICK TEST PASSED.
+```
+
+The setup does not silently install the optional external bioinformatics collection.
+
+### Check it from the terminal
+
+```bash
+flbio doctor
+flbio quick-test
+flbio sentences
+flbio sentences statistics
+flbio sentences figures
+```
 
 ### Windows PowerShell
 
-Install Python and Git first, then open PowerShell.
+Install Python and Git, then run:
 
 ```powershell
 py -m pip install --user pipx
 py -m pipx ensurepath
-```
-
-Close and reopen PowerShell, then install the pinned tested snapshot:
-
-```powershell
-pipx install "git+https://github.com/victork4314-sys/Figureloom.git@3508ad3ef9073a1c5bbd9fa03765260369784d61#subdirectory=figureloom-bio"
-flbio doctor
-```
-
-Install the current GitHub version instead:
-
-```powershell
 pipx install "git+https://github.com/victork4314-sys/Figureloom.git#subdirectory=figureloom-bio"
 flbio doctor
 ```
 
-Open the browser IDE from PowerShell:
+Open the hosted IDE with:
 
 ```powershell
 Start-Process "https://figureloom.org/ide/"
@@ -130,54 +153,26 @@ With Homebrew installed:
 ```bash
 brew install python git pipx
 pipx ensurepath
-```
-
-Close and reopen Terminal, then install the pinned tested snapshot:
-
-```bash
-pipx install "git+https://github.com/victork4314-sys/Figureloom.git@3508ad3ef9073a1c5bbd9fa03765260369784d61#subdirectory=figureloom-bio"
-flbio doctor
-```
-
-Install the current GitHub version instead:
-
-```bash
 pipx install "git+https://github.com/victork4314-sys/Figureloom.git#subdirectory=figureloom-bio"
 flbio doctor
 ```
 
-Open the browser IDE:
+Open the hosted IDE with:
 
 ```bash
 open https://figureloom.org/ide/
 ```
 
-### Ubuntu or Debian Linux
+### Manual Linux command-line installation
+
+The desktop installer is recommended. For a command-line-only installation:
 
 ```bash
 sudo apt update
 sudo apt install -y python3 python3-venv git pipx
 pipx ensurepath
-```
-
-Close and reopen the terminal, then install the pinned tested snapshot:
-
-```bash
-pipx install "git+https://github.com/victork4314-sys/Figureloom.git@3508ad3ef9073a1c5bbd9fa03765260369784d61#subdirectory=figureloom-bio"
-flbio doctor
-```
-
-Install the current GitHub version instead:
-
-```bash
 pipx install "git+https://github.com/victork4314-sys/Figureloom.git#subdirectory=figureloom-bio"
 flbio doctor
-```
-
-Open the browser IDE:
-
-```bash
-xdg-open https://figureloom.org/ide/
 ```
 
 ### Install from a local clone
@@ -189,73 +184,32 @@ pipx install ./figureloom-bio
 flbio doctor
 ```
 
-For an editable development environment instead:
+### Run a program
 
-```bash
-cd Figureloom/figureloom-bio
-python3 -m venv .venv
-. .venv/bin/activate
-python -m pip install -e .
-flbio doctor
-```
-
-On Windows PowerShell, activate that environment with:
-
-```powershell
-.\.venv\Scripts\Activate.ps1
-```
-
-## Verify the installation
-
-```bash
-flbio doctor
-flbio sentences
-flbio sentences statistics
-flbio sentences figures
-```
-
-`flbio doctor` reports the installed version, Python version, package path, language-manifest version and command count, all translation targets, and the status of optional bioinformatics tools.
-
-## Run a program
-
-Save instructions as `program.flbio`, place input files beside it, and run:
+Put the `.flbio` program and its input files in the same folder:
 
 ```bash
 flbio run program.flbio
 ```
 
-Tool-backed commands are deliberately blocked unless permission is explicit:
+Tool-backed commands need explicit permission:
 
 ```bash
-flbio run program.flbio --allow-tools
+flbio run bacterial-analysis.flbio --allow-tools
 ```
 
-Native commands do not need `--allow-tools`. This includes the built-in table, sequence, FASTQ, alignment, variant, gene, primer, tree, statistics, and SVG-figure operations.
-
-## Update and uninstall
-
-A current-branch pipx installation remembers its Git source. Reinstall it to fetch and rebuild the current repository version:
+### Update or uninstall a manual pipx installation
 
 ```bash
 pipx reinstall figureloom-bio
 flbio doctor
 ```
 
-A pinned installation remains pinned. To move it to the current GitHub version:
-
-```bash
-pipx uninstall figureloom-bio
-pipx install "git+https://github.com/victork4314-sys/Figureloom.git#subdirectory=figureloom-bio"
-flbio doctor
-```
-
-Uninstall FigureLoom Bio:
-
 ```bash
 pipx uninstall figureloom-bio
 ```
 
-The uninstall removes the isolated command-line environment. It does not delete `.flbio` programs or result files.
+Uninstalling the engine does not delete `.flbio` programs or result files.
 
 ## Optional bioinformatics tools
 
