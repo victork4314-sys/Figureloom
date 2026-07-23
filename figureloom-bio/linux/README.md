@@ -4,13 +4,16 @@ FigureLoom Bio is **not preinstalled into the Kasm image**. There is no Kasm ima
 
 A user installs it only when they choose to, either on a normal Ubuntu or Debian desktop or from inside their own running Kasm desktop session.
 
-## Download the installer
+## Download FigureLoom Bio
 
-[Download FigureLoom Bio](https://github.com/victork4314-sys/Figureloom/releases/download/figureloom-bio-installer/FigureLoom-Bio-Installer.deb)
+- [Download FigureLoom Bio for Linux and Kasm](https://github.com/victork4314-sys/Figureloom/releases/download/figureloom-bio-installer/FigureLoom-Bio-Installer.deb)
+- [Download FigureLoom Bio for Windows](https://github.com/victork4314-sys/Figureloom/releases/download/figureloom-bio-windows-installer/FigureLoom-Bio-Installer.exe)
+- [Download FigureLoom Bio for Mac, Apple Silicon](https://github.com/victork4314-sys/Figureloom/releases/download/figureloom-bio-macos-installer/FigureLoom-Bio-Installer-macOS-Apple-Silicon.pkg)
+- [Download FigureLoom Bio for Mac, Intel](https://github.com/victork4314-sys/Figureloom/releases/download/figureloom-bio-macos-installer/FigureLoom-Bio-Installer-macOS-Intel.pkg)
 
-Open `FigureLoom-Bio-Installer.deb` and approve the normal Linux installation prompt. The package contains the current engine, local IDE, desktop launchers, and test files, so it does not fetch a second installer during installation.
+For Linux, open `FigureLoom-Bio-Installer.deb` and approve the normal installation prompt. The package contains the current engine, local IDE, desktop launchers, and test files, so it does not fetch a second installer during installation.
 
-Inside Kasm, download and open the same file inside the running workspace. It installs FigureLoom Bio only into that Linux environment. It does not rebuild, replace, or modify the Kasm Docker image.
+Inside Kasm, download and open the same Linux file inside the running workspace. It installs FigureLoom Bio only into that Linux environment. It does not rebuild, replace, or modify the Kasm Docker image.
 
 The first install adds:
 
