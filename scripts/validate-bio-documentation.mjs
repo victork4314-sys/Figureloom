@@ -34,7 +34,7 @@ for (const [name, content] of Object.entries({ mainReadme: files.mainReadme, pac
 }
 
 const installerDownload = 'https://github.com/victork4314-sys/Figureloom/releases/download/figureloom-bio-installer/FigureLoom-Bio-Installer.deb';
-for (const [name, content] of Object.entries({ easyInstall: files.easyInstall, linuxReadme: files.linuxReadme })) {
+for (const [name, content] of Object.entries({ mainReadme: files.mainReadme, easyInstall: files.easyInstall, linuxReadme: files.linuxReadme })) {
   requireText(name, content, installerDownload);
   requireText(name, content, 'Download FigureLoom Bio');
   requireText(name, content, 'FigureLoom-Bio-Installer.deb');

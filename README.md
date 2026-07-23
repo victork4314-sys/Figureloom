@@ -74,13 +74,13 @@ The command-line engine translates `.flbio` programs to Python, R, Bash, Snakema
 
 ### Install FigureLoom Bio
 
-**Linux and Kasm use the easy desktop installer.** Open a terminal in the Linux desktop or in your running Kasm workspace and paste this once:
+**Linux and Kasm use the downloadable desktop installer.**
 
-```bash
-curl -fsSL https://raw.githubusercontent.com/victork4314-sys/Figureloom/main/figureloom-bio/linux/install-linux.sh | sudo bash
-```
+[Download FigureLoom Bio](https://github.com/victork4314-sys/Figureloom/releases/download/figureloom-bio-installer/FigureLoom-Bio-Installer.deb)
 
-The first installation adds:
+Open `FigureLoom-Bio-Installer.deb`, press **Install**, and approve the normal Linux administrator prompt. The downloaded package already contains the FigureLoom Bio engine, local IDE, desktop launchers, and test files. It does not fetch a second installer while it is being installed.
+
+The installation adds:
 
 - **Install or Update FigureLoom Bio** on the desktop and application menu;
 - **FigureLoom Bio IDE** as a local standalone app window;
@@ -90,7 +90,13 @@ The first installation adds:
 
 After that, double-click **Install or Update FigureLoom Bio** for updates or repairs. The window checks the required Linux pieces, installs only what is missing, runs `flbio doctor`, and can open the IDE, open the test files, or run the real quick test.
 
-Inside Kasm, run the command in the workspace terminal. It is user-installed and does not rebuild or replace the Kasm Docker image.
+Inside Kasm, open the download page in the running workspace and install the same file there. FigureLoom Bio is user-installed and is not preinstalled into, baked into, or used to rebuild the Kasm Docker image.
+
+The old terminal installer remains only as a fallback for Linux desktops that cannot open `.deb` packages:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/victork4314-sys/Figureloom/main/figureloom-bio/linux/install-linux.sh | sudo bash
+```
 
 Windows, macOS, development, and command-line-only instructions remain in [`figureloom-bio/README.md`](figureloom-bio/README.md). The short visual guide is in the [easy installer page](https://figureloom.org/wiki/#FigureLoom-Bio-Easy-Install).
 
@@ -258,20 +264,3 @@ FigureLoom's original code and project-authored artwork are released under the *
 [Read the full license](LICENSE).
 
 People may use, study, modify, and share FigureLoom. When someone operates a modified version over a network, the AGPL requires that version's corresponding source code be made available to its users.
-
-Outside asset packs keep their own licenses and attribution requirements. Read [`docs/ASSET_PACKS.md`](docs/ASSET_PACKS.md) before publishing work that uses them.
-
-## More documentation
-
-- [FigureLoom Bio package guide](figureloom-bio/README.md)
-- [FigureLoom Bio manual](https://figureloom.org/wiki/#FigureLoom-Bio)
-- [Hosted manual and tutorials](https://figureloom.org/wiki/#Home)
-- [MCP and AI access](https://figureloom.org/wiki/#MCP-and-AI-Access)
-- [`docs/PRO_TOOLS.md`](docs/PRO_TOOLS.md)
-- [`docs/FEATURE_AUDIT.md`](docs/FEATURE_AUDIT.md)
-- [`docs/CLOUD_SETUP.md`](docs/CLOUD_SETUP.md)
-- [`docs/ASSET_PACKS.md`](docs/ASSET_PACKS.md)
-
----
-
-*Dedicated to Adriana M. K.*
