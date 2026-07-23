@@ -99,6 +99,7 @@ Find variants.
 Count the variants.
 Show the variants.
 Save the variants as variants.csv.
+Open the file sequences.fasta.
 Build a phylogenetic tree.
 Show the tree.
 Save the tree as tree.nwk.
