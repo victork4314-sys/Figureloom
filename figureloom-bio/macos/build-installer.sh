@@ -71,6 +71,13 @@ build_app() {
   codesign --force --deep --sign - "$APP_BUILD/$name.app"
 }
 
+test_app() {
+  local name="$1"
+  local executable="$APP_BUILD/$name.app/Contents/MacOS/$name"
+  test -x "$executable"
+  QT_QPA_PLATFORM=offscreen "$executable" --self-test
+}
+
 python3 -m PyInstaller \
   --noconfirm \
   --clean \
@@ -89,6 +96,10 @@ codesign --force --sign - "$APP_BUILD/flbio"
 build_app "FigureLoom Bio IDE" "figureloom-bio/platform/ide_entry.py"
 build_app "Test FigureLoom Bio" "figureloom-bio/platform/test_entry.py"
 build_app "Install or Update FigureLoom Bio" "figureloom-bio/platform/manager_entry.py"
+
+test_app "FigureLoom Bio IDE"
+test_app "Test FigureLoom Bio"
+test_app "Install or Update FigureLoom Bio"
 
 if find "$APP_BUILD" -type f \( -iname '*.html' -o -iname '*.htm' -o -iname '*.js' -o -iname '*.mjs' \) -print -quit | grep -q .; then
   echo "The macOS desktop build contains forbidden web-interface files." >&2
