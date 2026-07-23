@@ -25,6 +25,7 @@ jobs:
           node --check ide/ide-current-file-language.js
           node --check ide/ide-language-manifest.js
           node --check ide/ide-language-catalog-ui.js
+          node --check ide/ide-language-blocks-ui.js
           node --check ide/ide-translator.js
           node --check ide/ide-approved-common.js
           node --check ide/ide-addon-packages.js
