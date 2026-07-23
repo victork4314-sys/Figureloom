@@ -118,28 +118,36 @@
   function waitForFlowAndRetry() {
     if (retryingRun) return;
     retryingRun = true;
+    runButton.disabled = true;
     status.textContent = 'Starting browser analysis';
     status.className = 'status-pill running';
-    let attempts = 0;
+    const started = Date.now();
+    const timeout = 12000;
+
     const retry = () => {
-      attempts += 1;
       if (flowWillHandle()) {
         retryingRun = false;
+        runButton.disabled = false;
         runButton.click();
         return;
       }
-      if (attempts < 60) setTimeout(retry, 50);
-      else {
+      if (Date.now() - started >= timeout) {
         retryingRun = false;
-        showError(new Error('The browser analysis layer did not load. Refresh FigureLoom Bio and try again.'));
+        runButton.disabled = false;
+        showError(new Error('The decision and microbiology tools did not finish loading. Refresh FigureLoom Bio and press Run again.'));
+        return;
       }
+      setTimeout(retry, 80);
     };
-    setTimeout(retry, 0);
+
+    Promise.resolve(window.FigureLoomBioFlowLoading)
+      .catch(() => null)
+      .finally(retry);
   }
 
   const hasMicrobiology = () => /(?:\.(?:microbiology|genomics)|bacterial|resistance genes|virulence genes|plasmids|identify the organism|classify .+ using)/i.test(editor.value);
   const hasProgramFlow = () => /(^|\n)\s*(?:If .+:|Otherwise(?:,)?(?: if .+)?:|For every .+:|Make a recipe called .+:)/im.test(editor.value)
-    || /\b(?:Call the result|Make sure|Show a warning|Open all (?:FASTQ|FASTA|CSV|TSV) files|Continue with the next sample|Skip this sample|Mark the sample for review|Stop the program|Save the (?:result|sequences|reads) using the sample name)\b/i.test(editor.value);
+    || /\b(?:Call the result|Use the result|Use the recipe|Make sure|Show a warning|Open all (?:FASTQ|FASTA|CSV|TSV) files|Continue with the next sample|Skip this sample|Mark the sample for review|Stop the program|Save the (?:result|sequences|reads) using the sample name)\b/i.test(editor.value);
   const needsAdvancedRun = () => hasMicrobiology() || hasProgramFlow();
 
   window.addEventListener('click', (event) => {
