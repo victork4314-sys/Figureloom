@@ -7,39 +7,44 @@ valid_user() {
   id "$candidate" >/dev/null 2>&1
 }
 
-regular_desktop_user() {
-  local home=""
-  local candidate=""
-  local found=""
-  for home in /Users/*; do
-    [[ -d "$home" ]] || continue
-    candidate="$(basename "$home")"
-    case "$candidate" in
-      Shared|Guest) continue ;;
-    esac
-    valid_user "$candidate" || continue
-    if [[ -n "$found" ]]; then
-      return 1
-    fi
-    found="$candidate"
-  done
-  [[ -n "$found" ]] || return 1
-  printf '%s\n' "$found"
+normal_user() {
+  local candidate="${1:-}"
+  valid_user "$candidate" && [[ "$candidate" != root ]]
 }
 
-TARGET_USER="${FIGURELOOM_TARGET_USER:-${SUDO_USER:-}}"
-if ! valid_user "$TARGET_USER" || [[ "$TARGET_USER" == root ]]; then
-  CONSOLE_USER="$(stat -f '%Su' /dev/console 2>/dev/null || true)"
-  if valid_user "$CONSOLE_USER" && [[ "$CONSOLE_USER" != root ]]; then
-    TARGET_USER="$CONSOLE_USER"
-  else
-    DETECTED_USER="$(regular_desktop_user 2>/dev/null || true)"
-    if valid_user "$DETECTED_USER"; then
-      TARGET_USER="$DETECTED_USER"
-    fi
+TARGET_USER=""
+CONSOLE_USER="$(stat -f '%Su' /dev/console 2>/dev/null || true)"
+WHO_USER="$(who 2>/dev/null | awk '$2 == "console" { print $1; exit }')"
+
+for candidate in \
+  "${FIGURELOOM_TARGET_USER:-}" \
+  "${SUDO_USER:-}" \
+  "$CONSOLE_USER" \
+  "$WHO_USER" \
+  runner; do
+  if normal_user "$candidate"; then
+    TARGET_USER="$candidate"
+    break
+  fi
+done
+
+if [[ -z "$TARGET_USER" ]]; then
+  mapfile -t desktop_users < <(
+    for home in /Users/*; do
+      [[ -d "$home" ]] || continue
+      candidate="$(basename "$home")"
+      case "$candidate" in
+        Shared|Guest) continue ;;
+      esac
+      normal_user "$candidate" && printf '%s\n' "$candidate"
+    done
+  )
+  if [[ ${#desktop_users[@]} -eq 1 ]]; then
+    TARGET_USER="${desktop_users[0]}"
   fi
 fi
-if ! valid_user "$TARGET_USER"; then
+
+if [[ -z "$TARGET_USER" ]]; then
   TARGET_USER="root"
 fi
 
@@ -51,6 +56,9 @@ else
 fi
 DESKTOP="$TARGET_HOME/Desktop"
 TEST_FOLDER="$DESKTOP/FigureLoom Bio Test Files"
+
+echo "FigureLoom Bio desktop user: $TARGET_USER"
+echo "FigureLoom Bio desktop folder: $DESKTOP"
 mkdir -p "$DESKTOP"
 
 ln -sfn "/Applications/FigureLoom Bio IDE.app" "$DESKTOP/FigureLoom Bio IDE.app"
