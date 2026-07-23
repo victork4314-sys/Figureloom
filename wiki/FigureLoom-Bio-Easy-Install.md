@@ -11,6 +11,8 @@ FigureLoom Bio installs like a normal desktop program. There is no terminal comm
 
 Apple Silicon means an M1, M2, M3, M4, M5, or newer Apple-chip Mac. Use the Intel package only on an Intel Mac.
 
+> **Installing on a Mac:** the current Mac packages are not signed and notarized through Apple's paid developer program. macOS may show a developer or security warning even when the package was downloaded correctly. Download it only from the official links above, then follow the Mac steps below if macOS blocks it.
+
 The direct installer links stay together in this **Download for your computer** section. They are not repeated beside the wiki search bar or as separate download entries in the navigation.
 
 ## Install it
@@ -33,11 +35,15 @@ The Windows installer does not require a separate Python installation. It instal
 
 ### macOS
 
-1. Choose the Apple Silicon or Intel package above.
-2. Open the downloaded `.pkg` file.
-3. Follow the normal macOS installer.
+1. Download the Apple Silicon or Intel package above.
+2. Open **Finder → Downloads** and locate the downloaded `.pkg` file.
+3. Try opening the package normally. If the installer opens, press **Continue** and follow the normal installation steps.
+4. If macOS blocks it, Control-click the `.pkg`, choose **Open**, and approve the second **Open** prompt.
+5. If it is still blocked, try opening the package once so macOS records the attempt. Then open **Apple menu → System Settings → Privacy & Security**.
+6. Scroll down to **Security**, find the message about the FigureLoom Bio package, and press **Open Anyway**. This option normally remains available for about an hour after the blocked opening attempt.
+7. Enter the Mac login password or use Touch ID when asked, press **Open**, and finish the normal installer.
 
-The current public Mac packages are not Apple-notarized yet. If macOS blocks the first opening, Control-click the package, choose **Open**, and approve it once.
+The warning appears because the package is distributed independently and is not currently Apple-notarized. It does not mean FigureLoom Bio is a browser app or that the installer is incomplete. After macOS accepts it once, the installed FigureLoom Bio apps open normally.
 
 The downloaded installers contain the FigureLoom Bio engine, native desktop IDE, installer window, and test files. They do not download a second installer while the first installation is running.
 
