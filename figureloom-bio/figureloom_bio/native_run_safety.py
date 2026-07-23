@@ -56,7 +56,12 @@ def install_native_run_safety(native_ide_module: Any) -> None:
                 )
                 self.finished.emit(result)
             except FigureLoomBioError as error:
-                self.failed.emit(error.plain_message(), int(error.line_number or 0))
+                cause = error.__cause__
+                if cause is not None and not isinstance(cause, FigureLoomBioError):
+                    details_path = _save_run_details(traceback.format_exc())
+                    self.failed.emit(_unexpected_run_message(cause, details_path), 0)
+                else:
+                    self.failed.emit(error.plain_message(), int(error.line_number or 0))
             except Exception as error:
                 details_path = _save_run_details(traceback.format_exc())
                 self.failed.emit(_unexpected_run_message(error, details_path), 0)
