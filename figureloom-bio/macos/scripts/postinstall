@@ -29,18 +29,21 @@ for candidate in \
 done
 
 if [[ -z "$TARGET_USER" ]]; then
-  mapfile -t desktop_users < <(
-    for home in /Users/*; do
-      [[ -d "$home" ]] || continue
-      candidate="$(basename "$home")"
-      case "$candidate" in
-        Shared|Guest) continue ;;
-      esac
-      normal_user "$candidate" && printf '%s\n' "$candidate"
-    done
-  )
-  if [[ ${#desktop_users[@]} -eq 1 ]]; then
-    TARGET_USER="${desktop_users[0]}"
+  DESKTOP_USER_COUNT=0
+  ONLY_DESKTOP_USER=""
+  for home in /Users/*; do
+    [[ -d "$home" ]] || continue
+    candidate="$(basename "$home")"
+    case "$candidate" in
+      Shared|Guest) continue ;;
+    esac
+    if normal_user "$candidate"; then
+      DESKTOP_USER_COUNT=$((DESKTOP_USER_COUNT + 1))
+      ONLY_DESKTOP_USER="$candidate"
+    fi
+  done
+  if [[ $DESKTOP_USER_COUNT -eq 1 ]]; then
+    TARGET_USER="$ONLY_DESKTOP_USER"
   fi
 fi
 
