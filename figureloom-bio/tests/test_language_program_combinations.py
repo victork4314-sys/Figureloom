@@ -111,13 +111,16 @@ Show the variants.
 Save the variants as variants.csv.
 """,
     """Open the file sequences.fasta.
+Call the result original sequences.
 Find genes.
 Count the genes.
 Show the genes.
 Save the genes as genes.csv.
+Use the result original sequences.
 Find PCR primers.
 Check the primers.
 Show the primers.
+Use the result original sequences.
 Build a phylogenetic tree.
 Show the tree.
 Save the tree as tree.nwk.
@@ -255,7 +258,7 @@ class LanguageProgramCombinationTests(unittest.TestCase):
             ("Open the file reads.fastq.", FASTQ_TRANSFORMS, "Count the reads."),
         )
         for family_index, (opener, steps, closer) in enumerate(families, start=1):
-            for program_index in range(40):
+            for program_index in range(50):
                 chosen = [randomizer.choice(steps) for _ in range(randomizer.randint(3, 12))]
                 source = "\n".join((opener, *chosen, closer)) + "\n"
                 with self.subTest(family=family_index, program=program_index, steps=chosen):
@@ -286,7 +289,7 @@ class LanguageProgramCombinationTests(unittest.TestCase):
             + len(SEQUENCE_TRANSFORMS) * len(SEQUENCE_INSPECTORS)
             + len(FASTQ_TRANSFORMS) * len(FASTQ_INSPECTORS)
         )
-        long_programs = 3 * 40
+        long_programs = 3 * 50
         explicit_workflows = len(STATEFUL_WORKFLOWS) + len(CONTROL_FLOW_WORKFLOWS) + 1
         total = ordered_pairs + transition_checks + long_programs + explicit_workflows
         self.assertGreaterEqual(total, 600)
