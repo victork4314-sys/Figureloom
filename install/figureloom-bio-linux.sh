@@ -79,12 +79,17 @@ chmod 755 "${VENV_DIR}/bin/flbio"
 install -Dm755 "${SOURCE_DIR}/install/linux/figureloom-bio-ide" "${BIN_DIR}/figureloom-bio-ide"
 install -Dm755 "${SOURCE_DIR}/install/linux/figureloom-bio-copy-tests" "${BIN_DIR}/figureloom-bio-copy-tests"
 install -Dm755 "${SOURCE_DIR}/install/linux/figureloom-bio-quick-test" "${BIN_DIR}/figureloom-bio-quick-test"
+install -Dm755 "${SOURCE_DIR}/install/linux/figureloom-bio-setup" "${BIN_DIR}/figureloom-bio-setup"
 ln -sfn "${VENV_DIR}/bin/flbio" "${BIN_DIR}/flbio"
 
-mkdir -p "${SHARE_DIR}"
+mkdir -p "${SHARE_DIR}/setup"
 rm -rf "${SHARE_DIR}/test-files"
 cp -a "${SOURCE_DIR}/figureloom-bio/test-files" "${SHARE_DIR}/test-files"
+install -m755 "${SOURCE_DIR}/install/linux/figureloom_bio_setup.py" \
+    "${SHARE_DIR}/setup/figureloom_bio_setup.py"
 
+install -Dm755 "${SOURCE_DIR}/install/linux/Install or Update FigureLoom Bio.desktop" \
+    "${APPLICATIONS_DIR}/figureloom-bio-setup.desktop"
 install -Dm755 "${SOURCE_DIR}/install/linux/FigureLoom Bio IDE.desktop" \
     "${APPLICATIONS_DIR}/figureloom-bio-ide.desktop"
 install -Dm755 "${SOURCE_DIR}/install/linux/FigureLoom Bio Test Files.desktop" \
@@ -98,6 +103,8 @@ install_desktop_items() {
     local desktop_dir="${home_dir}/Desktop"
     mkdir -p "${desktop_dir}"
 
+    install -m755 "${SOURCE_DIR}/install/linux/Install or Update FigureLoom Bio.desktop" \
+        "${desktop_dir}/Install or Update FigureLoom Bio.desktop"
     install -m755 "${SOURCE_DIR}/install/linux/FigureLoom Bio IDE.desktop" \
         "${desktop_dir}/FigureLoom Bio IDE.desktop"
     install -m755 "${SOURCE_DIR}/install/linux/FigureLoom Bio Test Files.desktop" \
@@ -135,6 +142,7 @@ echo "FigureLoom Bio is installed."
 "${VENV_DIR}/bin/flbio" doctor
 echo
 echo "Desktop items installed:"
+echo "- Install or Update FigureLoom Bio"
 echo "- FigureLoom Bio IDE"
 echo "- FigureLoom Bio Test Files"
 echo "- Run FigureLoom Bio Quick Test"
