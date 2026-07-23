@@ -22,13 +22,18 @@ jobs:
           node --check ide/ide-decisions.js
           node --check ide/ide-addon-runtime.js
           node --check ide/ide-decision-core.js
+          node --check ide/ide-current-file-language.js
           node --check ide/ide-approved-common.js
           node --check ide/ide-addon-packages.js
           node --check ide/ide-builtin-language-support.js
           node --check scripts/validate-bio-control-flow.mjs
           node --check scripts/validate-bio-browser-example.mjs
+          node --check scripts/validate-bio-current-file.mjs
           node --check scripts/validate-bio-decision-core.mjs
           node --check scripts/validate-bio-runtime-race.mjs
+
+      - name: Validate current-file sentences
+        run: node scripts/validate-bio-current-file.mjs
 
       - name: Validate exact decision words
         run: node scripts/validate-bio-decision-core.mjs

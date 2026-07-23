@@ -211,7 +211,10 @@ def parse(source: str) -> list[Instruction]:
         for action, pattern in _PATTERNS:
             match = pattern.fullmatch(sentence)
             if match:
-                values = tuple(value.strip() for value in match.groups())
+                values = tuple(
+                    value.strip() if value is not None else ""
+                    for value in match.groups()
+                )
                 instructions.append(Instruction(action, line_number, values))
                 break
         else:
