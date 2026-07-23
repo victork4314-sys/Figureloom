@@ -1,4 +1,5 @@
-from figureloom_bio.platform_desktop import run_ide_entry
+from figureloom_bio.native_ide import run_native_ide
+
 
 if __name__ == "__main__":
-    run_ide_entry()
+    raise SystemExit(run_native_ide())
