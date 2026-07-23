@@ -17,6 +17,14 @@
   };
 
   ready.then((aliases) => {
+    // The alias handler is registered immediately before this promise resolves.
+    // Put that specific, vocabulary-driven handler before broad legacy handlers
+    // so an older table rule cannot swallow a newer read or figure sentence.
+    const registeredHandlers = window.FigureLoomBioStatementHandlers;
+    if (Array.isArray(registeredHandlers) && registeredHandlers.length > 1) {
+      registeredHandlers.unshift(registeredHandlers.pop());
+    }
+
     const previous = window.FigureLoomBioCurrentFile;
     if (!previous?.normalizeSource) throw new Error('The current-file language did not load before generated-file support.');
 
