@@ -73,12 +73,22 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          set -euo pipefail
           tag="figureloom-bio-installer"
           file="dist/FigureLoom-Bio-Installer.deb"
           notes="Download FigureLoom-Bio-Installer.deb, open it, and approve the normal Linux installation prompt. Nothing is preinstalled into the Kasm image."
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag --force "$tag" "$GITHUB_SHA"
+          git push origin "refs/tags/$tag" --force
+
           if gh release view "$tag" >/dev/null 2>&1; then
             gh release upload "$tag" "$file" --clobber
             gh release edit "$tag" --latest --title "FigureLoom Bio Linux Installer" --notes "$notes"
           else
             gh release create "$tag" "$file" --latest --title "FigureLoom Bio Linux Installer" --notes "$notes"
           fi
+
+          remote_sha="$(git ls-remote --tags origin "refs/tags/$tag" | awk '{print $1}')"
+          test "$remote_sha" = "$GITHUB_SHA"
