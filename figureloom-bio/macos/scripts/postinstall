@@ -7,9 +7,37 @@ valid_user() {
   id "$candidate" >/dev/null 2>&1
 }
 
+regular_desktop_user() {
+  local home=""
+  local candidate=""
+  local found=""
+  for home in /Users/*; do
+    [[ -d "$home" ]] || continue
+    candidate="$(basename "$home")"
+    case "$candidate" in
+      Shared|Guest) continue ;;
+    esac
+    valid_user "$candidate" || continue
+    if [[ -n "$found" ]]; then
+      return 1
+    fi
+    found="$candidate"
+  done
+  [[ -n "$found" ]] || return 1
+  printf '%s\n' "$found"
+}
+
 TARGET_USER="${FIGURELOOM_TARGET_USER:-${SUDO_USER:-}}"
-if ! valid_user "$TARGET_USER"; then
-  TARGET_USER="$(stat -f '%Su' /dev/console 2>/dev/null || true)"
+if ! valid_user "$TARGET_USER" || [[ "$TARGET_USER" == root ]]; then
+  CONSOLE_USER="$(stat -f '%Su' /dev/console 2>/dev/null || true)"
+  if valid_user "$CONSOLE_USER" && [[ "$CONSOLE_USER" != root ]]; then
+    TARGET_USER="$CONSOLE_USER"
+  else
+    DETECTED_USER="$(regular_desktop_user 2>/dev/null || true)"
+    if valid_user "$DETECTED_USER"; then
+      TARGET_USER="$DETECTED_USER"
+    fi
+  fi
 fi
 if ! valid_user "$TARGET_USER"; then
   TARGET_USER="root"
