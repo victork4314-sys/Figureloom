@@ -1,0 +1,353 @@
+name: Patch easy FigureLoom Bio install docs
+
+on:
+  push:
+    branches: [agent/figureloom-bio-easy-install-docs]
+    paths: [.github/workflows/patch-easy-bio-install-docs.yml]
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: agent/figureloom-bio-easy-install-docs
+
+      - name: Make every install guide match the live installer
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          command = 'curl -fsSL https://raw.githubusercontent.com/victork4314-sys/Figureloom/main/figureloom-bio/linux/install-linux.sh | sudo bash'
+
+          def replace_section(file_name: str, start: str, end: str, replacement: str) -> None:
+              path = Path(file_name)
+              text = path.read_text(encoding='utf-8')
+              if start not in text or end not in text:
+                  raise SystemExit(f'Could not find the install section in {file_name}')
+              before, rest = text.split(start, 1)
+              _, after = rest.split(end, 1)
+              path.write_text(before + replacement.rstrip() + '\n\n' + end + after, encoding='utf-8')
+
+          root_section = f'''### Install FigureLoom Bio
+
+          **Linux and Kasm use the easy desktop installer.** Open a terminal in the Linux desktop or in your running Kasm workspace and paste this once:
+
+          ```bash
+          {command}
+          ```
+
+          The first installation adds:
+
+          - **Install or Update FigureLoom Bio** on the desktop and application menu;
+          - **FigureLoom Bio IDE** as a local standalone app window;
+          - **Test FigureLoom Bio**;
+          - an already-unzipped **FigureLoom Bio Test Files** folder;
+          - `flbio quick-test` and `flbio test-files` in the terminal.
+
+          After that, double-click **Install or Update FigureLoom Bio** for updates or repairs. The window checks the required Linux pieces, installs only what is missing, runs `flbio doctor`, and can open the IDE, open the test files, or run the real quick test.
+
+          Inside Kasm, run the command in the workspace terminal. It is user-installed and does not rebuild or replace the Kasm Docker image.
+
+          Windows, macOS, development, and command-line-only instructions remain in [`figureloom-bio/README.md`](figureloom-bio/README.md). The short visual guide is in the [easy installer page](https://figureloom.org/wiki/#FigureLoom-Bio-Easy-Install).
+
+          Run or translate a program:
+
+          ```bash
+          flbio run program.flbio
+          flbio translate program.flbio --to python
+          flbio sentences
+          ```
+
+          Tool-backed microbiology workflows require explicit permission:
+
+          ```bash
+          flbio run bacterial-analysis.flbio --allow-tools
+          ```'''
+
+          detailed_section = f'''## Easy Linux and Kasm installation
+
+          Open a terminal in Ubuntu, Debian, FigureLoom Linux, or your running Kasm workspace and paste this once:
+
+          ```bash
+          {command}
+          ```
+
+          FigureLoom Bio is installed only when the user chooses to install it. The command does not rebuild, replace, or modify the Kasm Docker image.
+
+          The first installation creates:
+
+          - **Install or Update FigureLoom Bio** on the desktop and application menu;
+          - **FigureLoom Bio IDE** as a local standalone app window;
+          - **Test FigureLoom Bio** on the desktop;
+          - an already-unzipped **FigureLoom Bio Test Files** folder;
+          - `flbio test-files` to recreate the test folder;
+          - `flbio quick-test` to run the automatic test.
+
+          ### Installer window
+
+          Double-click **Install or Update FigureLoom Bio** after the first installation. The window can install, update, or repair FigureLoom Bio; add only missing basic Linux pieces; open the local IDE; open the unzipped test folder; and run the real test suite.
+
+          The automatic test covers CSV, FASTA, FASTQ, figures, alignment, and a phylogenetic tree. A successful run ends with:
+
+          ```text
+          EVERY QUICK TEST PASSED.
+          ```
+
+          The setup does not silently install the optional external bioinformatics collection.
+
+          ### Check it from the terminal
+
+          ```bash
+          flbio doctor
+          flbio quick-test
+          flbio sentences
+          flbio sentences statistics
+          flbio sentences figures
+          ```
+
+          ### Windows PowerShell
+
+          Install Python and Git, then run:
+
+          ```powershell
+          py -m pip install --user pipx
+          py -m pipx ensurepath
+          pipx install "git+https://github.com/victork4314-sys/Figureloom.git#subdirectory=figureloom-bio"
+          flbio doctor
+          ```
+
+          Open the hosted IDE with:
+
+          ```powershell
+          Start-Process "https://figureloom.org/ide/"
+          ```
+
+          ### macOS Terminal
+
+          With Homebrew installed:
+
+          ```bash
+          brew install python git pipx
+          pipx ensurepath
+          pipx install "git+https://github.com/victork4314-sys/Figureloom.git#subdirectory=figureloom-bio"
+          flbio doctor
+          ```
+
+          Open the hosted IDE with:
+
+          ```bash
+          open https://figureloom.org/ide/
+          ```
+
+          ### Manual Linux command-line installation
+
+          The desktop installer is recommended. For a command-line-only installation:
+
+          ```bash
+          sudo apt update
+          sudo apt install -y python3 python3-venv git pipx
+          pipx ensurepath
+          pipx install "git+https://github.com/victork4314-sys/Figureloom.git#subdirectory=figureloom-bio"
+          flbio doctor
+          ```
+
+          ### Install from a local clone
+
+          ```bash
+          git clone https://github.com/victork4314-sys/Figureloom.git
+          cd Figureloom
+          pipx install ./figureloom-bio
+          flbio doctor
+          ```
+
+          ### Run a program
+
+          Put the `.flbio` program and its input files in the same folder:
+
+          ```bash
+          flbio run program.flbio
+          ```
+
+          Tool-backed commands need explicit permission:
+
+          ```bash
+          flbio run bacterial-analysis.flbio --allow-tools
+          ```
+
+          ### Update or uninstall a manual pipx installation
+
+          ```bash
+          pipx reinstall figureloom-bio
+          flbio doctor
+          ```
+
+          ```bash
+          pipx uninstall figureloom-bio
+          ```
+
+          Uninstalling the engine does not delete `.flbio` programs or result files.'''
+
+          replace_section('README.md', '### Install FigureLoom Bio', '## Desktop, tablet, and phone', root_section)
+          replace_section('figureloom-bio/README.md', '## Install the command-line engine', '## Optional bioinformatics tools', detailed_section)
+          replace_section('wiki/FigureLoom-Bio.md', '## Install the terminal engine', '## Optional bioinformatics tools', detailed_section.replace('## Easy Linux and Kasm installation', '## Install FigureLoom Bio'))
+
+          easy_page = f'''# Install FigureLoom Bio
+
+          FigureLoom Bio can be installed like a normal desktop program. The first command adds an installer window, the local IDE, an unzipped test folder, and a one-click test.
+
+          ## First installation
+
+          Open a terminal in Linux or in your running Kasm workspace and paste:
+
+          ```bash
+          {command}
+          ```
+
+          Inside Kasm, use the terminal inside the workspace. This does not rebuild or replace the Kasm image.
+
+          ## What appears on the desktop
+
+          - **Install or Update FigureLoom Bio**
+          - **FigureLoom Bio IDE**
+          - **Test FigureLoom Bio**
+          - **FigureLoom Bio Test Files**, already unzipped
+
+          ## Use the installer window
+
+          Double-click **Install or Update FigureLoom Bio**. The window shows whether the engine, IDE, launchers, browser support, and test files are ready. It installs only missing basic Linux pieces and leaves optional scientific tools alone.
+
+          The window can:
+
+          - install or update FigureLoom Bio;
+          - repair missing launchers or files;
+          - open the IDE;
+          - open the test folder;
+          - run the quick test.
+
+          ## Check that it works
+
+          Double-click **Test FigureLoom Bio**, or run:
+
+          ```bash
+          flbio quick-test
+          ```
+
+          A successful test ends with:
+
+          ```text
+          EVERY QUICK TEST PASSED.
+          ```
+
+          The test uses real CSV, FASTA, and FASTQ inputs and also checks figures, alignment, and a tree.
+
+          ## Update later
+
+          Double-click **Install or Update FigureLoom Bio** and choose update or repair. There is no need to repeat the full manual installation guide.
+
+          ## Open the IDE
+
+          Double-click **FigureLoom Bio IDE**. It opens locally in its own app window without normal browser tabs or an address bar.
+          '''
+          Path('wiki/FigureLoom-Bio-Easy-Install.md').write_text(easy_page.strip() + '\n', encoding='utf-8')
+
+          sidebar = Path('wiki/_Sidebar.md')
+          sidebar_text = sidebar.read_text(encoding='utf-8')
+          sidebar_text = sidebar_text.replace(
+              '- [FigureLoom Bio Linux installer](https://github.com/victork4314-sys/Figureloom/blob/main/figureloom-bio/linux/README.md)',
+              '- [Install FigureLoom Bio](FigureLoom-Bio-Easy-Install)',
+          )
+          sidebar.write_text(sidebar_text, encoding='utf-8')
+
+          wiki_js = Path('wiki/wiki.js')
+          wiki_js_text = wiki_js.read_text(encoding='utf-8')
+          registration = "    ['Scientific work','FigureLoom-Bio-Easy-Install','Install FigureLoom Bio'],\n"
+          if 'FigureLoom-Bio-Easy-Install' not in wiki_js_text:
+              wiki_js_text = wiki_js_text.replace(
+                  "    ['Scientific work','FigureLoom-Bio','FigureLoom Bio'],\n",
+                  "    ['Scientific work','FigureLoom-Bio','FigureLoom Bio'],\n" + registration,
+              )
+          wiki_js.write_text(wiki_js_text, encoding='utf-8')
+
+          validator = '''import fs from 'node:fs';
+          import path from 'node:path';
+
+          const root = process.cwd();
+          const read = file => fs.readFileSync(path.join(root, file), 'utf8');
+          const normalized = value => String(value).replace(/\\\\\\s*\\n\\s*/g, ' ').replace(/\\s+/g, ' ').trim();
+          const errors = [];
+          const requireText = (name, content, value) => { if (!content.includes(value)) errors.push(`${name} is missing ${value}`); };
+          const requireNormalized = (name, content, value) => { if (!normalized(content).includes(normalized(value))) errors.push(`${name} is missing ${value}`); };
+
+          const files = {
+            mainReadme: read('README.md'),
+            packageReadme: read('figureloom-bio/README.md'),
+            wiki: read('wiki/FigureLoom-Bio.md'),
+            easyInstall: read('wiki/FigureLoom-Bio-Easy-Install.md'),
+            sidebar: read('wiki/_Sidebar.md'),
+            wikiRuntime: read('wiki/wiki.js'),
+            wikiSync: read('.github/workflows/sync-wiki.yml'),
+          };
+
+          for (const [name, content] of Object.entries({ mainReadme: files.mainReadme, packageReadme: files.packageReadme, wiki: files.wiki })) {
+            for (const value of ['.flbio', 'Check the file.', 'Otherwise:', 'flbio doctor', 'figureloom.org/ide']) requireText(name, content, value);
+            if (/^\\s*#\\s*TODO\\b/im.test(content)) errors.push(`${name} contains an actual TODO placeholder line.`);
+            if (/^\\s*Otherwise:\\.\\s*$/im.test(content)) errors.push(`${name} contains an invalid Otherwise:. instruction.`);
+          }
+
+          const easyCommand = 'curl -fsSL https://raw.githubusercontent.com/victork4314-sys/Figureloom/main/figureloom-bio/linux/install-linux.sh | sudo bash';
+          for (const [name, content] of Object.entries({ mainReadme: files.mainReadme, packageReadme: files.packageReadme, wiki: files.wiki, easyInstall: files.easyInstall })) {
+            requireNormalized(name, content, easyCommand);
+            requireText(name, content, 'Install or Update FigureLoom Bio');
+            requireText(name, content, 'FigureLoom Bio Test Files');
+          }
+
+          for (const value of ['Test FigureLoom Bio', 'flbio quick-test', 'EVERY QUICK TEST PASSED.', 'running Kasm workspace']) requireText('easyInstall', files.easyInstall, value);
+          requireText('sidebar', files.sidebar, '[Install FigureLoom Bio](FigureLoom-Bio-Easy-Install)');
+          requireText('wikiRuntime', files.wikiRuntime, "['Scientific work','FigureLoom-Bio-Easy-Install','Install FigureLoom Bio']");
+
+          const detailed = [
+            'pipx install "git+https://github.com/victork4314-sys/Figureloom.git#subdirectory=figureloom-bio"',
+            'pipx uninstall figureloom-bio',
+            'flbio run program.flbio',
+            '--allow-tools',
+            'Calculate the p value for score between treated and control under group.',
+            'Create a PCA plot.',
+            'Build a phylogenetic tree.',
+            'Find PCR primers.',
+            'Translate a program',
+            '--to powershell',
+          ];
+          for (const [name, content] of Object.entries({ packageReadme: files.packageReadme, wiki: files.wiki })) {
+            for (const value of detailed) requireNormalized(name, content, value);
+            for (const tool of ['seqkit','fastp','spades','quast','prokka','abricate','kraken2','mob_suite']) requireText(name, content, tool);
+            requireText(name, content, 'the file');
+          }
+
+          for (const target of ['python','r','bash','snakemake','nextflow','julia','ruby','perl','powershell']) {
+            requireText('packageReadme', files.packageReadme, `--to ${target}`);
+            requireText('wiki', files.wiki, `--to ${target}`);
+          }
+
+          if (!/\\['Scientific work','FigureLoom-Bio','FigureLoom Bio'\\]/.test(files.wikiRuntime)) errors.push('The hosted Help center does not register the FigureLoom Bio manual.');
+          if (!files.wikiRuntime.includes("fetch(`./${slug}.md`")) errors.push('The hosted Help center is not loading the canonical Markdown pages.');
+          if (!files.wikiSync.includes('cp wiki/*.md .wiki-repository/')) errors.push('The GitHub wiki sync does not copy the canonical Markdown pages.');
+          if (!files.wikiSync.includes('${{ github.repository }}.wiki.git')) errors.push('The GitHub wiki sync does not target the repository wiki.');
+
+          if (errors.length) throw new Error(`FigureLoom Bio documentation validation found ${errors.length} problem(s):\\n- ${errors.join('\\n- ')}`);
+          console.log('FigureLoom Bio documentation matches the live graphical Linux and Kasm installer.');
+          '''
+          Path('scripts/validate-bio-documentation.mjs').write_text(validator.strip() + '\n', encoding='utf-8')
+          PY
+
+      - name: Commit the documentation
+        run: |
+          git config user.name "FigureLoom Docs"
+          git config user.email "actions@users.noreply.github.com"
+          git add README.md figureloom-bio/README.md wiki/FigureLoom-Bio.md wiki/FigureLoom-Bio-Easy-Install.md wiki/_Sidebar.md wiki/wiki.js scripts/validate-bio-documentation.mjs
+          git diff --cached --check
+          git commit -m "Make the live FigureLoom Bio installer easy to follow"
+          git push origin HEAD:agent/figureloom-bio-easy-install-docs
