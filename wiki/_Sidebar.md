@@ -17,6 +17,7 @@
 ### Scientific work
 
 - [FigureLoom Bio](FigureLoom-Bio)
+- [Download FigureLoom Bio](https://github.com/victork4314-sys/Figureloom/releases/download/figureloom-bio-installer/FigureLoom-Bio-Installer.deb)
 - [Install FigureLoom Bio](FigureLoom-Bio-Easy-Install)
 - [Illustrations and maps](Scientific-Illustrations-and-Maps)
 - [Data, tables, and charts](Data-Tables-and-Charts)
