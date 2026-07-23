@@ -44,10 +44,17 @@ for (const [name, content] of Object.entries({
   mainReadme: files.mainReadme,
   easyInstall: files.easyInstall,
   linuxReadme: files.linuxReadme,
-  sidebar: files.sidebar,
-  wikiIndex: files.wikiIndex,
 })) {
   for (const download of Object.values(installerDownloads)) requireText(name, content, download);
+}
+
+requireText('easyInstall', files.easyInstall, '## Download for your computer');
+for (const download of Object.values(installerDownloads)) {
+  if (files.sidebar.includes(download)) errors.push('The wiki sidebar must not contain direct installer links.');
+  if (files.wikiIndex.includes(download)) errors.push('The wiki header must not contain direct installer links beside search.');
+}
+for (const label of ['Bio Linux', 'Bio Windows', 'Bio Mac Apple', 'Bio Mac Intel']) {
+  if (files.wikiIndex.includes(`download>${label}</a>`)) errors.push(`The wiki header still contains ${label}.`);
 }
 
 for (const [name, content] of Object.entries({ mainReadme: files.mainReadme, easyInstall: files.easyInstall, linuxReadme: files.linuxReadme })) {
@@ -65,7 +72,6 @@ for (const value of ['Test FigureLoom Bio', 'EVERY QUICK TEST PASSED.', 'running
 requireText('sidebar', files.sidebar, '[Install FigureLoom Bio](FigureLoom-Bio-Easy-Install)');
 requireText('wikiRuntime', files.wikiRuntime, "['Scientific work','FigureLoom-Bio-Easy-Install','Install FigureLoom Bio']");
 requireText('wikiIndex', files.wikiIndex, 'a[href*="FigureLoom-Bio-Installer"]');
-for (const label of ['Bio Linux', 'Bio Windows', 'Bio Mac Apple', 'Bio Mac Intel']) requireText('wikiIndex', files.wikiIndex, `download>${label}</a>`);
 
 const detailed = [
   'pipx install "git+https://github.com/victork4314-sys/Figureloom.git#subdirectory=figureloom-bio"',
@@ -96,4 +102,4 @@ if (!files.wikiSync.includes('cp wiki/*.md .wiki-repository/')) errors.push('The
 if (!files.wikiSync.includes('${{ github.repository }}.wiki.git')) errors.push('The GitHub wiki sync does not target the repository wiki.');
 
 if (errors.length) throw new Error(`FigureLoom Bio documentation validation found ${errors.length} problem(s):\n- ${errors.join('\n- ')}`);
-console.log('FigureLoom Bio documentation shows the Linux, Windows, Apple Silicon Mac, and Intel Mac installers together.');
+console.log('FigureLoom Bio installer links stay together only under Download for your computer in the wiki.');
