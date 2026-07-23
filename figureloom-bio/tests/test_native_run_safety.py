@@ -48,6 +48,16 @@ class NativeRunSafetyTests(unittest.TestCase):
         self.assertIn("window.isVisible()", source)
         self.assertIn("native_ide_module.native_self_test = painted_self_test", source)
 
+    def test_installed_self_test_proves_accepted_words_receive_real_colors(self) -> None:
+        source = SAFETY.read_text(encoding="utf-8")
+        self.assertIn('window.editor.setPlainText("Open the file samples.csv.")', source)
+        self.assertIn("window.editor.highlighter.rehighlight()", source)
+        self.assertIn("def _foreground_colors", source)
+        for token_format in ("command", "file", "word", "punctuation"):
+            self.assertIn(f"highlighter.{token_format}.foreground().color().name()", source)
+        self.assertIn("expected_colors - actual_colors", source)
+        self.assertIn("did not paint all accepted-instruction token colors", source)
+
     def test_safety_is_installed_after_final_ui_wrapping(self) -> None:
         entry = ENTRY.read_text(encoding="utf-8")
         account = entry.index("native_account.install_native_account(native_ide)")
