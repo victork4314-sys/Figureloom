@@ -9,6 +9,7 @@ import sys
 
 from .capabilities import expand_capabilities
 from .control_flow import run_flow_program, uses_control_flow
+from .desktop_tools import create_test_files, run_quick_test
 from .errors import FigureLoomBioError
 from .language_manifest import language_manifest
 from .parser import parse
@@ -150,6 +151,25 @@ def doctor() -> int:
     return 0
 
 
+def make_test_files(folder: Path | None) -> int:
+    try:
+        destination = create_test_files(folder)
+    except OSError as error:
+        print(f"I could not create the test files.\n\n{error}", file=sys.stderr)
+        return 1
+    print("FigureLoom Bio test files are ready.")
+    print(f"Folder: {destination}")
+    print("Open quick-test.flbio in FigureLoom Bio IDE, or run: flbio quick-test")
+    return 0
+
+
+def quick_test(folder: Path | None) -> int:
+    success, report, _ = run_quick_test(folder)
+    stream = sys.stdout if success else sys.stderr
+    print(report, file=stream, end="")
+    return 0 if success else 1
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="flbio",
@@ -180,6 +200,18 @@ def build_parser() -> argparse.ArgumentParser:
     )
     sentences.add_argument("theme", nargs="?", help="Theme name, such as Microbiology")
 
+    test_files = subcommands.add_parser(
+        "test-files",
+        help="Put ready-to-use FigureLoom Bio test files on the desktop.",
+    )
+    test_files.add_argument("folder", nargs="?", type=Path)
+
+    quick = subcommands.add_parser(
+        "quick-test",
+        help="Run a real CSV, FASTA, FASTQ, figure, alignment, and tree test.",
+    )
+    quick.add_argument("folder", nargs="?", type=Path)
+
     subcommands.add_parser(
         "doctor",
         help="Verify the installation and show optional bioinformatics tools.",
@@ -200,6 +232,10 @@ def main() -> None:
         raise SystemExit(translate_program(arguments.program, arguments.to, arguments.output))
     if arguments.command in {"sentences", "addons"}:
         raise SystemExit(show_sentences(arguments.theme))
+    if arguments.command == "test-files":
+        raise SystemExit(make_test_files(arguments.folder))
+    if arguments.command == "quick-test":
+        raise SystemExit(quick_test(arguments.folder))
     if arguments.command == "doctor":
         raise SystemExit(doctor())
     parser.print_help()

@@ -130,3 +130,20 @@ jobs:
         run: |
           cd figureloom-bio
           python3 -m unittest discover -s tests -v
+
+      - name: Rehearse clean Linux desktop installation
+        run: |
+          browser="$(command -v chromium || command -v chromium-browser || command -v google-chrome || command -v google-chrome-stable || true)"
+          test -n "$browser"
+          sudo env \
+            FIGURELOOM_SOURCE_DIR="$GITHUB_WORKSPACE" \
+            FIGURELOOM_VENV_DIR=/opt/figureloom-bio-ci \
+            FIGURELOOM_APP_DIR=/opt/figureloom-desktop-ci \
+            SUDO_USER="$USER" \
+            bash figureloom-bio/linux/install-workspace.sh
+          test -x /usr/local/bin/figureloom-bio-ide
+          test -x /usr/local/bin/figureloom-bio-test
+          test -f "$HOME/Desktop/FigureLoom Bio IDE.desktop"
+          test -f "$HOME/Desktop/Test FigureLoom Bio.desktop"
+          test -f "$HOME/Desktop/FigureLoom Bio Test Files/quick-test.flbio"
+          /opt/figureloom-bio-ci/bin/flbio quick-test /tmp/figureloom-clean-install-test
