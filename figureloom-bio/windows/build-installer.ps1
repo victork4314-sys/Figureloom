@@ -56,10 +56,27 @@ function Build-FigureLoomExecutable {
     }
 }
 
+function Test-FigureLoomDesktopExecutable {
+    param([string]$Name)
+    $Executable = Join-Path $AppBuild "$Name.exe"
+    if (-not (Test-Path $Executable)) {
+        throw "$Name was not built."
+    }
+    $Process = Start-Process -FilePath $Executable -ArgumentList '--self-test' -Wait -PassThru
+    if ($Process.ExitCode -ne 0) {
+        throw "$Name failed its real startup self-test with exit code $($Process.ExitCode)."
+    }
+}
+
 Build-FigureLoomExecutable -Name "flbio" -Entry "figureloom-bio\platform\flbio_entry.py" -Console
 Build-FigureLoomExecutable -Name "FigureLoom Bio IDE" -Entry "figureloom-bio\platform\ide_entry.py"
 Build-FigureLoomExecutable -Name "Test FigureLoom Bio" -Entry "figureloom-bio\platform\test_entry.py"
 Build-FigureLoomExecutable -Name "Install or Update FigureLoom Bio" -Entry "figureloom-bio\platform\manager_entry.py"
+
+$env:QT_QPA_PLATFORM = "offscreen"
+Test-FigureLoomDesktopExecutable -Name "FigureLoom Bio IDE"
+Test-FigureLoomDesktopExecutable -Name "Test FigureLoom Bio"
+Test-FigureLoomDesktopExecutable -Name "Install or Update FigureLoom Bio"
 
 $ForbiddenWebFiles = Get-ChildItem -Path $AppBuild -Recurse -File -ErrorAction SilentlyContinue | Where-Object {
     $_.Extension -in '.html', '.htm', '.js', '.mjs'
