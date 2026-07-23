@@ -40,6 +40,8 @@ class PlatformInstallerTests(unittest.TestCase):
             self.assertIn(name, postinstall)
         self.assertIn("quick-test", postinstall)
         self.assertIn("/usr/local/bin/flbio", postinstall)
+        self.assertIn("/dev/console", postinstall)
+        self.assertNotIn("mapfile", postinstall)
 
     def test_cross_platform_workflow_builds_and_installs_every_package(self) -> None:
         workflow = (self.root / ".github" / "workflows" / "build-bio-cross-platform-installers.yml").read_text(encoding="utf-8")
