@@ -125,13 +125,13 @@
       .greeting-arrival{animation:greetingArrival .55s cubic-bezier(.2,.8,.2,1)}
       @keyframes greetingArrival{from{opacity:0;transform:translateY(-7px)}to{opacity:1;transform:none}}
 
-      #scWelcome{position:fixed;inset:0;z-index:1400;display:none;place-items:center;padding:18px;background:rgba(20,32,48,.38);backdrop-filter:blur(15px);isolation:isolate}
+      #scWelcome{position:fixed;inset:0;z-index:1400;display:none;place-items:center;padding:18px;background:rgba(20,32,48,.38);backdrop-filter:blur(15px);isolation:isolate;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
       #scWelcome.open{display:grid}
       .welcome-orbit{position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:-1}
       .welcome-orbit span{position:absolute;display:grid;place-items:center;width:54px;height:54px;border:1px solid rgba(224,245,245,.26);border-radius:50%;color:rgba(236,250,250,.58);font-size:21px;animation:welcomeFloat 9s ease-in-out infinite}
       .welcome-orbit span:nth-child(1){left:8%;top:18%}.welcome-orbit span:nth-child(2){right:10%;top:12%;animation-delay:-2s}.welcome-orbit span:nth-child(3){left:16%;bottom:12%;animation-delay:-4s}.welcome-orbit span:nth-child(4){right:15%;bottom:18%;animation-delay:-6s}
       @keyframes welcomeFloat{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(-15px) rotate(8deg)}}
-      .welcome-card{width:min(570px,calc(100vw - 28px));padding:28px;border:1px solid rgba(211,226,234,.72);border-radius:24px;background:linear-gradient(145deg,rgba(252,254,255,.98),rgba(241,248,248,.97) 54%,rgba(246,243,250,.98));box-shadow:0 38px 110px rgba(15,27,43,.36);color:var(--delight-ink)}
+      .welcome-card{width:min(570px,calc(100vw - 28px));max-height:calc(100vh - 36px);max-height:calc(100dvh - 36px);overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;touch-action:pan-y;padding:28px;border:1px solid rgba(211,226,234,.72);border-radius:24px;background:linear-gradient(145deg,rgba(252,254,255,.98),rgba(241,248,248,.97) 54%,rgba(246,243,250,.98));box-shadow:0 38px 110px rgba(15,27,43,.36);color:var(--delight-ink)}
       .welcome-kicker{display:inline-flex;align-items:center;gap:7px;margin-bottom:15px;padding:6px 10px;border-radius:999px;background:rgba(80,143,153,.1);color:#547d83;font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
       .welcome-card h1{margin:0;font-size:clamp(28px,6vw,46px);line-height:1.02;letter-spacing:-.045em;background:linear-gradient(110deg,#263e67,#4c7d85 56%,#786b9e);-webkit-background-clip:text;background-clip:text;color:transparent}
       .welcome-card>p{margin:12px 0 20px;color:#66758a;line-height:1.55;font-size:14px}
@@ -166,7 +166,7 @@
       body.lab-focus-mode .document-title input,body.lab-focus-mode button,body.lab-focus-mode input,body.lab-focus-mode select,body.lab-focus-mode textarea{background:#102633!important;border-color:rgba(91,196,201,.28)!important;color:#d9f0f1!important}
       body.lab-focus-mode #canvas{filter:drop-shadow(0 20px 30px rgba(0,0,0,.45))}
 
-      @media(max-width:640px){#userGreetingButton{max-width:92px!important;padding-inline:8px!important}.welcome-card{padding:22px;border-radius:20px}.welcome-actions{justify-content:stretch}.welcome-actions button{flex:1}.welcome-card h1{font-size:34px}#scicanvasTour .tour-card{bottom:9px;padding:15px}}
+      @media(max-width:640px){#userGreetingButton{max-width:92px!important;padding-inline:8px!important}#scWelcome{padding:max(10px,env(safe-area-inset-top)) max(10px,env(safe-area-inset-right)) max(10px,env(safe-area-inset-bottom)) max(10px,env(safe-area-inset-left))}.welcome-card{width:100%;max-height:calc(100vh - 20px);max-height:calc(100dvh - 20px);padding:22px;border-radius:20px}.welcome-actions{justify-content:stretch}.welcome-actions button{flex:1}.welcome-card h1{font-size:34px}#scicanvasTour .tour-card{bottom:9px;padding:15px}}
       @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important}.welcome-orbit span{animation:none!important}}
     `;
     document.head.appendChild(style);
