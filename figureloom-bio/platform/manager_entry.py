@@ -1,4 +1,5 @@
-from figureloom_bio.platform_desktop import show_manager_window
+from figureloom_bio.platform_qt_tools import show_manager_window
+
 
 if __name__ == "__main__":
-    show_manager_window()
+    raise SystemExit(show_manager_window())
