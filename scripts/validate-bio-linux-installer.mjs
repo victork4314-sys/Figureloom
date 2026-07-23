@@ -7,6 +7,9 @@ const required = [
   "install/linux/figureloom-bio-ide",
   "install/linux/figureloom-bio-copy-tests",
   "install/linux/figureloom-bio-quick-test",
+  "install/linux/figureloom-bio-setup",
+  "install/linux/figureloom_bio_setup.py",
+  "install/linux/Install or Update FigureLoom Bio.desktop",
   "install/linux/FigureLoom Bio IDE.desktop",
   "install/linux/FigureLoom Bio Test Files.desktop",
   "install/linux/Run FigureLoom Bio Quick Test.desktop",
@@ -33,9 +36,11 @@ for (const phrase of [
   "/opt/figureloom-bio",
   "/home/kasm-default-profile",
   "/etc/skel",
+  "Install or Update FigureLoom Bio.desktop",
   "FigureLoom Bio IDE.desktop",
   "FigureLoom Bio Test Files",
   "Run FigureLoom Bio Quick Test.desktop",
+  "figureloom_bio_setup.py",
   'bin/flbio" doctor',
 ]) {
   if (!installer.includes(phrase)) {
@@ -50,7 +55,25 @@ for (const phrase of ["python3 -m http.server", "--app=", "127.0.0.1", "/ide/"])
   }
 }
 
+const graphicalSetup = fs.readFileSync(
+  path.join(root, "install/linux/figureloom_bio_setup.py"),
+  "utf8",
+);
+for (const phrase of [
+  "FigureLoom Bio Setup",
+  "Install / Update",
+  "Open IDE",
+  "Open Test Files",
+  "Run Quick Test",
+  "optional_missing",
+]) {
+  if (!graphicalSetup.includes(phrase)) {
+    throw new Error(`Graphical setup is missing: ${phrase}`);
+  }
+}
+
 for (const desktopName of [
+  "Install or Update FigureLoom Bio.desktop",
   "FigureLoom Bio IDE.desktop",
   "FigureLoom Bio Test Files.desktop",
   "Run FigureLoom Bio Quick Test.desktop",
@@ -61,4 +84,4 @@ for (const desktopName of [
   }
 }
 
-console.log("FigureLoom Bio Linux desktop installer files are complete.");
+console.log("FigureLoom Bio Linux desktop installer and graphical setup are complete.");
