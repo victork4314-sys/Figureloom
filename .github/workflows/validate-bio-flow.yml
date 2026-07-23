@@ -29,11 +29,15 @@ jobs:
           node --check scripts/validate-bio-control-flow.mjs
           node --check scripts/validate-bio-browser-example.mjs
           node --check scripts/validate-bio-current-file.mjs
+          node --check scripts/validate-bio-current-file-runtime.mjs
           node --check scripts/validate-bio-decision-core.mjs
           node --check scripts/validate-bio-runtime-race.mjs
 
       - name: Validate current-file sentences
         run: node scripts/validate-bio-current-file.mjs
+
+      - name: Run current-file sentences through the real browser runtime
+        run: node scripts/validate-bio-current-file-runtime.mjs
 
       - name: Validate exact decision words
         run: node scripts/validate-bio-decision-core.mjs
