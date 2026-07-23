@@ -107,9 +107,9 @@ for (const line of invalidLines) {
 if (registeredRules.length !== 3) fail(`Expected three decision highlighting rules, found ${registeredRules.length}.`);
 
 const html = read('ide/index.html');
-const runtimeAt = html.indexOf('ide-control-flow-runtime.js?v=3');
-const coreAt = html.indexOf('ide-decision-core.js?v=1');
-const basicAt = html.indexOf('ide-app-v2.js?v=2');
+const runtimeAt = html.indexOf('ide-control-flow-runtime.js?');
+const coreAt = html.indexOf('ide-decision-core.js?');
+const basicAt = html.indexOf('ide-app-v2.js?');
 if (runtimeAt < 0 || coreAt < 0 || basicAt < 0 || !(runtimeAt < coreAt && coreAt < basicAt)) {
   fail('The complete runtime and early decision core must load before the basic editor parser.');
 }
