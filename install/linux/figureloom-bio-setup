@@ -35,24 +35,25 @@ if command -v zenity >/dev/null 2>&1; then
     fi
 
     log_file="$(mktemp -t figureloom-bio-setup-XXXXXX.log)"
-    if "${run[@]}" >"${log_file}" 2>&1 & then
-        installer_pid=$!
-        (
-            while kill -0 "${installer_pid}" 2>/dev/null; do
-                echo "# Installing FigureLoom Bio…"
-                sleep 0.4
-            done
-        ) | zenity --progress \
-            --title="FigureLoom Bio Setup" \
-            --text="Installing FigureLoom Bio…" \
-            --pulsate \
-            --auto-close \
-            --no-cancel \
-            --width=500 || true
-        wait "${installer_pid}"
-        status=$?
+    "${run[@]}" >"${log_file}" 2>&1 &
+    installer_pid=$!
+    (
+        while kill -0 "${installer_pid}" 2>/dev/null; do
+            echo "# Installing FigureLoom Bio…"
+            sleep 0.4
+        done
+    ) | zenity --progress \
+        --title="FigureLoom Bio Setup" \
+        --text="Installing FigureLoom Bio…" \
+        --pulsate \
+        --auto-close \
+        --no-cancel \
+        --width=500 || true
+
+    if wait "${installer_pid}"; then
+        status=0
     else
-        status=1
+        status=$?
     fi
 
     if [[ "${status}" -eq 0 ]]; then
