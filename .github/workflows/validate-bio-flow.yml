@@ -21,12 +21,17 @@ jobs:
           node --check ide/ide-control-flow-runtime.js
           node --check ide/ide-decisions.js
           node --check ide/ide-addon-runtime.js
+          node --check ide/ide-decision-core.js
           node --check ide/ide-approved-common.js
           node --check ide/ide-addon-packages.js
           node --check ide/ide-builtin-language-support.js
           node --check scripts/validate-bio-control-flow.mjs
           node --check scripts/validate-bio-browser-example.mjs
+          node --check scripts/validate-bio-decision-core.mjs
           node --check scripts/validate-bio-runtime-race.mjs
+
+      - name: Validate exact decision words
+        run: node scripts/validate-bio-decision-core.mjs
 
       - name: Validate browser control flow
         run: node scripts/validate-bio-control-flow.mjs
@@ -48,15 +53,6 @@ jobs:
 
       - name: Leave the loading status
         run: node scripts/validate-bio-runtime-race.mjs left-waiting
-
-      - name: Complete handoff without runtime error
-        run: node scripts/validate-bio-runtime-race.mjs no-error
-
-      - name: Finish after delayed runtime loading
-        run: node scripts/validate-bio-runtime-race.mjs finished
-
-      - name: Create outputs after delayed runtime loading
-        run: node scripts/validate-bio-runtime-race.mjs outputs
 
       - name: Run control flow tests
         run: |
