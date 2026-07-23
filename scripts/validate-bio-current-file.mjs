@@ -128,9 +128,9 @@ for (const sentence of [
 }
 
 const html = read('ide/index.html');
-const currentAt = html.indexOf('ide-current-file-language.js?v=1');
-const addonAt = html.indexOf('ide-addon-runtime.js?v=5');
-const flowAt = html.indexOf('ide-control-flow-runtime.js?v=3');
+const currentAt = html.indexOf('ide-current-file-language.js?');
+const addonAt = html.indexOf('ide-addon-runtime.js?');
+const flowAt = html.indexOf('ide-control-flow-runtime.js?');
 if (currentAt < 0 || addonAt < 0 || flowAt < 0 || currentAt > addonAt || addonAt > flowAt) {
   fail('The current-file language must load before both browser runtimes.');
 }
