@@ -74,23 +74,28 @@ The command-line engine translates `.flbio` programs to Python, R, Bash, Snakema
 
 ### Install FigureLoom Bio
 
-**Linux and Kasm use the downloadable desktop installer.**
+Choose the installer for your computer:
 
-[Download FigureLoom Bio](https://github.com/victork4314-sys/Figureloom/releases/download/figureloom-bio-installer/FigureLoom-Bio-Installer.deb)
+- [Download FigureLoom Bio for Linux and Kasm](https://github.com/victork4314-sys/Figureloom/releases/download/figureloom-bio-installer/FigureLoom-Bio-Installer.deb)
+- [Download FigureLoom Bio for Windows](https://github.com/victork4314-sys/Figureloom/releases/download/figureloom-bio-windows-installer/FigureLoom-Bio-Installer.exe)
+- [Download FigureLoom Bio for Mac, Apple Silicon](https://github.com/victork4314-sys/Figureloom/releases/download/figureloom-bio-macos-installer/FigureLoom-Bio-Installer-macOS-Apple-Silicon.pkg)
+- [Download FigureLoom Bio for Mac, Intel](https://github.com/victork4314-sys/Figureloom/releases/download/figureloom-bio-macos-installer/FigureLoom-Bio-Installer-macOS-Intel.pkg)
 
-Open `FigureLoom-Bio-Installer.deb`, press **Install**, and approve the normal Linux administrator prompt. The downloaded package already contains the FigureLoom Bio engine, local IDE, desktop launchers, and test files. It does not fetch a second installer while it is being installed.
+Open the downloaded installer and follow the normal installation window for your operating system. Each package already contains the FigureLoom Bio engine, local IDE, application launchers, icon, and test files. It does not fetch a second installer while it is being installed.
 
 The installation adds:
 
-- **Install or Update FigureLoom Bio** on the desktop and application menu;
+- **Install or Update FigureLoom Bio**;
 - **FigureLoom Bio IDE** as a local standalone app window;
 - **Test FigureLoom Bio**;
 - an already-unzipped **FigureLoom Bio Test Files** folder;
 - `flbio quick-test` and `flbio test-files` in the terminal.
 
-After that, double-click **Install or Update FigureLoom Bio** for updates or repairs. The window checks the required Linux pieces, installs only what is missing, runs `flbio doctor`, and can open the IDE, open the test files, or run the real quick test.
+Linux adds the launchers to the desktop and application menu. Windows adds desktop and Start Menu shortcuts. macOS installs the apps under `/Applications` and adds them to the desktop.
 
-Inside Kasm, open the download page in the running workspace and install the same file there. FigureLoom Bio is user-installed and is not preinstalled into, baked into, or used to rebuild the Kasm Docker image.
+After that, open **Install or Update FigureLoom Bio** for updates or repairs. It can run `flbio doctor`, open the IDE, open the test files, or run the real quick test.
+
+Inside Kasm, open the download page in the running workspace and install the Linux file there. FigureLoom Bio is user-installed and is not preinstalled into, baked into, or used to rebuild the Kasm Docker image.
 
 The old terminal installer remains only as a fallback for Linux desktops that cannot open `.deb` packages:
 
@@ -98,7 +103,7 @@ The old terminal installer remains only as a fallback for Linux desktops that ca
 curl -fsSL https://raw.githubusercontent.com/victork4314-sys/Figureloom/main/figureloom-bio/linux/install-linux.sh | sudo bash
 ```
 
-Windows, macOS, development, and command-line-only instructions remain in [`figureloom-bio/README.md`](figureloom-bio/README.md). The short visual guide is in the [easy installer page](https://figureloom.org/wiki/#FigureLoom-Bio-Easy-Install).
+Development and command-line-only instructions remain in [`figureloom-bio/README.md`](figureloom-bio/README.md). The short visual guide is in the [easy installer page](https://figureloom.org/wiki/#FigureLoom-Bio-Easy-Install).
 
 Run or translate a program:
 
