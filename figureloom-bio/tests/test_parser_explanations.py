@@ -1,9 +1,11 @@
 from __future__ import annotations
 
+import re
 import unittest
 
 from figureloom_bio.errors import FigureLoomBioError
-from figureloom_bio.parser import parse
+from figureloom_bio.language_manifest import language_manifest
+from figureloom_bio.parser import _known_command_words, parse
 
 
 class ParserExplanationTests(unittest.TestCase):
@@ -17,6 +19,15 @@ class ParserExplanationTests(unittest.TestCase):
         self.assertIn("Open Sentences", message)
         self.assertIn("Create volcano plot from effect and p_value.", message)
         self.assertNotIn("I do not understand this instruction yet", message)
+
+    def test_every_command_shown_in_sentences_is_known_automatically(self) -> None:
+        manifest_words = set()
+        for command in language_manifest().commands:
+            match = re.match(r"[^\s:,.]+", command.example.strip())
+            self.assertIsNotNone(match, command.example)
+            manifest_words.add(match.group(0).casefold())
+        self.assertTrue(manifest_words)
+        self.assertTrue(manifest_words.issubset(_known_command_words()))
 
     def test_unknown_command_word_explains_the_first_word(self) -> None:
         with self.assertRaises(FigureLoomBioError) as caught:
