@@ -67,9 +67,7 @@ TTGCAACGTTAA
 +
 HHHHHHHHHHHH
 `,
-    [PROGRAM]: `Use .microbiology.
-
-Say Preparing the browser microbiology example.
+    [PROGRAM]: `Say Preparing the browser microbiology example.
 
 Open the files forward.fastq and reverse.fastq as a pair.
 Prepare bacterial reads.
