@@ -84,7 +84,8 @@ Manual IDE check:
 3. Select quick-test.flbio and the three data files in this folder.
 4. Press Run.
 5. The results should appear in separate readable sections.
-6. The test should create histogram, volcano plot, alignment, and tree files.
+6. The histogram and thresholded volcano plot should appear as visible figure previews.
+7. The test should also create alignment and tree files.
 
 You can recreate this entire folder at any time with:
 
@@ -138,6 +139,13 @@ def _check_output(path: Path) -> None:
         raise FigureLoomBioError(f"The quick test found placeholder text in {path.name}.")
     if path.suffix.casefold() == ".svg" and not text.lstrip().startswith("<svg"):
         raise FigureLoomBioError(f"The quick test did not create a real SVG in {path.name}.")
+    if path.name == "quick-volcano.svg":
+        required = ('data-significance="higher"', 'data-significance="lower"', "stroke-dasharray")
+        missing = [value for value in required if value not in text]
+        if missing:
+            raise FigureLoomBioError(
+                "The volcano plot is missing significance groups or threshold lines: " + ", ".join(missing)
+            )
     if path.suffix.casefold() == ".nwk" and not text.strip().endswith(";"):
         raise FigureLoomBioError(f"The quick test did not create a valid-looking tree in {path.name}.")
 
@@ -160,6 +168,8 @@ def run_quick_test(destination: Path | None = None) -> tuple[bool, str, Path]:
             "Average of score",
             "Median of score",
             "Volcano plot",
+            "Significantly higher",
+            "Significantly lower",
             "Alignment",
             "Phylogenetic tree",
             "Average read quality",
@@ -181,8 +191,8 @@ def run_quick_test(destination: Path | None = None) -> tuple[bool, str, Path]:
         "FIGURELOOM BIO QUICK TEST PASSED\n\n"
         "The language opened CSV, FASTA, and FASTQ data.\n"
         "It calculated statistics and read quality.\n"
-        "It created real histogram and volcano plot SVG figures.\n"
-        "It created a real alignment and phylogenetic tree.\n"
+        "It created a real thresholded volcano plot with higher and lower significance groups.\n"
+        "It created a real histogram, alignment, and phylogenetic tree.\n"
         "No TODO or placeholder output was found.\n\n"
         f"Test folder: {folder}\n"
     )
