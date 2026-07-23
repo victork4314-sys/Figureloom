@@ -43,6 +43,6 @@ install_paired_length_parity(Runner)
 install_language_label_parity()
 install_language_source_parity()
 
-__version__ = "0.7.0"
+__version__ = "0.8.0"
 
 __all__ = ["Runner", "__version__"]
