@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+import py_compile
 import shutil
 import subprocess
 from tempfile import TemporaryDirectory
@@ -40,7 +41,7 @@ class DesktopToolsTests(unittest.TestCase):
         if bash is None:
             self.skipTest("bash is not installed")
         linux = Path(__file__).resolve().parents[1] / "linux"
-        for name in ("install-workspace.sh", "install-linux.sh", "install-kasm-image.sh"):
+        for name in ("install-workspace.sh", "install-linux.sh", "install-kasm-image.sh", "update-worker.sh"):
             with self.subTest(name=name):
                 subprocess.run(
                     [bash, "-n", str(linux / name)],
@@ -48,6 +49,18 @@ class DesktopToolsTests(unittest.TestCase):
                     capture_output=True,
                     text=True,
                 )
+
+    def test_installer_window_is_valid_python(self) -> None:
+        installer = Path(__file__).resolve().parents[1] / "linux" / "installer-window.py"
+        with TemporaryDirectory() as temporary:
+            py_compile.compile(installer, cfile=str(Path(temporary) / "installer-window.pyc"), doraise=True)
+
+    def test_workspace_installer_creates_manager_launcher(self) -> None:
+        installer = (Path(__file__).resolve().parents[1] / "linux" / "install-workspace.sh").read_text(encoding="utf-8")
+        self.assertIn("Install or Update FigureLoom Bio.desktop", installer)
+        self.assertIn("figureloom-bio-installer", installer)
+        self.assertIn("figureloom-bio-update", installer)
+        self.assertNotIn('chown -R "$owner":"$owner" "$desktop"', installer)
 
 
 if __name__ == "__main__":
