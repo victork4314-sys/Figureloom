@@ -44,8 +44,12 @@ for (const [name, content] of Object.entries({ mainReadme: files.mainReadme, eas
 
 for (const value of ['Test FigureLoom Bio', 'EVERY QUICK TEST PASSED.', 'running workspace', 'Nothing is preinstalled into or baked into the Kasm image']) requireText('easyInstall', files.easyInstall, value);
 requireText('sidebar', files.sidebar, '[Install FigureLoom Bio](FigureLoom-Bio-Easy-Install)');
+requireText('sidebar', files.sidebar, installerDownload);
+requireText('sidebar', files.sidebar, '[Download FigureLoom Bio]');
 requireText('wikiRuntime', files.wikiRuntime, "['Scientific work','FigureLoom-Bio-Easy-Install','Install FigureLoom Bio']");
 requireText('wikiIndex', files.wikiIndex, 'a[href*="FigureLoom-Bio-Installer.deb"]');
+requireText('wikiIndex', files.wikiIndex, installerDownload);
+requireText('wikiIndex', files.wikiIndex, 'download>Download Bio</a>');
 
 const detailed = [
   'pipx install "git+https://github.com/victork4314-sys/Figureloom.git#subdirectory=figureloom-bio"',
