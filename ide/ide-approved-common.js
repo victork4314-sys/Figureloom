@@ -16,8 +16,19 @@
   }
 
   const runners = [];
-  const highlightRules = [];
+  const highlightRules = [
+    [/^(If )(.+)(:)$/i, ['c','v','p']],
+    [/^(Otherwise(?:,)? if )(.+)(:)$/i, ['c','v','p']],
+    [/^(Otherwise)(:)$/i, ['c','p']],
+    [/^(Make a recipe called )(.+)(:)$/i, ['c','v','p']],
+    [/^(For every )([a-z][\w-]*)(?: in )?([a-z][\w-]*)?(:)$/i, ['c','v','v','p']],
+    [/^(Make sure )(.+)(\.)$/i, ['c','v','p']],
+    [/^(Call the result )(.+)(\.)$/i, ['c','v','p']],
+    [/^(Show a warning saying )(.+)(\.)$/i, ['c','v','p']],
+  ];
   let target = results;
+  let repaintHighlight = () => {};
+  let waitingForFlow = false;
 
   function readFiles() {
     try {
@@ -90,14 +101,50 @@
     localStorage.setItem(RESULTS_KEY, results.innerHTML);
     localStorage.setItem(RUN_STATUS_KEY, JSON.stringify({ text:runStatus.textContent || 'Ready', className:runStatus.className || 'status-pill' }));
   }
+  function sourceNeedsAdvancedRuntime(source = editor.value) {
+    return /(^|\n)\s*(?:If .+:|Otherwise(?:,? if .+)?:|For every .+:|Make a recipe called .+:)/im.test(source)
+      || /(?:Call the result|Use the result|Use the recipe|Make sure|Show a warning|Open all (?:FASTQ|FASTA|CSV|TSV) files|Prepare (?:the )?bacterial|Clean (?:the )?bacterial|bacterial genome|resistance genes|virulence genes|plasmids|identify (?:the )?organism|classify .+ using)/i.test(source);
+  }
   function advancedRuntimeWillHandle() {
     return Boolean(window.FigureLoomBioFlow?.usesAdvancedRuntime?.(editor.value));
   }
+  function waitForAdvancedRuntime() {
+    if (waitingForFlow) return;
+    waitingForFlow = true;
+    runButton.disabled = true;
+    runStatus.textContent = 'Starting browser analysis';
+    runStatus.className = 'status-pill running';
+
+    const started = Date.now();
+    const timeout = 12000;
+    const retry = () => {
+      if (advancedRuntimeWillHandle()) {
+        waitingForFlow = false;
+        runButton.disabled = false;
+        runButton.click();
+        return;
+      }
+      if (Date.now() - started >= timeout) {
+        waitingForFlow = false;
+        runButton.disabled = false;
+        showError(new PlainError('The decision and microbiology tools did not finish loading. Refresh FigureLoom Bio and press Run again.'));
+        return;
+      }
+      setTimeout(retry, 80);
+    };
+
+    Promise.resolve(window.FigureLoomBioFlowLoading)
+      .catch(() => null)
+      .finally(retry);
+  }
   function execute(event) {
-    // Decisions, sample loops, recipes, named results, and microbiology are
-    // handled by the complete browser runtime. Do not let an older specialist
-    // runner claim the program first just because it recognizes one line.
-    if (advancedRuntimeWillHandle()) return;
+    if (sourceNeedsAdvancedRuntime()) {
+      if (advancedRuntimeWillHandle()) return;
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      waitForAdvancedRuntime();
+      return;
+    }
 
     let instructions;
     try { instructions = splitInstructions(editor.value); }
@@ -155,12 +202,13 @@
         for (const [pattern, classes] of highlightRules) {
           const match = text.match(pattern); if (!match) continue;
           invalid.className = 'syntax-valid';
-          invalid.innerHTML = match.slice(1).map((part, index) => `<span class="${classNames[classes[index]]}">${escapeHtml(part)}</span>`).join('');
+          invalid.innerHTML = match.slice(1).map((part, index) => `<span class="${classNames[classes[index]] || classNames.v}">${escapeHtml(part || '')}</span>`).join('');
           break;
         }
       }
       changing = false;
     };
+    repaintHighlight = patch;
     new MutationObserver(patch).observe(highlight, { childList:true, subtree:true, characterData:true }); patch();
   }
   if (editorWrap) {
@@ -172,7 +220,8 @@
     PlainError, readFiles, findFile, addSection,
     preview:(text, width=60) => text.length <= width ? text : `${text.slice(0,width)}…`,
     registerRunner:(runner) => runners.push(runner),
-    registerHighlight:(pattern, classes) => highlightRules.push([pattern, classes]),
-    advancedRuntimeWillHandle
+    registerHighlight:(pattern, classes) => { highlightRules.push([pattern, classes]); repaintHighlight(); },
+    advancedRuntimeWillHandle,
+    sourceNeedsAdvancedRuntime,
   };
 })();
