@@ -45,22 +45,16 @@ jobs:
           node --check scripts/validate-bio-decision-core.mjs
           node --check scripts/validate-bio-runtime-race.mjs
           node --check scripts/validate-bio-documentation.mjs
+          node --check scripts/validate-bio-no-placeholders.mjs
 
       - name: Validate shared language manifest
         run: node scripts/validate-bio-language-manifest.mjs
 
       - name: Validate completed documentation and wiki sync
-        run: |
-          set -o pipefail
-          node scripts/validate-bio-documentation.mjs 2>&1 | tee bio-documentation-validation.log
+        run: node scripts/validate-bio-documentation.mjs
 
-      - name: Upload documentation validation output
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: bio-documentation-validation-log
-          path: bio-documentation-validation.log
-          if-no-files-found: error
+      - name: Reject unfinished runtime and translation placeholders
+        run: node scripts/validate-bio-no-placeholders.mjs
 
       - name: Validate registered language handlers
         run: node scripts/validate-bio-statement-registry.mjs
