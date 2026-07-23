@@ -19,6 +19,7 @@ install_exact_web_syntax()
 install_native_stability(native_ide)
 install_native_worker_explanations(native_ide)
 
-
+# run_stable_ide delegates to native_ide.run_native_ide after installing the crash
+# guard, so the native runtime and every existing IDE function remain authoritative.
 if __name__ == "__main__":
     raise SystemExit(run_stable_ide(native_ide))
