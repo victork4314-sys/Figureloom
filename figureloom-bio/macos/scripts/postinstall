@@ -1,0 +1,56 @@
+#!/bin/bash
+set -euo pipefail
+
+valid_user() {
+  local candidate="${1:-}"
+  [[ -n "$candidate" && "$candidate" != "_mbsetupuser" && "$candidate" != "loginwindow" ]] || return 1
+  /usr/bin/id "$candidate" >/dev/null 2>&1
+}
+
+TARGET_HINT="/var/tmp/figureloom-bio-target-user"
+TARGET_USER=""
+if [[ -f "$TARGET_HINT" ]]; then
+  TARGET_USER="$(/bin/cat "$TARGET_HINT" 2>/dev/null || true)"
+  /bin/rm -f "$TARGET_HINT"
+fi
+if ! valid_user "$TARGET_USER"; then
+  TARGET_USER="${FIGURELOOM_TARGET_USER:-${SUDO_USER:-}}"
+fi
+if ! valid_user "$TARGET_USER"; then
+  TARGET_USER="$(/usr/bin/stat -f '%Su' /dev/console 2>/dev/null || true)"
+fi
+if ! valid_user "$TARGET_USER"; then
+  TARGET_USER="root"
+fi
+
+if [[ "$TARGET_USER" == root ]]; then
+  TARGET_HOME="/var/root"
+else
+  TARGET_HOME="$(/usr/bin/dscl . -read "/Users/$TARGET_USER" NFSHomeDirectory 2>/dev/null | /usr/bin/awk '{print $2}' || true)"
+  [[ -n "$TARGET_HOME" ]] || TARGET_HOME="/Users/$TARGET_USER"
+fi
+TARGET_GROUP="$(/usr/bin/id -gn "$TARGET_USER" 2>/dev/null || printf '%s' wheel)"
+DESKTOP="$TARGET_HOME/Desktop"
+TEST_FOLDER="$DESKTOP/FigureLoom Bio Test Files"
+
+echo "FigureLoom Bio desktop user: $TARGET_USER"
+echo "FigureLoom Bio desktop folder: $DESKTOP"
+/bin/mkdir -p "$DESKTOP"
+
+/bin/ln -sfn "/Applications/FigureLoom Bio IDE.app" "$DESKTOP/FigureLoom Bio IDE.app"
+/bin/ln -sfn "/Applications/Test FigureLoom Bio.app" "$DESKTOP/Test FigureLoom Bio.app"
+/bin/ln -sfn "/Applications/Install or Update FigureLoom Bio.app" "$DESKTOP/Install or Update FigureLoom Bio.app"
+
+/usr/bin/env HOME="$TARGET_HOME" TMPDIR=/private/tmp \
+  /usr/local/bin/flbio test-files "$TEST_FOLDER"
+/usr/bin/env HOME="$TARGET_HOME" TMPDIR=/private/tmp \
+  /usr/local/bin/flbio doctor
+/usr/bin/env HOME="$TARGET_HOME" TMPDIR=/private/tmp \
+  /usr/local/bin/flbio quick-test "$TEST_FOLDER"
+
+/bin/chown -h "$TARGET_USER:$TARGET_GROUP" \
+  "$DESKTOP/FigureLoom Bio IDE.app" \
+  "$DESKTOP/Test FigureLoom Bio.app" \
+  "$DESKTOP/Install or Update FigureLoom Bio.app" 2>/dev/null || true
+/bin/chown -R "$TARGET_USER:$TARGET_GROUP" "$TEST_FOLDER" 2>/dev/null || true
+exit 0

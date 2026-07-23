@@ -2,8 +2,12 @@ from __future__ import annotations
 
 from pathlib import Path
 import os
-import pwd
 import shutil
+
+try:
+    import pwd
+except ImportError:  # Windows does not provide the Unix password database module.
+    pwd = None  # type: ignore[assignment]
 
 from .errors import FigureLoomBioError
 from .parser import parse
@@ -93,7 +97,7 @@ EXPECTED_OUTPUTS = (
 
 def user_home() -> Path:
     sudo_user = os.environ.get("SUDO_USER")
-    if sudo_user and sudo_user != "root":
+    if sudo_user and sudo_user != "root" and pwd is not None:
         try:
             return Path(pwd.getpwnam(sudo_user).pw_dir)
         except KeyError:
