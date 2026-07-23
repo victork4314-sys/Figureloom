@@ -26,6 +26,7 @@ jobs:
           node --check ide/ide-language-manifest.js
           node --check ide/ide-language-catalog-ui.js
           node --check ide/ide-language-blocks-ui.js
+          node --check ide/ide-analysis-language.js
           node --check ide/ide-translator.js
           node --check ide/ide-approved-common.js
           node --check ide/ide-addon-packages.js
@@ -36,6 +37,7 @@ jobs:
           node --check scripts/validate-bio-current-file-runtime.mjs
           node --check scripts/validate-bio-language-manifest.mjs
           node --check scripts/validate-bio-statement-registry.mjs
+          node --check scripts/validate-bio-analysis-language.mjs
           node --check scripts/validate-bio-translator.mjs
           node --check scripts/validate-bio-decision-core.mjs
           node --check scripts/validate-bio-runtime-race.mjs
@@ -45,6 +47,9 @@ jobs:
 
       - name: Validate registered language handlers
         run: node scripts/validate-bio-statement-registry.mjs
+
+      - name: Run native statistics and figures in the browser
+        run: node scripts/validate-bio-analysis-language.mjs
 
       - name: Validate current-file sentences
         run: node scripts/validate-bio-current-file.mjs
