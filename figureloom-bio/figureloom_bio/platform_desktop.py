@@ -1,26 +1,20 @@
 from __future__ import annotations
 
-from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 import os
 import platform
-import socket
 import subprocess
 import sys
 import tempfile
 import threading
-import time
 import tkinter as tk
 from tkinter import messagebox, ttk
 from urllib.error import URLError
 from urllib.request import Request, urlopen
-import webbrowser
 
 from .desktop_tools import run_quick_test
 
 APP_NAME = "FigureLoom Bio"
-PORT = int(os.environ.get("FIGURELOOM_IDE_PORT", "8877"))
-URL = f"http://127.0.0.1:{PORT}/ide/"
 WINDOWS_INSTALLER_URL = (
     "https://github.com/victork4314-sys/Figureloom/releases/download/"
     "figureloom-bio-windows-installer/FigureLoom-Bio-Installer.exe"
@@ -81,66 +75,6 @@ def open_path(path: Path) -> None:
         return
     opener = "open" if sys.platform == "darwin" else "xdg-open"
     subprocess.Popen([opener, str(path)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-
-
-def port_ready(port: int = PORT) -> bool:
-    with socket.socket() as sock:
-        sock.settimeout(0.25)
-        return sock.connect_ex(("127.0.0.1", port)) == 0
-
-
-class QuietHandler(SimpleHTTPRequestHandler):
-    def log_message(self, _format: str, *_args: object) -> None:
-        return
-
-
-def serve_ide() -> None:
-    root = resource_path()
-    if not (root / "ide" / "index.html").is_file():
-        raise FileNotFoundError(f"The bundled IDE was not found under {root}.")
-    handler = lambda *args, **kwargs: QuietHandler(*args, directory=str(root), **kwargs)
-    server = ThreadingHTTPServer(("127.0.0.1", PORT), handler)
-    server.serve_forever()
-
-
-def _start_server_process() -> None:
-    command = [sys.executable, "--serve"]
-    kwargs: dict[str, object] = {
-        "stdin": subprocess.DEVNULL,
-        "stdout": subprocess.DEVNULL,
-        "stderr": subprocess.DEVNULL,
-        "close_fds": True,
-    }
-    if sys.platform == "win32":
-        kwargs["creationflags"] = subprocess.CREATE_NEW_PROCESS_GROUP | subprocess.DETACHED_PROCESS
-    else:
-        kwargs["start_new_session"] = True
-    subprocess.Popen(command, **kwargs)
-
-
-def launch_ide() -> None:
-    if not port_ready():
-        _start_server_process()
-        for _ in range(60):
-            if port_ready():
-                break
-            time.sleep(0.1)
-    if not port_ready():
-        raise RuntimeError("The local FigureLoom Bio IDE server could not start.")
-    webbrowser.open_new(URL)
-
-
-def run_ide_entry() -> None:
-    if "--serve" in sys.argv:
-        serve_ide()
-        return
-    try:
-        launch_ide()
-    except (OSError, RuntimeError) as error:
-        root = tk.Tk()
-        root.withdraw()
-        messagebox.showerror(APP_NAME, str(error))
-        root.destroy()
 
 
 def _button(parent: tk.Widget, text: str, command, *, primary: bool = False) -> tk.Button:
@@ -232,7 +166,7 @@ def open_installed_ide() -> None:
         if candidate.exists():
             subprocess.Popen(["open", str(candidate)])
             return
-    launch_ide()
+    raise RuntimeError("The native FigureLoom Bio IDE application was not found. Use Install or Update to repair it.")
 
 
 class ManagerWindow(tk.Tk):
@@ -262,7 +196,7 @@ class ManagerWindow(tk.Tk):
         tk.Label(outer, text=APP_NAME, bg=BG, fg=TEXT, font=("TkDefaultFont", 24, "bold")).pack(anchor="w")
         tk.Label(
             outer,
-            text="Install, update, repair, and test the local plain-English biology workspace.",
+            text="Install, update, repair, and test the local native plain-English biology workspace.",
             bg=BG,
             fg=MUTED,
             wraplength=680,
@@ -274,7 +208,7 @@ class ManagerWindow(tk.Tk):
         card.pack(fill="both", expand=True, pady=(18, 0))
         self.status = tk.Label(card, text="Ready", bg=PANEL, fg=TEXT, font=("TkDefaultFont", 15, "bold"), anchor="w")
         self.status.pack(fill="x")
-        self.explainer = tk.Label(
+        tk.Label(
             card,
             text="Updates download the current official installer, then open the normal Windows or macOS installation window.",
             bg=PANEL,
@@ -283,8 +217,7 @@ class ManagerWindow(tk.Tk):
             justify="left",
             anchor="w",
             pady=10,
-        )
-        self.explainer.pack(fill="x")
+        ).pack(fill="x")
         self.progress = ttk.Progressbar(card, style="Figure.Horizontal.TProgressbar", mode="determinate", maximum=100)
         self.progress.pack(fill="x", pady=(8, 14))
         self.log = tk.Text(card, height=11, bg="#0c2020", fg="#dce8e4", relief="flat", padx=12, pady=10, wrap="word")
