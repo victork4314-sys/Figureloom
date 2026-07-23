@@ -21,6 +21,24 @@ class PlatformInstallerTests(unittest.TestCase):
             with self.subTest(path=path.name):
                 py_compile.compile(path, doraise=True)
 
+    def test_platform_icon_is_wired_into_windows_and_macos(self) -> None:
+        icon = self.root / "figureloom-bio" / "linux" / "assets" / "figureloom-bio.png"
+        windows_build = (self.root / "figureloom-bio" / "windows" / "build-installer.ps1").read_text(encoding="utf-8")
+        windows_setup = (self.root / "figureloom-bio" / "windows" / "FigureLoomBio.iss").read_text(encoding="utf-8")
+        macos_build = (self.root / "figureloom-bio" / "macos" / "build-installer.sh").read_text(encoding="utf-8")
+        desktop_runtime = (self.root / "figureloom-bio" / "figureloom_bio" / "platform_desktop.py").read_text(encoding="utf-8")
+
+        self.assertTrue(icon.is_file())
+        self.assertIn("figureloom-bio.png", windows_build)
+        self.assertIn("--icon", windows_build)
+        self.assertIn("/DIconFile=$IconIco", windows_build)
+        self.assertIn("SetupIconFile={#IconFile}", windows_setup)
+        self.assertIn("figureloom-bio.png", macos_build)
+        self.assertIn("figureloom-bio.icns", macos_build)
+        self.assertGreaterEqual(macos_build.count('build_app "'), 3)
+        self.assertIn("--icon", macos_build)
+        self.assertIn('resource_path("assets", "figureloom-bio.png")', desktop_runtime)
+
     def test_windows_installer_has_all_four_programs(self) -> None:
         build = (self.root / "figureloom-bio" / "windows" / "build-installer.ps1").read_text(encoding="utf-8")
         setup = (self.root / "figureloom-bio" / "windows" / "FigureLoomBio.iss").read_text(encoding="utf-8")
