@@ -14,11 +14,12 @@ class PlatformInstallerTests(unittest.TestCase):
         files = [
             self.root / "figureloom-bio" / "figureloom_bio" / "platform_desktop.py",
             self.root / "figureloom-bio" / "figureloom_bio" / "platform_qt_tools.py",
+            self.root / "figureloom-bio" / "figureloom_bio" / "platform_tool_safety.py",
             *sorted((self.root / "figureloom-bio" / "figureloom_bio").glob("native_*.py")),
             *sorted((self.root / "figureloom-bio" / "platform").glob("*_entry.py")),
             self.root / "figureloom-bio" / "scripts" / "build-platform-icons.py",
         ]
-        self.assertGreaterEqual(len(files), 14)
+        self.assertGreaterEqual(len(files), 15)
         for path in files:
             with self.subTest(path=path.name):
                 py_compile.compile(path, doraise=True)
@@ -84,8 +85,9 @@ class PlatformInstallerTests(unittest.TestCase):
         for forbidden in ("QWebEngine", "QWebView", "WebView", "<html", "javascript:"):
             self.assertNotIn(forbidden, account + cloud + entry)
 
-    def test_test_and_updater_shortcuts_use_reliable_native_qt_windows(self) -> None:
+    def test_test_and_updater_shortcuts_use_reliable_painted_qt_windows(self) -> None:
         tools = (self.root / "figureloom-bio" / "figureloom_bio" / "platform_qt_tools.py").read_text(encoding="utf-8")
+        safety = (self.root / "figureloom-bio" / "figureloom_bio" / "platform_tool_safety.py").read_text(encoding="utf-8")
         test_entry = (self.root / "figureloom-bio" / "platform" / "test_entry.py").read_text(encoding="utf-8")
         manager_entry = (self.root / "figureloom-bio" / "platform" / "manager_entry.py").read_text(encoding="utf-8")
         self.assertIn("from PySide6", tools)
@@ -95,12 +97,20 @@ class PlatformInstallerTests(unittest.TestCase):
         self.assertIn('"What happened\\n{reason}', tools)
         self.assertIn('"What to do\\n{next_step}', tools)
         self.assertIn('if "--self-test" in sys.argv', tools)
-        self.assertIn("platform_qt_tools", test_entry)
-        self.assertIn("platform_qt_tools", manager_entry)
-        self.assertIn("raise SystemExit(show_test_window())", test_entry)
-        self.assertIn("raise SystemExit(show_manager_window())", manager_entry)
+        self.assertIn("install_platform_tool_safety", test_entry)
+        self.assertIn("install_platform_tool_safety", manager_entry)
+        self.assertIn("platform_qt_tools.show_test_window()", test_entry)
+        self.assertIn("platform_qt_tools.show_manager_window()", manager_entry)
+        self.assertIn('os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")', test_entry)
+        self.assertIn('os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")', manager_entry)
+        self.assertIn("window.show()", safety)
+        self.assertGreaterEqual(safety.count("app.processEvents()"), 6)
+        self.assertIn("window.repaint()", safety)
+        self.assertIn("window.report.viewport().update()", safety)
+        self.assertIn("window.log.viewport().update()", safety)
+        self.assertGreaterEqual(safety.count("window.isVisible()"), 2)
         self.assertNotIn("platform_desktop", test_entry + manager_entry)
-        self.assertNotIn("tkinter", tools)
+        self.assertNotIn("tkinter", tools + safety)
 
     def test_platform_icon_is_wired_into_windows_and_macos(self) -> None:
         icon = self.root / "figureloom-bio" / "linux" / "assets" / "figureloom-bio.png"
