@@ -19,6 +19,10 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: figureloom-bio-cross-platform-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   windows:
     runs-on: windows-latest
