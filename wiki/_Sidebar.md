@@ -17,9 +17,10 @@
 ### Scientific work
 
 - [FigureLoom Bio](FigureLoom-Bio)
-- [Download FigureLoom Bio](https://github.com/victork4314-sys/Figureloom/releases/download/figureloom-bio-installer/FigureLoom-Bio-Installer.deb)
+- [Download FigureLoom Bio for Linux](https://github.com/victork4314-sys/Figureloom/releases/download/figureloom-bio-installer/FigureLoom-Bio-Installer.deb)
 - [Download FigureLoom Bio for Windows](https://github.com/victork4314-sys/Figureloom/releases/download/figureloom-bio-windows-installer/FigureLoom-Bio-Installer.exe)
-- [Download FigureLoom Bio for Mac](FigureLoom-Bio-Easy-Install#macos)
+- [Download FigureLoom Bio for Mac, Apple Silicon](https://github.com/victork4314-sys/Figureloom/releases/download/figureloom-bio-macos-installer/FigureLoom-Bio-Installer-macOS-Apple-Silicon.pkg)
+- [Download FigureLoom Bio for Mac, Intel](https://github.com/victork4314-sys/Figureloom/releases/download/figureloom-bio-macos-installer/FigureLoom-Bio-Installer-macOS-Intel.pkg)
 - [Install FigureLoom Bio](FigureLoom-Bio-Easy-Install)
 - [Illustrations and maps](Scientific-Illustrations-and-Maps)
 - [Data, tables, and charts](Data-Tables-and-Charts)
