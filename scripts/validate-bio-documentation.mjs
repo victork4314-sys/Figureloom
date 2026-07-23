@@ -4,6 +4,7 @@ import path from 'node:path';
 const root = process.cwd();
 const read = (file) => fs.readFileSync(path.join(root, file), 'utf8');
 const fail = (message) => { throw new Error(message); };
+const normalized = (value) => String(value).replace(/\\\s*\n\s*/g, ' ').replace(/\s+/g, ' ').trim();
 
 const files = {
   mainReadme:read('README.md'),
@@ -46,8 +47,9 @@ const requiredDetailed = [
   'seqkit fastp spades quast prokka abricate kraken2 mob_suite',
 ];
 for (const [name, content] of Object.entries({ packageReadme:files.packageReadme, wiki:files.wiki })) {
+  const comparable = normalized(content);
   for (const value of requiredDetailed) {
-    if (!content.includes(value)) fail(`${name} is missing ${value}`);
+    if (!comparable.includes(normalized(value))) fail(`${name} is missing ${value}`);
   }
 }
 
