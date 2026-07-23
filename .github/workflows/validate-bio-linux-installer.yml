@@ -22,6 +22,8 @@ jobs:
           bash -n install/linux/figureloom-bio-ide
           bash -n install/linux/figureloom-bio-copy-tests
           bash -n install/linux/figureloom-bio-quick-test
+          bash -n install/linux/figureloom-bio-setup
+          python3 -m py_compile install/linux/figureloom_bio_setup.py
           node scripts/validate-bio-linux-installer.mjs
 
       - name: Install from the checked-out repository
@@ -37,6 +39,21 @@ jobs:
             FIGURELOOM_BIO_KASM_PROFILE_DIR=/tmp/figureloom-test/kasm-profile \
             FIGURELOOM_BIO_HOME_ROOT=/tmp/figureloom-test/home \
             bash install/figureloom-bio-linux.sh
+
+      - name: Check the graphical setup and Kasm desktop
+        run: |
+          export PATH="/tmp/figureloom-test/bin:$PATH"
+          export FIGURELOOM_BIO_INSTALL_ROOT=/tmp/figureloom-test/opt
+          export FIGURELOOM_BIO_INSTALLER=/tmp/figureloom-test/opt/source/install/figureloom-bio-linux.sh
+          export FIGURELOOM_BIO_SETUP_PYTHON=/tmp/figureloom-test/share/setup/figureloom_bio_setup.py
+          export FIGURELOOM_BIO_SHARE_DIR=/tmp/figureloom-test/share
+          export FIGURELOOM_BIO_APPLICATIONS_DIR=/tmp/figureloom-test/applications
+          export FIGURELOOM_BIO_BIN_DIR=/tmp/figureloom-test/bin
+          figureloom-bio-setup --self-test
+          test -x "/tmp/figureloom-test/bin/figureloom-bio-setup"
+          test -f "/tmp/figureloom-test/kasm-profile/Desktop/Install or Update FigureLoom Bio.desktop"
+          test -f "/tmp/figureloom-test/kasm-profile/Desktop/FigureLoom Bio IDE.desktop"
+          test -d "/tmp/figureloom-test/kasm-profile/Desktop/FigureLoom Bio Test Files"
 
       - name: Run the installed command and bundled tests
         run: |
