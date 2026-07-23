@@ -30,7 +30,8 @@ jobs:
           status=$?
           set -e
           if [ "$status" -ne 0 ]; then
-            cat "$RUNNER_TEMP/figureloom-bio-tests.log"
+            echo "FigureLoom Bio tests failed. Showing the final 120 lines:"
+            tail -n 120 "$RUNNER_TEMP/figureloom-bio-tests.log"
             exit "$status"
           fi
           tail -n 30 "$RUNNER_TEMP/figureloom-bio-tests.log"
