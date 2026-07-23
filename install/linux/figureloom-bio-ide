@@ -1,0 +1,86 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+APP_ROOT="${FIGURELOOM_BIO_APP_ROOT:-/opt/figureloom-bio/source}"
+PORT="${FIGURELOOM_BIO_IDE_PORT:-4314}"
+URL="http://127.0.0.1:${PORT}/ide/"
+RUNTIME_ROOT="${XDG_RUNTIME_DIR:-/tmp/figureloom-bio-${UID}}"
+PID_FILE="${RUNTIME_ROOT}/ide-server.pid"
+LOG_FILE="${RUNTIME_ROOT}/ide-server.log"
+PROFILE_DIR="${HOME}/.config/figureloom-bio-ide"
+
+mkdir -p "${RUNTIME_ROOT}" "${PROFILE_DIR}"
+
+server_ready() {
+    python3 - "$URL" <<'PY'
+import sys
+import urllib.request
+
+url = sys.argv[1]
+try:
+    with urllib.request.urlopen(url, timeout=0.5) as response:
+        body = response.read(65536).decode("utf-8", "replace")
+except Exception:
+    raise SystemExit(1)
+raise SystemExit(0 if "FigureLoom Bio IDE" in body else 1)
+PY
+}
+
+if ! server_ready; then
+    if [[ -f "${PID_FILE}" ]]; then
+        old_pid="$(cat "${PID_FILE}" 2>/dev/null || true)"
+        if [[ -n "${old_pid}" ]] && kill -0 "${old_pid}" 2>/dev/null; then
+            kill "${old_pid}" 2>/dev/null || true
+            sleep 0.2
+        fi
+        rm -f "${PID_FILE}"
+    fi
+
+    nohup python3 -m http.server "${PORT}" \
+        --bind 127.0.0.1 \
+        --directory "${APP_ROOT}" \
+        >"${LOG_FILE}" 2>&1 &
+    echo "$!" >"${PID_FILE}"
+
+    for _ in $(seq 1 40); do
+        server_ready && break
+        sleep 0.1
+    done
+fi
+
+if ! server_ready; then
+    echo "FigureLoom Bio IDE could not start."
+    echo "Log: ${LOG_FILE}"
+    exit 1
+fi
+
+browser="${FIGURELOOM_BIO_BROWSER:-}"
+for candidate in chromium chromium-browser google-chrome google-chrome-stable; do
+    if [[ -z "${browser}" ]] && command -v "${candidate}" >/dev/null 2>&1; then
+        browser="${candidate}"
+        break
+    fi
+done
+
+if [[ -n "${browser}" ]]; then
+    browser_args=(
+        "--app=${URL}"
+        "--user-data-dir=${PROFILE_DIR}"
+        "--class=FigureLoomBioIDE"
+        "--name=FigureLoomBioIDE"
+        "--no-first-run"
+        "--disable-session-crashed-bubble"
+    )
+    if [[ "${EUID}" -eq 0 ]]; then
+        browser_args+=("--no-sandbox")
+    fi
+    exec "${browser}" "${browser_args[@]}"
+fi
+
+if command -v xdg-open >/dev/null 2>&1; then
+    exec xdg-open "${URL}"
+fi
+
+echo "No supported browser was found."
+echo "Open ${URL} in a browser."
+exit 1
