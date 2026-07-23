@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=FigureLoom Bio Test Files
+Comment=Copy ready-to-run FigureLoom Bio examples to the desktop
+Exec=/usr/local/bin/figureloom-bio-copy-tests
+Icon=/opt/figureloom-bio/source/favicon.ico
+Terminal=false
+Categories=Development;Science;Education;
+StartupNotify=true
