@@ -1,11 +1,14 @@
 from __future__ import annotations
 
 import math
-from statistics import fmean
+from statistics import fmean, stdev
 from typing import Any
 
 from . import complete_language
 from .errors import FigureLoomBioError
+
+
+_ORIGINAL_CALCULATE = complete_language._calculate
 
 
 def install_complete_language_parity() -> None:
@@ -15,10 +18,13 @@ def install_complete_language_parity() -> None:
     columns such as sample names are metadata and must be skipped, not treated
     as malformed numeric values. Commands that explicitly name a numeric column
     continue to use the strict validator in ``complete_language``.
+
+    Standard deviation uses the sample calculation in every native runtime.
     """
     if getattr(complete_language, "_parity_fix_installed", False):
         return
     complete_language._compare_groups = _compare_groups
+    complete_language._calculate = _calculate
     complete_language._parity_fix_installed = True
 
 
@@ -66,6 +72,15 @@ def _compare_groups(runner: Any, first: str, second: str, requested: str) -> Non
     columns = list(rows[0])
     complete_language._set_table(runner, columns, rows, "group comparison")
     runner.output.add_table(f"Compared {first} and {second}", columns, rows)
+
+
+def _calculate(runner: Any, action: str, requested: str) -> None:
+    if action != "calculate_standard_deviation":
+        _ORIGINAL_CALCULATE(runner, action, requested)
+        return
+    values, column = complete_language._numeric_column(runner, requested)
+    value = stdev(values) if len(values) > 1 else 0.0
+    runner.output.add("Standard deviation", column, f"{value:.6g}")
 
 
 def _numeric_values_if_possible(
