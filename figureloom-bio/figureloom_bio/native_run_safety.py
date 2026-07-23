@@ -1,10 +1,11 @@
 from __future__ import annotations
 
+import os
 from pathlib import Path
 import traceback
 from typing import Any
 
-from PySide6.QtWidgets import QMessageBox
+from PySide6.QtWidgets import QApplication, QMessageBox
 
 from .errors import FigureLoomBioError
 from .native_core import application_data_folder, run_workspace
@@ -41,7 +42,7 @@ def _unexpected_run_message(error: BaseException, details_path: Path | None) -> 
 
 
 def install_native_run_safety(native_ide_module: Any) -> None:
-    """Keep worker errors and window closing from hard-crashing the native IDE."""
+    """Keep worker errors, startup paint, and window closing from crashing the IDE."""
 
     worker_class = native_ide_module.RunWorker
     if not getattr(worker_class, "_figureloom_safe_run_installed", False):
@@ -64,27 +65,49 @@ def install_native_run_safety(native_ide_module: Any) -> None:
         worker_class._figureloom_safe_run_installed = True
 
     window_class = native_ide_module.NativeIdeWindow
-    if getattr(window_class, "_figureloom_safe_close_installed", False):
+    if not getattr(window_class, "_figureloom_safe_close_installed", False):
+        original_close_event = window_class.closeEvent
+
+        def safe_close_event(self: Any, event: Any) -> None:
+            thread = getattr(self, "_run_thread", None)
+            if thread is not None and thread.isRunning():
+                QMessageBox.information(
+                    self,
+                    native_ide_module.APP_NAME,
+                    "The program is still running.\n\n"
+                    "Wait for it to finish or report an error before closing the IDE. "
+                    "This prevents the running job and its files from being cut off.",
+                )
+                event.ignore()
+                return
+            original_close_event(self, event)
+
+        window_class.closeEvent = safe_close_event
+        window_class._figureloom_safe_close_installed = True
+
+    if getattr(native_ide_module, "_figureloom_painted_self_test_installed", False):
         return
 
-    original_close_event = window_class.closeEvent
+    original_self_test = native_ide_module.native_self_test
 
-    def safe_close_event(self: Any, event: Any) -> None:
-        thread = getattr(self, "_run_thread", None)
-        if thread is not None and thread.isRunning():
-            QMessageBox.information(
-                self,
-                native_ide_module.APP_NAME,
-                "The program is still running.\n\n"
-                "Wait for it to finish or report an error before closing the IDE. "
-                "This prevents the running job and its files from being cut off.",
-            )
-            event.ignore()
-            return
-        original_close_event(self, event)
+    def painted_self_test() -> int:
+        os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
+        app = QApplication.instance() or QApplication([native_ide_module.APP_NAME, "--self-test"])
+        with native_ide_module.tempfile_workspace() as workspace:
+            window = native_ide_module.NativeIdeWindow(workspace)
+            window.show()
+            app.processEvents()
+            window.editor.viewport().update()
+            window.editor.line_number_area.update()
+            app.processEvents()
+            if not window.isVisible():
+                raise RuntimeError("The final native IDE window did not become visible during its startup test.")
+            window.close()
+            app.processEvents()
+        return original_self_test()
 
-    window_class.closeEvent = safe_close_event
-    window_class._figureloom_safe_close_installed = True
+    native_ide_module.native_self_test = painted_self_test
+    native_ide_module._figureloom_painted_self_test_installed = True
 
 
 __all__ = ["install_native_run_safety"]
