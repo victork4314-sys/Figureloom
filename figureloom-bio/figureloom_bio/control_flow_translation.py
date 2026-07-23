@@ -41,11 +41,7 @@ def translate_flow_source(
         normalized,
         content,
         translator_module.TARGET_EXTENSIONS[normalized],
-        [
-            "This program uses FigureLoom Bio decisions, loops, named results, or recipes. "
-            "The translation preserves those semantics by running the embedded .flbio "
-            "program through the flbio runtime."
-        ],
+        [],
         ["bash", "flbio"],
     )
 
