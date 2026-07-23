@@ -65,7 +65,7 @@
     {"id":"build_tree_short","action":"build_phylogenetic_tree","pattern":"build the tree","canonical":"Build a phylogenetic tree.","examples":["Build the tree."]},
     {"id":"display_tree","action":"show_tree","pattern":"display the tree","canonical":"Show the tree.","examples":["Display the tree."]},
 
-    {"id":"average_column","action":"summary_statistic","pattern":"(?:calculate|find|show) the (average|mean|median|standard deviation|confidence interval) (?:of|under|for) (.+)","canonical":"Calculate the $1 of $2.","examples":["Find the mean of score.","Calculate the median under score.","Show the confidence interval for score."]},
+    {"id":"average_column","action":"summary_statistic","pattern":"(?:calculate|find|show) the (average|mean|median|standard deviation|confidence interval) (?:of|under|for) (?!(?:read )?(?:quality|length)$)(.+)","canonical":"Calculate the $1 of $2.","examples":["Find the mean of score.","Calculate the median under score.","Show the confidence interval for score."]},
     {"id":"minimum_column","action":"calculate_minimum","pattern":"(?:calculate|find|show) the minimum (?:of|under|for) (.+)","canonical":"Calculate the minimum under $1.","examples":["Find the minimum of score."]},
     {"id":"maximum_column","action":"calculate_maximum","pattern":"(?:calculate|find|show) the maximum (?:of|under|for) (.+)","canonical":"Calculate the maximum under $1.","examples":["Find the maximum of score."]},
     {"id":"normalize_column","action":"normalize_counts","pattern":"normalize (?!the counts under )(.+)","canonical":"Normalize the counts under $1.","examples":["Normalize expression.","Normalize count."]},
