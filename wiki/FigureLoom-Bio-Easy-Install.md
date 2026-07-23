@@ -11,6 +11,8 @@ FigureLoom Bio installs like a normal desktop program. There is no terminal comm
 
 Apple Silicon means an M1, M2, M3, M4, M5, or newer Apple-chip Mac. Use the Intel package only on an Intel Mac.
 
+The direct installer links stay together in this **Download for your computer** section. They are not repeated beside the wiki search bar or as separate download entries in the navigation.
+
 ## Install it
 
 ### Linux
@@ -37,7 +39,7 @@ The Windows installer does not require a separate Python installation. It instal
 
 The current public Mac packages are not Apple-notarized yet. If macOS blocks the first opening, Control-click the package, choose **Open**, and approve it once.
 
-The downloaded installers contain the FigureLoom Bio engine, local IDE, installer window, and test files. They do not download a second installer while the first installation is running.
+The downloaded installers contain the FigureLoom Bio engine, native desktop IDE, installer window, and test files. They do not download a second installer while the first installation is running.
 
 ## What appears on the desktop
 
@@ -68,7 +70,9 @@ Double-click **Test FigureLoom Bio**. A successful test report says that the qui
 EVERY QUICK TEST PASSED.
 ```
 
-The test uses real CSV, FASTA, and FASTQ inputs and also checks a real SVG figure, alignment, and phylogenetic tree.
+The quick test uses real CSV, FASTA, and FASTQ inputs and also checks a real SVG figure, alignment, and phylogenetic tree.
+
+The separate exhaustive language audit runs all **161 canonical sentences** and all **99 accepted alternate wordings** through the real parser and runtime. The generated [complete command reference](FigureLoom-Bio-Command-Reference) lists all 260 tested sentences.
 
 ## Update later
 
@@ -76,7 +80,9 @@ Double-click **Install or Update FigureLoom Bio** and choose install, update, or
 
 ## Open the IDE
 
-Double-click **FigureLoom Bio IDE**. It starts the bundled local IDE and opens it through the computer's normal browser without sending program files to a server.
+Double-click **FigureLoom Bio IDE**. It opens the native FigureLoom Bio desktop application directly. The Windows and macOS IDE does not open a browser, start a localhost server, use a WebView, or bundle an HTML interface.
+
+Programs and device projects stay on the computer unless the user explicitly signs into the shared FigureLoom account and saves an encrypted project to Bio cloud.
 
 ## Linux terminal fallback
 
