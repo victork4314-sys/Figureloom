@@ -13,6 +13,7 @@ const files = {
   packageReadme: read('figureloom-bio/README.md'),
   linuxReadme: read('figureloom-bio/linux/README.md'),
   wiki: read('wiki/FigureLoom-Bio.md'),
+  commandReference: read('wiki/FigureLoom-Bio-Command-Reference.md'),
   easyInstall: read('wiki/FigureLoom-Bio-Easy-Install.md'),
   sidebar: read('wiki/_Sidebar.md'),
   wikiRuntime: read('wiki/wiki.js'),
@@ -69,9 +70,23 @@ for (const [name, content] of Object.entries({ mainReadme: files.mainReadme, eas
 }
 
 for (const value of ['Test FigureLoom Bio', 'EVERY QUICK TEST PASSED.', 'running workspace', 'Nothing is preinstalled into or baked into the Kasm image']) requireText('easyInstall', files.easyInstall, value);
+for (const value of ['native FigureLoom Bio desktop application', 'does not open a browser', 'FigureLoom-Bio-Command-Reference']) requireText('easyInstall', files.easyInstall, value);
+if (files.easyInstall.includes("opens it through the computer's normal browser")) errors.push('The installer guide still describes the removed browser wrapper.');
+
+requireText('sidebar', files.sidebar, '[Complete Bio command reference](FigureLoom-Bio-Command-Reference)');
 requireText('sidebar', files.sidebar, '[Install FigureLoom Bio](FigureLoom-Bio-Easy-Install)');
+requireText('wikiRuntime', files.wikiRuntime, "['Scientific work','FigureLoom-Bio-Command-Reference','Complete Bio command reference']");
 requireText('wikiRuntime', files.wikiRuntime, "['Scientific work','FigureLoom-Bio-Easy-Install','Install FigureLoom Bio']");
 requireText('wikiIndex', files.wikiIndex, 'a[href*="FigureLoom-Bio-Installer"]');
+
+for (const value of [
+  '**Canonical sentences:** 161',
+  '**Accepted alternate wordings:** 99',
+  '**Total tested sentences shown here:** 260',
+  '`Normalize the counts in expression.`',
+  '`Show a warning saying This sample needs review.`',
+  '`Assemble the bacterial genome.`',
+]) requireText('commandReference', files.commandReference, value);
 
 const detailed = [
   'pipx install "git+https://github.com/victork4314-sys/Figureloom.git#subdirectory=figureloom-bio"',
@@ -102,4 +117,4 @@ if (!files.wikiSync.includes('cp wiki/*.md .wiki-repository/')) errors.push('The
 if (!files.wikiSync.includes('${{ github.repository }}.wiki.git')) errors.push('The GitHub wiki sync does not target the repository wiki.');
 
 if (errors.length) throw new Error(`FigureLoom Bio documentation validation found ${errors.length} problem(s):\n- ${errors.join('\n- ')}`);
-console.log('FigureLoom Bio installer links stay together only under Download for your computer in the wiki.');
+console.log('FigureLoom Bio documentation matches the 260-sentence execution audit, and installer links stay only under Download for your computer in the wiki.');
