@@ -10,6 +10,7 @@ WORK_ROOT="$BUILD_ROOT/work"
 SPEC_ROOT="$BUILD_ROOT/spec"
 PKG_ROOT="$BUILD_ROOT/package-root"
 SCRIPTS_ROOT="$BUILD_ROOT/package-scripts"
+COMPONENT_PLIST="$BUILD_ROOT/components.plist"
 ICON_PNG="$ROOT_DIR/figureloom-bio/linux/assets/figureloom-bio.png"
 ICONSET="$BUILD_ROOT/figureloom-bio.iconset"
 ICON_ICNS="$BUILD_ROOT/figureloom-bio.icns"
@@ -122,10 +123,44 @@ ln -s ../libexec/figureloom-bio/flbio "$PKG_ROOT/usr/local/bin/flbio"
 cp "$ROOT_DIR/figureloom-bio/macos/scripts/postinstall" "$SCRIPTS_ROOT/postinstall"
 chmod 0755 "$SCRIPTS_ROOT/postinstall"
 
+# Keep every FigureLoom Bio app fixed under /Applications. Component packages
+# otherwise consider app bundles relocatable and may update the temporary build
+# copies instead of installing the applications where users expect them.
+pkgbuild --analyze --root "$PKG_ROOT" "$COMPONENT_PLIST"
+python3 - "$COMPONENT_PLIST" <<'PY'
+from pathlib import Path
+import plistlib
+import sys
+
+path = Path(sys.argv[1])
+with path.open("rb") as handle:
+    components = plistlib.load(handle)
+
+fixed = []
+for component in components:
+    bundle_path = str(component.get("RootRelativeBundlePath", ""))
+    normalized_path = bundle_path.removeprefix("./")
+    if normalized_path.startswith("Applications/") and normalized_path.endswith(".app"):
+        component["BundleIsRelocatable"] = False
+        component["BundleIsVersionChecked"] = False
+        component["BundleOverwriteAction"] = "upgrade"
+        fixed.append(normalized_path)
+
+if len(fixed) != 3:
+    raise SystemExit(
+        "Expected three FigureLoom Bio applications in the component plist, "
+        f"found {len(fixed)}: {fixed}; raw components: {components}"
+    )
+
+with path.open("wb") as handle:
+    plistlib.dump(components, handle, fmt=plistlib.FMT_XML, sort_keys=False)
+PY
+
 INSTALLER="$OUTPUT_DIR/FigureLoom-Bio-Installer-macOS-${FILE_ARCH}.pkg"
 pkgbuild \
   --root "$PKG_ROOT" \
   --scripts "$SCRIPTS_ROOT" \
+  --component-plist "$COMPONENT_PLIST" \
   --identifier "org.figureloom.bio" \
   --version "$VERSION" \
   --install-location / \
