@@ -10,6 +10,16 @@ from .native_web_parity import WebSyntaxHighlighter
 class ExactWebSyntaxHighlighter(WebSyntaxHighlighter):
     """Paint accepted native lines in the same layers as the web editor."""
 
+    # A normal FigureLoom Bio sentence ends with a period. The inherited file
+    # boundary treated that final period as though the filename continued, so
+    # `samples.csv.` was accepted by the language but was not painted as a file.
+    # Permit only real sentence punctuation after the extension while still
+    # rejecting partial matches such as `samples.csv.backup`.
+    FILE_PATTERN = re.compile(
+        r"(?<![\w.-])(?:[^\s,;:()]+\.(?:flbio|txt|csv|tsv|fa|fasta|fna|ffn|faa|frn|fq|fastq|svg|nwk|newick|vcf|bcf|gff|gff3|gtf|bed|bam|sam|xlsx|xls|json|png|pdf))(?=$|[\s,;:()]|\.(?:\s|$))",
+        re.IGNORECASE,
+    )
+
     CONNECTOR_PATTERN = re.compile(
         r"\b(?:the|only|rows?|sequences?|reads?|result|file|files|under|by|using|as|with|than|at least|below|above|in|on|of|for|every)\b",
         re.IGNORECASE,
