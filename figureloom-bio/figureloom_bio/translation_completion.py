@@ -20,23 +20,29 @@ EXTRA_TARGET_LABELS = {
 }
 EXISTING_TARGETS = {"python", "r", "bash", "snakemake", "nextflow"}
 
+_ADVISORY_WARNING_PREFIXES = (
+    "SeqKit statistics do not reproduce every native validation counter",
+    "SeqKit controls split filenames inside ",
+    "fastp uses base-quality settings rather than the native exact average-read rule",
+)
+
 
 def install_translation_completion() -> None:
     """Finish translation without placeholders or approximate silent fallbacks.
 
-    Exact, warning-free translations remain standalone. When a complete native
-    translation is not available, the generated target embeds the original
-    ``.flbio`` source and runs it through the installed FigureLoom Bio engine.
-    This preserves decisions, loops, recipes, current-file references, future
-    built-in sentences, and exact native behavior without generating placeholder
-    code or pretending that an approximation is the same analysis.
+    Exact translations and runnable translations with explicit advisory notes stay
+    standalone. When a complete native translation is not available, the generated
+    target embeds the original ``.flbio`` source and runs it through the installed
+    FigureLoom Bio engine. This preserves decisions, loops, recipes, current-file
+    references, future built-in sentences, and exact native behavior without
+    generating placeholder code or pretending that an approximation is identical.
     """
     if getattr(translator_module, "_translation_completion_installed", False):
         return
 
     translator_module.TARGET_EXTENSIONS.update(EXTRA_TARGET_EXTENSIONS)
     translator_module.TARGET_LABELS.update(EXTRA_TARGET_LABELS)
-    translator_module.ShellPlan.warn = _runtime_required_warning
+    translator_module.ShellPlan.warn = _classified_warning
     original_translate_source = translator_module.translate_source
 
     def translate_source(
@@ -63,7 +69,7 @@ def install_translation_completion() -> None:
             normalized,
             program_name=program_name,
         )
-        if translated.warnings or "runtime required" in translated.content.casefold():
+        if "runtime required" in translated.content.casefold():
             return _runtime_translation(source, normalized, program_name)
         return translated
 
@@ -71,7 +77,7 @@ def install_translation_completion() -> None:
     translator_module._translation_completion_installed = True
 
 
-def _runtime_required_warning(
+def _classified_warning(
     plan: translator_module.ShellPlan,
     sentence: str,
     reason: str,
@@ -79,6 +85,8 @@ def _runtime_required_warning(
     message = f"{sentence}: {reason}"
     if message not in plan.warnings:
         plan.warnings.append(message)
+    if reason.startswith(_ADVISORY_WARNING_PREFIXES):
+        return
     plan.lines.append(f"# FigureLoom Bio runtime required: {message}")
 
 
