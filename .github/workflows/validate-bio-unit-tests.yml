@@ -1,0 +1,45 @@
+name: Validate FigureLoom Bio unit tests
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'figureloom-bio/**'
+      - '.github/workflows/validate-bio-unit-tests.yml'
+  pull_request:
+    paths:
+      - 'figureloom-bio/**'
+      - '.github/workflows/validate-bio-unit-tests.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  unit_tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Run all FigureLoom Bio tests
+        run: |
+          cd figureloom-bio
+          set +e
+          python3 -m unittest discover -s tests -v > "$RUNNER_TEMP/figureloom-bio-tests.log" 2>&1
+          status=$?
+          set -e
+          if [ "$status" -ne 0 ]; then
+            echo "FigureLoom Bio tests failed. Showing the final 160 lines:"
+            tail -n 160 "$RUNNER_TEMP/figureloom-bio-tests.log"
+            exit "$status"
+          fi
+          tail -n 35 "$RUNNER_TEMP/figureloom-bio-tests.log"
+
+      - name: Upload complete unit-test report
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: figureloom-bio-unit-test-report
+          path: ${{ runner.temp }}/figureloom-bio-tests.log
+          if-no-files-found: error
