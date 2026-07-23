@@ -39,9 +39,10 @@
     document.body.append(script);
   }
 
-  function loadCanonicalLanguageUi() {
+  function loadCanonicalLanguageModules() {
     loadModule('figureloomBioLanguageCatalogUi', './ide-language-catalog-ui.js?v=1');
     loadModule('figureloomBioLanguageBlocksUi', './ide-language-blocks-ui.js?v=1');
+    loadModule('figureloomBioAnalysisLanguage', './ide-analysis-language.js?v=1');
   }
 
   window.FigureLoomBioLanguageReady = fetch(source, { cache:'no-store' })
@@ -66,8 +67,8 @@
     });
 
   if (document.readyState === 'complete') {
-    queueMicrotask(loadCanonicalLanguageUi);
+    queueMicrotask(loadCanonicalLanguageModules);
   } else {
-    window.addEventListener?.('load', loadCanonicalLanguageUi, { once:true });
+    window.addEventListener?.('load', loadCanonicalLanguageModules, { once:true });
   }
 })();
