@@ -40,8 +40,17 @@ jobs:
 
       - name: Run FigureLoom Bio tests
         run: |
+          set -o pipefail
           cd figureloom-bio
-          python3 -m unittest discover -s tests -v
+          python3 -m unittest discover -s tests -v 2>&1 | tee "$GITHUB_WORKSPACE/figureloom-bio-unit-tests.log"
+
+      - name: Upload complete FigureLoom Bio unittest trace
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: FigureLoom-Bio-Unittest-Trace
+          path: figureloom-bio-unit-tests.log
+          if-no-files-found: warn
 
       - name: Check required application files
         run: |
