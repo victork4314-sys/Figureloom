@@ -4,11 +4,11 @@
 [![Open FigureLoom](https://img.shields.io/badge/open-figureloom.org-0c2e28.svg)](https://figureloom.org/)
 [![Free and open source](https://img.shields.io/badge/free%20%26%20open%20source-yes-2ea44f.svg)](LICENSE)
 
-**A free, local-first editor for scientific figures, diagrams, posters, and presentations.**
+**A free, local-first editor for scientific figures, diagrams, posters, presentations, and plain-language biological workflows.**
 
 FigureLoom runs in the browser. You can open it, make something, save it locally, and export it without creating an account. There is no paywall, watermark, or institutional pricing maze.
 
-The interface should feel familiar to anyone who has used PowerPoint, Keynote, or another office-style editor. The difference is that FigureLoom is built around scientific work, so pathways, equations, plots, maps, microscopy layouts, references, annotations, and publication checks are part of the editor rather than an afterthought.
+The interface should feel familiar to anyone who has used PowerPoint, Keynote, or another office-style editor. The difference is that FigureLoom is built around scientific work, so pathways, equations, plots, maps, microscopy layouts, references, annotations, publication checks, and biological workflows are part of the project rather than an afterthought.
 
 Try it at [figureloom.org](https://figureloom.org/).
 
@@ -28,11 +28,81 @@ Read the [hosted manual and tutorials](https://figureloom.org/wiki/#Home) or the
 - Code windows for instructions, methods, examples, and technical notes
 - PowerPoint and spreadsheet import tools
 - Editable SVG export for one page or every project page
+- FigureLoom Bio, a plain-English `.flbio` language with browser and terminal runtimes
 - Optional FigureLoom Linux VM access for browser-based bioinformatics and Linux desktop work
 - Contrast checks, tiny-text warnings, grayscale and color-vision previews, alt text, references, attribution, and journal sizing checks
 - Fullscreen multi-page presentation mode
 
 Older project backups are still accepted, so updating FigureLoom does not strand files made with earlier versions.
+
+## FigureLoom Bio
+
+FigureLoom Bio is one built-in language for tables, FASTA, FASTQ, paired reads, microbiology, alignment, variants, genes, proteins, PCR primers, phylogenetic trees, statistics, and SVG figures. It is not an add-on system. Programs use the `.flbio` extension and read like ordinary instructions.
+
+```flbio
+Open the file measurements.csv.
+Calculate the average of score.
+Calculate the p value for score between treated and control under group.
+Create a volcano plot using effect and p_value.
+Save the file as final-results.csv.
+```
+
+The current result is called **the file**:
+
+```flbio
+Open the files forward.fastq and reverse.fastq as a pair.
+Check the file.
+Prepare bacterial reads.
+Save the file as clean-reads.fastq.
+Assemble the bacterial genome.
+Annotate the file.
+Find resistance genes in the file.
+```
+
+Normal instructions end with a period. Decision, loop, and recipe headers end with a colon and never with `:.`.
+
+```flbio
+If resistance genes were found:
+    Show a warning saying Resistance genes were found.
+Otherwise:
+    Say No resistance genes were found.
+```
+
+The browser IDE at [figureloom.org/ide](https://figureloom.org/ide/) provides text editing, visual Blocks, a searchable Sentences catalog, real local execution, generated files, and translation. The same canonical catalog drives the Python runtime, browser runtime, Blocks, Sentences, terminal help, documentation, and parity tests so a sentence cannot be advertised in one place and silently rejected in another.
+
+The command-line engine translates `.flbio` programs to Python, R, Bash, Snakemake, Nextflow, Julia, Ruby, Perl, and PowerShell. Direct target rules are used where exact translation is possible. More complex programs become runnable wrappers around the embedded `.flbio` source rather than placeholder code.
+
+### Install FigureLoom Bio
+
+There is not a PyPI release yet. The pinned command installs the tested 0.7.0 code snapshot with `pipx`:
+
+```bash
+pipx install "git+https://github.com/victork4314-sys/Figureloom.git@3508ad3ef9073a1c5bbd9fa03765260369784d61#subdirectory=figureloom-bio"
+flbio doctor
+```
+
+Install the current GitHub version:
+
+```bash
+pipx install "git+https://github.com/victork4314-sys/Figureloom.git#subdirectory=figureloom-bio"
+flbio doctor
+```
+
+Run or translate a program:
+
+```bash
+flbio run program.flbio
+flbio translate program.flbio --to python
+flbio sentences
+```
+
+Tool-backed microbiology workflows require explicit permission:
+
+```bash
+flbio run bacterial-analysis.flbio --allow-tools
+```
+
+The complete Windows, macOS, Linux, update, uninstall, optional-tool, troubleshooting, and language guide is in [`figureloom-bio/README.md`](figureloom-bio/README.md) and the [FigureLoom Bio manual](https://figureloom.org/wiki/#FigureLoom-Bio).
 
 ## Desktop, tablet, and phone
 
@@ -63,7 +133,7 @@ Loomy is a small helper for getting a first draft onto the canvas. You can descr
 
 The result is editable. Objects can be moved, resized, recolored, relabeled, deleted, or rearranged like anything else in the editor.
 
-You can also ignore Loomy completely. The editor, drawing tools, templates, imports, and exports do not depend on it.
+You can also ignore Loomy completely. The editor, drawing tools, templates, imports, exports, and FigureLoom Bio do not depend on it.
 
 ## FigureLoom Linux VM
 
@@ -143,7 +213,13 @@ Then open:
 http://localhost:8080/
 ```
 
-Most editor features work locally. Cloud authentication redirects need the local URL added to the Supabase allow list. Hosted MCP, cloud projects, live collaboration, and the hosted Linux VM also require the configured backend services.
+The local FigureLoom Bio IDE is at:
+
+```text
+http://localhost:8080/ide/
+```
+
+Most editor and native FigureLoom Bio features work locally. Cloud authentication redirects need the local URL added to the Supabase allow list. Hosted MCP, cloud projects, live collaboration, tool-backed remote jobs, and the hosted Linux VM also require the configured backend services.
 
 ## Testing
 
@@ -159,8 +235,11 @@ Pull requests run syntax and browser checks for the parts of the app they touch.
 - Visible FigureLoom branding
 - Account, gallery, guest-link collaboration, TeX, pathway, MCP, VM access, and export wiring
 - Wiki links, hosted page registration, and hosted wiki JavaScript syntax
-
-The repository still has an older validation workflow with a few legacy assumptions. New focused browser tests are used for the current phone interface and other recently rebuilt areas.
+- FigureLoom Bio browser and Python runtime parity
+- Exact current-file and decision-word regressions
+- The canonical 161-command language catalog
+- Translation punctuation and all nine targets
+- Alignment, variants, genes, protein regions, PCR primers, Newick trees, statistics, and real SVG figures
 
 ## Contributing
 
@@ -180,6 +259,8 @@ Outside asset packs keep their own licenses and attribution requirements. Read [
 
 ## More documentation
 
+- [FigureLoom Bio package guide](figureloom-bio/README.md)
+- [FigureLoom Bio manual](https://figureloom.org/wiki/#FigureLoom-Bio)
 - [Hosted manual and tutorials](https://figureloom.org/wiki/#Home)
 - [MCP and AI access](https://figureloom.org/wiki/#MCP-and-AI-Access)
 - [`docs/PRO_TOOLS.md`](docs/PRO_TOOLS.md)
