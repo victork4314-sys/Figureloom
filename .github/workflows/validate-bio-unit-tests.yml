@@ -35,3 +35,11 @@ jobs:
             exit "$status"
           fi
           tail -n 30 "$RUNNER_TEMP/figureloom-bio-tests.log"
+
+      - name: Upload complete unit-test report
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: figureloom-bio-unit-test-report
+          path: ${{ runner.temp }}/figureloom-bio-tests.log
+          if-no-files-found: error
