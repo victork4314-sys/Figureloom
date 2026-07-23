@@ -184,7 +184,7 @@ find "$PACKAGE_DIR/usr/share/figureloom-bio/source" -type f -exec chmod 0644 {} 
 chmod 0755 \
   "$PACKAGE_DIR/usr/share/figureloom-bio/source/figureloom-bio/linux/build-deb.sh" \
   "$PACKAGE_DIR/usr/share/figureloom-bio/source/figureloom-bio/linux/install-workspace.sh" \
-  "$PACKAGE_DIR/usr/share/figureloom-bio/source/figureloom-bio/linux/install-ilinux.sh" \
+  "$PACKAGE_DIR/usr/share/figureloom-bio/source/figureloom-bio/linux/install-linux.sh" \
   "$PACKAGE_DIR/usr/share/figureloom-bio/source/figureloom-bio/linux/update-worker.sh" \
   "$PACKAGE_DIR/usr/share/figureloom-bio/source/figureloom-bio/linux/installer-window.py"
 
