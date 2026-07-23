@@ -40,6 +40,12 @@ jobs:
       - name: Hold program while runtime loads
         run: node scripts/validate-bio-runtime-race.mjs waiting
 
+      - name: Load and claim the program
+        run: node scripts/validate-bio-runtime-race.mjs runtime-ready
+
+      - name: Retry Run into the complete runtime
+        run: node scripts/validate-bio-runtime-race.mjs retried
+
       - name: Finish after delayed runtime loading
         run: node scripts/validate-bio-runtime-race.mjs finished
 
