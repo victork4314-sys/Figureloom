@@ -34,8 +34,17 @@ jobs:
       - name: Run bundled microbiology example
         run: node scripts/validate-bio-browser-example.mjs
 
-      - name: Reproduce delayed runtime loading
-        run: node scripts/validate-bio-runtime-race.mjs
+      - name: Recognize decisions before runtime loading
+        run: node scripts/validate-bio-runtime-race.mjs recognition
+
+      - name: Hold program while runtime loads
+        run: node scripts/validate-bio-runtime-race.mjs waiting
+
+      - name: Finish after delayed runtime loading
+        run: node scripts/validate-bio-runtime-race.mjs finished
+
+      - name: Create outputs after delayed runtime loading
+        run: node scripts/validate-bio-runtime-race.mjs outputs
 
       - name: Run control flow tests
         run: |
