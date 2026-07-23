@@ -1,4 +1,5 @@
-from figureloom_bio.platform_desktop import show_test_window
+from figureloom_bio.platform_qt import run_test_app
+
 
 if __name__ == "__main__":
-    show_test_window()
+    raise SystemExit(run_test_app())
