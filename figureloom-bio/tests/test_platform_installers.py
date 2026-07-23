@@ -44,7 +44,7 @@ class PlatformInstallerTests(unittest.TestCase):
             "index.html",
         ):
             self.assertNotIn(forbidden, runtime + entry)
-        self.assertNotIn("--add-data", windows.split("$RepoRoot 'ide'")[0] if "$RepoRoot 'ide'" in windows else windows)
+        self.assertNotIn("Join-Path $RepoRoot 'ide'", windows)
         self.assertNotIn("$ROOT_DIR/ide:ide", macos)
         self.assertIn("forbidden web-interface files", windows)
         self.assertIn("forbidden web-interface files", macos)
