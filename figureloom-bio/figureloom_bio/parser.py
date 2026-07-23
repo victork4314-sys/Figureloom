@@ -13,7 +13,7 @@ class Instruction:
     values: tuple[str, ...] = ()
 
 
-_KNOWN_COMMAND_WORDS = {
+_BASE_COMMAND_WORDS = {
     "align", "annotate", "assemble", "ask", "build", "calculate", "call",
     "change", "check", "clear", "close", "combine", "compare", "convert",
     "copy", "correct", "count", "create", "cut", "delete", "download",
@@ -195,6 +195,25 @@ _PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
 )
 
 
+def _known_command_words() -> set[str]:
+    words = set(_BASE_COMMAND_WORDS)
+    try:
+        # This is deliberately loaded only when an instruction fails. It keeps
+        # parser startup simple while ensuring every command shown in the
+        # built-in Sentences list is automatically treated as a known command.
+        from .language_manifest import language_manifest
+
+        for command in language_manifest().commands:
+            match = re.match(r"[^\s:,.]+", command.example.strip())
+            if match:
+                words.add(match.group(0).casefold())
+    except (ImportError, OSError, KeyError, TypeError, ValueError):
+        # The base list still gives a useful explanation if the manifest itself
+        # is damaged. Manifest validation reports that separate problem later.
+        pass
+    return words
+
+
 def _split_sentences(source: str) -> list[tuple[int, str]]:
     sentences: list[tuple[int, str]] = []
 
@@ -220,7 +239,7 @@ def _split_sentences(source: str) -> list[tuple[int, str]]:
 def _unknown_instruction_message(sentence: str) -> str:
     first_match = re.match(r"[^\s]+", sentence.strip())
     first_word = first_match.group(0) if first_match else ""
-    if first_word.casefold() in _KNOWN_COMMAND_WORDS:
+    if first_word.casefold() in _known_command_words():
         return (
             f"I recognize the command word {first_word}, but I could not match the whole sentence.\n\n"
             "What happened\n"
