@@ -1,16 +1,18 @@
 # Install FigureLoom Bio
 
-FigureLoom Bio can be installed like a normal desktop program. The first command adds an installer window, the local IDE, an unzipped test folder, and a one-click test.
+FigureLoom Bio installs like a normal Linux desktop program. There is no terminal command in the normal setup.
 
-## First installation
+[Download FigureLoom Bio](https://github.com/victork4314-sys/Figureloom/releases/download/figureloom-bio-installer/FigureLoom-Bio-Installer.deb)
 
-Open a terminal in Linux or in your running Kasm workspace and paste:
+## Install it
 
-```bash
-curl -fsSL https://raw.githubusercontent.com/victork4314-sys/Figureloom/main/figureloom-bio/linux/install-linux.sh | sudo bash
-```
+1. Press **Download FigureLoom Bio** above.
+2. Open `FigureLoom-Bio-Installer.deb` from the Downloads folder.
+3. Press **Install** and approve the normal Linux administrator prompt.
 
-Inside Kasm, use the terminal inside the workspace. This does not rebuild or replace the Kasm image.
+The downloaded file contains the FigureLoom Bio engine, local IDE, installer window, and test files. It does not download a second installer while it is being installed.
+
+Inside Kasm, open this page in the running workspace, download the same file, and open it there. FigureLoom Bio is installed only because that user chose to install it. Nothing is preinstalled into or baked into the Kasm image.
 
 ## What appears on the desktop
 
@@ -33,13 +35,7 @@ The window can:
 
 ## Check that it works
 
-Double-click **Test FigureLoom Bio**, or run:
-
-```bash
-flbio quick-test
-```
-
-A successful test ends with:
+Double-click **Test FigureLoom Bio**. A successful test ends with:
 
 ```text
 EVERY QUICK TEST PASSED.
@@ -49,8 +45,16 @@ The test uses real CSV, FASTA, and FASTQ inputs and also checks figures, alignme
 
 ## Update later
 
-Double-click **Install or Update FigureLoom Bio** and choose update or repair. There is no need to repeat the full manual installation guide.
+Double-click **Install or Update FigureLoom Bio** and choose update or repair. You do not need to download the package again for normal updates.
 
 ## Open the IDE
 
 Double-click **FigureLoom Bio IDE**. It opens locally in its own app window without normal browser tabs or an address bar.
+
+## Terminal fallback
+
+The downloadable package is the normal installation method. The older terminal installer remains available only as a fallback for a Linux desktop that cannot open `.deb` packages:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/victork4314-sys/Figureloom/main/figureloom-bio/linux/install-linux.sh | sudo bash
+```
