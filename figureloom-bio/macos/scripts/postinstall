@@ -14,7 +14,7 @@ normal_user() {
 
 TARGET_USER=""
 CONSOLE_USER="$(/usr/bin/stat -f '%Su' /dev/console 2>/dev/null || true)"
-WHO_USER="$(/usr/bin/who 2>/dev/null | /usr/bin/awk '$2 == "console" { print $1; exit }')"
+WHO_USER="$(/usr/bin/who 2>/dev/null | /usr/bin/awk '$2 == "console" { print $1; exit }' || true)"
 
 for candidate in \
   "${FIGURELOOM_TARGET_USER:-}" \
@@ -54,7 +54,7 @@ fi
 if [[ "$TARGET_USER" == root ]]; then
   TARGET_HOME="/var/root"
 else
-  TARGET_HOME="$(/usr/bin/dscl . -read "/Users/$TARGET_USER" NFSHomeDirectory 2>/dev/null | /usr/bin/awk '{print $2}')"
+  TARGET_HOME="$(/usr/bin/dscl . -read "/Users/$TARGET_USER" NFSHomeDirectory 2>/dev/null | /usr/bin/awk '{print $2}' || true)"
   [[ -n "$TARGET_HOME" ]] || TARGET_HOME="/Users/$TARGET_USER"
 fi
 TARGET_GROUP="$(/usr/bin/id -gn "$TARGET_USER" 2>/dev/null || printf '%s' wheel)"
