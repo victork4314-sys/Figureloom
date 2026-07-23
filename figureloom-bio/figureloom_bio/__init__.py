@@ -8,6 +8,7 @@ from .genomics_core import install_genomics_core
 from .unique_name_fix import install_unique_name_fix
 from .workflow_expansion import install_workflow_expansion
 from .complete_language import install_complete_language
+from .complete_language_parity import install_complete_language_parity
 from .analysis_language import install_analysis_language
 from .addon_packages import install_addon_packages
 from .addon_translation import install_addon_translation
@@ -22,6 +23,7 @@ install_genomics_core(Runner)
 install_unique_name_fix(Runner)
 install_workflow_expansion(Runner)
 install_complete_language(Runner)
+install_complete_language_parity()
 install_analysis_language(Runner)
 install_addon_packages(Runner)
 install_current_file_language(Runner)
