@@ -72,11 +72,13 @@ Save the file as clean-reads.fastq.
 
 creates `clean-reads-forward.fastq` and `clean-reads-reverse.fastq`.
 
-## Browser IDE
+## Browser and desktop IDE
 
-Open the IDE at `https://figureloom.org/ide/`.
+The hosted browser IDE is at `https://figureloom.org/ide/`.
 
-The browser IDE includes:
+The Linux/Kasm installer also adds a local **FigureLoom Bio IDE** desktop app. It opens the same visual IDE in a standalone Chromium app window without normal browser tabs or an address bar.
+
+The IDE includes:
 
 - Text editing and visual Blocks for the same `.flbio` program.
 - A searchable Sentences library generated from the canonical language catalog.
@@ -88,36 +90,66 @@ The browser IDE includes:
 
 The editor does not color a sentence as valid unless the release tests also exercise its parser or runtime path. The same catalog drives Sentences, Blocks, terminal help, documentation, and parity tests.
 
-## Install the command-line engine
+## Easiest Linux and Kasm installation
 
-FigureLoom Bio requires Python 3.10 or newer and Git for Git-based installs. `pipx` is recommended because it installs the `flbio` command in an isolated environment.
+Paste one command in a Linux terminal, server console, temporary Kasm image-building container, or Dockerfile layer:
 
-There is not a PyPI release yet. The pinned command below installs the tested 0.7.0 code snapshot. The current-version command follows the repository’s `main` branch.
+```bash
+curl -fsSL https://raw.githubusercontent.com/victork4314-sys/Figureloom/main/install/figureloom-bio-linux.sh | sudo bash
+```
+
+The installer adds or updates:
+
+- the `flbio` terminal command;
+- the local visual IDE;
+- **Install or Update FigureLoom Bio** on the desktop;
+- **FigureLoom Bio IDE** on the desktop;
+- an already-unzipped **FigureLoom Bio Test Files** folder;
+- **Run FigureLoom Bio Quick Test** on the desktop.
+
+It checks Python, Git, graphical setup support, and a supported local browser. Missing required packages are requested only when needed. It does not reinstall the large optional bioinformatics tool collection already present in FigureLoom Linux.
+
+For Kasm images, the installer writes the launchers and test folder into `/home/kasm-default-profile/Desktop` and `/etc/skel/Desktop`, as well as existing user desktops under `/home`. No user workspace needs to be running while the image is prepared.
+
+### Use the setup window
+
+After the first installation, double-click **Install or Update FigureLoom Bio**.
+
+The window shows what is ready and what is missing. Press **Install** or **Update / Repair**. When setup finishes, use the same window to:
+
+- open the IDE;
+- open the test files;
+- run the quick test.
+
+The quick test runs real CSV, FASTA, and FASTQ programs. Its final line should say:
+
+```text
+EVERY QUICK TEST PASSED.
+```
+
+Running the one-command installer again also updates or repairs the same installation.
+
+## Manual command-line installation
+
+There is not a PyPI release yet. Manual installs use the current GitHub version.
 
 ### Windows PowerShell
 
-Install Python and Git first, then open PowerShell.
+Install Python and Git first, then run:
 
 ```powershell
 py -m pip install --user pipx
 py -m pipx ensurepath
 ```
 
-Close and reopen PowerShell, then install the pinned tested snapshot:
-
-```powershell
-pipx install "git+https://github.com/victork4314-sys/Figureloom.git@3508ad3ef9073a1c5bbd9fa03765260369784d61#subdirectory=figureloom-bio"
-flbio doctor
-```
-
-Install the current GitHub version instead:
+Close and reopen PowerShell, then install FigureLoom Bio:
 
 ```powershell
 pipx install "git+https://github.com/victork4314-sys/Figureloom.git#subdirectory=figureloom-bio"
 flbio doctor
 ```
 
-Open the browser IDE from PowerShell:
+Open the hosted IDE:
 
 ```powershell
 Start-Process "https://figureloom.org/ide/"
@@ -132,52 +164,29 @@ brew install python git pipx
 pipx ensurepath
 ```
 
-Close and reopen Terminal, then install the pinned tested snapshot:
-
-```bash
-pipx install "git+https://github.com/victork4314-sys/Figureloom.git@3508ad3ef9073a1c5bbd9fa03765260369784d61#subdirectory=figureloom-bio"
-flbio doctor
-```
-
-Install the current GitHub version instead:
+Close and reopen Terminal, then run:
 
 ```bash
 pipx install "git+https://github.com/victork4314-sys/Figureloom.git#subdirectory=figureloom-bio"
 flbio doctor
 ```
 
-Open the browser IDE:
+Open the hosted IDE:
 
 ```bash
 open https://figureloom.org/ide/
 ```
 
-### Ubuntu or Debian Linux
+### Linux command-line only
+
+The graphical installer is recommended. For a command-line-only `pipx` installation:
 
 ```bash
 sudo apt update
 sudo apt install -y python3 python3-venv git pipx
 pipx ensurepath
-```
-
-Close and reopen the terminal, then install the pinned tested snapshot:
-
-```bash
-pipx install "git+https://github.com/victork4314-sys/Figureloom.git@3508ad3ef9073a1c5bbd9fa03765260369784d61#subdirectory=figureloom-bio"
-flbio doctor
-```
-
-Install the current GitHub version instead:
-
-```bash
 pipx install "git+https://github.com/victork4314-sys/Figureloom.git#subdirectory=figureloom-bio"
 flbio doctor
-```
-
-Open the browser IDE:
-
-```bash
-xdg-open https://figureloom.org/ide/
 ```
 
 ### Install from a local clone
@@ -189,7 +198,7 @@ pipx install ./figureloom-bio
 flbio doctor
 ```
 
-For an editable development environment instead:
+For an editable development environment:
 
 ```bash
 cd Figureloom/figureloom-bio
@@ -232,30 +241,24 @@ flbio run program.flbio --allow-tools
 
 Native commands do not need `--allow-tools`. This includes the built-in table, sequence, FASTQ, alignment, variant, gene, primer, tree, statistics, and SVG-figure operations.
 
-## Update and uninstall
+## Update, repair, and uninstall
 
-A current-branch pipx installation remembers its Git source. Reinstall it to fetch and rebuild the current repository version:
+On Linux or Kasm, double-click **Install or Update FigureLoom Bio** and press **Update / Repair**. Pasting the one-command installer again performs the same update.
+
+A manual `pipx` installation can be updated with:
 
 ```bash
 pipx reinstall figureloom-bio
 flbio doctor
 ```
 
-A pinned installation remains pinned. To move it to the current GitHub version:
-
-```bash
-pipx uninstall figureloom-bio
-pipx install "git+https://github.com/victork4314-sys/Figureloom.git#subdirectory=figureloom-bio"
-flbio doctor
-```
-
-Uninstall FigureLoom Bio:
+Uninstall a manual `pipx` installation with:
 
 ```bash
 pipx uninstall figureloom-bio
 ```
 
-The uninstall removes the isolated command-line environment. It does not delete `.flbio` programs or result files.
+Uninstalling the command-line engine does not delete `.flbio` programs or result files.
 
 ## Optional bioinformatics tools
 
@@ -270,7 +273,7 @@ Most of the language runs natively. The microbiology sentences that invoke estab
 - `kraken2`
 - `mob_recon` from MOB-suite
 
-A conda-compatible package manager is the simplest shared installation path on Linux and macOS:
+The graphical setup reports which optional tools are present but does not reinstall them unnecessarily. A conda-compatible package manager is the simplest shared installation path when they are genuinely missing:
 
 ```bash
 conda create -n figureloom-bio-tools -c conda-forge -c bioconda \
@@ -279,7 +282,7 @@ conda activate figureloom-bio-tools
 flbio doctor
 ```
 
-The same package names work with `mamba` or `micromamba` by replacing `conda` in the command. Native Windows users should use WSL or the FigureLoom Linux VM for tools that do not provide a normal Windows build.
+The same package names work with `mamba` or `micromamba`. Native Windows users should use WSL or the FigureLoom Linux VM for tools without a normal Windows build.
 
 ## Files, tables, FASTA, and FASTQ
 
@@ -481,7 +484,7 @@ python -m pip install -e .
 python -m unittest discover -s tests -v
 ```
 
-The release workflow also runs browser tests for the exact Run-button route, current-file commands, block punctuation, translation targets, runtime loading races, the canonical Sentences and Blocks catalog, native statistics and SVG figures, and the completed alignment/variant/gene/protein/PCR/tree language.
+The release workflow also runs browser tests for the exact Run-button route, current-file commands, block punctuation, translation targets, runtime loading races, the canonical Sentences and Blocks catalog, native statistics and SVG figures, the completed alignment/variant/gene/protein/PCR/tree language, Linux/Kasm installation, graphical setup, the bundled quick tests, and local IDE startup.
 
 ## License
 
