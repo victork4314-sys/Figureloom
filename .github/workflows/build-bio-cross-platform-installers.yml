@@ -51,6 +51,10 @@ jobs:
 
           $native = Start-Process -FilePath "$app\FigureLoom Bio IDE.exe" -ArgumentList '--self-test' -Wait -PassThru
           if ($native.ExitCode -ne 0) { throw "Native Windows IDE self-test failed with exit code $($native.ExitCode)" }
+          $testLauncher = Start-Process -FilePath "$app\Test FigureLoom Bio.exe" -ArgumentList '--self-test' -Wait -PassThru
+          if ($testLauncher.ExitCode -ne 0) { throw "Windows test launcher self-test failed with exit code $($testLauncher.ExitCode)" }
+          $managerLauncher = Start-Process -FilePath "$app\Install or Update FigureLoom Bio.exe" -ArgumentList '--self-test' -Wait -PassThru
+          if ($managerLauncher.ExitCode -ne 0) { throw "Windows updater self-test failed with exit code $($managerLauncher.ExitCode)" }
           & "$app\flbio.exe" doctor
           & "$app\flbio.exe" quick-test "$env:RUNNER_TEMP\figureloom-bio-windows-test"
           if ($LASTEXITCODE -ne 0) { throw 'Windows language quick test failed' }
@@ -99,6 +103,8 @@ jobs:
             exit 1
           fi
           QT_QPA_PLATFORM=offscreen '/Applications/FigureLoom Bio IDE.app/Contents/MacOS/FigureLoom Bio IDE' --self-test
+          QT_QPA_PLATFORM=offscreen '/Applications/Test FigureLoom Bio.app/Contents/MacOS/Test FigureLoom Bio' --self-test
+          QT_QPA_PLATFORM=offscreen '/Applications/Install or Update FigureLoom Bio.app/Contents/MacOS/Install or Update FigureLoom Bio' --self-test
           /usr/local/bin/flbio doctor
           /usr/local/bin/flbio quick-test "$RUNNER_TEMP/figureloom-bio-macos-arm-test"
           test -f "$HOME/Desktop/FigureLoom Bio Test Files/quick-test.flbio"
@@ -156,6 +162,8 @@ jobs:
             exit 1
           fi
           QT_QPA_PLATFORM=offscreen '/Applications/FigureLoom Bio IDE.app/Contents/MacOS/FigureLoom Bio IDE' --self-test
+          QT_QPA_PLATFORM=offscreen '/Applications/Test FigureLoom Bio.app/Contents/MacOS/Test FigureLoom Bio' --self-test
+          QT_QPA_PLATFORM=offscreen '/Applications/Install or Update FigureLoom Bio.app/Contents/MacOS/Install or Update FigureLoom Bio' --self-test
           /usr/local/bin/flbio doctor
           /usr/local/bin/flbio quick-test "$RUNNER_TEMP/figureloom-bio-macos-intel-test"
           test -f "$HOME/Desktop/FigureLoom Bio Test Files/quick-test.flbio"
