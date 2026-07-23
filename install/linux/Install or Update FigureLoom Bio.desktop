@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=Install or Update FigureLoom Bio
+Comment=Install, repair, or update FigureLoom Bio in a simple window
+Exec=/usr/local/bin/figureloom-bio-setup
+Icon=/opt/figureloom-bio/source/favicon.ico
+Terminal=false
+Categories=Development;Science;Education;System;
+StartupNotify=true
