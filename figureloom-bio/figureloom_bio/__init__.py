@@ -9,6 +9,8 @@ from .unique_name_fix import install_unique_name_fix
 from .workflow_expansion import install_workflow_expansion
 from .addon_packages import install_addon_packages
 from .addon_translation import install_addon_translation
+from .current_file_language import install_current_file_language
+from .current_file_translation import install_current_file_translation
 
 install_runtime_extensions(Runner)
 install_repeat_reset(Runner)
@@ -17,8 +19,10 @@ install_genomics_core(Runner)
 install_unique_name_fix(Runner)
 install_workflow_expansion(Runner)
 install_addon_packages(Runner)
+install_current_file_language(Runner)
 install_addon_translation()
+install_current_file_translation()
 
-__version__ = "0.6.0"
+__version__ = "0.7.0"
 
 __all__ = ["Runner", "__version__"]
