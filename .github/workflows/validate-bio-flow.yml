@@ -46,6 +46,12 @@ jobs:
       - name: Retry Run into the complete runtime
         run: node scripts/validate-bio-runtime-race.mjs retried
 
+      - name: Leave the loading status
+        run: node scripts/validate-bio-runtime-race.mjs left-waiting
+
+      - name: Complete handoff without runtime error
+        run: node scripts/validate-bio-runtime-race.mjs no-error
+
       - name: Finish after delayed runtime loading
         run: node scripts/validate-bio-runtime-race.mjs finished
 
