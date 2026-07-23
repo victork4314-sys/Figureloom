@@ -33,23 +33,39 @@ for (const [name, content] of Object.entries({ mainReadme: files.mainReadme, pac
   requireText(name, content, 'FigureLoom Bio Test Files');
 }
 
-const installerDownload = 'https://github.com/victork4314-sys/Figureloom/releases/download/figureloom-bio-installer/FigureLoom-Bio-Installer.deb';
+const installerDownloads = {
+  linux: 'https://github.com/victork4314-sys/Figureloom/releases/download/figureloom-bio-installer/FigureLoom-Bio-Installer.deb',
+  windows: 'https://github.com/victork4314-sys/Figureloom/releases/download/figureloom-bio-windows-installer/FigureLoom-Bio-Installer.exe',
+  macAppleSilicon: 'https://github.com/victork4314-sys/Figureloom/releases/download/figureloom-bio-macos-installer/FigureLoom-Bio-Installer-macOS-Apple-Silicon.pkg',
+  macIntel: 'https://github.com/victork4314-sys/Figureloom/releases/download/figureloom-bio-macos-installer/FigureLoom-Bio-Installer-macOS-Intel.pkg',
+};
+
+for (const [name, content] of Object.entries({
+  mainReadme: files.mainReadme,
+  easyInstall: files.easyInstall,
+  linuxReadme: files.linuxReadme,
+  sidebar: files.sidebar,
+  wikiIndex: files.wikiIndex,
+})) {
+  for (const download of Object.values(installerDownloads)) requireText(name, content, download);
+}
+
 for (const [name, content] of Object.entries({ mainReadme: files.mainReadme, easyInstall: files.easyInstall, linuxReadme: files.linuxReadme })) {
-  requireText(name, content, installerDownload);
-  requireText(name, content, 'Download FigureLoom Bio');
-  requireText(name, content, 'FigureLoom-Bio-Installer.deb');
+  for (const label of [
+    'Download FigureLoom Bio for Linux',
+    'Download FigureLoom Bio for Windows',
+    'Download FigureLoom Bio for Mac, Apple Silicon',
+    'Download FigureLoom Bio for Mac, Intel',
+  ]) requireText(name, content, label);
   requireText(name, content, 'Install or Update FigureLoom Bio');
   requireText(name, content, 'FigureLoom Bio Test Files');
 }
 
 for (const value of ['Test FigureLoom Bio', 'EVERY QUICK TEST PASSED.', 'running workspace', 'Nothing is preinstalled into or baked into the Kasm image']) requireText('easyInstall', files.easyInstall, value);
 requireText('sidebar', files.sidebar, '[Install FigureLoom Bio](FigureLoom-Bio-Easy-Install)');
-requireText('sidebar', files.sidebar, installerDownload);
-requireText('sidebar', files.sidebar, '[Download FigureLoom Bio]');
 requireText('wikiRuntime', files.wikiRuntime, "['Scientific work','FigureLoom-Bio-Easy-Install','Install FigureLoom Bio']");
-requireText('wikiIndex', files.wikiIndex, 'a[href*="FigureLoom-Bio-Installer.deb"]');
-requireText('wikiIndex', files.wikiIndex, installerDownload);
-requireText('wikiIndex', files.wikiIndex, 'download>Download Bio</a>');
+requireText('wikiIndex', files.wikiIndex, 'a[href*="FigureLoom-Bio-Installer"]');
+for (const label of ['Bio Linux', 'Bio Windows', 'Bio Mac Apple', 'Bio Mac Intel']) requireText('wikiIndex', files.wikiIndex, `download>${label}</a>`);
 
 const detailed = [
   'pipx install "git+https://github.com/victork4314-sys/Figureloom.git#subdirectory=figureloom-bio"',
@@ -80,4 +96,4 @@ if (!files.wikiSync.includes('cp wiki/*.md .wiki-repository/')) errors.push('The
 if (!files.wikiSync.includes('${{ github.repository }}.wiki.git')) errors.push('The GitHub wiki sync does not target the repository wiki.');
 
 if (errors.length) throw new Error(`FigureLoom Bio documentation validation found ${errors.length} problem(s):\n- ${errors.join('\n- ')}`);
-console.log('FigureLoom Bio documentation matches the downloadable Linux and Kasm installer.');
+console.log('FigureLoom Bio documentation shows the Linux, Windows, Apple Silicon Mac, and Intel Mac installers together.');
