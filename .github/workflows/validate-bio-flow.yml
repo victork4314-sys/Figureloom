@@ -56,7 +56,17 @@ jobs:
         run: node scripts/validate-bio-language-manifest.mjs
 
       - name: Validate every accepted browser wording and execution family
-        run: node scripts/validate-bio-language-aliases.mjs
+        run: |
+          set -o pipefail
+          node scripts/validate-bio-language-aliases.mjs 2>&1 | tee language-alias-browser.log
+
+      - name: Upload exhaustive browser vocabulary output
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: language-alias-browser-log
+          path: language-alias-browser.log
+          if-no-files-found: error
 
       - name: Validate completed documentation and wiki sync
         run: node scripts/validate-bio-documentation.mjs
