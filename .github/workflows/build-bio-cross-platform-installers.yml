@@ -4,7 +4,6 @@ on:
   pull_request:
     paths:
       - 'figureloom-bio/**'
-      - 'ide/**'
       - '.github/workflows/build-bio-cross-platform-installers.yml'
       - 'wiki/FigureLoom-Bio-Easy-Install.md'
       - 'wiki/_Sidebar.md'
@@ -12,7 +11,6 @@ on:
     branches: [main]
     paths:
       - 'figureloom-bio/**'
-      - 'ide/**'
       - '.github/workflows/build-bio-cross-platform-installers.yml'
       - 'wiki/FigureLoom-Bio-Easy-Install.md'
       - 'wiki/_Sidebar.md'
@@ -44,12 +42,18 @@ jobs:
           Start-Process -FilePath $installer -ArgumentList '/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART' -Wait
           $app = Join-Path $env:LOCALAPPDATA 'Programs\FigureLoom Bio'
           if (-not (Test-Path "$app\flbio.exe")) { throw 'flbio.exe was not installed' }
-          if (-not (Test-Path "$app\FigureLoom Bio IDE.exe")) { throw 'IDE launcher was not installed' }
+          if (-not (Test-Path "$app\FigureLoom Bio IDE.exe")) { throw 'native IDE was not installed' }
           if (-not (Test-Path "$app\Test FigureLoom Bio.exe")) { throw 'test launcher was not installed' }
           if (-not (Test-Path "$app\Install or Update FigureLoom Bio.exe")) { throw 'manager launcher was not installed' }
+
+          $forbidden = Get-ChildItem -Path $app -Recurse -File | Where-Object { $_.Extension -in '.html', '.htm', '.js', '.mjs' }
+          if ($forbidden) { throw "Installed Windows app contains forbidden web files: $($forbidden.FullName -join ', ')" }
+
+          $native = Start-Process -FilePath "$app\FigureLoom Bio IDE.exe" -ArgumentList '--self-test' -Wait -PassThru
+          if ($native.ExitCode -ne 0) { throw "Native Windows IDE self-test failed with exit code $($native.ExitCode)" }
           & "$app\flbio.exe" doctor
           & "$app\flbio.exe" quick-test "$env:RUNNER_TEMP\figureloom-bio-windows-test"
-          if ($LASTEXITCODE -ne 0) { throw 'Windows quick test failed' }
+          if ($LASTEXITCODE -ne 0) { throw 'Windows language quick test failed' }
           if (-not (Test-Path "$env:USERPROFILE\Desktop\FigureLoom Bio Test Files\quick-test.flbio")) { throw 'Desktop test files were not installed' }
 
       - name: Upload Windows installer
@@ -90,6 +94,11 @@ jobs:
           test -d '/Applications/FigureLoom Bio IDE.app'
           test -d '/Applications/Test FigureLoom Bio.app'
           test -d '/Applications/Install or Update FigureLoom Bio.app'
+          if find '/Applications/FigureLoom Bio IDE.app' -type f \( -iname '*.html' -o -iname '*.htm' -o -iname '*.js' -o -iname '*.mjs' \) -print -quit | grep -q .; then
+            echo 'Installed Apple Silicon IDE contains forbidden web files.' >&2
+            exit 1
+          fi
+          QT_QPA_PLATFORM=offscreen '/Applications/FigureLoom Bio IDE.app/Contents/MacOS/FigureLoom Bio IDE' --self-test
           /usr/local/bin/flbio doctor
           /usr/local/bin/flbio quick-test "$RUNNER_TEMP/figureloom-bio-macos-arm-test"
           test -f "$HOME/Desktop/FigureLoom Bio Test Files/quick-test.flbio"
@@ -142,6 +151,11 @@ jobs:
           test -d '/Applications/FigureLoom Bio IDE.app'
           test -d '/Applications/Test FigureLoom Bio.app'
           test -d '/Applications/Install or Update FigureLoom Bio.app'
+          if find '/Applications/FigureLoom Bio IDE.app' -type f \( -iname '*.html' -o -iname '*.htm' -o -iname '*.js' -o -iname '*.mjs' \) -print -quit | grep -q .; then
+            echo 'Installed Intel IDE contains forbidden web files.' >&2
+            exit 1
+          fi
+          QT_QPA_PLATFORM=offscreen '/Applications/FigureLoom Bio IDE.app/Contents/MacOS/FigureLoom Bio IDE' --self-test
           /usr/local/bin/flbio doctor
           /usr/local/bin/flbio quick-test "$RUNNER_TEMP/figureloom-bio-macos-intel-test"
           test -f "$HOME/Desktop/FigureLoom Bio Test Files/quick-test.flbio"
@@ -219,12 +233,12 @@ jobs:
           publish_release \
             figureloom-bio-windows-installer \
             'FigureLoom Bio Windows Installer' \
-            'Download the EXE, open it, and follow the normal Windows installer. It contains the language, IDE, updater, shortcuts, and automatic test.' \
+            'Download the EXE and follow the normal installer. It contains the native desktop IDE, complete language vocabulary, updater, shortcuts, and automatic tests. It contains no bundled HTML or browser interface.' \
             release/windows/FigureLoom-Bio-Installer.exe
 
           publish_release \
             figureloom-bio-macos-installer \
             'FigureLoom Bio macOS Installers' \
-            'Choose Apple Silicon for M-series Macs or Intel for Intel Macs. Each package contains the language, IDE, updater, app shortcuts, and automatic test.' \
+            'Choose Apple Silicon for M-series Macs or Intel for Intel Macs. Each package contains the native desktop IDE, complete language vocabulary, updater, app shortcuts, and automatic tests. It contains no bundled HTML or browser interface.' \
             release/macos/FigureLoom-Bio-Installer-macOS-Apple-Silicon.pkg \
             release/macos/FigureLoom-Bio-Installer-macOS-Intel.pkg

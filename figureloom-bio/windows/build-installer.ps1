@@ -22,7 +22,7 @@ New-Item -ItemType Directory -Force -Path $AppBuild, $WorkRoot, $SpecRoot, $Outp
 
 & $Python -m pip install --disable-pip-version-check --upgrade pip
 $PackageRoot = Join-Path $RepoRoot "figureloom-bio"
-& $Python -m pip install --disable-pip-version-check pyinstaller pillow $PackageRoot
+& $Python -m pip install --disable-pip-version-check pyinstaller pillow PySide6 $PackageRoot
 & $Python (Join-Path $RepoRoot "figureloom-bio\scripts\build-platform-icons.py") $IconPng $IconIco
 
 $Version = & $Python -c "import tomllib; print(tomllib.load(open(r'$RepoRoot\figureloom-bio\pyproject.toml','rb'))['project']['version'])"
@@ -31,8 +31,7 @@ function Build-FigureLoomExecutable {
     param(
         [string]$Name,
         [string]$Entry,
-        [switch]$Console,
-        [switch]$IncludeIde
+        [switch]$Console
     )
     $SafeName = $Name -replace '[^A-Za-z0-9]+', '-'
     $Arguments = @(
@@ -50,17 +49,24 @@ function Build-FigureLoomExecutable {
         "--workpath", (Join-Path $WorkRoot $SafeName),
         "--specpath", $SpecRoot
     )
-    if ($IncludeIde) {
-        $Arguments += @("--add-data", "$(Join-Path $RepoRoot 'ide');ide")
-    }
     $Arguments += (Join-Path $RepoRoot $Entry)
     & $Python @Arguments
+    if ($LASTEXITCODE -ne 0) {
+        throw "PyInstaller failed while building $Name."
+    }
 }
 
 Build-FigureLoomExecutable -Name "flbio" -Entry "figureloom-bio\platform\flbio_entry.py" -Console
-Build-FigureLoomExecutable -Name "FigureLoom Bio IDE" -Entry "figureloom-bio\platform\ide_entry.py" -IncludeIde
+Build-FigureLoomExecutable -Name "FigureLoom Bio IDE" -Entry "figureloom-bio\platform\ide_entry.py"
 Build-FigureLoomExecutable -Name "Test FigureLoom Bio" -Entry "figureloom-bio\platform\test_entry.py"
 Build-FigureLoomExecutable -Name "Install or Update FigureLoom Bio" -Entry "figureloom-bio\platform\manager_entry.py"
+
+$ForbiddenWebFiles = Get-ChildItem -Path $AppBuild -Recurse -File -ErrorAction SilentlyContinue | Where-Object {
+    $_.Extension -in '.html', '.htm', '.js', '.mjs'
+}
+if ($ForbiddenWebFiles) {
+    throw "The Windows desktop build contains forbidden web-interface files: $($ForbiddenWebFiles.FullName -join ', ')"
+}
 
 $Iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
 if (-not (Test-Path $Iscc)) {
@@ -76,6 +82,9 @@ if (-not (Test-Path $Iscc)) {
     "/DOutputDir=$OutputDir" `
     "/DIconFile=$IconIco" `
     (Join-Path $PSScriptRoot "FigureLoomBio.iss")
+if ($LASTEXITCODE -ne 0) {
+    throw "Inno Setup failed."
+}
 
 $Installer = Join-Path $OutputDir "FigureLoom-Bio-Installer.exe"
 if (-not (Test-Path $Installer)) {
