@@ -505,10 +505,18 @@ class LineNumberArea(QWidget):
 
 
 class NativeSyntaxHighlighter(QSyntaxHighlighter):
+    FILE_SUFFIXES = (
+        r"flbio|txt|csv|tsv|fa|fasta|fna|ffn|faa|frn|fq|fastq|svg|nwk|newick|"
+        r"vcf|bcf|gff|gff3|gtf|bed|bam|sam|gb|gbk|genbank|pdb|cif|mmcif|"
+        r"xls|xlsx|ods|parquet|h5ad"
+    )
     FILE_PATTERN = re.compile(
-        r"(?<![\w])[\w .()@+\-]+?\.(?:flbio|txt|csv|tsv|fa|fasta|fna|ffn|faa|frn|fq|fastq|"
-        r"svg|nwk|newick|vcf|bcf|gff|gff3|gtf|bed|bam|sam|gb|gbk|genbank|pdb|cif|mmcif|"
-        r"xls|xlsx|ods|parquet|h5ad)(?![\w])",
+        rf"(?<![\w])(?:[\w@()+\-]+(?:[.\-][\w@()+\-]+)*)\.(?:{FILE_SUFFIXES})(?![\w])",
+        re.IGNORECASE,
+    )
+    CONTEXT_FILE_PATTERN = re.compile(
+        rf"\b(?:file|as|to|from|reference|alignment|variants|annotation|table)\s+"
+        rf"(.+?\.(?:{FILE_SUFFIXES}))(?=$|[.,:])",
         re.IGNORECASE,
     )
     NUMBER_PATTERN = re.compile(r"(?<![\w.-])\d+(?:\.\d+)?(?:%|\b)")
@@ -588,8 +596,6 @@ class NativeSyntaxHighlighter(QSyntaxHighlighter):
 
         for match in cls.CONNECTOR_PATTERN.finditer(stripped[:body_length]):
             roles.append((leading + match.start(), match.end() - match.start(), "word"))
-        for match in cls.FILE_PATTERN.finditer(stripped[:body_length]):
-            roles.append((leading + match.start(), match.end() - match.start(), "file"))
         for match in cls.NUMBER_PATTERN.finditer(stripped[:body_length]):
             roles.append((leading + match.start(), match.end() - match.start(), "value"))
         for pattern in cls.VALUE_PATTERNS:
@@ -611,6 +617,11 @@ class NativeSyntaxHighlighter(QSyntaxHighlighter):
                     end -= 1
                 if end > start:
                     roles.append((leading + start, end - start, "field"))
+        for match in cls.FILE_PATTERN.finditer(stripped[:body_length]):
+            roles.append((leading + match.start(), match.end() - match.start(), "file"))
+        for match in cls.CONTEXT_FILE_PATTERN.finditer(stripped[:body_length]):
+            start, end = match.span(1)
+            roles.append((leading + start, end - start, "file"))
         if punctuation:
             roles.append((leading + len(stripped) - 1, 1, "punctuation"))
         return roles
