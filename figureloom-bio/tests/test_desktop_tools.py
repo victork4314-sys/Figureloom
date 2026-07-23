@@ -79,7 +79,8 @@ class DesktopToolsTests(unittest.TestCase):
         self.assertNotIn("install-kasm-image.sh", documentation)
         self.assertIn("not preinstalled into the Kasm image", documentation)
 
-        self.assertIn("Package: figureloom-bio-desktop", package_builder)
+        self.assertIn('PACKAGE_NAME="figureloom-bio-desktop"', package_builder)
+        self.assertIn("Package: $PACKAGE_NAME", package_builder)
         self.assertIn("FigureLoom-Bio-Installer.deb", package_builder)
         self.assertIn("FIGURELOOM_PACKAGE_INSTALL=1", package_builder)
         self.assertIn(DOWNLOAD_URL, documentation)
