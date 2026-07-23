@@ -37,7 +37,35 @@ The Windows installer does not require a separate Python installation. It instal
 2. Open the downloaded `.pkg` file.
 3. Follow the normal macOS installer.
 
-The current public Mac packages are not Apple-notarized yet. If macOS blocks the first opening, Control-click the package, choose **Open**, and approve it once.
+The current public Mac packages are not signed or notarized by Apple. macOS may therefore block the installer the first time even when it was downloaded from the official FigureLoom release.
+
+#### When macOS blocks the installer
+
+Try opening the package normally once first. Then use either method below.
+
+**Method 1: Open Anyway**
+
+1. Open the downloaded FigureLoom Bio `.pkg` file once and close the warning.
+2. Open **System Settings**.
+3. Choose **Privacy & Security**.
+4. Scroll down to the **Security** section.
+5. Find the message saying that FigureLoom Bio was blocked.
+6. Press **Open Anyway**.
+7. Confirm with the Mac password or Touch ID.
+8. Open the `.pkg` again and continue through the normal installer.
+
+The **Open Anyway** button appears only after macOS has blocked an opening attempt and may disappear after about an hour. Open the package once more to make the button appear again.
+
+**Method 2: Control-click**
+
+1. Open the **Downloads** folder in Finder.
+2. Control-click, or right-click, the FigureLoom Bio `.pkg` file.
+3. Choose **Open**.
+4. Confirm that you want to open it.
+
+Do not disable Gatekeeper, lower the Mac security settings, or paste Terminal commands to bypass macOS security. The temporary **Open Anyway** approval is enough.
+
+After installation, open **FigureLoom Bio IDE** from the Applications folder or its Desktop shortcut. A newly downloaded update may require the same one-time approval again.
 
 The downloaded installers contain the FigureLoom Bio engine, native desktop IDE, installer window, and test files. They do not download a second installer while the first installation is running.
 
