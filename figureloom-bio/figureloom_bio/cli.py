@@ -10,7 +10,7 @@ import sys
 from .capabilities import expand_capabilities
 from .control_flow import run_flow_program, uses_control_flow
 from .errors import FigureLoomBioError
-from .language_catalog import commands_for_theme, load_language_catalog
+from .language_manifest import language_manifest
 from .parser import parse
 from .runtime import Runner
 from .streaming_fasta import run_streaming_if_needed
@@ -96,28 +96,35 @@ def translate_program(path: Path, target: str, output: Path | None) -> int:
 
 
 def show_sentences(theme_name: str | None = None) -> int:
-    catalog = load_language_catalog()
+    manifest = language_manifest()
     if theme_name:
-        commands = commands_for_theme(theme_name)
-        if not commands:
-            available = "\n".join(f"- {theme}" for theme in catalog.themes)
+        wanted = theme_name.strip().casefold()
+        theme = next(
+            (
+                item
+                for item in manifest.themes
+                if item.id.casefold() == wanted or item.title.casefold() == wanted
+            ),
+            None,
+        )
+        if theme is None:
+            available = "\n".join(f"- {item.title}" for item in manifest.themes)
             print(
                 f"I could not find the {theme_name} theme.\n\nAvailable themes:\n{available}",
                 file=sys.stderr,
             )
             return 1
-        print(commands[0].theme)
+        print(theme.title)
         print()
-        for command in commands:
+        for command in manifest.commands_for_theme(theme.id):
             print(command.example)
-            print()
         return 0
 
     print("FigureLoom Bio built-in sentence themes\n")
-    for theme in catalog.themes:
-        count = len(commands_for_theme(theme))
-        print(f"{theme} ({count})")
-    print(f"\n{len(catalog.commands)} canonical built-in entries are listed in the shared language catalog.")
+    for theme in manifest.themes:
+        count = len(manifest.commands_for_theme(theme.id))
+        print(f"{theme.title} ({count})")
+    print(f"\n{len(manifest.commands)} canonical built-in entries are listed in the shared language manifest.")
     print("Everything listed is part of one language. Nothing needs to be installed or enabled inside a program.")
     return 0
 
@@ -128,12 +135,12 @@ def doctor() -> int:
     except PackageNotFoundError:
         installed_version = "source checkout"
 
-    catalog = load_language_catalog()
+    manifest = language_manifest()
     print("FigureLoom Bio is ready.")
     print(f"Version: {installed_version}")
     print(f"Python: {platform.python_version()}")
     print(f"Package: {Path(__file__).resolve().parent}")
-    print(f"Language catalog: {catalog.version} ({len(catalog.commands)} entries)")
+    print(f"Language manifest: {manifest.version} ({len(manifest.commands)} entries)")
     print("Translation targets: " + ", ".join(TARGET_LABELS[key] for key in TARGET_LABELS))
     print("\nOptional installed tools:")
     for tool in OPTIONAL_TOOLS:
@@ -178,7 +185,7 @@ def build_parser() -> argparse.ArgumentParser:
         help="Verify the installation and show optional bioinformatics tools.",
     )
 
-    # Older scripts may still call this name. It now shows the same built-in catalog.
+    # Older scripts may still call this name. It now shows the same built-in manifest.
     legacy = subcommands.add_parser("addons", help=argparse.SUPPRESS)
     legacy.add_argument("theme", nargs="?")
     return parser
