@@ -82,13 +82,13 @@
         }
         match = generated ? canonical.match(/^Save (?:the )?(?:current )?file as (.+)\.$/i) : null;
         if (match) {
-          output.push(`${indent}Store the generated file ${generated} as ${match[1]}.`);
+          output.push(`${indent}FigureLoom internal copy generated file ${generated} to ${match[1]}.`);
           generated = match[1];
           continue;
         }
         match = generated ? canonical.match(/^Copy (?:the )?(?:current )?file as (.+)\.$/i) : null;
         if (match) {
-          output.push(`${indent}Store the generated file ${generated} as ${match[1]}.`);
+          output.push(`${indent}FigureLoom internal copy generated file ${generated} to ${match[1]}.`);
           continue;
         }
         match = generated ? canonical.match(/^Rename (?:the )?(?:current )?file to (.+)\.$/i) : null;
@@ -183,7 +183,7 @@
         helpers.section('File size', { big:String(content).length, p:['bytes'] });
         return true;
       }
-      if ((match = text.match(/^Store the generated file (.+?) as (.+)$/i))) {
+      if ((match = text.match(/^FigureLoom internal copy generated file (.+?) to (.+)$/i))) {
         copyGenerated(context, helpers, line, match[1], match[2]);
         return true;
       }
@@ -194,7 +194,7 @@
       }
       return false;
     };
-    const recognizer = (source) => /(?:Use|Show|Check|Count|Store|Rename) the generated file |(?:Show|Display|Check|Count|Save|Copy|Rename) (?:the )?(?:current )?(?:file|result)/i.test(String(source));
+    const recognizer = (source) => /FigureLoom internal copy generated file |(?:Use|Show|Check|Count|Rename) the generated file |(?:Show|Display|Check|Count|Save|Copy|Rename) (?:the )?(?:current )?(?:file|result)/i.test(String(source));
     window.FigureLoomBioStatementHandlers = window.FigureLoomBioStatementHandlers || [];
     window.FigureLoomBioStatementRecognizers = window.FigureLoomBioStatementRecognizers || [];
     window.FigureLoomBioStatementHandlers.unshift(handler);
