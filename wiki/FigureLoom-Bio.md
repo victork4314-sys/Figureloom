@@ -220,6 +220,24 @@ pipx uninstall figureloom-bio
 
 Uninstalling the engine does not delete `.flbio` programs or result files.
 
+### Run a program
+
+Put a `.flbio` program and its input files in the same folder, then run:
+
+```bash
+flbio run program.flbio
+```
+
+Native table, sequence, FASTQ, alignment, variant, gene, primer, tree, statistics, and figure commands run without extra permission.
+
+A program that launches an installed bioinformatics tool needs explicit permission:
+
+```bash
+flbio run bacterial-analysis.flbio --allow-tools
+```
+
+Without `--allow-tools`, FigureLoom Bio stops and explains which sentence requested local tool access.
+
 ## Optional bioinformatics tools
 
 The built-in table, sequence, FASTQ, alignment, variant, gene, primer, tree, statistics, and SVG-figure operations do not need outside programs.
