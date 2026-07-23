@@ -178,12 +178,27 @@ if (phase === 'retried') {
   process.exit(0);
 }
 
+if (phase === 'left-waiting') {
+  if (elements.runStatus.textContent === 'Starting browser analysis') {
+    fail('The complete runtime claimed Run but never left the loading status.');
+  }
+  console.log(`FigureLoom Bio left the loading status: ${elements.runStatus.textContent}`);
+  process.exit(0);
+}
+
+const hasErrorResult = elements.results.children.some((child) => String(child.className).includes('error'));
+if (phase === 'no-error') {
+  if (elements.runStatus.textContent === 'Needs attention' || hasErrorResult) {
+    fail('The delayed runtime reached an error after claiming Run.');
+  }
+  console.log(`FigureLoom Bio completed the handoff without an error status: ${elements.runStatus.textContent}`);
+  process.exit(0);
+}
+
 if (elements.runStatus.textContent !== 'Finished') {
   fail(`The delayed runtime did not finish the program. Status: ${elements.runStatus.textContent}`);
 }
-if (elements.results.children.some((child) => String(child.className).includes('error'))) {
-  fail('The delayed runtime produced an error result.');
-}
+if (hasErrorResult) fail('The delayed runtime produced an error result.');
 if (phase === 'finished') {
   console.log('FigureLoom Bio finished after delayed runtime loading.');
   process.exit(0);
