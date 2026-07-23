@@ -43,11 +43,11 @@ Count the reads.
 Say The FigureLoom Bio quick test is complete.
 """
 
-MEASUREMENTS = """sample,group,score,count,effect,p_value
-sample-a,treated,10,100,2.4,0.001
-sample-b,treated,12,120,1.2,0.04
-sample-c,control,4,40,-1.8,0.006
-sample-d,control,6,60,-0.4,0.4
+MEASUREMENTS = """sample,group,score,count,gene,effect,p_value
+sample-a,treated,10,100,gene-a,2.4,0.001
+sample-b,treated,12,120,gene-b,1.2,0.04
+sample-c,control,4,40,gene-c,-1.8,0.006
+sample-d,control,6,60,gene-d,-0.4,0.4
 """
 
 SEQUENCES = """>sample-one
@@ -85,7 +85,7 @@ Manual IDE check:
 3. Select quick-test.flbio and the three data files in this folder.
 4. Press Run.
 5. The results should appear in separate readable sections.
-6. The test should create histogram, volcano plot, alignment, and tree files.
+6. The histogram and volcano plot should appear as visible figure previews.
 
 You can recreate this entire folder at any time with:
 
@@ -139,6 +139,13 @@ def _check_output(path: Path) -> None:
         raise FigureLoomBioError(f"The quick test found placeholder text in {path.name}.")
     if path.suffix.casefold() == ".svg" and not text.lstrip().startswith("<svg"):
         raise FigureLoomBioError(f"The quick test did not create a real SVG in {path.name}.")
+    if path.name == "quick-volcano.svg":
+        required = ('data-significance="higher"', 'data-significance="lower"', "stroke-dasharray", "gene-a")
+        missing = [value for value in required if value not in text]
+        if missing:
+            raise FigureLoomBioError(
+                "The volcano plot is missing significance groups, threshold lines, or labels: " + ", ".join(missing)
+            )
     if path.suffix.casefold() == ".nwk" and not text.strip().endswith(";"):
         raise FigureLoomBioError(f"The quick test did not create a valid-looking tree in {path.name}.")
 
@@ -146,14 +153,10 @@ def _check_output(path: Path) -> None:
 def _failure_report(error: BaseException) -> str:
     if isinstance(error, FigureLoomBioError):
         reason = error.plain_message()
-        next_step = (
-            "Read the named line or missing result above, correct that instruction or file, then run the test again."
-        )
+        next_step = "Read the named line or missing result above, correct that instruction or file, then run the test again."
     elif isinstance(error, OSError):
         reason = str(error).strip() or "The computer could not read or write a required test file."
-        next_step = (
-            "Close other copies of FigureLoom Bio, make sure the Desktop is writable, then run the test again."
-        )
+        next_step = "Close other copies of FigureLoom Bio, make sure the Desktop is writable, then run the test again."
     else:
         reason = "The real language test hit an unexpected internal error instead of finishing."
         next_step = (
@@ -187,6 +190,8 @@ def run_quick_test(destination: Path | None = None) -> tuple[bool, str, Path]:
             "Average of score",
             "Median of score",
             "Volcano plot",
+            "Significantly higher",
+            "Significantly lower",
             "Alignment",
             "Phylogenetic tree",
             "Average read quality",
@@ -195,9 +200,7 @@ def run_quick_test(destination: Path | None = None) -> tuple[bool, str, Path]:
         )
         missing = [section for section in required_sections if section not in output]
         if missing:
-            raise FigureLoomBioError(
-                "The quick test was missing these results: " + ", ".join(missing)
-            )
+            raise FigureLoomBioError("The quick test was missing these results: " + ", ".join(missing))
     except Exception as error:
         report = _failure_report(error)
         (folder / "TEST-RESULT.txt").write_text(report, encoding="utf-8")
@@ -208,7 +211,7 @@ def run_quick_test(destination: Path | None = None) -> tuple[bool, str, Path]:
         "FIGURELOOM BIO QUICK TEST PASSED\n\n"
         "The language opened CSV, FASTA, and FASTQ data.\n"
         "It calculated statistics and read quality.\n"
-        "It created real histogram and volcano plot SVG figures.\n"
+        "It created a real histogram and a real thresholded volcano plot with significance groups and labels.\n"
         "It created a real alignment and phylogenetic tree.\n"
         "No TODO or placeholder output was found.\n\n"
         f"Test folder: {folder}\n"
