@@ -30,6 +30,15 @@
     return manifest;
   }
 
+  function loadCanonicalCatalogUi() {
+    if (document.getElementById('figureloomBioLanguageCatalogUi')) return;
+    const script = document.createElement('script');
+    script.id = 'figureloomBioLanguageCatalogUi';
+    script.src = './ide-language-catalog-ui.js?v=1';
+    script.defer = true;
+    document.body.append(script);
+  }
+
   window.FigureLoomBioLanguageReady = fetch(source, { cache:'no-store' })
     .then((response) => {
       if (!response.ok) throw new Error(`Could not load the FigureLoom Bio language manifest (${response.status}).`);
@@ -50,4 +59,10 @@
       }
       throw error;
     });
+
+  if (document.readyState === 'complete') {
+    queueMicrotask(loadCanonicalCatalogUi);
+  } else {
+    window.addEventListener?.('load', loadCanonicalCatalogUi, { once:true });
+  }
 })();
