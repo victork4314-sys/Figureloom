@@ -14,11 +14,12 @@ class PlatformInstallerTests(unittest.TestCase):
         files = [
             self.root / "figureloom-bio" / "figureloom_bio" / "platform_desktop.py",
             self.root / "figureloom-bio" / "figureloom_bio" / "platform_qt_tools.py",
+            self.root / "figureloom-bio" / "figureloom_bio" / "platform_qt_final.py",
             *sorted((self.root / "figureloom-bio" / "figureloom_bio").glob("native_*.py")),
             *sorted((self.root / "figureloom-bio" / "platform").glob("*_entry.py")),
             self.root / "figureloom-bio" / "scripts" / "build-platform-icons.py",
         ]
-        self.assertGreaterEqual(len(files), 14)
+        self.assertGreaterEqual(len(files), 15)
         for path in files:
             with self.subTest(path=path.name):
                 py_compile.compile(path, doraise=True)
@@ -27,25 +28,23 @@ class PlatformInstallerTests(unittest.TestCase):
         entry = (self.root / "figureloom-bio" / "platform" / "ide_entry.py").read_text(encoding="utf-8")
         runtime = (self.root / "figureloom-bio" / "figureloom_bio" / "platform_desktop.py").read_text(encoding="utf-8")
         native = (self.root / "figureloom-bio" / "figureloom_bio" / "native_ide.py").read_text(encoding="utf-8")
+        stability = (self.root / "figureloom-bio" / "figureloom_bio" / "native_stability.py").read_text(encoding="utf-8")
         windows = (self.root / "figureloom-bio" / "windows" / "build-installer.ps1").read_text(encoding="utf-8")
         macos = (self.root / "figureloom-bio" / "macos" / "build-installer.sh").read_text(encoding="utf-8")
 
-        self.assertIn("run_native_ide", entry)
+        self.assertIn("run_stable_ide", entry)
+        self.assertIn("native_ide_module.run_native_ide(arguments)", stability)
         self.assertIn("install_native_account", entry)
+        self.assertIn("install_native_run_safety", entry)
         self.assertIn("PySide6", native)
         self.assertIn("native_self_test", native)
         self.assertIn("QT_QPA_PLATFORM", native)
         self.assertNotIn("platform_desktop", entry)
         for forbidden in (
-            "ThreadingHTTPServer",
-            "SimpleHTTPRequestHandler",
-            "webbrowser",
-            "serve_ide",
-            "launch_ide",
-            "127.0.0.1",
-            "index.html",
+            "ThreadingHTTPServer", "SimpleHTTPRequestHandler", "webbrowser",
+            "serve_ide", "launch_ide", "127.0.0.1", "index.html",
         ):
-            self.assertNotIn(forbidden, runtime + entry)
+            self.assertNotIn(forbidden, runtime + entry + stability)
         self.assertNotIn("Join-Path $RepoRoot 'ide'", windows)
         self.assertNotIn("$ROOT_DIR/ide:ide", macos)
         self.assertIn("forbidden web-interface files", windows)
@@ -86,21 +85,23 @@ class PlatformInstallerTests(unittest.TestCase):
 
     def test_test_and_updater_shortcuts_use_reliable_native_qt_windows(self) -> None:
         tools = (self.root / "figureloom-bio" / "figureloom_bio" / "platform_qt_tools.py").read_text(encoding="utf-8")
+        final = (self.root / "figureloom-bio" / "figureloom_bio" / "platform_qt_final.py").read_text(encoding="utf-8")
         test_entry = (self.root / "figureloom-bio" / "platform" / "test_entry.py").read_text(encoding="utf-8")
         manager_entry = (self.root / "figureloom-bio" / "platform" / "manager_entry.py").read_text(encoding="utf-8")
         self.assertIn("from PySide6", tools)
         self.assertIn("class TestWindow(QMainWindow)", tools)
         self.assertIn("class ManagerWindow(QMainWindow)", tools)
-        self.assertIn("def simple_error", tools)
-        self.assertIn('"What happened\\n{reason}', tools)
-        self.assertIn('"What to do\\n{next_step}', tools)
-        self.assertIn('if "--self-test" in sys.argv', tools)
-        self.assertIn("platform_qt_tools", test_entry)
-        self.assertIn("platform_qt_tools", manager_entry)
-        self.assertIn("raise SystemExit(show_test_window())", test_entry)
-        self.assertIn("raise SystemExit(show_manager_window())", manager_entry)
+        self.assertIn("install_platform_qt_final", test_entry)
+        self.assertIn("install_platform_qt_final", manager_entry)
+        self.assertIn("platform_qt_tools.show_test_window", test_entry)
+        self.assertIn("platform_qt_tools.show_manager_window", manager_entry)
+        self.assertIn("How to fix it", final)
+        self.assertIn("MIN_INSTALLER_BYTES", final)
+        self.assertIn("QEventLoop", final)
+        self.assertIn("_wait_for_test", final)
+        self.assertIn("QTimer.singleShot(150, window.close)", final)
         self.assertNotIn("platform_desktop", test_entry + manager_entry)
-        self.assertNotIn("tkinter", tools)
+        self.assertNotIn("tkinter", tools + final)
 
     def test_platform_icon_is_wired_into_windows_and_macos(self) -> None:
         icon = self.root / "figureloom-bio" / "linux" / "assets" / "figureloom-bio.png"
@@ -108,7 +109,6 @@ class PlatformInstallerTests(unittest.TestCase):
         windows_setup = (self.root / "figureloom-bio" / "windows" / "FigureLoomBio.iss").read_text(encoding="utf-8")
         macos_build = (self.root / "figureloom-bio" / "macos" / "build-installer.sh").read_text(encoding="utf-8")
         desktop_runtime = (self.root / "figureloom-bio" / "figureloom_bio" / "platform_qt_tools.py").read_text(encoding="utf-8")
-
         self.assertTrue(icon.is_file())
         self.assertIn("figureloom-bio.png", windows_build)
         self.assertIn("--icon", windows_build)
@@ -163,8 +163,7 @@ class PlatformInstallerTests(unittest.TestCase):
     def test_easy_install_page_links_all_platforms(self) -> None:
         page = (self.root / "wiki" / "FigureLoom-Bio-Easy-Install.md").read_text(encoding="utf-8")
         for name in (
-            "FigureLoom-Bio-Installer.deb",
-            "FigureLoom-Bio-Installer.exe",
+            "FigureLoom-Bio-Installer.deb", "FigureLoom-Bio-Installer.exe",
             "FigureLoom-Bio-Installer-macOS-Apple-Silicon.pkg",
             "FigureLoom-Bio-Installer-macOS-Intel.pkg",
         ):
