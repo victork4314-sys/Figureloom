@@ -51,7 +51,17 @@ jobs:
         run: node scripts/validate-bio-language-manifest.mjs
 
       - name: Validate completed documentation and wiki sync
-        run: node scripts/validate-bio-documentation.mjs
+        run: |
+          set -o pipefail
+          node scripts/validate-bio-documentation.mjs 2>&1 | tee bio-documentation-validation.log
+
+      - name: Upload documentation requirement report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: final-bio-documentation-report
+          path: bio-documentation-validation.log
+          if-no-files-found: error
 
       - name: Reject unfinished runtime and translation placeholders
         run: node scripts/validate-bio-no-placeholders.mjs
