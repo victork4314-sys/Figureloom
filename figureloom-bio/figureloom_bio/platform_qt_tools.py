@@ -10,8 +10,8 @@ import traceback
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
-from PySide6.QtCore import QObject, QThread, QTimer, Qt, QUrl, Signal, Slot
-from PySide6.QtGui import QDesktopServices, QIcon
+from PySide6.QtCore import QObject, QThread, QTimer, Qt, Signal, Slot
+from PySide6.QtGui import QCloseEvent, QIcon, QTextCursor
 from PySide6.QtWidgets import (
     QApplication,
     QFrame,
@@ -26,7 +26,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from .desktop_tools import create_test_files, run_quick_test
+from .desktop_tools import run_quick_test
 
 
 APP_NAME = "FigureLoom Bio"
@@ -156,8 +156,17 @@ def stylesheet() -> str:
 def open_path(path: Path) -> None:
     if not path.exists():
         raise FileNotFoundError(f"I could not find {path}.")
-    if not QDesktopServices.openUrl(QUrl.fromLocalFile(str(path.resolve()))):
-        raise OSError(f"Your computer did not open {path.name}.")
+    resolved = str(path.resolve())
+    if sys.platform == "win32":
+        os.startfile(resolved)  # type: ignore[attr-defined]
+        return
+    opener = "open" if sys.platform == "darwin" else "xdg-open"
+    subprocess.Popen(
+        [opener, resolved],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        close_fds=True,
+    )
 
 
 def platform_installer() -> tuple[str, str, bytes]:
@@ -203,19 +212,28 @@ def simple_error(action: str, error: BaseException) -> str:
     detail = str(error).strip() or error.__class__.__name__
     if isinstance(error, HTTPError):
         reason = f"The download server answered with HTTP {error.code}."
-        next_step = "Check your internet connection, then try again. If GitHub is blocked, open the download page in a browser."
+        next_step = (
+            "Check your internet connection, then try again. "
+            "If GitHub downloads are blocked, open the FigureLoom Bio download page in a browser."
+        )
     elif isinstance(error, URLError):
         reason = "The updater could not reach the download server."
-        next_step = "Check the internet connection and make sure GitHub downloads are allowed, then try again."
+        next_step = (
+            "Check the internet connection and make sure GitHub downloads are allowed, then try again."
+        )
     elif isinstance(error, PermissionError):
         reason = "Your computer refused permission to create or open a required file."
-        next_step = "Close other copies of FigureLoom Bio, make sure your Desktop is writable, then try again."
+        next_step = (
+            "Close other copies of FigureLoom Bio, make sure your Desktop is writable, then try again."
+        )
     elif isinstance(error, FileNotFoundError):
         reason = detail
         next_step = "Use Install or update to restore the missing application or file."
     elif isinstance(error, RuntimeError):
         reason = detail
-        next_step = "Follow the instruction above. Nothing was removed from your existing FigureLoom Bio projects."
+        next_step = (
+            "Follow the instruction above. Nothing was removed from your existing FigureLoom Bio projects."
+        )
     else:
         reason = "FigureLoom Bio hit an unexpected internal error instead of finishing the action."
         next_step = "Run Install or update to repair the desktop files, then try the action again."
@@ -225,6 +243,17 @@ def simple_error(action: str, error: BaseException) -> str:
         f"What to do\n{next_step}\n\n"
         f"Details\n{error.__class__.__name__}: {detail}"
     )
+
+
+def save_failure_details(folder: Path, report: str, technical: str) -> None:
+    try:
+        folder.mkdir(parents=True, exist_ok=True)
+        (folder / "TEST-RESULT.txt").write_text(report.rstrip() + "\n", encoding="utf-8")
+        (folder / "TEST-DETAILS.txt").write_text(technical.rstrip() + "\n", encoding="utf-8")
+    except OSError:
+        # The useful explanation is still shown in the open window even when
+        # the computer also refuses permission to save the diagnostic files.
+        return
 
 
 class TestWorker(QObject):
@@ -240,16 +269,8 @@ class TestWorker(QObject):
         try:
             success, report, folder = run_quick_test(folder)
         except Exception as error:  # The window must survive every language/runtime failure.
-            try:
-                folder = create_test_files(folder)
-            except Exception:
-                folder.mkdir(parents=True, exist_ok=True)
             report = simple_error("The automatic FigureLoom Bio test", error)
-            report += "\n\nInternal trace\n" + traceback.format_exc()
-            try:
-                (folder / "TEST-RESULT.txt").write_text(report + "\n", encoding="utf-8")
-            except OSError:
-                pass
+            save_failure_details(folder, report, traceback.format_exc())
             success = False
         self.finished.emit(success, report, str(folder))
 
@@ -279,7 +300,8 @@ class TestWindow(QMainWindow):
         title = QLabel("FigureLoom Bio automatic test")
         title.setObjectName("title")
         copy = QLabel(
-            "This opens real CSV, FASTA, and FASTQ files, runs the language, and checks the generated scientific files."
+            "This opens real CSV, FASTA, and FASTQ files, runs the language, "
+            "and checks the generated scientific files."
         )
         copy.setObjectName("muted")
         copy.setWordWrap(True)
@@ -320,7 +342,8 @@ class TestWindow(QMainWindow):
         self.status.setObjectName("heading")
         self.status.setText("Running the real language test…")
         self.report.setPlainText(
-            "Creating the test files, opening the data, running every test instruction, and checking the outputs."
+            "Creating the test files, opening the data, running every test instruction, "
+            "and checking the outputs."
         )
         self.run_button.setEnabled(False)
         self.files_button.setEnabled(False)
@@ -357,11 +380,22 @@ class TestWindow(QMainWindow):
 
     def open_files(self) -> None:
         try:
-            if not self._folder.exists():
-                self._folder = create_test_files(self._folder)
             open_path(self._folder)
         except Exception as error:
             QMessageBox.critical(self, APP_NAME, simple_error("Opening the test files", error))
+
+    def closeEvent(self, event: QCloseEvent) -> None:  # noqa: N802 - Qt API name
+        if self._thread is not None and self._thread.isRunning():
+            self.status.setObjectName("heading")
+            self.status.setText("The test is still finishing")
+            self.report.setPlainText(
+                "The test is using the files right now. Close this window after the result appears."
+            )
+            self.style().unpolish(self.status)
+            self.style().polish(self.status)
+            event.ignore()
+            return
+        super().closeEvent(event)
 
 
 class DownloadWorker(QObject):
@@ -443,7 +477,8 @@ class ManagerWindow(QMainWindow):
         self.status.setObjectName("heading")
         card_layout.addWidget(self.status)
         note = QLabel(
-            "Install or update downloads the current official installer and then opens the normal Windows or macOS installation window."
+            "Install or update downloads the current official installer and then opens "
+            "the normal Windows or macOS installation window."
         )
         note.setObjectName("muted")
         note.setWordWrap(True)
@@ -502,7 +537,7 @@ class ManagerWindow(QMainWindow):
             existing = ""
         self.log.setPlainText((existing.rstrip() + "\n" + text.rstrip()).strip())
         cursor = self.log.textCursor()
-        cursor.movePosition(cursor.MoveOperation.End)
+        cursor.movePosition(QTextCursor.MoveOperation.End)
         self.log.setTextCursor(cursor)
 
     def install_or_update(self) -> None:
@@ -548,7 +583,9 @@ class ManagerWindow(QMainWindow):
             return
         try:
             open_path(Path(path))
-            self._append("The normal installer window was opened. Follow its steps to finish the update or repair.")
+            self._append(
+                "The normal installer window was opened. Follow its steps to finish the update or repair."
+            )
         except Exception as error:
             explanation = simple_error("Opening the downloaded installer", error)
             self._append(explanation)
@@ -564,7 +601,7 @@ class ManagerWindow(QMainWindow):
     def open_test(self) -> None:
         window = TestWindow(auto_run=True)
         window.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose, True)
-        window.destroyed.connect(lambda: self._forget_test(window))
+        window.destroyed.connect(lambda *_args: self._forget_test(window))
         self._test_windows.append(window)
         window.show()
         window.raise_()
@@ -583,11 +620,20 @@ class ManagerWindow(QMainWindow):
     def open_files(self) -> None:
         folder = test_folder()
         try:
-            if not folder.exists():
-                folder = create_test_files(folder)
             open_path(folder)
         except Exception as error:
             QMessageBox.critical(self, APP_NAME, simple_error("Opening the test files", error))
+
+    def closeEvent(self, event: QCloseEvent) -> None:  # noqa: N802 - Qt API name
+        if self._thread is not None and self._thread.isRunning():
+            self.status.setObjectName("heading")
+            self.status.setText("The installer is still downloading")
+            self._append("Close this window after the download finishes or reports an error.")
+            self.style().unpolish(self.status)
+            self.style().polish(self.status)
+            event.ignore()
+            return
+        super().closeEvent(event)
 
 
 def test_window_self_test() -> int:
