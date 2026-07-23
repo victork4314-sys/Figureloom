@@ -90,7 +90,15 @@
     localStorage.setItem(RESULTS_KEY, results.innerHTML);
     localStorage.setItem(RUN_STATUS_KEY, JSON.stringify({ text:runStatus.textContent || 'Ready', className:runStatus.className || 'status-pill' }));
   }
+  function advancedRuntimeWillHandle() {
+    return Boolean(window.FigureLoomBioFlow?.usesAdvancedRuntime?.(editor.value));
+  }
   function execute(event) {
+    // Decisions, sample loops, recipes, named results, and microbiology are
+    // handled by the complete browser runtime. Do not let an older specialist
+    // runner claim the program first just because it recognizes one line.
+    if (advancedRuntimeWillHandle()) return;
+
     let instructions;
     try { instructions = splitInstructions(editor.value); }
     catch (error) { event.preventDefault(); event.stopImmediatePropagation(); showError(error); return; }
@@ -164,6 +172,7 @@
     PlainError, readFiles, findFile, addSection,
     preview:(text, width=60) => text.length <= width ? text : `${text.slice(0,width)}…`,
     registerRunner:(runner) => runners.push(runner),
-    registerHighlight:(pattern, classes) => highlightRules.push([pattern, classes])
+    registerHighlight:(pattern, classes) => highlightRules.push([pattern, classes]),
+    advancedRuntimeWillHandle
   };
 })();
