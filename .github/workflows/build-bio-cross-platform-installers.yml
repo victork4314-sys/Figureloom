@@ -35,6 +35,13 @@ jobs:
         shell: pwsh
         run: ./figureloom-bio/windows/build-installer.ps1 -OutputDir "$env:GITHUB_WORKSPACE\dist"
 
+      - name: Test Windows native web parity and syntax colors
+        shell: pwsh
+        run: |
+          Push-Location figureloom-bio
+          python -m unittest tests.test_native_visual_parity -v
+          Pop-Location
+
       - name: Install and test the exact Windows installer
         shell: pwsh
         run: |
@@ -78,6 +85,11 @@ jobs:
         env:
           FIGURELOOM_MAC_ARCH_LABEL: arm64
         run: bash figureloom-bio/macos/build-installer.sh dist
+
+      - name: Test Apple Silicon native web parity and syntax colors
+        run: |
+          cd figureloom-bio
+          python3 -m unittest tests.test_native_visual_parity -v
 
       - name: Install and test the exact Apple Silicon package
         run: |
@@ -135,6 +147,11 @@ jobs:
         env:
           FIGURELOOM_MAC_ARCH_LABEL: x86_64
         run: bash figureloom-bio/macos/build-installer.sh dist
+
+      - name: Test Intel native web parity and syntax colors
+        run: |
+          cd figureloom-bio
+          python3 -m unittest tests.test_native_visual_parity -v
 
       - name: Install and test the exact Intel package
         run: |
