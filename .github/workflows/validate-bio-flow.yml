@@ -39,7 +39,15 @@ jobs:
         run: node scripts/validate-bio-current-file.mjs
 
       - name: Run current-file sentences through the real browser runtime
-        run: node scripts/validate-bio-current-file-runtime.mjs
+        run: node scripts/validate-bio-current-file-runtime.mjs > current-file-runtime.log 2>&1
+
+      - name: Upload current-file browser regression output
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: current-file-runtime-log
+          path: current-file-runtime.log
+          if-no-files-found: error
 
       - name: Validate browser translation targets and block punctuation
         run: node scripts/validate-bio-translator.mjs
