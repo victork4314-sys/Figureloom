@@ -96,19 +96,9 @@ jobs:
           python3 -m unittest discover -s tests -p 'test_control_flow.py' -v
 
       - name: Run completed terminal language tests
-        shell: bash
         run: |
-          set -o pipefail
           cd figureloom-bio
-          python3 -m unittest discover -s tests -p 'test_complete_language.py' -v 2>&1 | tee ../complete-language-test.log
-
-      - name: Upload completed language test output
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: complete-language-test-log
-          path: complete-language-test.log
-          if-no-files-found: error
+          python3 -m unittest discover -s tests -p 'test_complete_language.py' -v
 
       - name: Run native terminal analysis tests
         run: |
