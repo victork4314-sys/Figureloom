@@ -49,6 +49,13 @@ install_language_execution_parity()
 install_volcano_plot(Runner)
 install_language_diagnostics()
 
+# Import the desktop test only after the final parser wrapper is installed so
+# every launcher receives the same recognized-wording behavior.
+from . import desktop_tools as _desktop_tools
+from .desktop_test_final import install_desktop_test_final
+
+install_desktop_test_final(_desktop_tools)
+
 __version__ = "0.8.0"
 
 __all__ = ["Runner", "__version__"]
