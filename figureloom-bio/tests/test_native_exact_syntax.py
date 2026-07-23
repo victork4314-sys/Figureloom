@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import ast
 from pathlib import Path
+import re
 import unittest
 
 
@@ -28,6 +29,23 @@ class NativeExactSyntaxTests(unittest.TestCase):
         self.assertIn("return super()._accepted(stripped)", source)
         self.assertIn("except Exception", source)
         self.assertIn("return False", source)
+
+    def test_filename_pattern_accepts_sentence_punctuation_but_not_longer_fake_extensions(self) -> None:
+        tree = ast.parse(SYNTAX.read_text(encoding="utf-8"))
+        pattern = None
+        for node in ast.walk(tree):
+            if not isinstance(node, ast.Assign):
+                continue
+            if not any(isinstance(target, ast.Name) and target.id == "FILE_PATTERN" for target in node.targets):
+                continue
+            if isinstance(node.value, ast.Call) and node.value.args and isinstance(node.value.args[0], ast.Constant):
+                pattern = node.value.args[0].value
+                break
+        self.assertIsInstance(pattern, str)
+        compiled = re.compile(pattern, re.IGNORECASE)
+        self.assertEqual(compiled.search("Open the file samples.csv.").group(0), "samples.csv")
+        self.assertEqual(compiled.search("Open the file reads.fastq:").group(0), "reads.fastq")
+        self.assertIsNone(compiled.search("Open the file samples.csv.backup."))
 
 
 if __name__ == "__main__":
