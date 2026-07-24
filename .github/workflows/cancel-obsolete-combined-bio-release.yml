@@ -1,0 +1,28 @@
+name: Cancel obsolete combined FigureLoom Bio release
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/cancel-obsolete-combined-bio-release.yml'
+  workflow_dispatch:
+
+permissions:
+  actions: write
+  contents: read
+
+jobs:
+  cancel:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Cancel only superseded combined release run
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          obsolete_run=30091646906
+          status="$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$obsolete_run" --jq .status)"
+          if [[ "$status" != completed ]]; then
+            gh api --method POST "repos/$GITHUB_REPOSITORY/actions/runs/$obsolete_run/cancel"
+          fi
+          echo "Obsolete combined run status before cleanup: $status"
