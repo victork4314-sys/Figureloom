@@ -16,7 +16,7 @@ jobs:
   report:
     runs-on: ubuntu-latest
     steps:
-      - name: Keep only newest Mac publisher and report it
+      - name: Keep newest publisher and show Apple failure tail
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -39,43 +39,35 @@ jobs:
 
           while read -r run_id; do
             [[ -n "$run_id" ]] || continue
-            echo "Cancelling superseded Mac publisher $run_id"
             gh run cancel "$run_id" --repo "$GITHUB_REPOSITORY" || true
           done < /tmp/older-active.txt
 
-          # The old combined desktop publisher duplicates both Mac builds and can
-          # occupy the scarce hosted Mac runners. It is obsolete now that the
-          # dedicated atomic Mac publisher owns both packages.
-          gh run list \
-            --repo "$GITHUB_REPOSITORY" \
-            --workflow build-bio-cross-platform-installers.yml \
-            --branch main \
-            --limit 20 \
-            --json databaseId,status \
-            --jq '.[] | select(.status == "queued" or .status == "in_progress" or .status == "pending" or .status == "waiting") | .databaseId' \
-            > /tmp/combined-active.txt
-
-          while read -r run_id; do
-            [[ -n "$run_id" ]] || continue
-            echo "Cancelling obsolete combined publisher $run_id"
-            gh run cancel "$run_id" --repo "$GITHUB_REPOSITORY" || true
-          done < /tmp/combined-active.txt
-
-          sleep 5
           gh run view "$newest" \
             --repo "$GITHUB_REPOSITORY" \
             --json databaseId,status,conclusion,headSha,createdAt,updatedAt,url,jobs \
             > /tmp/newest.json
+
+          apple_job=89489398478
+          gh api "repos/$GITHUB_REPOSITORY/actions/jobs/$apple_job/logs" > /tmp/apple.bin
+          if unzip -t /tmp/apple.bin >/dev/null 2>&1; then
+            unzip -p /tmp/apple.bin > /tmp/apple.log
+          else
+            cp /tmp/apple.bin /tmp/apple.log
+          fi
+          tail -n 90 /tmp/apple.log > /tmp/apple-tail.log
 
           {
             echo 'Newest Mac publisher only:'
             echo '```json'
             cat /tmp/newest.json
             echo '```'
+            echo
+            echo 'Apple Silicon failed-proof tail:'
+            echo '```text'
+            cat /tmp/apple-tail.log
+            echo '```'
           } > /tmp/status.md
 
           gh api --method PATCH \
             "repos/$GITHUB_REPOSITORY/issues/comments/5069780966" \
             -f "body=$(cat /tmp/status.md)"
-
-# refresh after direct deterministic Test-app self-test
