@@ -8,6 +8,10 @@ on:
     branches:
       - main
 
+concurrency:
+  group: figureloom-bio-compiler-migration-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: write
 
@@ -25,7 +29,7 @@ jobs:
       - name: Apply compiler vocabulary migration
         run: python3 scripts/migrate-bio-language-to-compiler.py
 
-      - name: Fix ambiguous words and comparator grammar
+      - name: Fix compiler grammar edge cases
         run: |
           python3 - <<'PY'
           from pathlib import Path
@@ -51,11 +55,19 @@ jobs:
                       "else if ((term(lower, 'length') || has(lower, 'longer', 'at least', 'above', 'over', 'more than', 'greater than')) && nums[0]) {",
                   ),
               ],
+              Path('figureloom-bio/figureloom_bio/parser.py'): [
+                  (
+                      '"You can write the instruction in your own wording, but those parts must make one unambiguous operation.\\n\\n"',
+                      '"The wording and order do not have to copy an example. The operation, target, values, and role words must still make one unambiguous operation.\\n\\n"',
+                  ),
+              ],
           }
 
           for path, pairs in replacements.items():
               text = path.read_text(encoding='utf-8')
               for old, new in pairs:
+                  if old not in text and new not in text:
+                      raise SystemExit(f'Expected compiler text was not found in {path}: {old}')
                   text = text.replace(old, new)
               path.write_text(text, encoding='utf-8')
           PY
@@ -75,4 +87,6 @@ jobs:
           git config user.email "actions@users.noreply.github.com"
           git add README.md figureloom-bio ide wiki scripts
           git commit -m "Complete FigureLoom Bio compiler migration"
+          git fetch origin "$HEAD_BRANCH"
+          git rebase "origin/$HEAD_BRANCH"
           git push origin HEAD:"$HEAD_BRANCH"
