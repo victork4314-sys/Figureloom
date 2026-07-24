@@ -25,6 +25,7 @@ from .language_source_parity import install_language_source_parity
 from .language_execution_parity import install_language_execution_parity
 from .volcano_plot import install_volcano_plot
 from .language_diagnostics import install_language_diagnostics
+from .control_flow_logic import install_control_flow_logic
 
 install_runtime_extensions(Runner)
 install_repeat_reset(Runner)
@@ -50,6 +51,7 @@ install_language_source_parity()
 install_language_execution_parity()
 install_volcano_plot(Runner)
 install_language_diagnostics()
+install_control_flow_logic()
 
 __version__ = "0.8.0"
 

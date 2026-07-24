@@ -12,14 +12,20 @@
   const count = dialog.querySelector('.addons-installed-count');
   if (!grid || !search || !themeSelect || !count) return;
 
-  const sourceUrl = '../figureloom-bio/figureloom_bio/language_vocabulary.json?v=1';
+  const sourceUrl = '../figureloom-bio/figureloom_bio/language_vocabulary.json?v=2';
   let entries = [];
 
   const GROUPS = Object.freeze([
-    { key:'verbs', title:'Operations', icon:'▶', description:'Words that tell FigureLoom Bio what to do.' },
-    { key:'terms', title:'Biology and data terms', icon:'🧬', description:'Targets and scientific concepts the operation acts on.' },
+    { key:'verbs', title:'Operations', icon:'▶', description:'Action words that tell FigureLoom Bio what to do.' },
+    { key:'terms', title:'Biology and data terms', icon:'🧬', description:'Scientific, file, result, table, and sequence words.' },
+    { key:'flow', title:'If, else, loops, and recipes', icon:'⑂', description:'Words and phrases that control which instructions run.' },
+    { key:'logic', title:'Boolean logic', icon:'∧', description:'Words used to combine or reverse true and false conditions.' },
+    { key:'booleans', title:'True and false', icon:'◐', description:'Literal Boolean values that can be used directly in decisions.' },
+    { key:'conditions', title:'Decision terms', icon:'?', description:'Words used when checking counts, files, results, and findings.' },
     { key:'roles', title:'Role words', icon:'⇢', description:'Words that connect values, files, columns, groups, and outputs.' },
-    { key:'comparators', title:'Comparisons', icon:'≶', description:'Words that describe thresholds and ranges.' },
+    { key:'comparators', title:'Comparisons', icon:'≶', description:'Words and phrases that compare values and thresholds.' },
+    { key:'file_types', title:'File types', icon:'▧', description:'File type names understood by batch and file instructions.' },
+    { key:'fillers', title:'Optional plain-English words', icon:'·', description:'Optional words that make an instruction read naturally.' },
   ]);
 
   function titleCase(value) {
@@ -41,23 +47,33 @@
     editor.focus();
   }
 
+  function definitionsFor(payload, key) {
+    const value = payload[key] || {};
+    if (Array.isArray(value)) {
+      return Object.fromEntries(value.map((word) => [String(word).replace(/\W+/g, '_') || 'word', [word]]));
+    }
+    return value;
+  }
+
   function buildEntries(payload) {
     const output = [];
     for (const group of GROUPS) {
-      const definitions = payload[group.key] || {};
+      const definitions = definitionsFor(payload, group.key);
       for (const [name, forms] of Object.entries(definitions)) {
         const unique = [...new Set((forms || []).map((value) => String(value).trim()).filter(Boolean))];
-        output.push(Object.freeze({
-          id:`${group.key}-${name}`,
-          group:group.key,
-          groupTitle:group.title,
-          icon:group.icon,
-          description:group.description,
-          name,
-          title:titleCase(name),
-          forms:unique,
-          primary:unique[0] || titleCase(name).toLowerCase(),
-        }));
+        for (const form of unique) {
+          output.push(Object.freeze({
+            id:`${group.key}-${name}-${form.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`,
+            group:group.key,
+            groupTitle:group.title,
+            icon:group.icon,
+            description:group.description,
+            name,
+            title:form,
+            form,
+            meaning:titleCase(name),
+          }));
+        }
       }
     }
     return output;
@@ -65,7 +81,7 @@
 
   function refreshThemes() {
     const current = themeSelect.value;
-    themeSelect.replaceChildren(new Option('All kinds', ''));
+    themeSelect.replaceChildren(new Option('All words and terms', ''));
     for (const group of GROUPS) themeSelect.append(new Option(group.title, group.key));
     if (GROUPS.some((group) => group.key === current)) themeSelect.value = current;
   }
@@ -75,7 +91,7 @@
     const selected = themeSelect.value;
     const visible = entries.filter((entry) => {
       if (selected && entry.group !== selected) return false;
-      const haystack = `${entry.title} ${entry.name} ${entry.groupTitle} ${entry.forms.join(' ')} ${entry.description}`.toLowerCase();
+      const haystack = `${entry.title} ${entry.name} ${entry.meaning} ${entry.groupTitle} ${entry.description}`.toLowerCase();
       return !wanted || haystack.includes(wanted);
     });
 
@@ -88,14 +104,14 @@
       card.querySelector('.addon-card-icon').textContent = entry.icon;
       card.querySelector('h3').textContent = entry.title;
       card.querySelector('code').textContent = entry.groupTitle;
-      card.querySelector('p').textContent = entry.forms.join(' · ');
+      card.querySelector('p').textContent = `Meaning: ${entry.meaning}`;
       card.querySelector('.addon-card-meta span').textContent = entry.description;
 
       const insert = document.createElement('button');
       insert.type = 'button';
       insert.textContent = 'Insert';
       insert.addEventListener('click', () => {
-        insertWord(entry.primary);
+        insertWord(entry.form);
         insert.textContent = 'Inserted';
         setTimeout(() => { insert.textContent = 'Insert'; }, 800);
       });
@@ -110,7 +126,7 @@
       grid.append(empty);
     }
 
-    const uniqueForms = new Set(entries.flatMap((entry) => entry.forms.map((form) => form.toLowerCase())));
+    const uniqueForms = new Set(entries.map((entry) => entry.form.toLowerCase()));
     count.textContent = uniqueForms.size.toLocaleString();
   }
 

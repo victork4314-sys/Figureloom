@@ -82,12 +82,23 @@ requireText('wikiIndex', files.wikiIndex, 'a[href*="FigureLoom-Bio-Installer"]')
 for (const value of [
   '## Compiler model',
   '**Vocabulary forms:**',
-  '**Grammar families:** 4',
+  '**Grammar families:** 10',
   'Examples are examples, not a whitelist.',
+  '## If, else, loops, and recipes',
+  '## Boolean logic',
+  '## True and false',
+  '`if`',
+  '`else`',
+  '`and`',
+  '`or`',
+  '`not`',
+  '`true`',
+  '`false`',
   '`remove`',
   '`sequence`',
   '`below`',
   '`Assemble the bacterial genome.`',
+  'If true and not false:',
 ]) requireText('commandReference', files.commandReference, value);
 
 const detailed = [
@@ -122,4 +133,4 @@ if (errors.length) throw new Error(`FigureLoom Bio documentation validation foun
 for (const [name, content] of Object.entries({ mainReadme: files.mainReadme, packageReadme: files.packageReadme, wiki: files.wiki, commandReference: files.commandReference })) {
   if (content.includes('Canonical sentences')) errors.push(`${name} still describes a canonical sentence whitelist.`);
 }
-console.log('FigureLoom Bio documentation matches the compiler vocabulary and grammar, and installer links stay only under Download for your computer in the wiki.');
+console.log('FigureLoom Bio documentation matches the complete compiler, control-flow, and Boolean vocabulary, and installer links stay only under Download for your computer in the wiki.');
