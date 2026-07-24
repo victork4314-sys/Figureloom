@@ -55,6 +55,11 @@ jobs:
           cat compiler-test.log
           exit 1
 
+      - name: Run control-flow tests alone
+        run: |
+          cd figureloom-bio
+          python3 -m unittest discover -s tests -p 'test_control_flow.py' -v
+
       - name: Capture full FigureLoom Bio tests
         id: full_tests
         shell: bash
@@ -65,14 +70,6 @@ jobs:
           status=$?
           echo "status=$status" >> "$GITHUB_OUTPUT"
           exit 0
-
-      - name: Upload full FigureLoom Bio test log
-        if: always()
-        uses: actions/upload-artifact@v6
-        with:
-          name: full-bio-test-log
-          path: full-bio-test.log
-          if-no-files-found: error
 
       - name: Require full FigureLoom Bio tests
         if: steps.full_tests.outputs.status != '0'
