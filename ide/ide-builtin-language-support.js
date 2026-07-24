@@ -22,6 +22,7 @@
     [/^(Make sure )(.+)(\.)$/i, ['c','v','p']],
     [/^(Show a warning saying )(.+)(\.)$/i, ['c','v','p']],
     [/^(Show a warning)(\.)$/i, ['c','p']],
+    [/^((?:Warn|Warning)(?::|\s)+)(.+)(\.)$/i, ['c','v','p']],
     [/^((?:Stop the program|Continue with the next sample|Skip this sample|Mark the sample for review))(\.)$/i, ['c','p']],
     [/^(Save the (?:result|sequences|reads) using the sample name)(\.)$/i, ['c','p']],
 
