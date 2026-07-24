@@ -27,7 +27,15 @@ class MockElement {
   addEventListener(type, listener) { (this.listeners[type] ||= []).push(listener); }
   dispatchEvent(event) { for (const listener of this.listeners[event.type] || []) listener(event); return true; }
   closest(selector) { return selector.split(',').some((part) => part.trim() === `#${this.id}`) ? this : null; }
-  querySelector() { return null; }
+  querySelector(selector) {
+    const tag = String(selector).trim().toUpperCase();
+    const existing = this.children.find((child) => child?.tagName === tag);
+    if (existing) return existing;
+    if (!/^[A-Z][A-Z0-9-]*$/.test(tag)) return null;
+    const child = new MockElement(tag);
+    this.children.push(child);
+    return child;
+  }
   querySelectorAll() { return []; }
   setSelectionRange(start, end) { this.selectionStart = start; this.selectionEnd = end; }
   remove() {}
