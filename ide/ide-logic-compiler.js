@@ -96,11 +96,14 @@
     }
 
     if (/^Print\b/i.test(text)) {
-      const visible = /\b(result|output|file|sequences?|reads?|rows?|alignment|variants?|genes?|primers?|tree|quality report)\b/i.test(text);
+      const remainder = text.replace(/^Print\s*/i, '').trim().replace(/\.$/, '');
+      const visible = /^(?:the )?(?:result|output|file|current file|sequences?|reads?|rows?|alignment|variants?|genes?|primers?|tree|quality report)$/i.test(remainder);
       text = text.replace(/^Print\b/i, visible ? 'Show' : 'Say');
     }
     if (/^Write\b/i.test(text)) {
-      const saved = /\b(result|output|file|sequences?|reads?|alignment|variants?|genes?|tree)\b|\.(?:csv|tsv|fa|fasta|fq|fastq|nwk|svg)\b/i.test(text);
+      const remainder = text.replace(/^Write\s*/i, '').trim();
+      const saved = /^(?:the )?(?:result|output|file|current file|sequences?|reads?|pair|alignment|variants?|genes?|tree)\b/i.test(remainder)
+        || /\.(?:csv|tsv|fa|fasta|fq|fastq|nwk|svg)\.?$/i.test(remainder);
       text = text.replace(/^Write\b/i, saved ? 'Save' : 'Say');
     }
     if (/^Call\b/i.test(text) && !/^Call the result\b/i.test(text)) {
@@ -113,6 +116,25 @@
 
   function normalizeEverydaySource(source) {
     return String(source).split(/\r?\n/).map(normalizeEverydayLine).join('\n');
+  }
+
+  const parameterizedBuiltInPatterns = [
+    /^Say .+\.$/i,
+    /^(?:Keep|Remove) sequences with names containing .+\.$/i,
+    /^(?:Assemble|Build) (?:the |a )?bacterial genome from .+ into .+\.$/i,
+    /^(?:Check|Evaluate|Assess) (?:the )?(?:bacterial )?assembly .+ into .+\.$/i,
+    /^(?:(?:Annotate (?:the |a )?bacterial genome)|(?:Find genes in (?:the )?bacterial genome)) .+ into .+\.$/i,
+    /^Find resistance genes in .+ using .+\.$/i,
+    /^Screen .+ for resistance genes using .+\.$/i,
+    /^Find virulence genes in .+\.$/i,
+    /^Screen .+ for virulence genes\.$/i,
+    /^(?:Identify (?:the )?organism in|Classify) .+ using .+\.$/i,
+    /^(?:Find plasmids in|Reconstruct plasmids from) .+ into .+\.$/i,
+  ];
+
+  function isParameterizedBuiltIn(line) {
+    const text = String(line).trim();
+    return parameterizedBuiltInPatterns.some((pattern) => pattern.test(text));
   }
 
   function compileBeforeRecognition(source) {
@@ -128,14 +150,15 @@
     };
 
     try {
-      // These helpers contain broad recognizers used to choose a runtime. They
-      // must not prevent the grammar compiler from turning free-form wording
-      // into the canonical instruction that the chosen runtime executes.
       window.FigureLoomBioLanguageAliases = null;
       window.FigureLoomBioCompleteLanguage = null;
       window.FigureLoomBioCurrentFile = null;
       window.FigureLoomBioStatementRecognizers = [];
-      window.FigureLoomBioLanguage = null;
+      if (typeof compiler.compileLine === 'function') {
+        return String(source).split(/\r?\n/).map((line) => (
+          isParameterizedBuiltIn(line) ? line : compiler.compileLine(line)
+        )).join('\n');
+      }
       return compiler.compileSource(source);
     } finally {
       window.FigureLoomBioLanguageAliases = saved.aliases;
@@ -211,6 +234,7 @@
     normalizeBlockHeaders,
     normalizeEverydayLine,
     normalizeEverydaySource,
+    isParameterizedBuiltIn,
     compileBeforeRecognition,
     normalizeSource,
   });

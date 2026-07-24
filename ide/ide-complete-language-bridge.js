@@ -6,16 +6,57 @@
     throw new Error('The completed FigureLoom Bio language loaded without its browser runtime.');
   }
 
-  const handler = ({ text, context, line, helpers }) => api.run(
-    text,
-    context,
-    line,
-    {
-      X:helpers.Error,
-      enc:helpers.encode,
-      sec:helpers.section,
-    },
+  const sequenceAnalysis = /^(?:Find repeated sequences|Find palindromes|Find (?:start|stop) codons|Find open reading frames|Find genes|Find signal peptides|Find transmembrane regions|Find PCR primers|Compare the sequences|Build a phylogenetic tree|Join the sequences)$/i;
+
+  const clone = (value) => (
+    typeof structuredClone === 'function'
+      ? structuredClone(value)
+      : JSON.parse(JSON.stringify(value))
   );
+
+  const sequenceSummary = (data) => (data?.kind === 'seq'
+    ? data.records.map((record) => `${record.name}: ${record.sequence.length} bases`).join('\n') || 'No sequences remained.'
+    : 'No FASTA or FASTQ sequences were available.');
+
+  const handler = async ({ text, context, line, helpers }) => {
+    const instruction = String(text).trim();
+    const needsSequences = sequenceAnalysis.test(instruction);
+
+    if (needsSequences && context.data?.kind === 'seq') {
+      context.completeSequenceSource = clone(context.data);
+    } else if (
+      needsSequences
+      && context.data?.kind === 'table'
+      && context.completeSequenceSource?.kind === 'seq'
+    ) {
+      context.data = clone(context.completeSequenceSource);
+    }
+
+    let handled;
+    try {
+      handled = await api.run(
+        text,
+        context,
+        line,
+        {
+          X:helpers.Error,
+          enc:helpers.encode,
+          sec:helpers.section,
+        },
+      );
+    } catch (error) {
+      if (needsSequences && !String(error?.message || '').includes('Sequence input received:')) {
+        error.message = `${error.message}\n\nSequence input received:\n${sequenceSummary(context.data)}`;
+      }
+      throw error;
+    }
+
+    if (needsSequences && context.data?.kind === 'seq') {
+      context.completeSequenceSource = clone(context.data);
+    }
+    return handled;
+  };
+
   const recognizer = (source) => api.uses(source);
 
   window.FigureLoomBioStatementHandlers = window.FigureLoomBioStatementHandlers || [];

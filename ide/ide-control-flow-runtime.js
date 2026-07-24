@@ -4,7 +4,7 @@
   if (window.FigureLoomBioFlowLoading) return;
 
   const parts = [0, 1, 2, 3, 4].map(
-    (number) => `./ide-control-flow-runtime.part${String(number).padStart(2, '0')}?v=6`,
+    (number) => `./ide-control-flow-runtime.part${String(number).padStart(2, '0')}?v=7`,
   );
 
   async function fetchPart(url) {
@@ -47,6 +47,18 @@
       [
         "if(/^Stop the program$/i.test(t))throw new Stop",
         "if(/^(?:Stop|End|Quit) the program$/i.test(t))throw new Stop",
+      ],
+      [
+        "async function statement(n,c,p){let t=repl(n.t,c),m;",
+        "async function statement(n,c,p){let t=repl(n.t,c),m;if(c.completeSequenceSource?.kind==='seq'&&c.data?.kind==='table'&&/^(?:Show the sequences|Save the sequences as |Split the sequences into files with |Join the sequences$)/i.test(t))c.data=cl(c.completeSequenceSource);",
+      ],
+      [
+        "async function nodes(a,c,p){for(let n of a){if(n.type==='recipe')continue;if(n.type==='s'){await statement(n,c,p);continue}",
+        "async function nodes(a,c,p){for(let n of a){if(n.type==='recipe')continue;if(n.type==='s'){c.currentLine=n.l;c.currentInstruction=n.t;await statement(n,c,p);continue}",
+      ],
+      [
+        "else{console.error(e);err(new X('Something unexpected stopped the program.'))}",
+        "else{console.error(e);let detail=e?.message?String(e.message):String(e);let read=c.currentInstruction?`\\n\\nI read: ${c.currentInstruction}.`:'';err(new X(`Something unexpected stopped the program.\\n\\n${detail}${read}`,c.currentLine||null))}",
       ],
     ];
 
