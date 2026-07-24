@@ -1,18 +1,127 @@
-# FigureLoom Bio complete command reference
+# FigureLoom Bio language reference
 
-This page is generated from the same language catalog used by the native desktop IDE, browser IDE, terminal runner, Blocks editor, Sentences library, and exhaustive execution audit. Do not edit the command lists by hand.
+## Compiler model
 
-- **Canonical sentences:** 161
-- **Accepted alternate wordings:** 99
-- **Total tested sentences shown here:** 260
+FigureLoom Bio is a programming language with a lexer, grammar parser, compiled instructions, validation, and a runtime. It is not a whitelist of complete sentences.
 
-Every normal instruction ends with a period. Decision, loop, and recipe headers end with a colon. Replace example filenames, column names, values, and numbers with the ones needed by the program.
+**Grammar families:** 4
+**Vocabulary forms:** 234
+**Learning examples:** 161
 
-The execution audit runs every sentence on this page through the real FigureLoom Bio parser and runtime with suitable CSV, TSV, FASTA, FASTQ, control-flow, or installed-tool fixtures.
+Examples are examples, not a whitelist. You can write your own instruction by combining an operation, a target, values, and role words in a form the grammar can resolve unambiguously.
 
-## Program
+Normal instructions end with a period. Block headers end with a colon. The current result is called `the file`.
 
-### Main sentences
+## Operations
+
+| Concept | Words and terms |
+| --- | --- |
+| open | `open`, `load`, `read`, `import` |
+| keep | `keep`, `retain`, `select`, `filter` |
+| remove | `remove`, `delete`, `drop`, `discard`, `exclude` |
+| show | `show`, `display`, `view`, `print`, `list` |
+| count | `count`, `total` |
+| save | `save`, `write`, `export` |
+| rename | `rename`, `name`, `call` |
+| sort | `sort`, `order`, `arrange`, `put` |
+| replace | `replace`, `fill`, `change` |
+| combine | `combine`, `merge`, `join`, `append`, `add` |
+| convert | `convert`, `change`, `turn` |
+| calculate | `calculate`, `compute`, `measure`, `get` |
+| find | `find`, `detect`, `identify`, `locate`, `call`, `design` |
+| create | `create`, `make`, `draw`, `build`, `plot` |
+| check | `check`, `validate`, `inspect`, `test` |
+| compare | `compare`, `align` |
+| trim | `trim`, `cut`, `clip` |
+| normalize | `normalize`, `scale` |
+| translate | `translate` |
+| say | `say`, `print`, `write` |
+| run | `run`, `repeat` |
+| stop | `stop`, `end`, `quit` |
+| continue | `continue`, `next`, `skip` |
+
+## Biology and data terms
+
+| Concept | Words and terms |
+| --- | --- |
+| file | `file`, `data`, `dataset`, `input` |
+| result | `result`, `output` |
+| pair | `pair`, `paired`, `mates` |
+| row | `row`, `rows`, `record`, `records` |
+| column | `column`, `columns`, `field`, `fields` |
+| sequence | `sequence`, `sequences`, `read`, `reads` |
+| base | `base`, `bases`, `nucleotide`, `nucleotides` |
+| name | `name`, `names`, `identifier`, `identifiers`, `id`, `ids` |
+| quality | `quality`, `score`, `scores` |
+| adapter | `adapter`, `adapters` |
+| dna | `dna` |
+| rna | `rna` |
+| protein | `protein`, `proteins`, `amino`, `peptide`, `peptides` |
+| gene | `gene`, `genes` |
+| variant | `variant`, `variants`, `mutation`, `mutations` |
+| primer | `primer`, `primers` |
+| alignment | `alignment`, `alignments` |
+| tree | `tree`, `phylogeny`, `phylogenetic` |
+| assembly | `assembly`, `genome`, `contigs` |
+| organism | `organism`, `species`, `taxonomy` |
+| resistance | `resistance`, `amr`, `antimicrobial` |
+| virulence | `virulence` |
+| plasmid | `plasmid`, `plasmids` |
+| signal peptide | `signal peptide`, `signal peptides` |
+| transmembrane | `transmembrane`, `membrane region`, `membrane regions` |
+| histogram | `histogram` |
+| bar chart | `bar chart`, `bar plot` |
+| scatter plot | `scatter plot`, `scatter chart` |
+| box plot | `box plot`, `boxplot` |
+| heat map | `heat map`, `heatmap` |
+| pca | `pca`, `principal component analysis` |
+| volcano | `volcano plot`, `volcano` |
+| average | `average`, `mean` |
+| median | `median` |
+| standard deviation | `standard deviation`, `sd` |
+| minimum | `minimum`, `smallest`, `lowest` |
+| maximum | `maximum`, `largest`, `highest` |
+| confidence interval | `confidence interval`, `ci` |
+| p value | `p value`, `p-value`, `pvalue` |
+| gc content | `gc content`, `gc percentage` |
+| reverse complement | `reverse complement`, `reverse-complement` |
+| open reading frame | `open reading frame`, `open reading frames`, `orf`, `orfs` |
+| start codon | `start codon`, `start codons` |
+| stop codon | `stop codon`, `stop codons` |
+| palindrome | `palindrome`, `palindromes`, `palindromic` |
+| duplicate | `duplicate`, `duplicates`, `repeated`, `identical` |
+| ambiguous | `ambiguous`, `unknown`, `n bases` |
+| gap | `gap`, `gaps` |
+| length | `length`, `long`, `longer`, `short`, `shorter` |
+| warning | `warning`, `warn` |
+
+## Role words
+
+| Concept | Words and terms |
+| --- | --- |
+| under | `under`, `in`, `from`, `using`, `by` |
+| with | `with`, `as`, `to`, `into` |
+| where | `where`, `marked`, `whose` |
+| containing | `containing`, `contains`, `with` |
+| between | `between` |
+| from | `from` |
+| to | `to`, `into`, `as` |
+| using | `using`, `under`, `by`, `grouped by` |
+
+## Comparisons
+
+| Concept | Words and terms |
+| --- | --- |
+| greater | `longer than`, `greater than`, `more than`, `above`, `over` |
+| at least | `at least`, `minimum`, `no less than` |
+| less | `shorter than`, `less than`, `below`, `under` |
+| at most | `at most`, `maximum`, `no more than` |
+
+## Learning examples
+
+These examples teach common structures and feed the visual builder. They do not define all legal programs.
+
+### Program
 
 - `Say The analysis is starting.`
 - `Run this program 3 times.`
@@ -22,17 +131,7 @@ The execution audit runs every sentence on this page through the real FigureLoom
 - `Skip this sample.`
 - `Mark the sample for review.`
 
-### Accepted wording
-
-These sentences run as alternate wording for the same built-in operations.
-
-- `Print The analysis is starting.`
-- `Warn This sample needs review.`
-- `Show a warning: This sample needs review.`
-
-## Files and results
-
-### Main sentences
+### Files and results
 
 - `Open the file samples.csv.`
 - `Open the files forward.fastq and reverse.fastq as a pair.`
@@ -55,24 +154,7 @@ These sentences run as alternate wording for the same built-in operations.
 - `Rename the file to renamed.fasta.`
 - `List the files.`
 
-### Accepted wording
-
-These sentences run as alternate wording for the same built-in operations.
-
-- `Open samples.csv.`
-- `Open reads.fastq.`
-- `Show the current file.`
-- `Display the current file.`
-- `Display the result.`
-- `Save the current file as output.fasta.`
-- `Check the current file.`
-- `Count the current file.`
-- `Copy the current file as backup.fasta.`
-- `Rename the current file to renamed.fasta.`
-
-## Tables and data
-
-### Main sentences
+### Tables and data
 
 - `Keep only rows marked treated under condition.`
 - `Remove rows marked failed under status.`
@@ -87,23 +169,7 @@ These sentences run as alternate wording for the same built-in operations.
 - `Change untreated to control under condition.`
 - `Count the rows.`
 
-### Accepted wording
-
-These sentences run as alternate wording for the same built-in operations.
-
-- `Keep rows where condition is treated.`
-- `Remove rows where status is failed.`
-- `Select the columns sample and condition.`
-- `Keep the columns sample and condition.`
-- `Sort the rows by sample.`
-- `Sort score largest first.`
-- `Sort score smallest first.`
-- `Drop duplicate rows using sample.`
-- `Fill empty values under status with unknown.`
-
-## DNA, RNA, and sequences
-
-### Main sentences
+### DNA, RNA, and sequences
 
 - `Count the sequences.`
 - `Count the reads.`
@@ -151,24 +217,7 @@ These sentences run as alternate wording for the same built-in operations.
 - `Find open reading frames.`
 - `Join the sequences.`
 
-### Accepted wording
-
-These sentences run as alternate wording for the same built-in operations.
-
-- `Keep reads at least 100 bases.`
-- `Keep sequences at least 500 bases.`
-- `Keep reads with at least 100 bases.`
-- `Remove reads under 100 bases.`
-- `Remove sequences below 500 bases.`
-- `Keep reads longer than 100 bases.`
-- `Find ORFs.`
-- `Find palindromic sequences.`
-- `Find duplicate sequences.`
-- `Join all sequences.`
-
-## FASTQ and read quality
-
-### Main sentences
+### FASTQ and read quality
 
 - `Keep reads with average quality at least 20.`
 - `Remove reads with average quality below 20.`
@@ -181,26 +230,7 @@ These sentences run as alternate wording for the same built-in operations.
 - `Trim 5 bases from the start.`
 - `Trim 5 bases from the end.`
 
-### Accepted wording
-
-These sentences run as alternate wording for the same built-in operations.
-
-- `Calculate the average quality.`
-- `Calculate the median quality.`
-- `Find the mean read length.`
-- `Show the maximum quality.`
-- `Calculate the standard deviation of quality.`
-- `Calculate the standard deviation of read length.`
-- `Check read quality.`
-- `Check the read quality.`
-- `Show the read quality report.`
-- `Remove low-quality reads.`
-- `Trim 5 bases from the beginning of each read.`
-- `Trim 5 bases from the end of each read.`
-
-## Microbiology
-
-### Main sentences
+### Microbiology
 
 - `Prepare bacterial reads.`
 - `Assemble the bacterial genome from forward.fastq and reverse.fastq into assembly.`
@@ -218,123 +248,44 @@ These sentences run as alternate wording for the same built-in operations.
 - `Find plasmids in assembly/contigs.fasta into plasmids.`
 - `Find plasmids in the file.`
 
-### Accepted wording
-
-These sentences run as alternate wording for the same built-in operations.
-
-- `Clean bacterial reads.`
-- `Clean the bacterial reads.`
-- `Build the bacterial genome.`
-- `Annotate the genome.`
-- `Annotate the current genome.`
-- `Detect resistance genes.`
-- `Detect resistance genes in the file.`
-- `Detect virulence genes.`
-- `Classify the organism in the file using bacteria-reference.`
-- `Reconstruct plasmids.`
-- `Reconstruct plasmids from the file.`
-
-## Alignment
-
-### Main sentences
+### Alignment
 
 - `Compare the sequences.`
 - `Show the alignment.`
 - `Save the alignment as aligned.fasta.`
 
-### Accepted wording
-
-These sentences run as alternate wording for the same built-in operations.
-
-- `Align the sequences.`
-- `Align sequences.`
-- `Make an alignment.`
-- `Create an alignment.`
-- `Display the alignment.`
-
-## Variants
-
-### Main sentences
+### Variants
 
 - `Find variants.`
 - `Count the variants.`
 - `Show the variants.`
 - `Save the variants as variants.csv.`
 
-### Accepted wording
-
-These sentences run as alternate wording for the same built-in operations.
-
-- `Call variants.`
-- `Detect variants.`
-- `Display the variants.`
-
-## Genes and annotation
-
-### Main sentences
+### Genes and annotation
 
 - `Find genes.`
 - `Count the genes.`
 - `Show the genes.`
 - `Save the genes as genes.csv.`
 
-### Accepted wording
-
-These sentences run as alternate wording for the same built-in operations.
-
-- `Detect genes.`
-- `Display the genes.`
-
-## Proteins
-
-### Main sentences
+### Proteins
 
 - `Find signal peptides.`
 - `Find transmembrane regions.`
 
-### Accepted wording
-
-These sentences run as alternate wording for the same built-in operations.
-
-- `Detect signal peptides.`
-- `Find membrane regions.`
-
-## PCR and primers
-
-### Main sentences
+### PCR and primers
 
 - `Find PCR primers.`
 - `Check the primers.`
 - `Show the primers.`
 
-### Accepted wording
-
-These sentences run as alternate wording for the same built-in operations.
-
-- `Design PCR primers.`
-- `Validate the primers.`
-- `Display the primers.`
-
-## Phylogenetics
-
-### Main sentences
+### Phylogenetics
 
 - `Build a phylogenetic tree.`
 - `Show the tree.`
 - `Save the tree as tree.nwk.`
 
-### Accepted wording
-
-These sentences run as alternate wording for the same built-in operations.
-
-- `Create a phylogenetic tree.`
-- `Make a phylogenetic tree.`
-- `Build the tree.`
-- `Display the tree.`
-
-## Statistics
-
-### Main sentences
+### Statistics
 
 - `Calculate the average under score.`
 - `Calculate the median under score.`
@@ -349,23 +300,7 @@ These sentences run as alternate wording for the same built-in operations.
 - `Calculate the confidence interval of score.`
 - `Calculate the p value for score between treated and control under group.`
 
-### Accepted wording
-
-These sentences run as alternate wording for the same built-in operations.
-
-- `Find the mean of score.`
-- `Show the confidence interval for score.`
-- `Find the minimum of score.`
-- `Find the maximum of score.`
-- `Normalize expression.`
-- `Normalize count.`
-- `Normalize the counts in expression.`
-- `Compare treated and control using group.`
-- `Calculate the p-value for expression between treated and control using group.`
-
-## Figures
-
-### Main sentences
+### Figures
 
 - `Create a histogram from score.`
 - `Create a bar chart from sample and score.`
@@ -379,49 +314,31 @@ These sentences run as alternate wording for the same built-in operations.
 - `Create a PCA plot.`
 - `Create a volcano plot using effect and p_value.`
 
-### Accepted wording
+### Decisions, loops, and recipes
 
-These sentences run as alternate wording for the same built-in operations.
-
-- `Make a histogram of expression.`
-- `Draw a histogram using expression.`
-- `Make a bar chart of expression.`
-- `Create a bar chart using sample and expression.`
-- `Create a scatter plot using expression and fold_change.`
-- `Draw a scatter plot from x and y.`
-- `Create a box plot of expression under group.`
-- `Make a box plot of score grouped by condition.`
-- `Draw a box plot using expression.`
-- `Create a heat map using expression.`
-- `Draw a heatmap from gene_a and gene_b.`
-- `Make a heat map.`
-- `Draw a heatmap.`
-- `Make a PCA plot.`
-- `Create a principal component analysis plot.`
-- `Draw a volcano plot from fold_change and p_value.`
-
-## Decisions, loops, and recipes
-
-### Main sentences
-
-- `If the result is not empty:` *(block header)*
-- `Otherwise if the result is empty:` *(block header)*
-- `Otherwise:` *(block header)*
-- `For every sample in samples:` *(block header)*
-- `Make a recipe called Clean reads:` *(block header)*
+- `If the result is not empty:`
+- `Otherwise if the result is empty:`
+- `Otherwise:`
+- `For every sample in samples:`
+- `Make a recipe called Clean reads:`
 - `Use the recipe Clean reads.`
 - `Make sure at least 4 reads remain.`
 - `Open all FASTQ files as samples.`
 - `Open the sample.`
 
-## Installed tools
-
-### Main sentences
+### Installed tools
 
 - `Run the tool seqkit with stats reads.fasta.`
 
-## Installed-tool commands
+## Free-form examples compiled by the grammar
 
-Approved microbiology sentences use fixed, validated command shapes. The general `Run the tool ...` sentence requires **Allow installed tools** in the desktop IDE or `--allow-tools` in the terminal. The requested program must also be installed on the computer.
+```flbio
+Please load samples.csv.
+Retain rows where condition is treated.
+Discard rows where status equals failed.
+Total the records.
+Display the output.
+Write the output to clean.csv.
+```
 
-See [Install FigureLoom Bio](FigureLoom-Bio-Easy-Install) for the desktop downloads and [FigureLoom Bio](FigureLoom-Bio) for tutorials and complete workflow examples.
+The program above does not copy the learning-example wording. The compiler resolves the words and their grammatical roles into the same runtime operations.

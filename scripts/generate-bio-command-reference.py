@@ -1,112 +1,87 @@
 from __future__ import annotations
 
-import argparse
-from collections import defaultdict
+import json
 from pathlib import Path
-import sys
-
 
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / "figureloom-bio"))
+VOCABULARY_PATH = ROOT / "figureloom-bio" / "figureloom_bio" / "language_vocabulary.json"
+MANIFEST_PATH = ROOT / "figureloom-bio" / "figureloom_bio" / "language_manifest.json"
+OUTPUT_PATH = ROOT / "wiki" / "FigureLoom-Bio-Command-Reference.md"
 
-from figureloom_bio.language_manifest import language_manifest  # noqa: E402
-from figureloom_bio.native_core import vocabulary_entries  # noqa: E402
-
-
-DEFAULT_OUTPUT = ROOT / "wiki" / "FigureLoom-Bio-Command-Reference.md"
+GROUPS = (
+    ("verbs", "Operations"),
+    ("terms", "Biology and data terms"),
+    ("roles", "Role words"),
+    ("comparators", "Comparisons"),
+)
 
 
 def render() -> str:
-    manifest = language_manifest()
-    entries = vocabulary_entries()
-    canonical = list(manifest.commands)
-    alternatives = [entry for entry in entries if entry.accepted_wording]
-
-    commands_by_theme = defaultdict(list)
-    alternatives_by_theme = defaultdict(list)
-    for command in canonical:
-        commands_by_theme[command.theme].append(command)
-    for entry in alternatives:
-        alternatives_by_theme[entry.theme].append(entry)
+    vocabulary = json.loads(VOCABULARY_PATH.read_text(encoding="utf-8"))
+    manifest = json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))
+    forms = {
+        str(value).casefold()
+        for key, _ in GROUPS
+        for values in vocabulary.get(key, {}).values()
+        for value in values
+    }
 
     lines = [
-        "# FigureLoom Bio complete command reference",
+        "# FigureLoom Bio language reference",
         "",
-        "This page is generated from the same language catalog used by the native desktop IDE, browser IDE, terminal runner, Blocks editor, Sentences library, and exhaustive execution audit. Do not edit the command lists by hand.",
+        "## Compiler model",
         "",
-        f"- **Canonical sentences:** {len(canonical):,}",
-        f"- **Accepted alternate wordings:** {len(alternatives):,}",
-        f"- **Total tested sentences shown here:** {len(canonical) + len(alternatives):,}",
+        "FigureLoom Bio is a programming language with a lexer, grammar parser, compiled instructions, validation, and a runtime. It is not a whitelist of complete sentences.",
         "",
-        "Every normal instruction ends with a period. Decision, loop, and recipe headers end with a colon. Replace example filenames, column names, values, and numbers with the ones needed by the program.",
+        "**Grammar families:** 4",
+        f"**Vocabulary forms:** {len(forms)}",
+        f"**Learning examples:** {len(manifest.get('commands', []))}",
         "",
-        "The execution audit runs every sentence on this page through the real FigureLoom Bio parser and runtime with suitable CSV, TSV, FASTA, FASTQ, control-flow, or installed-tool fixtures.",
+        "Examples are examples, not a whitelist. You can write your own instruction by combining an operation, a target, values, and role words in a form the grammar can resolve unambiguously.",
+        "",
+        "Normal instructions end with a period. Block headers end with a colon. The current result is called `the file`.",
         "",
     ]
 
-    for theme in manifest.themes:
-        commands = commands_by_theme.get(theme.id, [])
-        accepted = alternatives_by_theme.get(theme.id, [])
-        if not commands and not accepted:
-            continue
-        lines.extend([f"## {theme.title}", ""])
-        if commands:
-            lines.extend(["### Main sentences", ""])
-            for command in commands:
-                suffix = " *(block header)*" if command.kind == "header" else ""
-                lines.append(f"- `{command.example}`{suffix}")
-            lines.append("")
-        if accepted:
-            lines.extend([
-                "### Accepted wording",
-                "",
-                "These sentences run as alternate wording for the same built-in operations.",
-                "",
-            ])
-            for entry in accepted:
-                lines.append(f"- `{entry.example}`")
-            lines.append("")
+    for key, title in GROUPS:
+        lines.extend([f"## {title}", "", "| Concept | Words and terms |", "| --- | --- |"])
+        for concept, values in vocabulary.get(key, {}).items():
+            shown = ", ".join(f"`{value}`" for value in values)
+            lines.append(f"| {concept.replace('_', ' ')} | {shown} |")
+        lines.append("")
+
+    theme_titles = {item["id"]: item["title"] for item in manifest.get("themes", [])}
+    lines.extend([
+        "## Learning examples",
+        "",
+        "These examples teach common structures and feed the visual builder. They do not define all legal programs.",
+        "",
+    ])
+    grouped: dict[str, list[str]] = {}
+    for command in manifest.get("commands", []):
+        grouped.setdefault(command["theme"], []).append(command["example"])
+    for theme, examples in grouped.items():
+        lines.extend([f"### {theme_titles.get(theme, theme)}", ""])
+        lines.extend(f"- `{example}`" for example in examples)
+        lines.append("")
 
     lines.extend([
-        "## Installed-tool commands",
+        "## Free-form examples compiled by the grammar",
         "",
-        "Approved microbiology sentences use fixed, validated command shapes. The general `Run the tool ...` sentence requires **Allow installed tools** in the desktop IDE or `--allow-tools` in the terminal. The requested program must also be installed on the computer.",
+        "```flbio",
+        "Please load samples.csv.",
+        "Retain rows where condition is treated.",
+        "Discard rows where status equals failed.",
+        "Total the records.",
+        "Display the output.",
+        "Write the output to clean.csv.",
+        "```",
         "",
-        "See [Install FigureLoom Bio](FigureLoom-Bio-Easy-Install) for the desktop downloads and [FigureLoom Bio](FigureLoom-Bio) for tutorials and complete workflow examples.",
+        "The program above does not copy the learning-example wording. The compiler resolves the words and their grammatical roles into the same runtime operations.",
         "",
     ])
     return "\n".join(lines)
 
 
-def main() -> int:
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
-    parser.add_argument("--check", action="store_true")
-    args = parser.parse_args()
-    expected = render()
-    output = args.output.resolve()
-
-    if args.check:
-        try:
-            current = output.read_text(encoding="utf-8")
-        except FileNotFoundError:
-            print(f"Missing generated command reference: {output}", file=sys.stderr)
-            return 1
-        if current != expected:
-            print(
-                "The FigureLoom Bio command reference is out of date. Run:\n"
-                "python3 scripts/generate-bio-command-reference.py",
-                file=sys.stderr,
-            )
-            return 1
-        print(f"Command reference is current: {output}")
-        return 0
-
-    output.parent.mkdir(parents=True, exist_ok=True)
-    output.write_text(expected, encoding="utf-8")
-    print(output)
-    return 0
-
-
 if __name__ == "__main__":
-    raise SystemExit(main())
+    OUTPUT_PATH.write_text(render(), encoding="utf-8")

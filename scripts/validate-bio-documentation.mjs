@@ -80,11 +80,13 @@ requireText('wikiRuntime', files.wikiRuntime, "['Scientific work','FigureLoom-Bi
 requireText('wikiIndex', files.wikiIndex, 'a[href*="FigureLoom-Bio-Installer"]');
 
 for (const value of [
-  '**Canonical sentences:** 161',
-  '**Accepted alternate wordings:** 99',
-  '**Total tested sentences shown here:** 260',
-  '`Normalize the counts in expression.`',
-  '`Show a warning saying This sample needs review.`',
+  '## Compiler model',
+  '**Vocabulary forms:**',
+  '**Grammar families:** 4',
+  'Examples are examples, not a whitelist.',
+  '`remove`',
+  '`sequence`',
+  '`below`',
   '`Assemble the bacterial genome.`',
 ]) requireText('commandReference', files.commandReference, value);
 
@@ -117,4 +119,7 @@ if (!files.wikiSync.includes('cp wiki/*.md .wiki-repository/')) errors.push('The
 if (!files.wikiSync.includes('${{ github.repository }}.wiki.git')) errors.push('The GitHub wiki sync does not target the repository wiki.');
 
 if (errors.length) throw new Error(`FigureLoom Bio documentation validation found ${errors.length} problem(s):\n- ${errors.join('\n- ')}`);
-console.log('FigureLoom Bio documentation matches the 260-sentence execution audit, and installer links stay only under Download for your computer in the wiki.');
+for (const [name, content] of Object.entries({ mainReadme: files.mainReadme, packageReadme: files.packageReadme, wiki: files.wiki, commandReference: files.commandReference })) {
+  if (content.includes('Canonical sentences')) errors.push(`${name} still describes a canonical sentence whitelist.`);
+}
+console.log('FigureLoom Bio documentation matches the compiler vocabulary and grammar, and installer links stay only under Download for your computer in the wiki.');

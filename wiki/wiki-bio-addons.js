@@ -45,10 +45,10 @@ Find resistance genes in the file.`)}
       <p>Older saved programs may still contain <code>Use .microbiology.</code> or another early compatibility declaration. The runtime ignores those old lines so existing files continue to run. New programs should not add them.</p>
 
       <h3 id="shared-language-manifest">Shared language manifest</h3>
-      <p>The browser IDE, computer runtime, <strong>Sentences</strong>, <strong>Blocks</strong>, terminal help, documentation, and release tests read one canonical language manifest. A sentence is not published merely because it can be colored in the editor. Its parser and runtime path must also be present and tested.</p>
-      ${code(`flbio sentences
-flbio sentences sequences
-flbio sentences statistics
+      <p>The browser IDE, computer runtime, <strong>Words & terms</strong>, <strong>Blocks</strong>, terminal help, documentation, and release tests read one compiler language manifest. A sentence is not published merely because it can be colored in the editor. Its parser and runtime path must also be present and tested.</p>
+      ${code(`flbio words
+flbio words sequences
+flbio words statistics
 flbio doctor`, 'bash')}
       <p><code>flbio doctor</code> shows the installed version, Python version, manifest version and command count, translation targets, package location, and optional tool status.</p>
 

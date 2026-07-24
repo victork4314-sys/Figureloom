@@ -46,7 +46,7 @@ Open [FigureLoom Bio](https://figureloom.org/ide/).
 7. Press **Translate** to create another language or workflow file.
 8. Press **Export results** to download a standalone HTML report.
 
-The text editor, Blocks editor, and Sentences library use one canonical language catalog. A visual block writes a real `.flbio` sentence. It does not create a second format.
+The text editor, Blocks editor, and Sentences library use one compiler vocabulary and grammar. A visual block writes a real `.flbio` sentence. It does not create a second format.
 
 ## Language rules
 
@@ -145,9 +145,9 @@ The setup does not silently install the optional external bioinformatics collect
 ```bash
 flbio doctor
 flbio quick-test
-flbio sentences
-flbio sentences statistics
-flbio sentences figures
+flbio words
+flbio words terms
+flbio words operations
 ```
 
 ### Windows PowerShell
@@ -591,7 +591,7 @@ The number is measured in bytes.
 
 ### The IDE colors a line but Run rejects it
 
-That is a parity bug, not user error. Current releases test every canonical sentence against the runtime routes. Report the exact sentence and line number if it happens again.
+That is a parity bug, not user error. Current releases test every example sentence against the runtime routes. Report the exact sentence and line number if it happens again.
 
 ### A block header asks for a period
 
