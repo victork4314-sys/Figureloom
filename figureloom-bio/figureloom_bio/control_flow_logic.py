@@ -1,10 +1,11 @@
 from __future__ import annotations
 
 import re
+from collections.abc import Callable
 
 
-_TRUE = "the result is empty or the result is not empty"
-_FALSE = "the result is empty and the result is not empty"
+_TRUE = "true"
+_FALSE = "false"
 
 
 def _literal(value: bool) -> tuple[str, bool]:
@@ -40,6 +41,8 @@ def _simplify_and(source: str):
 
 
 def simplify_condition(source: str) -> str:
+    """Simplify Boolean words without replacing them with fake data checks."""
+
     parts = [_simplify_and(part) for part in re.split(r"\s+or\s+", source, flags=re.IGNORECASE)]
     if any(kind == "literal" and value is True for kind, value in parts):
         return _TRUE
@@ -49,7 +52,32 @@ def simplify_condition(source: str) -> str:
     return " or ".join(remaining)
 
 
+def evaluate_condition(source: str, evaluate_atom: Callable[[str], bool]) -> bool:
+    """Evaluate true, false, and, or, and not before delegating data checks."""
+
+    text = str(source).strip()
+    parts = re.split(r"\s+or\s+", text, flags=re.IGNORECASE)
+    if len(parts) > 1:
+        return any(evaluate_condition(part, evaluate_atom) for part in parts)
+
+    parts = re.split(r"\s+and\s+", text, flags=re.IGNORECASE)
+    if len(parts) > 1:
+        return all(evaluate_condition(part, evaluate_atom) for part in parts)
+
+    if re.match(r"^not\s+", text, re.IGNORECASE):
+        remainder = re.sub(r"^not\s+", "", text, count=1, flags=re.IGNORECASE)
+        return not evaluate_condition(remainder, evaluate_atom)
+
+    if re.fullmatch(r"true", text, re.IGNORECASE):
+        return True
+    if re.fullmatch(r"false", text, re.IGNORECASE):
+        return False
+    return bool(evaluate_atom(text))
+
+
 def normalize_control_flow_source(source: str) -> str:
+    """Accept Else as ordinary language while preserving the condition itself."""
+
     output: list[str] = []
     for line in str(source).splitlines():
         match = re.fullmatch(
@@ -58,22 +86,12 @@ def normalize_control_flow_source(source: str) -> str:
             re.IGNORECASE,
         )
         if match:
-            output.append(f"{match.group(1)}Otherwise if {simplify_condition(match.group(2))}:")
-            continue
-
-        match = re.fullmatch(r"(\s*)If\s+(.+):\s*", line, re.IGNORECASE)
-        if match:
-            output.append(f"{match.group(1)}If {simplify_condition(match.group(2))}:")
+            output.append(f"{match.group(1)}Otherwise if {match.group(2).strip()}:")
             continue
 
         match = re.fullmatch(r"(\s*)(?:Else|Otherwise)\s*:\s*", line, re.IGNORECASE)
         if match:
             output.append(f"{match.group(1)}Otherwise:")
-            continue
-
-        match = re.fullmatch(r"(\s*)Make sure\s+(.+)\.\s*", line, re.IGNORECASE)
-        if match:
-            output.append(f"{match.group(1)}Make sure {simplify_condition(match.group(2))}.")
             continue
 
         output.append(line)
@@ -100,9 +118,20 @@ def install_control_flow_logic() -> None:
         )
 
     def condition(text: str, context, line_number: int) -> bool:
-        return original_condition(simplify_condition(text), context, line_number)
+        return evaluate_condition(
+            text,
+            lambda atom: original_condition(atom, context, line_number),
+        )
 
     control_flow.parse_program = parse_program
     control_flow.uses_control_flow = uses_control_flow
     control_flow._condition = condition
     control_flow._figureloom_logic_installed = True
+
+
+__all__ = [
+    "evaluate_condition",
+    "install_control_flow_logic",
+    "normalize_control_flow_source",
+    "simplify_condition",
+]
