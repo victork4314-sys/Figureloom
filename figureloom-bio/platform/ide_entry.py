@@ -1,15 +1,17 @@
-from figureloom_bio import native_account, native_ide, native_widgets
+from figureloom_bio import native_account, native_desktop_exact, native_ide, native_widgets
 from figureloom_bio.native_account_runtime import install_runtime_fixes
 from figureloom_bio.native_desktop_exact import install_exact_desktop
 from figureloom_bio.native_run_safety import install_native_run_safety
 from figureloom_bio.native_stability import install_native_stability, run_stable_ide
 from figureloom_bio.native_syntax_web_exact import install_exact_web_syntax
 from figureloom_bio.native_web_parity import install_web_parity
+from figureloom_bio.native_web_widgets_exact import install_exact_widgets
 
 
 install_runtime_fixes(native_account)
 native_account.install_native_account(native_ide)
 install_web_parity(native_ide)
+install_exact_widgets(native_desktop_exact)
 install_exact_desktop(native_ide)
 install_native_run_safety(native_ide)
 
