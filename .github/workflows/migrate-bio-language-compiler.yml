@@ -25,10 +25,45 @@ jobs:
       - name: Apply compiler vocabulary migration
         run: python3 scripts/migrate-bio-language-to-compiler.py
 
+      - name: Fix ambiguous words and comparator grammar
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          replacements = {
+              Path('figureloom-bio/figureloom_bio/language_compiler.py'): [
+                  (
+                      'aliases[str(form).casefold()] = canonical',
+                      'aliases.setdefault(str(form).casefold(), canonical)',
+                  ),
+                  (
+                      'if statement.has_term("length") or statement.has("longer", "at least"):',
+                      'if statement.has_term("length") or statement.has("longer", "at least", "above", "over", "more than", "greater than"):',
+                  ),
+              ],
+              Path('ide/ide-language-compiler.js'): [
+                  (
+                      "aliases.forEach((alias) => verbAliases.set(String(alias).toLowerCase(), canonical));",
+                      "aliases.forEach((alias) => { const key = String(alias).toLowerCase(); if (!verbAliases.has(key)) verbAliases.set(key, canonical); });",
+                  ),
+                  (
+                      "else if ((term(lower, 'length') || has(lower, 'longer', 'at least')) && nums[0]) {",
+                      "else if ((term(lower, 'length') || has(lower, 'longer', 'at least', 'above', 'over', 'more than', 'greater than')) && nums[0]) {",
+                  ),
+              ],
+          }
+
+          for path, pairs in replacements.items():
+              text = path.read_text(encoding='utf-8')
+              for old, new in pairs:
+                  text = text.replace(old, new)
+              path.write_text(text, encoding='utf-8')
+          PY
+
       - name: Keep workflow changes outside the generated commit
         run: git checkout -- .github/workflows/validate-bio-flow.yml
 
-      - name: Commit generated documentation and labels
+      - name: Commit generated documentation and compiler fixes
         env:
           HEAD_BRANCH: ${{ github.event.pull_request.head.ref || github.ref_name }}
         run: |
@@ -38,6 +73,6 @@ jobs:
           fi
           git config user.name "FigureLoom compiler migration"
           git config user.email "actions@users.noreply.github.com"
-          git add README.md figureloom-bio wiki scripts
-          git commit -m "Migrate FigureLoom Bio docs to compiler grammar"
+          git add README.md figureloom-bio ide wiki scripts
+          git commit -m "Complete FigureLoom Bio compiler migration"
           git push origin HEAD:"$HEAD_BRANCH"
