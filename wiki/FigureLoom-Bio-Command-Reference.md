@@ -5,7 +5,7 @@
 FigureLoom Bio is a programming language with a lexer, grammar parser, compiled instructions, validation, and a runtime. It is not a whitelist of complete sentences.
 
 **Grammar families:** 10
-**Vocabulary forms:** 304
+**Vocabulary forms:** 386
 **Learning examples:** 161
 
 Examples are examples, not a whitelist. You can write your own instruction by combining operations, targets, values, role words, comparisons, and Boolean logic in a form the grammar can resolve unambiguously.
@@ -22,56 +22,69 @@ Normal instructions end with a period. Block headers end with a colon. The curre
 | show | `show`, `display`, `view`, `print`, `list` |
 | count | `count`, `total` |
 | save | `save`, `write`, `export` |
+| copy | `copy` |
+| use | `use` |
 | rename | `rename`, `name`, `call` |
 | sort | `sort`, `order`, `arrange`, `put` |
 | replace | `replace`, `fill`, `change` |
 | combine | `combine`, `merge`, `join`, `append`, `add` |
+| split | `split` |
 | convert | `convert`, `change`, `turn` |
 | calculate | `calculate`, `compute`, `measure`, `get` |
-| find | `find`, `detect`, `identify`, `locate`, `call`, `design` |
+| find | `find`, `detect`, `identify`, `locate`, `call`, `design`, `classify`, `reconstruct` |
 | create | `create`, `make`, `draw`, `build`, `plot` |
 | check | `check`, `validate`, `inspect`, `test` |
 | compare | `compare`, `align` |
 | trim | `trim`, `cut`, `clip` |
 | normalize | `normalize`, `scale` |
+| prepare | `prepare`, `clean` |
+| assemble | `assemble` |
+| annotate | `annotate` |
 | translate | `translate` |
 | say | `say`, `print`, `write` |
 | run | `run`, `repeat` |
 | stop | `stop`, `end`, `quit` |
 | continue | `continue`, `next`, `skip` |
+| mark | `mark` |
 | warn | `warn`, `warning` |
 
 ## Biology and data terms
 
 | Concept | Words and terms |
 | --- | --- |
-| file | `file`, `files`, `data`, `dataset`, `input` |
-| result | `result`, `results`, `output` |
+| file | `file`, `files`, `data`, `dataset`, `input`, `current file` |
+| result | `result`, `results`, `output`, `current result` |
 | program | `program`, `programs` |
 | sample | `sample`, `samples` |
 | recipe | `recipe`, `recipes` |
 | folder | `folder`, `directory` |
-| review | `review` |
-| pair | `pair`, `paired`, `mates` |
+| tool | `tool`, `tools` |
+| reference | `reference`, `database`, `reference database` |
+| review | `review`, `review list` |
+| pair | `pair`, `paired`, `mates`, `read pair` |
 | row | `row`, `rows`, `record`, `records` |
 | column | `column`, `columns`, `field`, `fields` |
+| value | `value`, `values`, `empty values`, `missing values`, `blank values` |
 | sequence | `sequence`, `sequences`, `read`, `reads` |
 | base | `base`, `bases`, `nucleotide`, `nucleotides` |
-| name | `name`, `names`, `identifier`, `identifiers`, `id`, `ids` |
-| quality | `quality`, `score`, `scores` |
-| adapter | `adapter`, `adapters` |
+| name | `name`, `names`, `identifier`, `identifiers`, `id`, `ids`, `sample name`, `sequence name`, `sequence names` |
+| quality | `quality`, `score`, `scores`, `read quality`, `average quality`, `low quality`, `quality report` |
+| adapter | `adapter`, `adapters`, `adapter sequence`, `adapter sequences` |
+| statistics | `statistics`, `sequence statistics` |
+| count data | `count`, `counts` |
 | dna | `dna` |
 | rna | `rna` |
-| protein | `protein`, `proteins`, `amino`, `peptide`, `peptides` |
+| protein | `protein`, `proteins`, `amino`, `amino acid`, `amino acids`, `peptide`, `peptides` |
 | gene | `gene`, `genes` |
 | variant | `variant`, `variants`, `mutation`, `mutations` |
-| primer | `primer`, `primers` |
+| primer | `primer`, `primers`, `pcr primer`, `pcr primers` |
 | alignment | `alignment`, `alignments` |
-| tree | `tree`, `phylogeny`, `phylogenetic` |
-| assembly | `assembly`, `genome`, `contig`, `contigs` |
+| tree | `tree`, `phylogeny`, `phylogenetic`, `phylogenetic tree` |
+| assembly | `assembly`, `genome`, `contig`, `contigs`, `bacterial genome` |
+| bacterial reads | `bacterial read`, `bacterial reads` |
 | organism | `organism`, `species`, `taxonomy` |
-| resistance | `resistance`, `amr`, `antimicrobial` |
-| virulence | `virulence` |
+| resistance | `resistance`, `amr`, `antimicrobial`, `resistance gene`, `resistance genes` |
+| virulence | `virulence`, `virulence gene`, `virulence genes` |
 | plasmid | `plasmid`, `plasmids` |
 | signal peptide | `signal peptide`, `signal peptides` |
 | transmembrane | `transmembrane`, `membrane region`, `membrane regions` |
@@ -80,7 +93,7 @@ Normal instructions end with a period. Block headers end with a colon. The curre
 | scatter plot | `scatter plot`, `scatter chart` |
 | box plot | `box plot`, `boxplot` |
 | heat map | `heat map`, `heatmap` |
-| pca | `pca`, `principal component analysis` |
+| pca | `pca`, `pca plot`, `principal component analysis`, `principal component analysis plot` |
 | volcano | `volcano plot`, `volcano` |
 | average | `average`, `mean` |
 | median | `median` |
@@ -96,9 +109,9 @@ Normal instructions end with a period. Block headers end with a colon. The curre
 | stop codon | `stop codon`, `stop codons` |
 | palindrome | `palindrome`, `palindromes`, `palindromic` |
 | duplicate | `duplicate`, `duplicates`, `repeated`, `identical` |
-| ambiguous | `ambiguous`, `unknown`, `n bases` |
+| ambiguous | `ambiguous`, `unknown`, `n bases`, `ambiguous base`, `ambiguous bases` |
 | gap | `gap`, `gaps` |
-| length | `length`, `long`, `longer`, `short`, `shorter` |
+| length | `length`, `long`, `longer`, `short`, `shorter`, `read length`, `sequence length`, `sequence lengths` |
 | warning | `warning`, `warn` |
 
 ## If, else, loops, and recipes
@@ -113,11 +126,14 @@ Normal instructions end with a period. Block headers end with a colon. The curre
 | use recipe | `use the recipe` |
 | make sure | `make sure` |
 | call result | `call the result` |
+| use result | `use the result` |
 | stop program | `stop the program` |
 | continue sample | `continue with the next sample` |
 | skip sample | `skip this sample` |
 | mark review | `mark the sample for review` |
 | show warning | `show a warning`, `show a warning saying` |
+| open all | `open all` |
+| open sample | `open the sample` |
 
 ## Boolean logic
 
@@ -146,6 +162,8 @@ Normal instructions end with a period. Block headers end with a colon. The curre
 | percent | `percent` |
 | has | `has` |
 | contains | `contains` |
+| is | `is` |
+| were | `were` |
 
 ## Role words
 
@@ -157,12 +175,20 @@ Normal instructions end with a period. Block headers end with a colon. The curre
 | containing | `containing`, `contains`, `with` |
 | between | `between` |
 | from | `from` |
-| to | `to`, `into`, `as` |
+| to | `to`, `into`, `as`, `through` |
 | using | `using`, `under`, `by`, `grouped by` |
+| of | `of` |
+| for | `for` |
 | called | `called`, `named` |
 | times | `time`, `times` |
+| together | `together` |
+| every | `every`, `each` |
 | first | `first` |
 | last | `last` |
+| start | `start`, `beginning`, `left` |
+| end | `end`, `right` |
+| before | `before` |
+| after | `after` |
 
 ## Comparisons
 
@@ -178,10 +204,13 @@ Normal instructions end with a period. Block headers end with a colon. The curre
 
 | Concept | Words and terms |
 | --- | --- |
-| fastq | `FASTQ` |
-| fasta | `FASTA` |
-| csv | `CSV` |
-| tsv | `TSV` |
+| fastq | `FASTQ`, `fq`, `fastq` |
+| fasta | `FASTA`, `fa`, `fasta`, `fna`, `ffn`, `faa`, `frn` |
+| csv | `CSV`, `csv` |
+| tsv | `TSV`, `tsv` |
+| text | `TXT`, `txt` |
+| tree | `NWK`, `nwk` |
+| figure | `SVG`, `svg` |
 
 ## Optional plain-English words
 
@@ -196,6 +225,8 @@ Normal instructions end with a period. Block headers end with a colon. The curre
 | current | `current` |
 | only | `only` |
 | all | `all` |
+| it | `it` |
+| this | `this` |
 
 ## Learning examples
 
