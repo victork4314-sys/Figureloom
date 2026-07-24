@@ -16,6 +16,8 @@ class MockElement {
     this.textContent = '';
     this.value = '';
     this.disabled = false;
+    this.selectionStart = 0;
+    this.selectionEnd = 0;
     this.style = { setProperty() {} };
     this.listeners = {};
     this._innerHTML = '';
@@ -27,6 +29,7 @@ class MockElement {
   closest(selector) { return selector.split(',').some((part) => part.trim() === `#${this.id}`) ? this : null; }
   querySelector() { return null; }
   querySelectorAll() { return []; }
+  setSelectionRange(start, end) { this.selectionStart = start; this.selectionEnd = end; }
   set innerHTML(value) { this._innerHTML = String(value); }
   get innerHTML() { return this._innerHTML || this.children.map((child) => child?.textContent || '').join(''); }
 }
@@ -69,6 +72,8 @@ const windowObject = {
   addEventListener(type, listener) { (windowListeners[type] ||= []).push(listener); },
   location: { reload() {} },
 };
+windowObject.FigureLoomBioCompiler = Object.freeze({ compileSource(source) { return String(source); } });
+windowObject.FigureLoomBioCompilerReady = Promise.resolve(windowObject.FigureLoomBioCompiler);
 
 let clickCount = 0;
 let lastClick = null;
@@ -128,6 +133,7 @@ elements.programEditor.value = program;
 storage.set('figureloom-bio-ide-files-v1', JSON.stringify({ ...bundled }));
 storage.set('figureloom-bio-ide-active-v1', programName);
 
+new vm.Script(read('ide/ide-logic-compiler.js'), { filename:'ide-logic-compiler.js' }).runInContext(context);
 new vm.Script(read('ide/ide-addon-runtime.js'), { filename:'ide-addon-runtime.js' }).runInContext(context);
 new vm.Script(read('ide/ide-approved-common.js'), { filename:'ide-approved-common.js' }).runInContext(context);
 
@@ -135,11 +141,17 @@ const recognition = windowObject.FigureLoomApprovedBio?.sourceNeedsAdvancedRunti
 if (!recognition?.('If the assembly has more than 4 contigs:\n    Say fragmented.')) {
   fail('The editor did not recognize a decision block before the runtime loaded.');
 }
+if (!recognition?.('Else:\n    Say the alternate branch.')) {
+  fail('The editor did not recognize Else before the runtime loaded.');
+}
+if (!recognition?.('Warning Check this sample.')) {
+  fail('The editor did not recognize a plain warning before the runtime loaded.');
+}
 if (!recognition?.('For every sample in samples:\n    Open the sample.')) {
   fail('The editor did not recognize a sample loop before the runtime loaded.');
 }
 if (phase === 'recognition') {
-  console.log('FigureLoom Bio recognized decisions and loops before runtime loading.');
+  console.log('FigureLoom Bio recognized decisions, Else, warnings, and loops before runtime loading.');
   process.exit(0);
 }
 
@@ -218,4 +230,83 @@ for (const name of [
   if (typeof saved[name] !== 'string') fail(`Delayed runtime did not create ${name}.`);
 }
 
-console.log('FigureLoom Bio passed the delayed decision-runtime race test.');
+function collectText(node) {
+  return [node?.textContent || '', ...(node?.children || []).map(collectText)].join('\n');
+}
+
+if (phase === 'exact-program' || phase === 'all') {
+  const exactProgram = [
+    'Say The test started.',
+    '',
+    'If true and not false:',
+    '    Print The first check worked.',
+    'Else:',
+    '    Print This line should not appear.',
+    '',
+    'If false:',
+    '    Print This line should not appear either.',
+    'Else if true:',
+    '    Warning The second check worked.',
+    'Else:',
+    '    Print This line should also not appear.',
+    '',
+    'If false or true:',
+    '    Print The OR check worked.',
+    'Else:',
+    '    Print The OR check failed.',
+    '',
+    'If true and true:',
+    '    Print The AND check worked.',
+    'Else:',
+    '    Print The AND check failed.',
+    '',
+    'Print The whole program worked.',
+    'End the program.',
+    '',
+    'Print This line must never appear.',
+  ].join('\n');
+
+  elements.programEditor.value = exactProgram;
+  elements.programEditor.selectionStart = exactProgram.length;
+  elements.programEditor.selectionEnd = exactProgram.length;
+  elements.results.replaceChildren();
+  elements.runStatus.textContent = 'Ready';
+  elements.runStatus.className = 'status-pill';
+  dispatchRunClick();
+  await new Promise((resolve) => setTimeout(resolve, 120));
+
+  const rendered = collectText(elements.results);
+  if (elements.runStatus.textContent !== 'Stopped') {
+    fail(`The reported program did not stop correctly. Status: ${elements.runStatus.textContent}`);
+  }
+  for (const expected of [
+    'The test started',
+    'The first check worked',
+    'The second check worked',
+    'The OR check worked',
+    'The AND check worked',
+    'The whole program worked',
+    'Program stopped',
+  ]) {
+    if (!rendered.includes(expected)) fail(`The reported program did not show: ${expected}`);
+  }
+  for (const forbidden of [
+    'This line should not appear',
+    'This line should not appear either',
+    'This line should also not appear',
+    'The OR check failed',
+    'The AND check failed',
+    'This line must never appear',
+  ]) {
+    if (rendered.includes(forbidden)) fail(`The reported program incorrectly showed: ${forbidden}`);
+  }
+  if (elements.results.children.some((child) => String(child.className).includes('error'))) {
+    fail('The reported program produced an error section.');
+  }
+  if (phase === 'exact-program') {
+    console.log('The exact reported FigureLoom Bio program passed through the production Run path.');
+    process.exit(0);
+  }
+}
+
+console.log('FigureLoom Bio passed the delayed decision-runtime race and exact reported-program tests.');
