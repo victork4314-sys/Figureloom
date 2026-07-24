@@ -57,6 +57,9 @@
       match = line.match(/^(\s*)(?:Else|Otherwise)\s*:\s*$/i);
       if (match) return `${match[1]}Otherwise:`;
 
+      match = line.match(/^(\s*)Make sure\s+(.+)\.\s*$/i);
+      if (match) return `${match[1]}Make sure ${simplifyCondition(match[2])}.`;
+
       return line;
     }).join('\n');
   }
