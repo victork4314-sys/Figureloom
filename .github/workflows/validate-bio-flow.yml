@@ -38,6 +38,7 @@ jobs:
           node --check ide/ide-approved-common.js
           node --check ide/ide-addon-packages.js
           node --check ide/ide-builtin-language-support.js
+          node --check ide/ide-core-language-runtime.js
           node --check scripts/validate-bio-control-flow.mjs
           node --check scripts/validate-bio-browser-example.mjs
           node --check scripts/validate-bio-current-file.mjs
@@ -45,6 +46,7 @@ jobs:
           node --check scripts/validate-bio-language-manifest.mjs
           node --check scripts/validate-bio-language-aliases.mjs
           node --check scripts/validate-bio-every-advertised-instruction.mjs
+          node --check scripts/validate-bio-core-translation.mjs
           node --check scripts/validate-bio-statement-registry.mjs
           node --check scripts/validate-bio-analysis-language.mjs
           node --check scripts/validate-bio-complete-language.mjs
@@ -61,17 +63,10 @@ jobs:
         run: node scripts/validate-bio-language-aliases.mjs
 
       - name: Run every advertised instruction through the browser runtime
-        shell: bash
-        run: |
-          set -o pipefail
-          node scripts/validate-bio-every-advertised-instruction.mjs 2>&1 | tee advertised-language.log
+        run: node scripts/validate-bio-every-advertised-instruction.mjs
 
-      - name: Upload advertised-language report
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: advertised-language-${{ github.run_id }}
-          path: advertised-language.log
+      - name: Validate real DNA translation output
+        run: node scripts/validate-bio-core-translation.mjs
 
       - name: Validate completed documentation and wiki sync
         run: node scripts/validate-bio-documentation.mjs
