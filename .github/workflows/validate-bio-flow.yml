@@ -2,7 +2,7 @@ name: Validate FigureLoom Bio flow
 
 on:
   push:
-    branches: [main]
+    branches: [main, agent/fix-live-bio-run-path]
   pull_request:
   workflow_dispatch:
 
