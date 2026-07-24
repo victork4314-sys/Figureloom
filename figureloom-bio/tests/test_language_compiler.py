@@ -20,9 +20,18 @@ class FigureLoomBioCompilerTests(unittest.TestCase):
             'Retain reads above 100 bases.': ('keep_strict_length', ('100',)),
             'Delete reads under 50 bases.': ('remove_shorter', ('50',)),
             'Turn DNA into RNA.': ('to_rna', ()),
+            'Turn RNA into DNA.': ('to_dna', ()),
             'Display sequence identifiers.': ('show_sequence_names', ()),
             'Detect ORFs.': ('find_open_reading_frames', ()),
             'Compute the mean for score.': ('summary_statistic', ('average', 'score')),
+            'Compute the p value for score between treated and control under group.': (
+                'permutation_p_value',
+                ('score', 'treated', 'control', 'group'),
+            ),
+            'Fill empty values under status with unknown.': (
+                'replace_empty',
+                ('status', 'unknown'),
+            ),
             'Draw a volcano from effect and p_value.': ('volcano_plot', ('effect', 'p_value')),
         }
         for source, expected in cases.items():
