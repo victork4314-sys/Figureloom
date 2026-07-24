@@ -150,3 +150,125 @@ jobs:
           test -f "$HOME/Desktop/Test FigureLoom Bio.desktop"
           test -f "$HOME/Desktop/FigureLoom Bio Test Files/quick-test.flbio"
           /opt/figureloom-bio-ci/bin/flbio quick-test /tmp/figureloom-clean-install-test
+
+  exact_published_windows:
+    if: ${{ github.event_name == 'pull_request' && github.head_ref == 'validation/exact-published-windows' }}
+    name: Exact published Windows package
+    runs-on: windows-latest
+    timeout-minutes: 35
+    steps:
+      - name: Download the exact published Windows installer
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          New-Item -ItemType Directory -Force -Path release | Out-Null
+          gh release download figureloom-bio-windows-installer `
+            --repo $env:GITHUB_REPOSITORY `
+            --pattern 'FigureLoom-Bio-Installer.exe' `
+            --dir release `
+            --clobber
+          if ($LASTEXITCODE -ne 0) { throw 'The current public Windows installer could not be downloaded.' }
+          $installer = Join-Path $PWD 'release\FigureLoom-Bio-Installer.exe'
+          if (-not (Test-Path $installer)) { throw 'The public Windows installer is missing.' }
+          $bytes = [System.IO.File]::ReadAllBytes($installer)
+          if ($bytes.Length -lt 2 -or $bytes[0] -ne 0x4D -or $bytes[1] -ne 0x5A) {
+            throw 'The public Windows download is not a valid EXE.'
+          }
+          Get-FileHash -Algorithm SHA256 $installer | Format-List
+
+      - name: Install and test the exact published Windows package
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+
+          function Run-Bounded([string]$Name, [string]$FilePath, [string[]]$Arguments, [int]$Seconds) {
+            Write-Host "START: $Name"
+            $process = Start-Process -FilePath $FilePath -ArgumentList $Arguments -PassThru
+            if (-not $process.WaitForExit($Seconds * 1000)) {
+              try { Stop-Process -Id $process.Id -Force -ErrorAction SilentlyContinue } catch {}
+              throw "$Name exceeded $Seconds seconds."
+            }
+            if ($process.ExitCode -ne 0) {
+              throw "$Name exited with code $($process.ExitCode)."
+            }
+            Write-Host "PASS: $Name"
+          }
+
+          $installer = Join-Path $PWD 'release\FigureLoom-Bio-Installer.exe'
+          Run-Bounded 'Silent installation' $installer @('/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART') 300
+
+          $app = Join-Path $env:LOCALAPPDATA 'Programs\FigureLoom Bio'
+          $ide = Join-Path $app 'FigureLoom Bio IDE.exe'
+          $testApp = Join-Path $app 'Test FigureLoom Bio.exe'
+          $updater = Join-Path $app 'Install or Update FigureLoom Bio.exe'
+          $cli = Join-Path $app 'flbio.exe'
+          foreach ($path in @($ide, $testApp, $updater, $cli)) {
+            if (-not (Test-Path $path)) { throw "The installed file is missing: $path" }
+          }
+
+          $forbiddenWeb = Get-ChildItem -Path $app -Recurse -File -ErrorAction SilentlyContinue |
+            Where-Object { $_.Extension -in @('.html','.htm','.js','.mjs') } |
+            Select-Object -First 1
+          if ($forbiddenWeb) { throw "The installed native app contains a forbidden web file: $($forbiddenWeb.FullName)" }
+
+          Run-Bounded 'Native Windows IDE startup, paint, and syntax-color self-test' $ide @('--self-test') 180
+          Run-Bounded 'Native Windows Test app self-test' $testApp @('--self-test') 240
+          Run-Bounded 'Native Windows Updater self-test' $updater @('--self-test') 180
+          Run-Bounded 'Installed CLI doctor' $cli @('doctor') 90
+
+          $quickRoot = Join-Path $env:RUNNER_TEMP 'published-figureloom-bio-windows-test'
+          Remove-Item -Recurse -Force $quickRoot -ErrorAction SilentlyContinue
+          Run-Bounded 'Installed language quick test' $cli @('quick-test', $quickRoot) 240
+          $resultFile = Join-Path $quickRoot 'TEST-RESULT.txt'
+          $quickVolcano = Join-Path $quickRoot 'quick-volcano.svg'
+          if (-not (Test-Path $resultFile)) { throw 'The installed quick test did not create TEST-RESULT.txt.' }
+          if ((Get-Content -Raw $resultFile) -notmatch 'FIGURELOOM BIO QUICK TEST PASSED') {
+            throw 'The installed quick test did not report success.'
+          }
+          if (-not (Test-Path $quickVolcano)) { throw 'The installed quick test did not create the real volcano SVG.' }
+          $quickSvg = Get-Content -Raw $quickVolcano
+          if ($quickSvg -notmatch 'data-significance="higher"' -or $quickSvg -notmatch 'data-significance="lower"') {
+            throw 'The installed volcano SVG is missing higher or lower significance groups.'
+          }
+
+          $languageDir = Join-Path $env:RUNNER_TEMP 'published-figureloom-bio-windows-known-language'
+          Remove-Item -Recurse -Force $languageDir -ErrorAction SilentlyContinue
+          New-Item -ItemType Directory -Force -Path $languageDir | Out-Null
+          Copy-Item (Join-Path $quickRoot 'measurements.csv') (Join-Path $languageDir 'measurements.csv')
+          @(
+            'Open the file measurements.csv.'
+            'Draw a vulcano chart from effect and p_value.'
+          ) | Set-Content -Encoding utf8 (Join-Path $languageDir 'known-language.flbio')
+          Push-Location $languageDir
+          try {
+            $knownOutput = & $cli run known-language.flbio 2>&1 | Out-String
+            if ($LASTEXITCODE -ne 0) { throw "Known valid vulcano wording failed:`n$knownOutput" }
+          } finally {
+            Pop-Location
+          }
+          if (-not (Test-Path (Join-Path $languageDir 'volcano-plot.svg'))) {
+            throw 'Known valid vulcano wording did not create volcano-plot.svg.'
+          }
+          if ($knownOutput -notmatch 'Volcano plot') {
+            throw 'Known valid vulcano wording did not report a Volcano plot result.'
+          }
+
+          $unknownDir = Join-Path $env:RUNNER_TEMP 'published-figureloom-bio-windows-error-explanation'
+          Remove-Item -Recurse -Force $unknownDir -ErrorAction SilentlyContinue
+          New-Item -ItemType Directory -Force -Path $unknownDir | Out-Null
+          'Create something scientific somehow.' | Set-Content -Encoding utf8 (Join-Path $unknownDir 'unknown.flbio')
+          Push-Location $unknownDir
+          try {
+            $unknownOutput = & $cli run unknown.flbio 2>&1 | Out-String
+            $unknownExit = $LASTEXITCODE
+          } finally {
+            Pop-Location
+          }
+          if ($unknownExit -eq 0) { throw 'A genuinely unknown instruction was incorrectly accepted.' }
+          if ($unknownOutput -notmatch 'What happened' -or $unknownOutput -notmatch 'How to fix it|What to do') {
+            throw "The installed error explanation is not simple and complete:`n$unknownOutput"
+          }
+
+          Write-Host 'The exact published Windows installer passed every required native and language test.'
