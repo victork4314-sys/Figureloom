@@ -25,7 +25,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@v6
 
       - name: Build candidate package
         run: |
@@ -79,7 +79,7 @@ jobs:
     runs-on: windows-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@v6
 
       - name: Set up Python
         uses: actions/setup-python@v6
@@ -113,7 +113,7 @@ jobs:
             if (-not (Test-Path (Join-Path $app $file))) { throw "$file was not installed." }
           }
           $pathEntries = @(([Environment]::GetEnvironmentVariable('Path', 'User') -split ';') | Where-Object {
-            $_.TrimEnd('\\') -ieq $app.TrimEnd('\\')
+            $_.TrimEnd('\') -ieq $app.TrimEnd('\')
           })
           if ($pathEntries.Count -ne 1) { throw "FigureLoom Bio appeared $($pathEntries.Count) times in the user PATH after repair." }
 
@@ -129,7 +129,7 @@ jobs:
           if (Test-Path $app) { throw 'Application folder remained after uninstall.' }
           if (-not (Test-Path $sentinel)) { throw 'Uninstall removed a user project.' }
           $pathAfter = @(([Environment]::GetEnvironmentVariable('Path', 'User') -split ';') | Where-Object {
-            $_.TrimEnd('\\') -ieq $app.TrimEnd('\\')
+            $_.TrimEnd('\') -ieq $app.TrimEnd('\')
           })
           if ($pathAfter.Count -ne 0) { throw 'Uninstall left FigureLoom Bio in the user PATH.' }
 
@@ -158,7 +158,7 @@ jobs:
     runs-on: ${{ matrix.runner }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@v6
 
       - name: Set up Python
         uses: actions/setup-python@v6
