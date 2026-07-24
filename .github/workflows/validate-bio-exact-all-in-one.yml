@@ -27,5 +27,26 @@ jobs:
           node --check ide/ide-control-flow-runtime.js
           node --check scripts/validate-bio-exact-all-in-one.mjs
 
-      - name: Run the exact all-in-one program through the production browser runtime
-        run: node scripts/validate-bio-exact-all-in-one.mjs
+      - name: Capture the exact all-in-one browser run
+        id: exact_run
+        shell: bash
+        run: |
+          set +e
+          node scripts/validate-bio-exact-all-in-one.mjs > exact-all-in-one.log 2>&1
+          status=$?
+          echo "status=$status" >> "$GITHUB_OUTPUT"
+          exit 0
+
+      - name: Upload the complete all-in-one report
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: exact-all-in-one-report-${{ github.run_id }}
+          path: exact-all-in-one.log
+          if-no-files-found: error
+
+      - name: Require the exact all-in-one program to pass
+        if: steps.exact_run.outputs.status != '0'
+        run: |
+          cat exact-all-in-one.log
+          exit 1
