@@ -21,6 +21,8 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
+          # The newest run contains the bounded normal Test-app launch. Older
+          # publishers are cancelled only to release the two hosted Mac runners.
           gh run list \
             --repo "$GITHUB_REPOSITORY" \
             --workflow publish-fixed-macos-installers.yml \
