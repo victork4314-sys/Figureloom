@@ -11,6 +11,7 @@ from .capabilities import expand_capabilities
 from .control_flow import run_flow_program, uses_control_flow
 from .desktop_tools import create_test_files, run_quick_test
 from .errors import FigureLoomBioError
+from .language_compiler import VOCABULARY
 from .language_manifest import language_manifest
 from .parser import parse
 from .runtime import Runner
@@ -29,6 +30,13 @@ OPTIONAL_TOOLS = (
     "kraken2",
     "mob_recon",
 )
+
+VOCABULARY_GROUPS = {
+    "operations": ("verbs", "Operations"),
+    "terms": ("terms", "Biology and data terms"),
+    "roles": ("roles", "Role words"),
+    "comparisons": ("comparators", "Comparisons"),
+}
 
 
 def run_program(path: Path, *, allow_tools: bool = False) -> int:
@@ -96,7 +104,50 @@ def translate_program(path: Path, target: str, output: Path | None) -> int:
     return 0
 
 
-def show_sentences(theme_name: str | None = None) -> int:
+def _vocabulary_forms() -> set[str]:
+    forms: set[str] = set()
+    for key, _ in VOCABULARY_GROUPS.values():
+        for values in VOCABULARY.get(key, {}).values():
+            forms.update(str(value) for value in values)
+    return forms
+
+
+def show_words(group_name: str | None = None) -> int:
+    if group_name:
+        wanted = group_name.strip().casefold()
+        selected = next(
+            (
+                value
+                for key, value in VOCABULARY_GROUPS.items()
+                if key.casefold() == wanted or value[1].casefold() == wanted
+            ),
+            None,
+        )
+        if selected is None:
+            available = "\n".join(f"- {title}" for _, title in VOCABULARY_GROUPS.values())
+            print(
+                f"I could not find the {group_name} vocabulary group.\n\nAvailable groups:\n{available}",
+                file=sys.stderr,
+            )
+            return 1
+        key, title = selected
+        print(title)
+        print()
+        for concept, forms in VOCABULARY.get(key, {}).items():
+            print(f"{concept.replace('_', ' ')}: {', '.join(str(value) for value in forms)}")
+        return 0
+
+    print("FigureLoom Bio words and terms\n")
+    for key, title in VOCABULARY_GROUPS.values():
+        concepts = VOCABULARY.get(key, {})
+        forms = {str(value) for values in concepts.values() for value in values}
+        print(f"{title}: {len(concepts)} concepts, {len(forms)} forms")
+    print(f"\n{len(_vocabulary_forms())} unique word and term forms are built into the compiler vocabulary.")
+    print("They combine through the grammar. They are not a list of complete allowed sentences.")
+    return 0
+
+
+def show_examples(theme_name: str | None = None) -> int:
     manifest = language_manifest()
     if theme_name:
         wanted = theme_name.strip().casefold()
@@ -111,7 +162,7 @@ def show_sentences(theme_name: str | None = None) -> int:
         if theme is None:
             available = "\n".join(f"- {item.title}" for item in manifest.themes)
             print(
-                f"I could not find the {theme_name} theme.\n\nAvailable themes:\n{available}",
+                f"I could not find the {theme_name} example theme.\n\nAvailable themes:\n{available}",
                 file=sys.stderr,
             )
             return 1
@@ -121,12 +172,12 @@ def show_sentences(theme_name: str | None = None) -> int:
             print(command.example)
         return 0
 
-    print("FigureLoom Bio built-in sentence themes\n")
+    print("FigureLoom Bio example themes\n")
     for theme in manifest.themes:
         count = len(manifest.commands_for_theme(theme.id))
         print(f"{theme.title} ({count})")
-    print(f"\n{len(manifest.commands)} canonical built-in entries are listed in the shared language manifest.")
-    print("Everything listed is part of one language. Nothing needs to be installed or enabled inside a program.")
+    print(f"\n{len(manifest.commands)} examples are available for learning and the visual builder.")
+    print("Examples are not a whitelist and do not define which programs are legal.")
     return 0
 
 
@@ -141,7 +192,8 @@ def doctor() -> int:
     print(f"Version: {installed_version}")
     print(f"Python: {platform.python_version()}")
     print(f"Package: {Path(__file__).resolve().parent}")
-    print(f"Language manifest: {manifest.version} ({len(manifest.commands)} entries)")
+    print(f"Compiler vocabulary: {VOCABULARY.get('version', 1)} ({len(_vocabulary_forms())} word and term forms)")
+    print(f"Learning examples: {len(manifest.commands)}")
     print("Translation targets: " + ", ".join(TARGET_LABELS[key] for key in TARGET_LABELS))
     print("\nOptional installed tools:")
     for tool in OPTIONAL_TOOLS:
@@ -194,11 +246,17 @@ def build_parser() -> argparse.ArgumentParser:
     translate.add_argument("--to", required=True, choices=tuple(TARGET_LABELS))
     translate.add_argument("--output", "-o", type=Path)
 
-    sentences = subcommands.add_parser(
-        "sentences",
-        help="List built-in sentence themes or print one theme.",
+    words = subcommands.add_parser(
+        "words",
+        help="List compiler words and terms or print one vocabulary group.",
     )
-    sentences.add_argument("theme", nargs="?", help="Theme name, such as Microbiology")
+    words.add_argument("group", nargs="?", help="Operations, terms, roles, or comparisons")
+
+    examples = subcommands.add_parser(
+        "examples",
+        help="List example themes or print one theme.",
+    )
+    examples.add_argument("theme", nargs="?", help="Theme name, such as Microbiology")
 
     test_files = subcommands.add_parser(
         "test-files",
@@ -217,9 +275,10 @@ def build_parser() -> argparse.ArgumentParser:
         help="Verify the installation and show optional bioinformatics tools.",
     )
 
-    # Older scripts may still call this name. It now shows the same built-in manifest.
-    legacy = subcommands.add_parser("addons", help=argparse.SUPPRESS)
-    legacy.add_argument("theme", nargs="?")
+    legacy_sentences = subcommands.add_parser("sentences", help=argparse.SUPPRESS)
+    legacy_sentences.add_argument("theme", nargs="?")
+    legacy_addons = subcommands.add_parser("addons", help=argparse.SUPPRESS)
+    legacy_addons.add_argument("theme", nargs="?")
     return parser
 
 
@@ -230,8 +289,12 @@ def main() -> None:
         raise SystemExit(run_program(arguments.program, allow_tools=arguments.allow_tools))
     if arguments.command == "translate":
         raise SystemExit(translate_program(arguments.program, arguments.to, arguments.output))
+    if arguments.command == "words":
+        raise SystemExit(show_words(arguments.group))
+    if arguments.command == "examples":
+        raise SystemExit(show_examples(arguments.theme))
     if arguments.command in {"sentences", "addons"}:
-        raise SystemExit(show_sentences(arguments.theme))
+        raise SystemExit(show_examples(arguments.theme))
     if arguments.command == "test-files":
         raise SystemExit(make_test_files(arguments.folder))
     if arguments.command == "quick-test":
@@ -239,7 +302,6 @@ def main() -> None:
     if arguments.command == "doctor":
         raise SystemExit(doctor())
     parser.print_help()
-    raise SystemExit(0)
 
 
 if __name__ == "__main__":

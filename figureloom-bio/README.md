@@ -79,14 +79,14 @@ Open the IDE at `https://figureloom.org/ide/`.
 The browser IDE includes:
 
 - Text editing and visual Blocks for the same `.flbio` program.
-- A searchable Sentences library generated from the canonical language catalog.
+- A searchable Words & terms library generated from the compiler vocabulary.
 - Real browser execution for tables, FASTA, FASTQ, paired reads, microbiology examples, decisions, loops, recipes, alignment, variants, genes, primers, trees, statistics, and SVG figures.
 - Separate readable result cards.
 - Generated files in the Files panel.
 - Translation to nine target languages and workflow formats.
 - Large-FASTA storage and background processing paths.
 
-The editor does not color a sentence as valid unless the release tests also exercise its parser or runtime path. The same catalog drives Sentences, Blocks, terminal help, documentation, and parity tests.
+The editor colors a line as valid only when the compiler can parse its words and grammar and the runtime has an execution path. The vocabulary drives Words & terms; examples drive the builder and tutorials.
 
 ## Easy Linux and Kasm installation
 
@@ -124,9 +124,9 @@ The setup does not silently install the optional external bioinformatics collect
 ```bash
 flbio doctor
 flbio quick-test
-flbio sentences
-flbio sentences statistics
-flbio sentences figures
+flbio words
+flbio words terms
+flbio words operations
 ```
 
 ### Windows PowerShell
