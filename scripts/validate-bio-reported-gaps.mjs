@@ -62,6 +62,8 @@ const mixedSmallProgram = [
   'Calculate sequence statistics.',
   'If true:',
   '    Warning The mixed test worked.',
+  'End the program.',
+  'Print This line must never appear.',
 ].join('\n');
 
 if (streamingResult({}, ['example-samples.csv','example-reads.fastq','bacteria-reference.fasta'], mixedSmallProgram)) {
@@ -106,9 +108,25 @@ for (const sentence of [
   }
 }
 
+const stopSource = 'if(/^(?:Stop|End|Quit) the program$/i.test(t))throw new Stop';
+if (!patchedRuntime.includes(stopSource)) {
+  fail('The core runtime still relies on the wording converter for End the program.');
+}
+const stopPattern = /^(?:Stop|End|Quit) the program$/i;
+for (const sentence of ['Stop the program', 'End the program', 'Quit the program']) {
+  if (!stopPattern.test(sentence)) fail(`The core stop parser rejected: ${sentence}`);
+}
+
+const builtin = read('ide/ide-builtin-language-support.js');
+for (const sentence of ['Stop the program.', 'End the program.', 'Quit the program.']) {
+  if (!builtin.includes('(?:Stop|End|Quit) the program')) {
+    fail(`The editor highlighter does not recognize: ${sentence}`);
+  }
+}
+
 const html = read('ide/index.html');
 if (!html.includes('ide-large-file-vault-v2.js?v=1')) fail('The IDE is not loading the fixed large-file router.');
-if (!html.includes('ide-control-flow-runtime.js?v=7')) fail('The IDE did not bump the control-flow cache version.');
-if (!html.includes('ide-builtin-language-support.js?v=4')) fail('The IDE did not bump the Warning highlighter cache version.');
+if (!html.includes('ide-control-flow-runtime.js?v=8')) fail('The IDE did not bump the control-flow cache version.');
+if (!html.includes('ide-builtin-language-support.js?v=5')) fail('The IDE did not bump the program-flow highlighter cache version.');
 
-console.log('Small mixed FASTA programs stay in the complete runtime, genuine huge FASTA files still stream, and plain Warning runs directly in the core browser language.');
+console.log('Small mixed FASTA programs stay in the complete runtime; plain Warning, End, and Quit run directly in the core browser language; and genuine huge FASTA files still stream.');

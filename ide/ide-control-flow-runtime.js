@@ -44,6 +44,10 @@
         "if(m=t.match(/^Show a warning(?: saying (.+))?$/i))",
         "if(m=t.match(/^(?:Show a warning(?: saying)?|Warning|Warn)(?:(?::|\\s)+(.+))?$/i))",
       ],
+      [
+        "if(/^Stop the program$/i.test(t))throw new Stop",
+        "if(/^(?:Stop|End|Quit) the program$/i.test(t))throw new Stop",
+      ],
     ];
 
     let patched = source;
