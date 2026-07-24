@@ -115,10 +115,42 @@
     return String(source).split(/\r?\n/).map(normalizeEverydayLine).join('\n');
   }
 
+  function compileBeforeRecognition(source) {
+    const compiler = window.FigureLoomBioCompiler;
+    if (!compiler?.compileSource) return String(source);
+
+    const saved = {
+      aliases:window.FigureLoomBioLanguageAliases,
+      complete:window.FigureLoomBioCompleteLanguage,
+      current:window.FigureLoomBioCurrentFile,
+      recognizers:window.FigureLoomBioStatementRecognizers,
+      manifest:window.FigureLoomBioLanguage,
+    };
+
+    try {
+      // These helpers contain broad recognizers used to choose a runtime. They
+      // must not prevent the grammar compiler from turning free-form wording
+      // into the canonical instruction that the chosen runtime executes.
+      window.FigureLoomBioLanguageAliases = null;
+      window.FigureLoomBioCompleteLanguage = null;
+      window.FigureLoomBioCurrentFile = null;
+      window.FigureLoomBioStatementRecognizers = [];
+      window.FigureLoomBioLanguage = null;
+      return compiler.compileSource(source);
+    } finally {
+      window.FigureLoomBioLanguageAliases = saved.aliases;
+      window.FigureLoomBioCompleteLanguage = saved.complete;
+      window.FigureLoomBioCurrentFile = saved.current;
+      window.FigureLoomBioStatementRecognizers = saved.recognizers;
+      window.FigureLoomBioLanguage = saved.manifest;
+    }
+  }
+
   function normalizeSource(source) {
     const everyday = normalizeEverydaySource(source);
     const headers = normalizeBlockHeaders(everyday);
-    return window.FigureLoomBioCompiler?.compileSource?.(headers) || headers;
+    const aliases = window.FigureLoomBioLanguageAliases?.normalizeSource?.(headers) || headers;
+    return compileBeforeRecognition(aliases);
   }
 
   function compileTemporarily() {
@@ -167,11 +199,19 @@
     compileTemporarily();
   }, true);
 
+  const freeformRecognizer = (source) => {
+    if (!compilerReady()) return false;
+    try { return normalizeSource(source) !== String(source); } catch { return false; }
+  };
+  window.FigureLoomBioStatementRecognizers = window.FigureLoomBioStatementRecognizers || [];
+  window.FigureLoomBioStatementRecognizers.push(freeformRecognizer);
+
   window.FigureLoomBioLogicCompiler = Object.freeze({
     simplifyCondition,
     normalizeBlockHeaders,
     normalizeEverydayLine,
     normalizeEverydaySource,
+    compileBeforeRecognition,
     normalizeSource,
   });
 })();
