@@ -1,0 +1,120 @@
+name: Validate exact native desktop
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'figureloom-bio/**'
+      - '.github/workflows/validate-native-desktop-exact.yml'
+      - '.github/native-desktop-exact-validation.txt'
+
+permissions:
+  contents: read
+
+jobs:
+  windows_exact_desktop:
+    name: Windows exact web layout and real Run button
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+
+      - name: Install native desktop dependencies
+        shell: pwsh
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install PySide6
+          python -m pip install -e .\figureloom-bio
+
+      - name: Check exact layout and preserved desktop functions
+        shell: pwsh
+        run: |
+          python -m unittest discover -s figureloom-bio\tests -p 'test_native_web_parity.py' -v
+          python -m unittest discover -s figureloom-bio\tests -p 'test_native_run_safety.py' -v
+
+      - name: Open both themes and click the real Run button
+        shell: pwsh
+        env:
+          QT_QPA_PLATFORM: offscreen
+        run: |
+          @'
+          import os
+          import runpy
+          from pathlib import Path
+
+          os.environ['QT_QPA_PLATFORM'] = 'offscreen'
+          runpy.run_path(str(Path('figureloom-bio/platform/ide_entry.py')), run_name='figureloom_native_validation')
+
+          from PySide6.QtCore import QSettings
+          from PySide6.QtWidgets import QApplication, QFrame, QTabWidget
+          from figureloom_bio import native_ide
+
+          settings = QSettings('FigureLoom', 'FigureLoom Bio IDE')
+          settings.clear()
+          app = QApplication.instance() or QApplication(['FigureLoom Bio Desktop', '--exact-validation'])
+
+          with native_ide.tempfile_workspace() as workspace:
+              window = native_ide.NativeIdeWindow(workspace)
+              window.resize(1500, 900)
+              window.show()
+              app.processEvents()
+
+              header = window.findChild(QFrame, 'ideHeader')
+              toolbar = window.findChild(QFrame, 'ideToolbar')
+              files = window.findChild(QFrame, 'filesPanel')
+              results = window.findChild(QFrame, 'resultsPanel')
+              tabs = window.findChild(QTabWidget, 'editorModes')
+              if None in (header, toolbar, files, results, tabs):
+                  raise RuntimeError('The exact desktop structure is incomplete.')
+
+              structures = []
+              for dark, required in (
+                  (False, ('#f4f7f6', '#2f7468', '#fbfdfc')),
+                  (True, ('#181d1c', '#78c4b5', '#1f2624')),
+              ):
+                  window.dark = dark
+                  window.apply_theme()
+                  app.processEvents()
+                  style = window.styleSheet().casefold()
+                  for color in required:
+                      if color not in style:
+                          raise RuntimeError(f'Missing exact web theme color {color} in {"dark" if dark else "light"} mode.')
+                  structure = (
+                      header.height(),
+                      toolbar.height(),
+                      files.width(),
+                      results.width(),
+                      tabs.tabBar().isVisible(),
+                  )
+                  structures.append(structure)
+                  if header.height() != 62 or toolbar.height() != 70:
+                      raise RuntimeError(f'Header or toolbar does not match the web IDE: {structure}')
+                  if files.width() != 230 or not 320 <= results.width() <= 420:
+                      raise RuntimeError(f'Workspace columns do not match the web IDE: {structure}')
+                  if tabs.tabBar().isVisible():
+                      raise RuntimeError('Native Text/Blocks tabs changed the visible web layout.')
+
+              if structures[0] != structures[1]:
+                  raise RuntimeError(f'Light and dark mode use different structures: {structures}')
+
+              workspace.active_file = 'example.flbio'
+              workspace.save()
+              window.refresh_all()
+              window.run_button.click()
+              app.processEvents()
+              if window.run_status.text() != 'Finished':
+                  raise RuntimeError(f'The real eight-line program stayed at {window.run_status.text()!r}.')
+              if not window._last_sections:
+                  raise RuntimeError('The real Run button produced no visible result sections.')
+              print('EXACT LIGHT MODE PASSED')
+              print('EXACT DARK MODE PASSED')
+              print('REAL EIGHT-LINE RUN BUTTON PASSED')
+              window.close()
+              app.processEvents()
+          '@ | python -
