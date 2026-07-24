@@ -14,11 +14,25 @@ const editor = {
     this.selectionEnd = end;
   },
 };
+const clickListeners = [];
 const runButton = {
-  addEventListener() {},
-  click() {},
+  addEventListener(type, listener) {
+    if (type === 'click') clickListeners.push(listener);
+  },
+  click() {
+    const event = {
+      stopped:false,
+      preventDefault() {},
+      stopImmediatePropagation() { this.stopped = true; },
+    };
+    for (const listener of clickListeners) {
+      listener(event);
+      if (event.stopped) break;
+    }
+  },
 };
 
+let releaseVocabulary;
 globalThis.window = globalThis;
 globalThis.document = {
   getElementById(id) {
@@ -35,10 +49,12 @@ globalThis.CustomEvent = class CustomEvent {
   }
 };
 globalThis.dispatchEvent = () => true;
-globalThis.fetch = async () => ({
-  ok:true,
-  status:200,
-  async json() { return vocabulary; },
+globalThis.fetch = () => new Promise((resolve) => {
+  releaseVocabulary = () => resolve({
+    ok:true,
+    status:200,
+    async json() { return vocabulary; },
+  });
 });
 
 // Simulate one instruction already owned by the established browser grammar.
@@ -47,11 +63,32 @@ globalThis.FigureLoomBioLanguageAliases = {
     return core === 'Convert the RNA to DNA';
   },
 };
-
 globalThis.FigureLoomBioStatementRecognizers = [];
 
 vm.runInThisContext(compilerSource, { filename:'ide-language-compiler.js' });
+
+// Press Run before the vocabulary request resolves. The first click must be held,
+// then the replay must expose compiled source to downstream runtime listeners.
+let runtimeSaw = null;
+runButton.addEventListener('click', () => { runtimeSaw = editor.value; });
+editor.value = 'Please load samples.csv.';
+editor.selectionStart = editor.value.length;
+editor.selectionEnd = editor.value.length;
+runButton.click();
+assert.equal(runtimeSaw, null, 'A cold-load click must not reach the runtime early.');
+releaseVocabulary();
 const compiler = await globalThis.FigureLoomBioCompilerReady;
+assert.equal(
+  runtimeSaw,
+  'Open the file samples.csv.',
+  'The cold-load replay must compile free-form source before execution.',
+);
+await Promise.resolve();
+assert.equal(
+  editor.value,
+  'Please load samples.csv.',
+  'Temporary lowering must restore the user-written source after execution.',
+);
 
 assert.equal(
   compiler.compileLine('Convert the RNA to DNA.'),
@@ -102,4 +139,4 @@ assert.equal(program, [
   'Save the result as clean.csv.',
 ].join('\n'));
 
-console.log('Browser compiler accepts free-form programs without redefining established grammar.');
+console.log('Browser compiler accepts free-form programs, preserves established grammar, and safely replays cold-load runs.');
