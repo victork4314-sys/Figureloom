@@ -21,23 +21,15 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          run_id=30092415672
           intel_job=89478464392
-          gh run view "$run_id" \
-            --repo "$GITHUB_REPOSITORY" \
-            --json databaseId,status,conclusion,headSha,event,createdAt,updatedAt,url,jobs \
-            > /tmp/macos-run.json
-          gh run view "$run_id" \
-            --repo "$GITHUB_REPOSITORY" \
-            --job "$intel_job" \
-            --log > /tmp/intel-full.log 2>&1 || true
-          tail -n 180 /tmp/intel-full.log > /tmp/intel-tail.log
+          gh api "repos/$GITHUB_REPOSITORY/actions/jobs/$intel_job/logs" > /tmp/intel-log.bin
+          if unzip -t /tmp/intel-log.bin >/dev/null 2>&1; then
+            unzip -p /tmp/intel-log.bin > /tmp/intel-full.log
+          else
+            cp /tmp/intel-log.bin /tmp/intel-full.log
+          fi
+          tail -n 220 /tmp/intel-full.log > /tmp/intel-tail.log
           {
-            echo 'Independent Mac publisher:'
-            echo '```json'
-            cat /tmp/macos-run.json
-            echo '```'
-            echo
             echo 'Intel failed-job tail:'
             echo '```text'
             cat /tmp/intel-tail.log
