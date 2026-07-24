@@ -134,8 +134,8 @@ function programFor(label, sentence) {
   if (/^Open the file |^Open the files |^Merge the files /i.test(sentence)) return `If true:\n    ${sentence}`;
 
   let opening = '';
-  if (/\.csv\b/i.test(sentence) || tableWords.test(sentence)) opening = 'Open the file samples.csv.\n';
-  else if (fastqWords.test(sentence)) opening = 'Open the file reads.fastq.\n';
+  if (fastqWords.test(sentence)) opening = 'Open the file reads.fastq.\n';
+  else if (/\.csv\b/i.test(sentence) || tableWords.test(sentence)) opening = 'Open the file samples.csv.\n';
   else if (sequenceWords.test(sentence) || /(?:result|file)/i.test(sentence)) opening = 'Open the file sequences.fasta.\n';
   return `${opening}If true:\n    ${sentence}`;
 }
