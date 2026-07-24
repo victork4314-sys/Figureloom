@@ -30,10 +30,30 @@ jobs:
             figureloom-bio/figureloom_bio/language_diagnostics.py \
             figureloom-bio/figureloom_bio/cli.py
 
-      - name: Run compiler regression tests
+      - name: Capture compiler regression tests
+        id: compiler_tests
+        shell: bash
         run: |
+          set +e
           cd figureloom-bio
-          python3 -m unittest tests.test_language_compiler tests.test_parser_explanations -v
+          python3 -m unittest tests.test_language_compiler tests.test_parser_explanations -v > ../compiler-test.log 2>&1
+          status=$?
+          echo "status=$status" >> "$GITHUB_OUTPUT"
+          exit 0
+
+      - name: Upload compiler test log
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: compiler-test-log
+          path: compiler-test.log
+          if-no-files-found: error
+
+      - name: Require compiler regression tests
+        if: steps.compiler_tests.outputs.status != '0'
+        run: |
+          cat compiler-test.log
+          exit 1
 
       - name: Run full FigureLoom Bio tests
         run: |
