@@ -149,6 +149,7 @@ def install_macos_test_safety(platform_qt_module: Any) -> None:
             self.finished.emit(*execute_installed_test(self.destination))
 
     original_test_finished = platform_qt_module.TestWindow._test_finished
+    original_thread_finished = platform_qt_module.TestWindow._thread_finished
 
     def deterministic_self_test() -> int:
         """Prove the installed command and real Test window on the UI thread."""
@@ -173,9 +174,14 @@ def install_macos_test_safety(platform_qt_module: Any) -> None:
         app.processEvents()
         return 0
 
-    @Slot(bool, str, str)
-    def finish_and_exit_headless(self: Any, success: bool, report: str, folder: str) -> None:
-        original_test_finished(self, success, report, folder)
+    @Slot()
+    def finish_thread_and_exit_headless(self: Any) -> None:
+        # QThread.finished reaches this callback only after the worker has emitted
+        # its result and the thread event loop has stopped. Clear the references
+        # first, then let an offscreen automatic test close the application. Quitting
+        # from _test_finished was too early and could tear down Qt while its worker
+        # thread was still finishing, causing a macOS segmentation fault.
+        original_thread_finished(self)
         if os.environ.get("QT_QPA_PLATFORM", "").casefold() != "offscreen":
             return
         app = platform_qt_module.QApplication.instance()
@@ -183,10 +189,9 @@ def install_macos_test_safety(platform_qt_module: Any) -> None:
             platform_qt_module.QTimer.singleShot(0, app.quit)
 
     platform_qt_module.TestWorker = MacOSTestWorker
+    platform_qt_module.TestWindow._thread_finished = finish_thread_and_exit_headless
     if "--self-test" in sys.argv:
         platform_qt_module.test_window_self_test = deterministic_self_test
-    else:
-        platform_qt_module.TestWindow._test_finished = finish_and_exit_headless
     platform_qt_module._macos_test_safety_installed = True
 
 
