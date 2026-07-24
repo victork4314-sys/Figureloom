@@ -1,4 +1,5 @@
 name: Publish proven FigureLoom Bio Windows installer
+# Re-trigger after this workflow already exists on the default branch.
 
 on:
   push:
