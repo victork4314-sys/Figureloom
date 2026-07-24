@@ -1,22 +1,431 @@
-name: Build FigureLoom Bio Windows and macOS installers
+name: Build and verify FigureLoom Bio desktop installers
 
 on:
+  pull_request:
+    paths:
+      - 'figureloom-bio/**'
+      - '.github/workflows/build-bio-cross-platform-installers.yml'
+      - 'wiki/FigureLoom-Bio-Easy-Install.md'
+      - 'wiki/_Sidebar.md'
   push:
     branches: [main]
     paths:
+      - 'figureloom-bio/**'
       - '.github/workflows/build-bio-cross-platform-installers.yml'
+      - 'wiki/FigureLoom-Bio-Easy-Install.md'
+      - 'wiki/_Sidebar.md'
   workflow_dispatch:
 
 permissions:
-  contents: read
+  actions: read
+  contents: write
 
 concurrency:
-  group: figureloom-bio-cross-platform-${{ github.ref }}
+  group: figureloom-bio-desktop-release-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  queue_reset:
-    if: false
-    runs-on: ubuntu-latest
+  windows:
+    runs-on: windows-latest
+    timeout-minutes: 90
     steps:
-      - run: echo 'This temporary no-run commit cancels the stale heavyweight release build so the proven Windows publisher can start.'
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+
+      - name: Build Windows installer
+        shell: pwsh
+        run: ./figureloom-bio/windows/build-installer.ps1 -OutputDir "$env:GITHUB_WORKSPACE\dist"
+
+      - name: Install and test the exact Windows installer
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $trace = "$env:RUNNER_TEMP\figureloom-windows-installed-test.txt"
+          "FIGURELOOM BIO INSTALLED WINDOWS TEST`n" | Set-Content -Path $trace -Encoding utf8
+          $failures = [System.Collections.Generic.List[string]]::new()
+
+          function Record-DesktopSelfTest {
+            param(
+              [string]$Name,
+              [string]$Executable
+            )
+            "START: $Name`nExecutable: $Executable" | Add-Content -Path $trace -Encoding utf8
+            try {
+              $process = Start-Process -FilePath $Executable -ArgumentList '--self-test' -Wait -PassThru
+              "EXIT: $($process.ExitCode)`n" | Add-Content -Path $trace -Encoding utf8
+              if ($process.ExitCode -ne 0) {
+                $script:failures.Add("$Name exited with $($process.ExitCode)")
+              }
+            } catch {
+              "START FAILURE: $($_.Exception.Message)`n" | Add-Content -Path $trace -Encoding utf8
+              $script:failures.Add("$Name could not start: $($_.Exception.Message)")
+            }
+          }
+
+          function Record-ConsoleCheck {
+            param(
+              [string]$Name,
+              [string]$Executable,
+              [string[]]$Arguments
+            )
+            "START: $Name`nExecutable: $Executable`nArguments: $($Arguments -join ' ')" | Add-Content -Path $trace -Encoding utf8
+            try {
+              $output = & $Executable @Arguments 2>&1
+              $exitCode = $LASTEXITCODE
+              $output | Out-String | Add-Content -Path $trace -Encoding utf8
+              "EXIT: $exitCode`n" | Add-Content -Path $trace -Encoding utf8
+              if ($exitCode -ne 0) {
+                $script:failures.Add("$Name exited with $exitCode")
+              }
+            } catch {
+              $_ | Out-String | Add-Content -Path $trace -Encoding utf8
+              "START FAILURE: $($_.Exception.Message)`n" | Add-Content -Path $trace -Encoding utf8
+              $script:failures.Add("$Name could not run: $($_.Exception.Message)")
+            }
+          }
+
+          $installer = "$env:GITHUB_WORKSPACE\dist\FigureLoom-Bio-Installer.exe"
+          if (-not (Test-Path $installer)) { throw 'The Windows installer was not built.' }
+          Start-Process -FilePath $installer -ArgumentList '/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART' -Wait
+          $app = Join-Path $env:LOCALAPPDATA 'Programs\FigureLoom Bio'
+          foreach ($file in @('flbio.exe','FigureLoom Bio IDE.exe','Test FigureLoom Bio.exe','Install or Update FigureLoom Bio.exe')) {
+            if (-not (Test-Path (Join-Path $app $file))) { throw "$file was not installed." }
+          }
+
+          $forbidden = Get-ChildItem -Path $app -Recurse -File | Where-Object { $_.Extension -in '.html', '.htm', '.js', '.mjs' }
+          if ($forbidden) { throw "Installed Windows app contains forbidden web files: $($forbidden.FullName -join ', ')" }
+
+          Record-DesktopSelfTest 'Native Windows IDE self-test' "$app\FigureLoom Bio IDE.exe"
+          Record-DesktopSelfTest 'Windows test launcher self-test' "$app\Test FigureLoom Bio.exe"
+          Record-DesktopSelfTest 'Windows updater self-test' "$app\Install or Update FigureLoom Bio.exe"
+          Record-ConsoleCheck 'Windows CLI doctor' "$app\flbio.exe" @('doctor')
+          Record-ConsoleCheck 'Windows language quick test' "$app\flbio.exe" @('quick-test', "$env:RUNNER_TEMP\figureloom-bio-windows-test")
+
+          $quickFolder = "$env:RUNNER_TEMP\figureloom-bio-windows-test"
+          $volcano = Join-Path $quickFolder 'quick-volcano.svg'
+          $result = Join-Path $quickFolder 'TEST-RESULT.txt'
+          if (-not (Test-Path $volcano)) { $failures.Add('The real Windows volcano plot was not created.') }
+          if (-not (Test-Path $result)) { $failures.Add('The Windows quick-test result was not created.') }
+          if ((Test-Path $result) -and -not (Select-String -Path $result -SimpleMatch 'FIGURELOOM BIO QUICK TEST PASSED' -Quiet)) {
+            $failures.Add('The Windows quick test did not report success.')
+          }
+
+          $desktopProgram = "$env:USERPROFILE\Desktop\FigureLoom Bio Test Files\quick-test.flbio"
+          if (-not (Test-Path $desktopProgram)) { $failures.Add('Desktop test files were not installed.') }
+
+          Get-Content -Path $trace | Write-Host
+          if ($failures.Count -gt 0) {
+            throw ('Installed Windows checks failed: ' + ($failures -join '; '))
+          }
+
+      - name: Upload Windows install trace
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: FigureLoom-Bio-Windows-Install-Trace
+          path: ${{ runner.temp }}/figureloom-windows-installed-test.txt
+          if-no-files-found: warn
+
+      - name: Upload Windows installer
+        uses: actions/upload-artifact@v7
+        with:
+          name: FigureLoom-Bio-Windows-Installer
+          path: dist/FigureLoom-Bio-Installer.exe
+          if-no-files-found: error
+
+  macos_apple_silicon:
+    runs-on: macos-15
+    timeout-minutes: 90
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+
+      - name: Build Apple Silicon installer
+        env:
+          FIGURELOOM_MAC_ARCH_LABEL: arm64
+        run: bash figureloom-bio/macos/build-installer.sh dist
+
+      - name: Install and test the exact Apple Silicon package
+        run: |
+          set -euo pipefail
+          exec > >(tee "$RUNNER_TEMP/figureloom-apple-silicon-install-test.log") 2>&1
+          printf '%s\n' "$USER" | sudo tee /var/tmp/figureloom-bio-target-user >/dev/null
+          set +e
+          sudo installer -verboseR -pkg dist/FigureLoom-Bio-Installer-macOS-Apple-Silicon.pkg -target /
+          install_status=$?
+          set -e
+          sudo tail -n 400 /var/log/install.log > "$RUNNER_TEMP/figureloom-apple-silicon-system-installer.log" 2>&1 || true
+          test "$install_status" -eq 0
+          test -x /usr/local/bin/flbio
+          test -d '/Applications/FigureLoom Bio IDE.app'
+          test -d '/Applications/Test FigureLoom Bio.app'
+          test -d '/Applications/Install or Update FigureLoom Bio.app'
+          file '/Applications/FigureLoom Bio IDE.app/Contents/MacOS/FigureLoom Bio IDE' | grep -q 'arm64'
+          if find '/Applications/FigureLoom Bio IDE.app' -type f \( -iname '*.html' -o -iname '*.htm' -o -iname '*.js' -o -iname '*.mjs' \) -print -quit | grep -q .; then
+            echo 'Installed Apple Silicon IDE contains forbidden web files.' >&2
+            exit 1
+          fi
+          QT_QPA_PLATFORM=offscreen '/Applications/FigureLoom Bio IDE.app/Contents/MacOS/FigureLoom Bio IDE' --self-test
+          QT_QPA_PLATFORM=offscreen '/Applications/Test FigureLoom Bio.app/Contents/MacOS/Test FigureLoom Bio' --self-test
+          QT_QPA_PLATFORM=offscreen '/Applications/Install or Update FigureLoom Bio.app/Contents/MacOS/Install or Update FigureLoom Bio' --self-test
+          /usr/local/bin/flbio doctor
+          /usr/local/bin/flbio quick-test "$RUNNER_TEMP/figureloom-bio-macos-arm-test"
+          grep -q 'FIGURELOOM BIO QUICK TEST PASSED' "$RUNNER_TEMP/figureloom-bio-macos-arm-test/TEST-RESULT.txt"
+          test -s "$RUNNER_TEMP/figureloom-bio-macos-arm-test/quick-volcano.svg"
+          grep -q 'data-significance="higher"' "$RUNNER_TEMP/figureloom-bio-macos-arm-test/quick-volcano.svg"
+          grep -q 'data-significance="lower"' "$RUNNER_TEMP/figureloom-bio-macos-arm-test/quick-volcano.svg"
+
+          language_dir="$RUNNER_TEMP/figureloom-bio-known-language-arm"
+          mkdir -p "$language_dir"
+          cp "$HOME/Desktop/FigureLoom Bio Test Files/measurements.csv" "$language_dir/measurements.csv"
+          printf '%s\n' \
+            'Open the file measurements.csv.' \
+            'Draw a vulcano chart from effect and p_value.' \
+            > "$language_dir/known-language.flbio"
+          (cd "$language_dir" && /usr/local/bin/flbio run known-language.flbio > known-language-result.txt)
+          test -s "$language_dir/volcano-plot.svg"
+          grep -q 'Volcano plot' "$language_dir/known-language-result.txt"
+
+          rm -rf "$HOME/Desktop/FigureLoom Bio Test Files"
+          QT_QPA_PLATFORM=offscreen MPLBACKEND=Agg '/Applications/Test FigureLoom Bio.app/Contents/MacOS/Test FigureLoom Bio' > "$RUNNER_TEMP/figureloom-apple-silicon-test-app.log" 2>&1 &
+          test_pid=$!
+          passed=0
+          for _ in {1..120}; do
+            if grep -q 'FIGURELOOM BIO QUICK TEST PASSED' "$HOME/Desktop/FigureLoom Bio Test Files/TEST-RESULT.txt" 2>/dev/null; then
+              passed=1
+              break
+            fi
+            if ! kill -0 "$test_pid" 2>/dev/null; then
+              wait "$test_pid" || true
+              echo 'The installed Test app exited before reporting a result.' >&2
+              cat "$RUNNER_TEMP/figureloom-apple-silicon-test-app.log" >&2 || true
+              exit 1
+            fi
+            sleep 2
+          done
+          kill "$test_pid" 2>/dev/null || true
+          wait "$test_pid" 2>/dev/null || true
+          test "$passed" -eq 1
+          test -s "$HOME/Desktop/FigureLoom Bio Test Files/quick-volcano.svg"
+
+      - name: Upload Apple Silicon install trace
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: FigureLoom-Bio-Apple-Silicon-Install-Trace
+          path: |
+            ${{ runner.temp }}/figureloom-apple-silicon-install-test.log
+            ${{ runner.temp }}/figureloom-apple-silicon-system-installer.log
+            ${{ runner.temp }}/figureloom-apple-silicon-test-app.log
+          if-no-files-found: warn
+
+      - name: Upload Apple Silicon installer
+        uses: actions/upload-artifact@v7
+        with:
+          name: FigureLoom-Bio-macOS-Apple-Silicon-Installer
+          path: dist/FigureLoom-Bio-Installer-macOS-Apple-Silicon.pkg
+          if-no-files-found: error
+
+  macos_intel:
+    runs-on: macos-15-intel
+    timeout-minutes: 90
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+
+      - name: Build Intel installer
+        env:
+          FIGURELOOM_MAC_ARCH_LABEL: x86_64
+        run: bash figureloom-bio/macos/build-installer.sh dist
+
+      - name: Install and test the exact Intel package
+        run: |
+          set -euo pipefail
+          exec > >(tee "$RUNNER_TEMP/figureloom-intel-install-test.log") 2>&1
+          printf '%s\n' "$USER" | sudo tee /var/tmp/figureloom-bio-target-user >/dev/null
+          set +e
+          sudo installer -verboseR -pkg dist/FigureLoom-Bio-Installer-macOS-Intel.pkg -target /
+          install_status=$?
+          set -e
+          sudo tail -n 400 /var/log/install.log > "$RUNNER_TEMP/figureloom-intel-system-installer.log" 2>&1 || true
+          test "$install_status" -eq 0
+          test -x /usr/local/bin/flbio
+          test -d '/Applications/FigureLoom Bio IDE.app'
+          test -d '/Applications/Test FigureLoom Bio.app'
+          test -d '/Applications/Install or Update FigureLoom Bio.app'
+          file '/Applications/FigureLoom Bio IDE.app/Contents/MacOS/FigureLoom Bio IDE' | grep -q 'x86_64'
+          if find '/Applications/FigureLoom Bio IDE.app' -type f \( -iname '*.html' -o -iname '*.htm' -o -iname '*.js' -o -iname '*.mjs' \) -print -quit | grep -q .; then
+            echo 'Installed Intel IDE contains forbidden web files.' >&2
+            exit 1
+          fi
+          QT_QPA_PLATFORM=offscreen '/Applications/FigureLoom Bio IDE.app/Contents/MacOS/FigureLoom Bio IDE' --self-test
+          QT_QPA_PLATFORM=offscreen '/Applications/Test FigureLoom Bio.app/Contents/MacOS/Test FigureLoom Bio' --self-test
+          QT_QPA_PLATFORM=offscreen '/Applications/Install or Update FigureLoom Bio.app/Contents/MacOS/Install or Update FigureLoom Bio' --self-test
+          /usr/local/bin/flbio doctor
+          /usr/local/bin/flbio quick-test "$RUNNER_TEMP/figureloom-bio-macos-intel-test"
+          grep -q 'FIGURELOOM BIO QUICK TEST PASSED' "$RUNNER_TEMP/figureloom-bio-macos-intel-test/TEST-RESULT.txt"
+          test -s "$RUNNER_TEMP/figureloom-bio-macos-intel-test/quick-volcano.svg"
+          grep -q 'data-significance="higher"' "$RUNNER_TEMP/figureloom-bio-macos-intel-test/quick-volcano.svg"
+          grep -q 'data-significance="lower"' "$RUNNER_TEMP/figureloom-bio-macos-intel-test/quick-volcano.svg"
+
+          language_dir="$RUNNER_TEMP/figureloom-bio-known-language-intel"
+          mkdir -p "$language_dir"
+          cp "$HOME/Desktop/FigureLoom Bio Test Files/measurements.csv" "$language_dir/measurements.csv"
+          printf '%s\n' \
+            'Open the file measurements.csv.' \
+            'Draw a vulcano chart from effect and p_value.' \
+            > "$language_dir/known-language.flbio"
+          (cd "$language_dir" && /usr/local/bin/flbio run known-language.flbio > known-language-result.txt)
+          test -s "$language_dir/volcano-plot.svg"
+          grep -q 'Volcano plot' "$language_dir/known-language-result.txt"
+
+          rm -rf "$HOME/Desktop/FigureLoom Bio Test Files"
+          QT_QPA_PLATFORM=offscreen MPLBACKEND=Agg '/Applications/Test FigureLoom Bio.app/Contents/MacOS/Test FigureLoom Bio' > "$RUNNER_TEMP/figureloom-intel-test-app.log" 2>&1 &
+          test_pid=$!
+          passed=0
+          for _ in {1..120}; do
+            if grep -q 'FIGURELOOM BIO QUICK TEST PASSED' "$HOME/Desktop/FigureLoom Bio Test Files/TEST-RESULT.txt" 2>/dev/null; then
+              passed=1
+              break
+            fi
+            if ! kill -0 "$test_pid" 2>/dev/null; then
+              wait "$test_pid" || true
+              echo 'The installed Test app exited before reporting a result.' >&2
+              cat "$RUNNER_TEMP/figureloom-intel-test-app.log" >&2 || true
+              exit 1
+            fi
+            sleep 2
+          done
+          kill "$test_pid" 2>/dev/null || true
+          wait "$test_pid" 2>/dev/null || true
+          test "$passed" -eq 1
+          test -s "$HOME/Desktop/FigureLoom Bio Test Files/quick-volcano.svg"
+
+      - name: Upload Intel install trace
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: FigureLoom-Bio-Intel-Install-Trace
+          path: |
+            ${{ runner.temp }}/figureloom-intel-install-test.log
+            ${{ runner.temp }}/figureloom-intel-system-installer.log
+            ${{ runner.temp }}/figureloom-intel-test-app.log
+          if-no-files-found: warn
+
+      - name: Upload Intel installer
+        uses: actions/upload-artifact@v7
+        with:
+          name: FigureLoom-Bio-macOS-Intel-Installer
+          path: dist/FigureLoom-Bio-Installer-macOS-Intel.pkg
+          if-no-files-found: error
+
+  publish:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [windows, macos_apple_silicon, macos_intel]
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Download Windows installer
+        uses: actions/download-artifact@v8
+        with:
+          name: FigureLoom-Bio-Windows-Installer
+          path: release/windows
+
+      - name: Download Apple Silicon installer
+        uses: actions/download-artifact@v8
+        with:
+          name: FigureLoom-Bio-macOS-Apple-Silicon-Installer
+          path: release/macos
+
+      - name: Download Intel installer
+        uses: actions/download-artifact@v8
+        with:
+          name: FigureLoom-Bio-macOS-Intel-Installer
+          path: release/macos
+
+      - name: Publish and verify stable desktop downloads
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          windows='release/windows/FigureLoom-Bio-Installer.exe'
+          apple='release/macos/FigureLoom-Bio-Installer-macOS-Apple-Silicon.pkg'
+          intel='release/macos/FigureLoom-Bio-Installer-macOS-Intel.pkg'
+          test "$(head -c 2 "$windows")" = 'MZ'
+          test "$(head -c 4 "$apple")" = 'xar!'
+          test "$(head -c 4 "$intel")" = 'xar!'
+          sha256sum "$windows" "$apple" "$intel"
+
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+
+          publish_release() {
+            local tag="$1"
+            local title="$2"
+            local notes="$3"
+            shift 3
+            git tag --force "$tag" "$GITHUB_SHA"
+            git push origin "refs/tags/$tag" --force
+            if gh release view "$tag" >/dev/null 2>&1; then
+              gh release upload "$tag" "$@" --clobber
+              gh release edit "$tag" --latest --title "$title" --notes "$notes"
+            else
+              gh release create "$tag" "$@" --target "$GITHUB_SHA" --latest --title "$title" --notes "$notes"
+            fi
+            remote_sha="$(git ls-remote --tags origin "refs/tags/$tag" | awk '{print $1}')"
+            test "$remote_sha" = "$GITHUB_SHA"
+          }
+
+          publish_release \
+            figureloom-bio-windows-installer \
+            'FigureLoom Bio Windows Installer' \
+            'Native FigureLoom Bio for Windows. The published EXE passed a real install, all three desktop self-tests, CLI doctor, language quick test, and real volcano-plot verification.' \
+            "$windows"
+
+          publish_release \
+            figureloom-bio-macos-installer \
+            'FigureLoom Bio macOS Installers' \
+            'Choose Apple Silicon for M-series Macs or Intel for Intel Macs. Both native packages passed real installation, IDE startup, Test app execution, updater startup, known-language handling, CLI doctor, and real volcano-plot verification before this release was replaced.' \
+            "$apple" "$intel"
+
+          windows_assets="$(gh release view figureloom-bio-windows-installer --json assets --jq '.assets[].name')"
+          grep -Fx 'FigureLoom-Bio-Installer.exe' <<<"$windows_assets"
+          mac_assets="$(gh release view figureloom-bio-macos-installer --json assets --jq '.assets[].name')"
+          grep -Fx 'FigureLoom-Bio-Installer-macOS-Apple-Silicon.pkg' <<<"$mac_assets"
+          grep -Fx 'FigureLoom-Bio-Installer-macOS-Intel.pkg' <<<"$mac_assets"
+
+          verify_public_download() {
+            local tag="$1"
+            local source="$2"
+            local name
+            name="$(basename "$source")"
+            local downloaded="$RUNNER_TEMP/$name"
+            curl --fail --location --retry 12 --retry-delay 5 --retry-all-errors \
+              "https://github.com/${GITHUB_REPOSITORY}/releases/download/${tag}/${name}" \
+              --output "$downloaded"
+            cmp "$source" "$downloaded"
+          }
+
+          verify_public_download figureloom-bio-windows-installer "$windows"
+          verify_public_download figureloom-bio-macos-installer "$apple"
+          verify_public_download figureloom-bio-macos-installer "$intel"
