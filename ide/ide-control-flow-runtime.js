@@ -4,7 +4,7 @@
   if (window.FigureLoomBioFlowLoading) return;
 
   const parts = [0, 1, 2, 3, 4].map(
-    (number) => `./ide-control-flow-runtime.part${String(number).padStart(2, '0')}?v=2`,
+    (number) => `./ide-control-flow-runtime.part${String(number).padStart(2, '0')}?v=3`,
   );
 
   async function fetchPart(url) {
@@ -22,13 +22,39 @@
     throw lastError || new Error(`Could not load ${url}`);
   }
 
+  function applyCoreLanguageSupport(source) {
+    const edits = [
+      [
+        "else if(m=t.match(/^Otherwise(?:,)? if (.+):$/i))",
+        "else if(m=t.match(/^(?:Else|Otherwise)(?:,)? if (.+):$/i))",
+      ],
+      [
+        "else if(/^Otherwise:$/i.test(t))",
+        "else if(/^(?:Else|Otherwise):$/i.test(t))",
+      ],
+      [
+        "function cond(q,c,l){let a=",
+        "function cond(q,c,l){q=String(q).trim();if(/^true$/i.test(q))return true;if(/^false$/i.test(q))return false;let a=",
+      ],
+    ];
+
+    let patched = source;
+    for (const [before, after] of edits) {
+      if (!patched.includes(before)) {
+        throw new Error(`The FigureLoom Bio browser runtime is missing a required language hook: ${before}`);
+      }
+      patched = patched.replace(before, after);
+    }
+    return patched;
+  }
+
   window.FigureLoomBioFlowLoading = Promise.all(parts.map(fetchPart))
     .then((sources) => {
       const existing = document.getElementById('figureloomBioControlFlowCombined');
       if (existing) existing.remove();
       const script = document.createElement('script');
       script.id = 'figureloomBioControlFlowCombined';
-      script.textContent = sources.join('');
+      script.textContent = applyCoreLanguageSupport(sources.join(''));
       document.head.append(script);
       if (!window.FigureLoomBioFlow) {
         throw new Error('The FigureLoom Bio decision runtime loaded without starting.');
@@ -45,4 +71,6 @@
       }
       throw error;
     });
+
+  window.FigureLoomBioCoreRuntimePatches = Object.freeze({ applyCoreLanguageSupport });
 })();
