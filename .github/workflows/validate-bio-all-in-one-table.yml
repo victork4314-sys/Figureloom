@@ -1,0 +1,32 @@
+name: Validate all-in-one table section
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: validate-bio-all-in-one-table-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  all_in_one_table:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Check changed JavaScript
+        run: |
+          node --check ide/ide-control-flow-runtime.js
+          node --check ide/ide-core-language-runtime.js
+          node --check scripts/validate-bio-all-in-one-table-section.mjs
+
+      - name: Execute the exact all-in-one table mutation chain
+        run: node scripts/validate-bio-all-in-one-table-section.mjs
