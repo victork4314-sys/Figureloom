@@ -1,5 +1,6 @@
 import unittest
 
+from figureloom_bio.cli import VOCABULARY_GROUPS, _vocabulary_forms
 from figureloom_bio.control_flow import IfBlock, Statement, parse_program, uses_control_flow
 from figureloom_bio.control_flow_logic import normalize_control_flow_source, simplify_condition
 
@@ -58,6 +59,14 @@ Else:
             normalized,
             "Make sure the result is empty or the result is not empty.",
         )
+
+    def test_words_command_counts_control_flow_and_boolean_words(self):
+        self.assertIn("flow", VOCABULARY_GROUPS)
+        self.assertIn("logic", VOCABULARY_GROUPS)
+        self.assertIn("booleans", VOCABULARY_GROUPS)
+        forms = {value.casefold() for value in _vocabulary_forms()}
+        for word in ("if", "else", "else if", "and", "or", "not", "true", "false"):
+            self.assertIn(word, forms)
 
 
 if __name__ == "__main__":
