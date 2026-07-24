@@ -28,7 +28,7 @@ class FigureLoomBioCompilerTests(unittest.TestCase):
                 'permutation_p_value',
                 ('score', 'treated', 'control', 'group'),
             ),
-            'Fill empty values under status with unknown.': (
+            'Replace blank values in column status with unknown.': (
                 'replace_empty',
                 ('status', 'unknown'),
             ),
