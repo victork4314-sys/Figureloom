@@ -14,6 +14,10 @@
       : JSON.parse(JSON.stringify(value))
   );
 
+  const sequenceSummary = (data) => (data?.kind === 'seq'
+    ? data.records.map((record) => `${record.name}: ${record.sequence.length} bases`).join('\n')
+    : 'No FASTA or FASTQ sequences were available.');
+
   const handler = async ({ text, context, line, helpers }) => {
     const needsSequences = sequenceAnalysis.test(String(text).trim());
 
@@ -27,16 +31,24 @@
       context.data = clone(context.completeSequenceSource);
     }
 
-    const handled = await api.run(
-      text,
-      context,
-      line,
-      {
-        X:helpers.Error,
-        enc:helpers.encode,
-        sec:helpers.section,
-      },
-    );
+    let handled;
+    try {
+      handled = await api.run(
+        text,
+        context,
+        line,
+        {
+          X:helpers.Error,
+          enc:helpers.encode,
+          sec:helpers.section,
+        },
+      );
+    } catch (error) {
+      if (needsSequences && !String(error?.message || '').includes('Sequence input received:')) {
+        error.message = `${error.message}\n\nSequence input received:\n${sequenceSummary(context.data)}`;
+      }
+      throw error;
+    }
 
     if (needsSequences && context.data?.kind === 'seq') {
       context.completeSequenceSource = clone(context.data);
