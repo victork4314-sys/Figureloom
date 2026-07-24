@@ -22,18 +22,23 @@ jobs:
       - name: Check compiler JavaScript syntax
         run: |
           node --check ide/ide-language-compiler.js
+          node --check ide/ide-logic-compiler.js
           node --check ide/ide-language-catalog-ui.js
           node --check ide/ide-vocabulary-ui-copy.js
           node --check scripts/validate-bio-language-compiler.mjs
+          node --check scripts/validate-bio-logic-compiler.mjs
 
       - name: Execute browser compiler frontend tests
-        run: node scripts/validate-bio-language-compiler.mjs
+        run: |
+          node scripts/validate-bio-language-compiler.mjs
+          node scripts/validate-bio-logic-compiler.mjs
 
       - name: Check compiler Python syntax
         run: |
           python3 -m py_compile \
             figureloom-bio/figureloom_bio/language_compiler.py \
             figureloom-bio/figureloom_bio/language_compiler_runtime.py \
+            figureloom-bio/figureloom_bio/control_flow_logic.py \
             figureloom-bio/figureloom_bio/parser.py \
             figureloom-bio/figureloom_bio/language_diagnostics.py \
             figureloom-bio/figureloom_bio/cli.py
@@ -66,7 +71,7 @@ jobs:
       - name: Run control-flow tests alone
         run: |
           cd figureloom-bio
-          python3 -m unittest discover -s tests -p 'test_control_flow.py' -v
+          python3 -m unittest tests.test_control_flow tests.test_control_flow_logic -v
 
       - name: Capture full FigureLoom Bio tests
         id: full_tests
