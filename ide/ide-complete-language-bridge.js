@@ -32,12 +32,6 @@
       context.data = clone(context.completeSequenceSource);
     }
 
-    if (needsSequences) {
-      context.completeSequenceHistory ||= [];
-      context.completeSequenceHistory.push(`${instruction}\n${sequenceSummary(context.data)}`);
-      context.completeSequenceHistory = context.completeSequenceHistory.slice(-12);
-    }
-
     let handled;
     try {
       handled = await api.run(
@@ -51,13 +45,8 @@
         },
       );
     } catch (error) {
-      const runtimeHistory = (context.runtimeSequenceHistory || []).join('\n\n');
       if (needsSequences && !String(error?.message || '').includes('Sequence input received:')) {
-        const history = (context.completeSequenceHistory || []).join('\n\n');
-        error.message = `${error.message}\n\nSequence input received:\n${sequenceSummary(context.data)}${history ? `\n\nRecent sequence steps:\n${history}` : ''}`;
-      }
-      if (runtimeHistory && !String(error?.message || '').includes('Runtime instruction trail:')) {
-        error.message = `${error.message}\n\nRuntime instruction trail:\n${runtimeHistory}`;
+        error.message = `${error.message}\n\nSequence input received:\n${sequenceSummary(context.data)}`;
       }
       throw error;
     }
