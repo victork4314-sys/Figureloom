@@ -1,1 +1,1 @@
-FigureLoom Bio compiler migration applied. Validate the real compiler branch.
+FigureLoom Bio compiler migration applied. Capture and fix the current compiler test failures.
