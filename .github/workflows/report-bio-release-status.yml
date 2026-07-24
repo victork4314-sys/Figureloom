@@ -16,12 +16,11 @@ jobs:
   report:
     runs-on: ubuntu-latest
     steps:
-      - name: Keep newest publisher and show Apple failure tail
+      - name: Keep only newest Mac publisher and report it
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-
           gh run list \
             --repo "$GITHUB_REPOSITORY" \
             --workflow publish-fixed-macos-installers.yml \
@@ -35,39 +34,24 @@ jobs:
 
           jq -r --arg newest "$newest" \
             '.[] | select((.status == "queued" or .status == "in_progress" or .status == "pending" or .status == "waiting") and (.databaseId|tostring) != $newest) | .databaseId' \
-            /tmp/runs.json > /tmp/older-active.txt
+            /tmp/runs.json \
+          | while read -r run_id; do
+              [[ -n "$run_id" ]] || continue
+              echo "Cancelling superseded Mac publisher $run_id"
+              gh run cancel "$run_id" --repo "$GITHUB_REPOSITORY" || true
+            done
 
-          while read -r run_id; do
-            [[ -n "$run_id" ]] || continue
-            gh run cancel "$run_id" --repo "$GITHUB_REPOSITORY" || true
-          done < /tmp/older-active.txt
-
+          sleep 5
           gh run view "$newest" \
             --repo "$GITHUB_REPOSITORY" \
             --json databaseId,status,conclusion,headSha,createdAt,updatedAt,url,jobs \
             > /tmp/newest.json
-
-          apple_job=89489398478
-          gh api "repos/$GITHUB_REPOSITORY/actions/jobs/$apple_job/logs" > /tmp/apple.bin
-          if unzip -t /tmp/apple.bin >/dev/null 2>&1; then
-            unzip -p /tmp/apple.bin > /tmp/apple.log
-          else
-            cp /tmp/apple.bin /tmp/apple.log
-          fi
-          tail -n 90 /tmp/apple.log > /tmp/apple-tail.log
-
           {
             echo 'Newest Mac publisher only:'
             echo '```json'
             cat /tmp/newest.json
             echo '```'
-            echo
-            echo 'Apple Silicon failed-proof tail:'
-            echo '```text'
-            cat /tmp/apple-tail.log
-            echo '```'
           } > /tmp/status.md
-
           gh api --method PATCH \
             "repos/$GITHUB_REPOSITORY/issues/comments/5069780966" \
             -f "body=$(cat /tmp/status.md)"
