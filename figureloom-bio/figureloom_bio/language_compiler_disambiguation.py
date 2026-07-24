@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections import defaultdict
+import re
 
 from . import language_compiler
 
@@ -102,6 +103,25 @@ def install_language_compiler_disambiguation() -> None:
     statement_class._find_verb = _contextual_verb
     statement_class.has_term = has_term
     statement_class._figureloom_disambiguation_installed = True
+
+    # This exact form must beat the broad "Write a message" alias.
+    from . import parser as parser_module
+
+    write_output = (
+        "save_result",
+        re.compile(r"write (?:the )?(?:result|output) (?:to|as) (.+)", re.IGNORECASE),
+    )
+    parser_module._PATTERNS = (
+        write_output,
+        *(
+            item
+            for item in parser_module._PATTERNS
+            if not (
+                item[0] == write_output[0]
+                and item[1].pattern == write_output[1].pattern
+            )
+        ),
+    )
 
 
 __all__ = ["install_language_compiler_disambiguation"]
