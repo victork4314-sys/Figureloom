@@ -1,6 +1,9 @@
 name: Publish proven FigureLoom Bio Intel package on macOS 15
 
 on:
+  pull_request:
+    paths:
+      - '.github/workflows/publish-proven-macos15-intel.yml'
   push:
     branches: [main]
     paths:
@@ -12,11 +15,12 @@ permissions:
   contents: write
 
 concurrency:
-  group: publish-proven-figureloom-bio-macos15-intel
+  group: publish-proven-figureloom-bio-macos15-intel-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
   build_test_publish:
+    if: github.event_name != 'pull_request' || (github.actor == 'victork4314-sys' && github.head_ref == 'rescue/publish-proven-macos15-intel')
     runs-on: macos-15-intel
     timeout-minutes: 90
     steps:
