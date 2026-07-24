@@ -15,16 +15,15 @@ jobs:
   clear:
     runs-on: ubuntu-latest
     steps:
-      - name: Cancel superseded broken Mac run and redundant queues
+      - name: Cancel superseded Mac runs and redundant queues
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
 
-          # Run 30092415672 used the unsafe worker-thread UI callback. Its Intel
-          # job already failed and its Apple job is only holding a runner needed
-          # by the corrected 2c0fef1 publisher.
+          # These runs used the older threaded self-test implementations.
           gh run cancel 30092415672 --repo "$GITHUB_REPOSITORY" || true
+          gh run cancel 30093844734 --repo "$GITHUB_REPOSITORY" || true
 
           for workflow in \
             build-bio-cross-platform-installers.yml \
@@ -38,9 +37,8 @@ jobs:
               --jq '.[].databaseId' \
             | while read -r run_id; do
                 [[ -n "$run_id" ]] || continue
-                echo "Cancelling redundant queued run $run_id from $workflow"
                 gh run cancel "$run_id" --repo "$GITHUB_REPOSITORY" || true
               done
           done
 
-          echo 'The corrected independent run 30093844734 was left untouched.'
+          echo 'The newest 4dff001 independent Mac publisher was left untouched.'
