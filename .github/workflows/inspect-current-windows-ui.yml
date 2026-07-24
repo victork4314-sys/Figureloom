@@ -1,5 +1,6 @@
 name: Inspect published Windows desktop UI
 
+# Capture the current stable installer after the final parity release.
 on:
   push:
     branches: [main]
