@@ -1,7 +1,7 @@
 {
-  "version": 1,
-  "description": "Words and terms understood by the FigureLoom Bio compiler. These are language vocabulary, not complete allowed sentences.",
-  "fillers": ["please", "then", "now", "the", "a", "an", "current"],
+  "version": 2,
+  "description": "Every defined FigureLoom Bio compiler, control-flow, Boolean, connector, comparison, and scientific term. These are words and phrases that can be combined; they are not a list of allowed sentences.",
+  "fillers": ["please", "then", "now", "the", "a", "an", "current", "only", "all"],
   "verbs": {
     "open": ["open", "load", "read", "import"],
     "keep": ["keep", "retain", "select", "filter"],
@@ -25,11 +25,17 @@
     "say": ["say", "print", "write"],
     "run": ["run", "repeat"],
     "stop": ["stop", "end", "quit"],
-    "continue": ["continue", "next", "skip"]
+    "continue": ["continue", "next", "skip"],
+    "warn": ["warn", "warning"]
   },
   "terms": {
-    "file": ["file", "data", "dataset", "input"],
-    "result": ["result", "output"],
+    "file": ["file", "files", "data", "dataset", "input"],
+    "result": ["result", "results", "output"],
+    "program": ["program", "programs"],
+    "sample": ["sample", "samples"],
+    "recipe": ["recipe", "recipes"],
+    "folder": ["folder", "directory"],
+    "review": ["review"],
     "pair": ["pair", "paired", "mates"],
     "row": ["row", "rows", "record", "records"],
     "column": ["column", "columns", "field", "fields"],
@@ -46,7 +52,7 @@
     "primer": ["primer", "primers"],
     "alignment": ["alignment", "alignments"],
     "tree": ["tree", "phylogeny", "phylogenetic"],
-    "assembly": ["assembly", "genome", "contigs"],
+    "assembly": ["assembly", "genome", "contig", "contigs"],
     "organism": ["organism", "species", "taxonomy"],
     "resistance": ["resistance", "amr", "antimicrobial"],
     "virulence": ["virulence"],
@@ -87,12 +93,57 @@
     "between": ["between"],
     "from": ["from"],
     "to": ["to", "into", "as"],
-    "using": ["using", "under", "by", "grouped by"]
+    "using": ["using", "under", "by", "grouped by"],
+    "called": ["called", "named"],
+    "times": ["time", "times"],
+    "first": ["first"],
+    "last": ["last"]
   },
   "comparators": {
-    "greater": ["longer than", "greater than", "more than", "above", "over"],
-    "at_least": ["at least", "minimum", "no less than"],
-    "less": ["shorter than", "less than", "below", "under"],
-    "at_most": ["at most", "maximum", "no more than"]
+    "greater": ["longer than", "greater than", "more than", "above", "over", "is above"],
+    "at_least": ["at least", "minimum", "no less than", "is at least"],
+    "less": ["shorter than", "less than", "below", "under", "fewer than", "is below"],
+    "at_most": ["at most", "maximum", "no more than", "is at most"],
+    "equal": ["equals", "equal to", "is"]
+  },
+  "flow": {
+    "if": ["if"],
+    "else": ["else", "otherwise"],
+    "else_if": ["else if", "otherwise if"],
+    "for_every": ["for every"],
+    "make_recipe": ["make a recipe called"],
+    "use_recipe": ["use the recipe"],
+    "make_sure": ["make sure"],
+    "call_result": ["call the result"],
+    "stop_program": ["stop the program"],
+    "continue_sample": ["continue with the next sample"],
+    "skip_sample": ["skip this sample"],
+    "mark_review": ["mark the sample for review"],
+    "show_warning": ["show a warning", "show a warning saying"]
+  },
+  "logic": {
+    "and": ["and"],
+    "or": ["or"],
+    "not": ["not"]
+  },
+  "booleans": {
+    "true": ["true"],
+    "false": ["false"]
+  },
+  "conditions": {
+    "count": ["count"],
+    "remain": ["remain", "remains"],
+    "exists": ["exists"],
+    "empty": ["empty", "not empty"],
+    "found": ["found", "were found", "no"],
+    "percent": ["percent"],
+    "has": ["has"],
+    "contains": ["contains"]
+  },
+  "file_types": {
+    "fastq": ["FASTQ"],
+    "fasta": ["FASTA"],
+    "csv": ["CSV"],
+    "tsv": ["TSV"]
   }
 }
