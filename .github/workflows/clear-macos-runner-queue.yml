@@ -15,11 +15,17 @@ jobs:
   clear:
     runs-on: ubuntu-latest
     steps:
-      - name: Cancel redundant queued release and install-cycle runs
+      - name: Cancel superseded broken Mac run and redundant queues
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
+
+          # Run 30092415672 used the unsafe worker-thread UI callback. Its Intel
+          # job already failed and its Apple job is only holding a runner needed
+          # by the corrected 2c0fef1 publisher.
+          gh run cancel 30092415672 --repo "$GITHUB_REPOSITORY" || true
+
           for workflow in \
             build-bio-cross-platform-installers.yml \
             audit-bio-install-cycles.yml; do
@@ -37,4 +43,4 @@ jobs:
               done
           done
 
-          echo 'The independent publish-fixed-macos-installers.yml run was intentionally left untouched.'
+          echo 'The corrected independent run 30093844734 was left untouched.'
