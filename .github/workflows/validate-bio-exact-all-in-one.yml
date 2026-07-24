@@ -1,0 +1,31 @@
+name: Validate exact all-in-one FigureLoom Bio program
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: validate-bio-exact-all-in-one-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  exact_all_in_one:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Check changed browser files
+        run: |
+          node --check ide/ide-control-flow-runtime.js
+          node --check scripts/validate-bio-exact-all-in-one.mjs
+
+      - name: Run the exact all-in-one program through the production browser runtime
+        run: node scripts/validate-bio-exact-all-in-one.mjs
