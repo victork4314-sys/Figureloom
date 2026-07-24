@@ -21,8 +21,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          # The newest run contains the bounded normal Test-app launch. Older
-          # publishers are cancelled only to release the two hosted Mac runners.
+
           gh run list \
             --repo "$GITHUB_REPOSITORY" \
             --workflow publish-fixed-macos-installers.yml \
@@ -43,6 +42,24 @@ jobs:
             echo "Cancelling superseded Mac publisher $run_id"
             gh run cancel "$run_id" --repo "$GITHUB_REPOSITORY" || true
           done < /tmp/older-active.txt
+
+          # The old combined desktop publisher duplicates both Mac builds and can
+          # occupy the scarce hosted Mac runners. It is obsolete now that the
+          # dedicated atomic Mac publisher owns both packages.
+          gh run list \
+            --repo "$GITHUB_REPOSITORY" \
+            --workflow build-bio-cross-platform-installers.yml \
+            --branch main \
+            --limit 20 \
+            --json databaseId,status \
+            --jq '.[] | select(.status == "queued" or .status == "in_progress" or .status == "pending" or .status == "waiting") | .databaseId' \
+            > /tmp/combined-active.txt
+
+          while read -r run_id; do
+            [[ -n "$run_id" ]] || continue
+            echo "Cancelling obsolete combined publisher $run_id"
+            gh run cancel "$run_id" --repo "$GITHUB_REPOSITORY" || true
+          done < /tmp/combined-active.txt
 
           sleep 5
           gh run view "$newest" \
