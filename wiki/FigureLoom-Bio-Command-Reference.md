@@ -4,11 +4,11 @@
 
 FigureLoom Bio is a programming language with a lexer, grammar parser, compiled instructions, validation, and a runtime. It is not a whitelist of complete sentences.
 
-**Grammar families:** 4
-**Vocabulary forms:** 234
+**Grammar families:** 10
+**Vocabulary forms:** 304
 **Learning examples:** 161
 
-Examples are examples, not a whitelist. You can write your own instruction by combining an operation, a target, values, and role words in a form the grammar can resolve unambiguously.
+Examples are examples, not a whitelist. You can write your own instruction by combining operations, targets, values, role words, comparisons, and Boolean logic in a form the grammar can resolve unambiguously.
 
 Normal instructions end with a period. Block headers end with a colon. The current result is called `the file`.
 
@@ -39,13 +39,19 @@ Normal instructions end with a period. Block headers end with a colon. The curre
 | run | `run`, `repeat` |
 | stop | `stop`, `end`, `quit` |
 | continue | `continue`, `next`, `skip` |
+| warn | `warn`, `warning` |
 
 ## Biology and data terms
 
 | Concept | Words and terms |
 | --- | --- |
-| file | `file`, `data`, `dataset`, `input` |
-| result | `result`, `output` |
+| file | `file`, `files`, `data`, `dataset`, `input` |
+| result | `result`, `results`, `output` |
+| program | `program`, `programs` |
+| sample | `sample`, `samples` |
+| recipe | `recipe`, `recipes` |
+| folder | `folder`, `directory` |
+| review | `review` |
 | pair | `pair`, `paired`, `mates` |
 | row | `row`, `rows`, `record`, `records` |
 | column | `column`, `columns`, `field`, `fields` |
@@ -62,7 +68,7 @@ Normal instructions end with a period. Block headers end with a colon. The curre
 | primer | `primer`, `primers` |
 | alignment | `alignment`, `alignments` |
 | tree | `tree`, `phylogeny`, `phylogenetic` |
-| assembly | `assembly`, `genome`, `contigs` |
+| assembly | `assembly`, `genome`, `contig`, `contigs` |
 | organism | `organism`, `species`, `taxonomy` |
 | resistance | `resistance`, `amr`, `antimicrobial` |
 | virulence | `virulence` |
@@ -95,6 +101,52 @@ Normal instructions end with a period. Block headers end with a colon. The curre
 | length | `length`, `long`, `longer`, `short`, `shorter` |
 | warning | `warning`, `warn` |
 
+## If, else, loops, and recipes
+
+| Concept | Words and terms |
+| --- | --- |
+| if | `if` |
+| else | `else`, `otherwise` |
+| else if | `else if`, `otherwise if` |
+| for every | `for every` |
+| make recipe | `make a recipe called` |
+| use recipe | `use the recipe` |
+| make sure | `make sure` |
+| call result | `call the result` |
+| stop program | `stop the program` |
+| continue sample | `continue with the next sample` |
+| skip sample | `skip this sample` |
+| mark review | `mark the sample for review` |
+| show warning | `show a warning`, `show a warning saying` |
+
+## Boolean logic
+
+| Concept | Words and terms |
+| --- | --- |
+| and | `and` |
+| or | `or` |
+| not | `not` |
+
+## True and false
+
+| Concept | Words and terms |
+| --- | --- |
+| true | `true` |
+| false | `false` |
+
+## Decision terms
+
+| Concept | Words and terms |
+| --- | --- |
+| count | `count` |
+| remain | `remain`, `remains` |
+| exists | `exists` |
+| empty | `empty`, `not empty` |
+| found | `found`, `were found`, `no` |
+| percent | `percent` |
+| has | `has` |
+| contains | `contains` |
+
 ## Role words
 
 | Concept | Words and terms |
@@ -107,15 +159,43 @@ Normal instructions end with a period. Block headers end with a colon. The curre
 | from | `from` |
 | to | `to`, `into`, `as` |
 | using | `using`, `under`, `by`, `grouped by` |
+| called | `called`, `named` |
+| times | `time`, `times` |
+| first | `first` |
+| last | `last` |
 
 ## Comparisons
 
 | Concept | Words and terms |
 | --- | --- |
-| greater | `longer than`, `greater than`, `more than`, `above`, `over` |
-| at least | `at least`, `minimum`, `no less than` |
-| less | `shorter than`, `less than`, `below`, `under` |
-| at most | `at most`, `maximum`, `no more than` |
+| greater | `longer than`, `greater than`, `more than`, `above`, `over`, `is above` |
+| at least | `at least`, `minimum`, `no less than`, `is at least` |
+| less | `shorter than`, `less than`, `below`, `under`, `fewer than`, `is below` |
+| at most | `at most`, `maximum`, `no more than`, `is at most` |
+| equal | `equals`, `equal to`, `is` |
+
+## File types
+
+| Concept | Words and terms |
+| --- | --- |
+| fastq | `FASTQ` |
+| fasta | `FASTA` |
+| csv | `CSV` |
+| tsv | `TSV` |
+
+## Optional plain-English words
+
+| Concept | Words and terms |
+| --- | --- |
+| please | `please` |
+| then | `then` |
+| now | `now` |
+| the | `the` |
+| a | `a` |
+| an | `an` |
+| current | `current` |
+| only | `only` |
+| all | `all` |
 
 ## Learning examples
 
@@ -334,8 +414,10 @@ These examples teach common structures and feed the visual builder. They do not 
 
 ```flbio
 Please load samples.csv.
-Retain rows where condition is treated.
-Discard rows where status equals failed.
+If true and not false:
+    Retain records where condition equals treated.
+Else:
+    Discard records where status equals failed.
 Total the records.
 Display the output.
 Write the output to clean.csv.
