@@ -82,6 +82,22 @@ Else:
         rendered = self._run("Make sure true and not false.\nSay The check passed.\n")
         self.assertIn("The check passed", rendered)
 
+    def test_everyday_flow_synonyms_execute_in_the_shared_runtime(self):
+        source = """If true:
+    Print branch started.
+    Warning Check this sample.
+    End the program.
+"""
+        normalized = normalize_control_flow_source(source)
+        self.assertIn("Say branch started.", normalized)
+        self.assertIn("Show a warning saying Check this sample.", normalized)
+        self.assertIn("Stop the program.", normalized)
+
+        rendered = self._run(source)
+        self.assertIn("branch started", rendered)
+        self.assertIn("Check this sample", rendered)
+        self.assertIn("Program stopped", rendered)
+
     def test_words_command_counts_control_flow_and_boolean_words(self):
         self.assertIn("flow", VOCABULARY_GROUPS)
         self.assertIn("logic", VOCABULARY_GROUPS)
