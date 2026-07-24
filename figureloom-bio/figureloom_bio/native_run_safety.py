@@ -63,6 +63,29 @@ def _plain_run_error(error: FigureLoomBioError) -> tuple[str, int]:
     return error.plain_message(), int(error.line_number or 0)
 
 
+def _save_theme_screenshots(window: Any, app: QApplication) -> None:
+    requested = os.environ.get("FIGURELOOM_NATIVE_SCREENSHOT_DIR", "").strip()
+    if not requested:
+        return
+    folder = Path(requested)
+    folder.mkdir(parents=True, exist_ok=True)
+    original_dark = bool(window.dark)
+    try:
+        for dark, name in ((False, "figureloom-bio-light.png"), (True, "figureloom-bio-dark.png")):
+            window.dark = dark
+            window.apply_theme()
+            app.processEvents()
+            window.repaint()
+            app.processEvents()
+            target = folder / name
+            if not window.grab().save(str(target), "PNG") or target.stat().st_size == 0:
+                raise RuntimeError(f"The native {name} validation screenshot could not be saved.")
+    finally:
+        window.dark = original_dark
+        window.apply_theme()
+        app.processEvents()
+
+
 def install_native_run_safety(native_ide_module: Any) -> None:
     """Make the actual desktop Run button deterministic and keep failures readable."""
 
@@ -162,11 +185,13 @@ def install_native_run_safety(native_ide_module: Any) -> None:
             window.show()
             app.processEvents()
 
-            # Exercise the real GUI path that users trigger. The default example is the
-            # same eight-line table-cleaning program shipped in the installed IDE.
             workspace.active_file = "example.flbio"
             workspace.save()
             window.refresh_all()
+            _save_theme_screenshots(window, app)
+
+            # Exercise the real GUI path that users trigger. The default example is the
+            # same eight-line table-cleaning program shipped in the installed IDE.
             window.run_button.click()
             app.processEvents()
             if window.run_status.text() != "Finished":
