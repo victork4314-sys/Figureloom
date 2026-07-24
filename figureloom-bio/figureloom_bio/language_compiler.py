@@ -78,7 +78,7 @@ class Statement:
         aliases: dict[str, str] = {}
         for canonical, forms in VOCABULARY["verbs"].items():
             for form in forms:
-                aliases[str(form).casefold()] = canonical
+                aliases.setdefault(str(form).casefold(), canonical)
         aliases.update({
             "prepare": "prepare",
             "clean": "prepare",
@@ -213,7 +213,7 @@ def _compile_keep(statement: Statement) -> CompiledInstruction:
         return CompiledInstruction("keep_sequence_names_containing", (_need(value, "Keeping sequence names needs text to look for."),))
     if statement.has_term("base") and len(statement.numbers()) >= 2 and statement.has("to", "through"):
         return CompiledInstruction("keep_base_range", statement.numbers()[:2])
-    if statement.has_term("length") or statement.has("longer", "at least"):
+    if statement.has_term("length") or statement.has("longer", "at least", "above", "over", "more than", "greater than"):
         threshold = _need(number, "Keeping sequences by length needs a number of bases.")
         if statement.has("longer than", "more than", "greater than", "above", "over"):
             return CompiledInstruction("keep_strict_length", (threshold,))

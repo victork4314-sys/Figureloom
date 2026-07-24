@@ -108,7 +108,7 @@
         const value = after(source, 'containing', 'contains', 'with');
         if (value) output = `Keep sequences with names containing ${value}.`;
       } else if (term(lower, 'base') && nums.length >= 2 && has(lower, 'to', 'through')) output = `Keep bases ${nums[0]} to ${nums[1]}.`;
-      else if ((term(lower, 'length') || has(lower, 'longer', 'at least')) && nums[0]) {
+      else if ((term(lower, 'length') || has(lower, 'longer', 'at least', 'above', 'over', 'more than', 'greater than')) && nums[0]) {
         output = has(lower, 'longer than', 'more than', 'greater than', 'above', 'over')
           ? `Keep only sequences longer than ${nums[0]} bases.`
           : `Keep sequences at least ${nums[0]} bases long.`;
@@ -343,7 +343,7 @@
       vocabulary = loaded;
       verbAliases = new Map();
       Object.entries(vocabulary.verbs || {}).forEach(([canonical, aliases]) => {
-        aliases.forEach((alias) => verbAliases.set(String(alias).toLowerCase(), canonical));
+        aliases.forEach((alias) => { const key = String(alias).toLowerCase(); if (!verbAliases.has(key)) verbAliases.set(key, canonical); });
       });
       ready = true;
       const api = Object.freeze({ version: loaded.version, compileLine, compileSource });
