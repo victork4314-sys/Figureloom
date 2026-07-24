@@ -1,0 +1,34 @@
+name: Migrate FigureLoom Bio compiler language
+
+on:
+  push:
+    branches:
+      - agent/fix-word-term-grammar
+
+permissions:
+  contents: write
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout fix branch
+        uses: actions/checkout@v6
+        with:
+          ref: agent/fix-word-term-grammar
+          fetch-depth: 0
+
+      - name: Apply compiler vocabulary migration
+        run: python3 scripts/migrate-bio-language-to-compiler.py
+
+      - name: Commit generated documentation and labels
+        run: |
+          if git diff --quiet; then
+            echo "Migration is already applied."
+            exit 0
+          fi
+          git config user.name "FigureLoom compiler migration"
+          git config user.email "actions@users.noreply.github.com"
+          git add README.md figureloom-bio wiki scripts .github/workflows/validate-bio-flow.yml
+          git commit -m "Migrate FigureLoom Bio docs to compiler grammar"
+          git push origin HEAD:agent/fix-word-term-grammar
