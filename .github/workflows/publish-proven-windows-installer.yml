@@ -12,6 +12,7 @@ on:
 
 permissions:
   contents: write
+  issues: write
 
 concurrency:
   group: figureloom-bio-windows-publish-${{ github.sha }}
@@ -25,6 +26,13 @@ jobs:
     steps:
       - name: Checkout current source
         uses: actions/checkout@v6
+
+      - name: Report Windows release start
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh issue comment 231 --repo $env:GITHUB_REPOSITORY --body "STARTED: Windows desktop replacement build for commit $env:GITHUB_SHA. Building current source now."
 
       - name: Set up Python
         uses: actions/setup-python@v6
@@ -43,6 +51,13 @@ jobs:
             throw 'The built Windows installer is not a valid EXE.'
           }
           Get-FileHash -Algorithm SHA256 $installer | Format-List
+
+      - name: Report Windows build complete
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh issue comment 231 --repo $env:GITHUB_REPOSITORY --body "BUILT: The current Windows installer EXE was created and passed its integrity check. Installing and testing that exact EXE now."
 
       - name: Install and test the exact built Windows package
         shell: pwsh
@@ -130,6 +145,13 @@ jobs:
             }
           }
 
+      - name: Report installed Windows tests complete
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh issue comment 231 --repo $env:GITHUB_REPOSITORY --body "TESTED: The exact built EXE installed successfully. The real IDE Run button completed the bundled eight-line program, both light and dark screenshots were captured, and IDE colors, Test, Updater, CLI, quick test, Vulcano wording, and volcano SVG all passed. Uploading now."
+
       - name: Upload Windows theme screenshots
         uses: actions/upload-artifact@v7
         with:
@@ -173,3 +195,18 @@ jobs:
           if ($LASTEXITCODE -ne 0 -or $assets -notcontains 'FigureLoom-Bio-Installer.exe') {
             throw 'The current tested Windows installer is missing from the stable release.'
           }
+
+      - name: Report Windows release published
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh issue comment 231 --repo $env:GITHUB_REPOSITORY --body "PUBLISHED: The current tested FigureLoom-Bio-Installer.exe replaced the stable Windows download successfully."
+
+      - name: Report Windows release failure
+        if: failure()
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh issue comment 231 --repo $env:GITHUB_REPOSITORY --body "FAILED: The Windows replacement stopped in this run. The failed Actions step identifies whether it was build, installation/testing, screenshot capture, artifact upload, or stable-release publication."
