@@ -24,6 +24,7 @@ jobs:
           node --check ide/ide-decision-core.js
           node --check ide/ide-current-file-language.js
           node --check ide/ide-language-manifest.js
+          node --check ide/ide-language-compiler.js
           node --check ide/ide-language-aliases.js
           node --check ide/ide-generated-current-file.js
           node --check ide/ide-language-translation-bridge.js
@@ -105,6 +106,9 @@ jobs:
 
       - name: Leave the loading status
         run: node scripts/validate-bio-runtime-race.mjs left-waiting
+
+      - name: Run the exact reported program through the production path
+        run: node scripts/validate-bio-runtime-race.mjs exact-program
 
       - name: Run control flow tests
         run: |
