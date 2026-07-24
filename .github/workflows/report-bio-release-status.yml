@@ -52,4 +52,4 @@ jobs:
             "repos/$GITHUB_REPOSITORY/issues/comments/5069780966" \
             -f "body=$(cat /tmp/status.md)"
 
-# live refresh after deterministic self-test repair 2
+# live refresh after duplicate quick-test removal
