@@ -136,6 +136,6 @@ await Promise.resolve();
 assert.equal(editor.value, source, 'The editor must keep the exact wording the user wrote.');
 
 const html = read('ide/index.html');
-assert.match(html, /ide-logic-compiler\.js\?v=3&freeform=1/);
+assert.match(html, /ide-logic-compiler\.js\?v=4/);
 
 console.log('The exact red stress-test lines compile before runtime recognition, appear valid to the highlighter, execute canonically, and remain unchanged in the editor.');
