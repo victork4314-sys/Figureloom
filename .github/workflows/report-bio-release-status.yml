@@ -16,33 +16,38 @@ jobs:
   report:
     runs-on: ubuntu-latest
     steps:
-      - name: Report current Intel proof failure
+      - name: Keep newest Mac publisher and report it
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          run_id=30096168050
-          intel_job=89490644653
-          gh run view "$run_id" \
+          gh run list \
+            --repo "$GITHUB_REPOSITORY" \
+            --workflow publish-fixed-macos-installers.yml \
+            --branch main \
+            --limit 20 \
+            --json databaseId,status,conclusion,headSha,event,number,createdAt,updatedAt,url \
+            > /tmp/runs.json
+          newest="$(jq -r '.[0].databaseId // empty' /tmp/runs.json)"
+          test -n "$newest"
+
+          jq -r --arg newest "$newest" \
+            '.[] | select((.status == "queued" or .status == "in_progress" or .status == "pending" or .status == "waiting") and (.databaseId|tostring) != $newest) | .databaseId' \
+            /tmp/runs.json \
+          | while read -r run_id; do
+              [[ -n "$run_id" ]] || continue
+              gh run cancel "$run_id" --repo "$GITHUB_REPOSITORY" || true
+            done
+
+          sleep 5
+          gh run view "$newest" \
             --repo "$GITHUB_REPOSITORY" \
             --json databaseId,status,conclusion,headSha,createdAt,updatedAt,url,jobs \
-            > /tmp/run.json
-          gh api "repos/$GITHUB_REPOSITORY/actions/jobs/$intel_job/logs" > /tmp/intel.bin
-          if unzip -t /tmp/intel.bin >/dev/null 2>&1; then
-            unzip -p /tmp/intel.bin > /tmp/intel.log
-          else
-            cp /tmp/intel.bin /tmp/intel.log
-          fi
-          tail -n 90 /tmp/intel.log > /tmp/intel-tail.log
+            > /tmp/newest.json
           {
-            echo 'Current Mac publisher:'
+            echo 'Newest direct Mac release publisher:'
             echo '```json'
-            cat /tmp/run.json
-            echo '```'
-            echo
-            echo 'Intel failed-proof tail:'
-            echo '```text'
-            cat /tmp/intel-tail.log
+            cat /tmp/newest.json
             echo '```'
           } > /tmp/status.md
           gh api --method PATCH \
