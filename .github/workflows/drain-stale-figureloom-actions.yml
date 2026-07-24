@@ -1,0 +1,90 @@
+name: Drain stale FigureLoom repair Actions runs
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/drain-stale-figureloom-actions.yml'
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/drain-stale-figureloom-actions.yml'
+  workflow_dispatch:
+
+permissions:
+  actions: write
+  contents: read
+
+concurrency:
+  group: drain-stale-figureloom-actions-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  drain:
+    if: github.event_name != 'pull_request' || (github.actor == 'victork4314-sys' && github.head_ref == 'rescue/drain-actions-queue')
+    strategy:
+      fail-fast: false
+      matrix:
+        runner:
+          - windows-latest
+          - ubuntu-24.04
+          - ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 10
+    steps:
+      - name: Cancel only stale FigureLoom repair and rescue runs
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $repository = $env:GITHUB_REPOSITORY
+          $currentRun = [long]$env:GITHUB_RUN_ID
+          $protected = [System.Collections.Generic.HashSet[long]]::new()
+          [void]$protected.Add(30056199791) # Current four-pool macOS build/test/publish run.
+          [void]$protected.Add(30056632823) # Current separate macOS 14 Apple Silicon run.
+          [void]$protected.Add($currentRun)
+
+          $statuses = @('queued', 'in_progress', 'pending', 'waiting')
+          $targets = [System.Collections.Generic.Dictionary[long,string]]::new()
+
+          foreach ($status in $statuses) {
+            $payload = gh api "repos/$repository/actions/runs?status=$status&per_page=100" | ConvertFrom-Json
+            if ($LASTEXITCODE -ne 0) { throw "Could not list $status Actions runs." }
+            foreach ($run in $payload.workflow_runs) {
+              $id = [long]$run.id
+              if ($protected.Contains($id)) { continue }
+
+              $name = [string]$run.name
+              $branch = [string]$run.head_branch
+              $isOldRepairBranch = $branch -match '^(fix/(desktop-repair-final-verified|finish-bio-installer-publish|windows-native-ide-self-test)|rescue/publish-proven-windows)$'
+              $isRescueValidation = $branch.StartsWith('rescue/') -and $name -in @('Validate FigureLoom', 'Validate FigureLoom Bio flow')
+              $isOldCrossPlatform = $name -eq 'Build FigureLoom Bio Windows and macOS installers' -and $id -lt 30056199791
+              $isOldWindowsPublisher = $name -eq 'Publish proven FigureLoom Bio Windows installer'
+              $isSupersededMacRescue = $id -eq 30056085421
+
+              if ($isOldRepairBranch -or $isRescueValidation -or $isOldCrossPlatform -or $isOldWindowsPublisher -or $isSupersededMacRescue) {
+                $targets[$id] = "$name on $branch"
+              }
+            }
+          }
+
+          Write-Host "Stale runs selected: $($targets.Count)"
+          foreach ($entry in $targets.GetEnumerator()) {
+            $id = $entry.Key
+            Write-Host "Cancelling $id - $($entry.Value)"
+            gh api --method POST "repos/$repository/actions/runs/$id/cancel" *> $null
+            if ($LASTEXITCODE -ne 0) {
+              gh api --method POST "repos/$repository/actions/runs/$id/force-cancel" *> $null
+              if ($LASTEXITCODE -ne 0) {
+                Write-Warning "GitHub did not cancel run $id; it may have completed between listing and cancellation."
+              }
+            }
+          }
+
+          Start-Sleep -Seconds 5
+          foreach ($entry in $targets.GetEnumerator()) {
+            $id = $entry.Key
+            $run = gh api "repos/$repository/actions/runs/$id" | ConvertFrom-Json
+            if ($LASTEXITCODE -ne 0) { continue }
+            Write-Host "$id now reports status=$($run.status), conclusion=$($run.conclusion)"
+          }
