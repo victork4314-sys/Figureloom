@@ -101,6 +101,7 @@ await Promise.resolve();
 assert.equal(editor.value, original, 'The editor must keep the wording the user wrote.');
 
 const vocabulary = JSON.parse(fs.readFileSync('figureloom-bio/figureloom_bio/language_vocabulary.json', 'utf8'));
+assert.equal(vocabulary.version, 3);
 assert.deepEqual(vocabulary.logic.and, ['and']);
 assert.deepEqual(vocabulary.logic.or, ['or']);
 assert.deepEqual(vocabulary.logic.not, ['not']);
@@ -109,9 +110,15 @@ assert.deepEqual(vocabulary.booleans.false, ['false']);
 assert.ok(vocabulary.flow.if.includes('if'));
 assert.ok(vocabulary.flow.else.includes('else'));
 assert.ok(vocabulary.flow.else_if.includes('else if'));
+for (const word of ['copy', 'split', 'prepare', 'clean', 'assemble', 'annotate', 'classify', 'reconstruct', 'use', 'mark']) {
+  const allVerbs = Object.values(vocabulary.verbs).flat().map((value) => String(value).toLowerCase());
+  assert.ok(allVerbs.includes(word), `${word} must be present in the shared operation vocabulary.`);
+}
 
 const catalog = fs.readFileSync('ide/ide-language-catalog-ui.js', 'utf8');
-assert.match(catalog, /for \(const form of unique\)/, 'Every individual word or phrase must receive its own catalog entry.');
+assert.match(catalog, /Every individual word/);
+assert.match(catalog, /function individualWords\(payload\)/);
+assert.match(catalog, /group:'individual_words'/);
 for (const group of ['flow', 'logic', 'booleans', 'conditions', 'file_types', 'fillers']) {
   assert.match(catalog, new RegExp(`key:'${group}'`), `${group} must be visible in Words & terms.`);
 }
@@ -122,6 +129,6 @@ assert.match(index, /ide-logic-compiler\.js\?v=1/);
 assert.match(index, /ide-control-flow-runtime\.js\?v=6/);
 assert.match(index, /ide-app-v2\.js\?v=3/);
 assert.match(index, /ide-vocabulary-ui-copy\.js\?v=2/);
-assert.match(index, /ide-language-catalog-ui\.js\?v=4/);
+assert.match(index, /ide-language-catalog-ui\.js\?v=5/);
 
-console.log('Browser Boolean logic, Else aliases, free wording inside blocks, one-card-per-word vocabulary, and cache busting are validated.');
+console.log('Browser Boolean logic, Else aliases, free wording inside blocks, every individual vocabulary word, and cache busting are validated.');
