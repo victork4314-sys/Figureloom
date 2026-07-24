@@ -119,6 +119,7 @@
   }
 
   const parameterizedBuiltInPatterns = [
+    /^Say .+\.$/i,
     /^(?:Keep|Remove) sequences with names containing .+\.$/i,
     /^(?:Assemble|Build) (?:the |a )?bacterial genome from .+ into .+\.$/i,
     /^(?:Check|Evaluate|Assess) (?:the )?(?:bacterial )?assembly .+ into .+\.$/i,
