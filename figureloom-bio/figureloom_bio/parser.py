@@ -266,17 +266,8 @@ def parse(source: str) -> list[Instruction]:
     instructions: list[Instruction] = []
 
     for line_number, sentence in _split_sentences(source):
-        compiler_error: CompileError | None = None
-        try:
-            compiled = compile_sentence(sentence)
-        except CompileError as error:
-            compiled = None
-            compiler_error = error
-
-        if compiled is not None:
-            instructions.append(Instruction(compiled.action, line_number, compiled.values))
-            continue
-
+        # Existing productions are grammar rules, not a whitelist. Preserve their
+        # established runtime actions first, then use the compiler for any new wording.
         for action, pattern in _PATTERNS:
             match = pattern.fullmatch(sentence)
             if match:
@@ -287,11 +278,18 @@ def parse(source: str) -> list[Instruction]:
                 instructions.append(Instruction(action, line_number, values))
                 break
         else:
-            if compiler_error is not None:
+            try:
+                compiled = compile_sentence(sentence)
+            except CompileError as error:
                 raise FigureLoomBioError(
-                    _compile_error_message(sentence, compiler_error),
+                    _compile_error_message(sentence, error),
                     line_number=line_number,
-                )
+                ) from error
+
+            if compiled is not None:
+                instructions.append(Instruction(compiled.action, line_number, compiled.values))
+                continue
+
             raise FigureLoomBioError(
                 _unknown_instruction_message(sentence),
                 line_number=line_number,
