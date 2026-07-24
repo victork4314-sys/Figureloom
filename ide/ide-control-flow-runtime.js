@@ -4,7 +4,7 @@
   if (window.FigureLoomBioFlowLoading) return;
 
   const parts = [0, 1, 2, 3, 4].map(
-    (number) => `./ide-control-flow-runtime.part${String(number).padStart(2, '0')}?v=3`,
+    (number) => `./ide-control-flow-runtime.part${String(number).padStart(2, '0')}?v=4`,
   );
 
   async function fetchPart(url) {
@@ -35,6 +35,10 @@
       [
         "function cond(q,c,l){let a=",
         "function cond(q,c,l){q=String(q).trim();if(/^true$/i.test(q))return true;if(/^false$/i.test(q))return false;let a=",
+      ],
+      [
+        "else c.data.records=c.data.records.filter(x=>x.sequence.length>=q);return}",
+        "else{let r=c.data?.records;if(!Array.isArray(r))throw new X('This instruction needs an open FASTA or FASTQ file.',n.l);c.data.records=r.filter(x=>x.sequence.length>=q)}return}",
       ],
     ];
 
