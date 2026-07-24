@@ -22,7 +22,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh issue comment 231 --repo $env:GITHUB_REPOSITORY --body "VISUAL CHECK STARTED: run $env:GITHUB_RUN_ID is installing the published Windows EXE and capturing the real light and dark windows."
+          gh issue comment 234 --repo $env:GITHUB_REPOSITORY --body "VISUAL CHECK STARTED: run $env:GITHUB_RUN_ID is installing the published Windows EXE and capturing the real light and dark windows."
 
       - name: Download published Windows installer
         shell: pwsh
@@ -65,7 +65,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh issue comment 231 --repo $env:GITHUB_REPOSITORY --body "VISUAL CHECK READY: run $env:GITHUB_RUN_ID captured the exact installed Windows light and dark windows for inspection."
+          gh issue comment 234 --repo $env:GITHUB_REPOSITORY --body "VISUAL CHECK READY: run $env:GITHUB_RUN_ID captured the exact installed Windows light and dark windows for inspection."
 
       - name: Report visual inspection failure
         if: failure()
@@ -73,4 +73,4 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh issue comment 231 --repo $env:GITHUB_REPOSITORY --body "VISUAL CHECK FAILED: run $env:GITHUB_RUN_ID could not capture the installed Windows light/dark windows."
+          gh issue comment 234 --repo $env:GITHUB_REPOSITORY --body "VISUAL CHECK FAILED: run $env:GITHUB_RUN_ID could not capture the installed Windows light/dark windows."
