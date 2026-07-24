@@ -30,6 +30,7 @@ class MockElement {
   querySelector() { return null; }
   querySelectorAll() { return []; }
   setSelectionRange(start, end) { this.selectionStart = start; this.selectionEnd = end; }
+  remove() {}
   set innerHTML(value) { this._innerHTML = String(value); }
   get innerHTML() { return this._innerHTML || this.children.map((child) => child?.textContent || '').join(''); }
 }
@@ -46,6 +47,7 @@ const storageApi = {
 };
 const windowListeners = {};
 const documentListeners = {};
+const dynamicElements = new Map();
 const elements = {
   programEditor: new MockElement('textarea', 'programEditor'),
   runButton: new MockElement('button', 'runButton'),
@@ -60,16 +62,28 @@ elements.activeFileLabel.textContent = 'microbiology-example.flbio';
 elements.programName.value = 'microbiology-example.flbio';
 elements.runStatus.textContent = 'Ready';
 
+let context;
 const document = {
-  getElementById(id) { return elements[id] || null; },
+  getElementById(id) { return elements[id] || dynamicElements.get(id) || null; },
   querySelector() { return null; },
   createElement(tag) { return new MockElement(tag); },
   addEventListener(type, listener) { (documentListeners[type] ||= []).push(listener); },
   head: new MockElement('head'),
   body: new MockElement('body'),
 };
+document.head.append = (...items) => {
+  document.head.children.push(...items.filter(Boolean));
+  for (const item of items) {
+    if (!item) continue;
+    if (item.id) dynamicElements.set(item.id, item);
+    if (item.tagName === 'SCRIPT' && item.textContent) {
+      new vm.Script(item.textContent, { filename:item.id || 'dynamic-script.js' }).runInContext(context);
+    }
+  }
+};
 const windowObject = {
   addEventListener(type, listener) { (windowListeners[type] ||= []).push(listener); },
+  dispatchEvent(event) { for (const listener of windowListeners[event.type] || []) listener(event); return true; },
   location: { reload() {} },
 };
 windowObject.FigureLoomBioCompiler = Object.freeze({ compileSource(source) { return String(source); } });
@@ -95,7 +109,7 @@ function dispatchRunClick() {
 }
 elements.runButton.click = dispatchRunClick;
 
-const context = vm.createContext({
+context = vm.createContext({
   console,
   document,
   window: windowObject,
@@ -104,8 +118,15 @@ const context = vm.createContext({
   location: windowObject.location,
   Element: MockElement,
   Event: MockEvent,
+  CustomEvent: MockEvent,
   MutationObserver: class { observe() {} },
   structuredClone,
+  fetch: async (url) => {
+    const match = String(url).match(/ide-control-flow-runtime\.part(\d{2})/);
+    if (!match) return { ok:false, status:404, text:async () => '' };
+    const content = read(`ide/ide-control-flow-runtime.part${match[1]}`);
+    return { ok:true, status:200, text:async () => content };
+  },
   setTimeout,
   clearTimeout,
   queueMicrotask,
@@ -169,10 +190,8 @@ if (phase === 'waiting') {
 }
 
 await new Promise((resolve) => setTimeout(resolve, 120));
-const combinedRuntime = [0, 1, 2, 3, 4]
-  .map((number) => read(`ide/ide-control-flow-runtime.part${String(number).padStart(2, '0')}`))
-  .join('');
-new vm.Script(combinedRuntime, { filename:'ide-control-flow-runtime.combined.js' }).runInContext(context);
+new vm.Script(read('ide/ide-control-flow-runtime.js'), { filename:'ide-control-flow-runtime.js' }).runInContext(context);
+await windowObject.FigureLoomBioFlowLoading;
 
 if (!windowObject.FigureLoomBioFlow?.usesAdvancedRuntime?.(program)) {
   fail('The complete runtime loaded but did not claim the microbiology program.');
