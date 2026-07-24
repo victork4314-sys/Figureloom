@@ -40,6 +40,30 @@ class FigureLoomBioCompilerTests(unittest.TestCase):
                 instruction = parse(source)[0]
                 self.assertEqual((instruction.action, instruction.values), expected)
 
+    def test_ambiguous_everyday_words_use_the_sentence_context(self) -> None:
+        cases = {
+            'Change DNA into RNA.': ('to_rna', ()),
+            'Build the bacterial genome.': ('assemble_current_bacterial_genome', ()),
+            'Print the result.': ('show_result', ()),
+            'Print Analysis started.': ('say', ('Analysis started',)),
+            'Write the result to clean.csv.': ('save_result', ('clean.csv',)),
+            'Write Analysis started.': ('say', ('Analysis started',)),
+            'Call variants.': ('find_variants', ()),
+            'Call the column old to new.': ('rename_column', ('old', 'new')),
+            'Filter rows marked treated under condition.': ('keep_rows', ('treated', 'condition')),
+            'Filter out rows marked failed under status.': ('remove_rows', ('failed', 'status')),
+            'Look for genes.': ('find_genes', ()),
+            'Get rid of gaps from the sequences.': ('remove_sequence_gaps', ()),
+            'Label the genome.': ('annotate_current_file', ()),
+            'Build a relationship tree.': ('build_phylogenetic_tree', ()),
+            'Calculate the spread of score.': ('summary_statistic', ('standard deviation', 'score')),
+            'Calculate the confidence range of score.': ('summary_statistic', ('confidence interval', 'score')),
+        }
+        for source, expected in cases.items():
+            with self.subTest(source=source):
+                instruction = parse(source)[0]
+                self.assertEqual((instruction.action, instruction.values), expected)
+
     def test_remaining_official_operation_words_compile(self) -> None:
         cases = {
             'Copy the current file as backup.fasta.': ('copy_file', ('backup.fasta',)),
@@ -75,10 +99,10 @@ class FigureLoomBioCompilerTests(unittest.TestCase):
             program = root / 'free-wording.flbio'
             program.write_text(
                 'Please load samples.csv.\n'
-                'Retain rows where condition is treated.\n'
-                'Discard rows where status equals failed.\n'
+                'Filter rows marked treated under condition.\n'
+                'Filter out rows marked failed under status.\n'
                 'Total the records.\n'
-                'Display the output.\n'
+                'Print the output.\n'
                 'Write the output to clean.csv.\n',
                 encoding='utf-8',
             )
