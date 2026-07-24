@@ -5,6 +5,7 @@ import json
 import unittest
 
 import figureloom_bio  # noqa: F401 - installs the complete language before tests run
+from figureloom_bio.language_aliases import normalize_sentence
 from figureloom_bio.parser import parse
 
 
@@ -73,8 +74,9 @@ class ExecutableLanguageContractTests(unittest.TestCase):
         cls.aliases = json.loads(package.joinpath("language_aliases.json").read_text(encoding="utf-8"))
 
     @staticmethod
-    def _one_instruction(sentence: str):
-        instructions = parse(sentence)
+    def _one_instruction(sentence: str, *, lower_aliases: bool = False):
+        source = normalize_sentence(sentence) if lower_aliases else sentence
+        instructions = parse(source)
         if len(instructions) != 1:
             raise AssertionError(f"Expected one instruction from {sentence!r}, got {len(instructions)}")
         return instructions[0]
@@ -95,8 +97,8 @@ class ExecutableLanguageContractTests(unittest.TestCase):
                         sentence = template.format(word=form.capitalize())
                         canonical_sentence = template.format(word=canonical.capitalize())
 
-                    actual = self._one_instruction(sentence)
-                    expected = self._one_instruction(canonical_sentence)
+                    actual = self._one_instruction(sentence, lower_aliases=True)
+                    expected = self._one_instruction(canonical_sentence, lower_aliases=True)
                     self.assertEqual(
                         (actual.action, actual.values),
                         (expected.action, expected.values),
@@ -122,8 +124,8 @@ class ExecutableLanguageContractTests(unittest.TestCase):
         )
         for simple, technical in pairs:
             with self.subTest(simple=simple):
-                actual = self._one_instruction(simple)
-                expected = self._one_instruction(technical)
+                actual = self._one_instruction(simple, lower_aliases=True)
+                expected = self._one_instruction(technical, lower_aliases=True)
                 self.assertEqual((actual.action, actual.values), (expected.action, expected.values))
 
 
