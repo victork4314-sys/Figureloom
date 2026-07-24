@@ -41,7 +41,18 @@ jobs:
             figureloom-bio/figureloom_bio/control_flow_logic.py \
             figureloom-bio/figureloom_bio/parser.py \
             figureloom-bio/figureloom_bio/language_diagnostics.py \
-            figureloom-bio/figureloom_bio/cli.py
+            figureloom-bio/figureloom_bio/cli.py \
+            scripts/generate-bio-command-reference.py
+
+      - name: Regenerate complete language reference
+        run: python3 scripts/generate-bio-command-reference.py
+
+      - name: Upload generated language reference
+        uses: actions/upload-artifact@v6
+        with:
+          name: complete-bio-language-reference-${{ github.run_id }}
+          path: wiki/FigureLoom-Bio-Command-Reference.md
+          if-no-files-found: error
 
       - name: Capture compiler regression tests
         id: compiler_tests
