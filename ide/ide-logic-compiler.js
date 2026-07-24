@@ -5,8 +5,6 @@
   const runButton = document.getElementById('runButton');
   if (!editor || !runButton) return;
 
-  const TRUE_CONDITION = 'the result is empty or the result is not empty';
-  const FALSE_CONDITION = 'the result is empty and the result is not empty';
   let replayingColdRun = false;
 
   function literal(value) {
@@ -40,9 +38,9 @@
 
   function simplifyCondition(source) {
     const parts = String(source).split(/\s+or\s+/i).map(simplifyAnd);
-    if (parts.some((part) => part.kind === 'literal' && part.value)) return TRUE_CONDITION;
+    if (parts.some((part) => part.kind === 'literal' && part.value)) return 'true';
     const remaining = parts.filter((part) => part.kind !== 'literal');
-    if (!remaining.length) return FALSE_CONDITION;
+    if (!remaining.length) return 'false';
     return remaining.map((part) => part.value).join(' or ');
   }
 
