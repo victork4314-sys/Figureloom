@@ -3,6 +3,7 @@ import tempfile
 import unittest
 
 from figureloom_bio.language_compiler import compile_sentence, lex
+from figureloom_bio.language_compiler_extensions import compile_extended_sentence
 from figureloom_bio.parser import parse
 from figureloom_bio.runtime import Runner
 
@@ -38,6 +39,22 @@ class FigureLoomBioCompilerTests(unittest.TestCase):
             with self.subTest(source=source):
                 instruction = parse(source)[0]
                 self.assertEqual((instruction.action, instruction.values), expected)
+
+    def test_remaining_official_operation_words_compile(self) -> None:
+        cases = {
+            'Copy the current file as backup.fasta.': ('copy_file', ('backup.fasta',)),
+            'Split the reads into files with 25 reads each as part.fastq.': (
+                'split_sequences',
+                ('25', 'part.fastq'),
+            ),
+            'Use the sequence called sample-17.': ('use_sequence', ('sample-17',)),
+            'Mark the sample for review.': ('mark_review', ()),
+        }
+        for source, expected in cases.items():
+            with self.subTest(source=source):
+                compiled = compile_extended_sentence(source)
+                self.assertIsNotNone(compiled)
+                self.assertEqual((compiled.action, compiled.values), expected)
 
     def test_examples_do_not_define_legality(self) -> None:
         compiled = compile_sentence('Keep rows where condition is treated')

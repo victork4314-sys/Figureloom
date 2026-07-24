@@ -12,10 +12,11 @@
   const count = dialog.querySelector('.addons-installed-count');
   if (!grid || !search || !themeSelect || !count) return;
 
-  const sourceUrl = '../figureloom-bio/figureloom_bio/language_vocabulary.json?v=2';
+  const sourceUrl = '../figureloom-bio/figureloom_bio/language_vocabulary.json?v=3';
   let entries = [];
 
   const GROUPS = Object.freeze([
+    { key:'individual_words', title:'Every individual word', icon:'Aa', description:'Every single word contained in the built-in vocabulary, shown separately.' },
     { key:'verbs', title:'Operations', icon:'▶', description:'Action words that tell FigureLoom Bio what to do.' },
     { key:'terms', title:'Biology and data terms', icon:'🧬', description:'Scientific, file, result, table, and sequence words.' },
     { key:'flow', title:'If, else, loops, and recipes', icon:'⑂', description:'Words and phrases that control which instructions run.' },
@@ -55,9 +56,52 @@
     return value;
   }
 
+  function vocabularyForms(payload) {
+    const forms = [];
+    for (const group of GROUPS) {
+      if (group.key === 'individual_words') continue;
+      const definitions = definitionsFor(payload, group.key);
+      for (const values of Object.values(definitions)) {
+        for (const value of values || []) {
+          const form = String(value).trim();
+          if (form) forms.push(form);
+        }
+      }
+    }
+    return forms;
+  }
+
+  function individualWords(payload) {
+    const words = new Map();
+    for (const form of vocabularyForms(payload)) {
+      for (const match of form.matchAll(/[A-Za-z0-9_]+(?:-[A-Za-z0-9_]+)*/g)) {
+        const shown = match[0];
+        const key = shown.toLowerCase();
+        if (!words.has(key)) words.set(key, shown);
+      }
+    }
+    return [...words.values()].sort((left, right) => left.localeCompare(right, undefined, { sensitivity:'base' }));
+  }
+
   function buildEntries(payload) {
     const output = [];
+
+    for (const word of individualWords(payload)) {
+      output.push(Object.freeze({
+        id:`individual-word-${word.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`,
+        group:'individual_words',
+        groupTitle:'Every individual word',
+        icon:'Aa',
+        description:'A single word used inside one or more built-in FigureLoom Bio words or phrases.',
+        name:word,
+        title:word,
+        form:word,
+        meaning:'Individual vocabulary word',
+      }));
+    }
+
     for (const group of GROUPS) {
+      if (group.key === 'individual_words') continue;
       const definitions = definitionsFor(payload, group.key);
       for (const [name, forms] of Object.entries(definitions)) {
         const unique = [...new Set((forms || []).map((value) => String(value).trim()).filter(Boolean))];
