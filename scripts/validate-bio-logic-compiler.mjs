@@ -184,7 +184,7 @@ for (const group of ['flow', 'logic', 'booleans', 'conditions', 'file_types', 'f
 const index = fs.readFileSync('ide/index.html', 'utf8');
 assert.match(index, /ide-language-compiler\.js\?v=2/);
 assert.match(index, /ide-logic-compiler\.js\?v=3/);
-assert.match(index, /ide-control-flow-runtime\.js\?v=8/);
+assert.match(index, /ide-control-flow-runtime\.js\?v=9/);
 assert.match(index, /ide-decision-core\.js\?v=2/);
 assert.match(index, /ide-large-file-vault-v2\.js\?v=1/);
 assert.match(index, /ide-app-v2\.js\?v=3/);
