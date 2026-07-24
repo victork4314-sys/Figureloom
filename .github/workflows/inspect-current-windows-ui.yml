@@ -1,6 +1,6 @@
 name: Inspect published Windows desktop UI
 
-# Capture the current stable installer after the final parity release.
+# Capture the final transparent-label stable installer in both themes.
 on:
   push:
     branches: [main]
