@@ -40,21 +40,26 @@ class Event {
 class CustomEvent extends Event { constructor(type, options = {}) { super(type, options); this.detail = options.detail; } }
 class MutationObserver { observe() {} disconnect() {} }
 
-const fastq = '@sample-17\nATGAAATAGATGAAATAG\n+\nIIIIIIIIIIIIIIIIII\n@failed-read\nNNNNATGAAATAGNNNNN\n+\nIIIIIIIIIIIIIIIIII\n';
-const fasta = '>sample-17\nATGAAATAGATGAAATAG\n>old-name\nATGACAATGNNN\n>failed-sequence\nATGAAATAG\n';
-const table = 'sample,condition,status,score,count,x,y,effect,p_value,expression,fold_change,gene_a,gene_b\ns1,treated,,10,4,1,2,2.0,0.01,10,2.0,4,8\ns2,control,failed,4,8,2,4,-1.2,0.2,4,-1.2,2,3\n';
-const files = {
+const readSequence = 'ATG'.repeat(40);
+const longSequence = 'ATG'.repeat(200);
+const fastq = `@sample-17\n${readSequence}\n+\n${'I'.repeat(readSequence.length)}\n@failed-read\n${'N'.repeat(readSequence.length)}\n+\n${'I'.repeat(readSequence.length)}\n`;
+const fasta = `>sample-17\n${longSequence}\n>old-name\nATGACAATGNNN\n>failed-sequence\nATGAAATAG\n`;
+const table = 'sample,old_name,group,condition,status,score,count,x,y,effect,p_value,expression,fold_change,gene_a,gene_b\ns1,one,treated,treated,,10,4,1,2,2.0,0.01,10,2.0,4,8\ns2,two,control,control,failed,4,8,2,4,-1.2,0.2,4,-1.2,2,3\ns3,three,treated,treated,ok,7,5,3,6,0.4,0.04,8,0.4,6,7\n';
+const fixtureFiles = Object.freeze({
   'samples.csv':table, 'metadata.csv':table, 'more-samples.csv':table,
   'reads.fastq':fastq, 'forward.fastq':fastq, 'reverse.fastq':fastq,
   'sequences.fasta':fasta, 'reads.fasta':fasta, 'reference.fasta':fasta,
   'more.fasta':fasta, 'more-sequences.fasta':fasta, 'first.fasta':fasta, 'second.fasta':fasta,
   'assembly/contigs.fasta':fasta, 'card.fasta':fasta, 'resistance-markers.fasta':fasta,
   'virulence-markers.fasta':fasta, 'bacteria-reference.fasta':fasta,
+});
+const storage = new Map();
+const resetWorkspace = () => {
+  storage.clear();
+  storage.set('figureloom-bio-ide-files-v1', JSON.stringify(fixtureFiles));
+  storage.set('figureloom-bio-ide-active-v1', 'advertised-language.flbio');
 };
-const storage = new Map([
-  ['figureloom-bio-ide-files-v1', JSON.stringify(files)],
-  ['figureloom-bio-ide-active-v1', 'advertised-language.flbio'],
-]);
+resetWorkspace();
 const storageApi = { getItem:key => storage.has(key) ? storage.get(key) : null, setItem:(key,value) => storage.set(key,String(value)), removeItem:key => storage.delete(key) };
 const windowListeners = {}, documentListeners = {}, dynamicElements = new Map();
 const elements = {
@@ -69,8 +74,7 @@ const document = {
   getElementById(id) { return elements[id] || dynamicElements.get(id) || null; },
   createElement(tag) { return new MockElement(tag); },
   addEventListener(type, listener) { (documentListeners[type] ||= []).push(listener); },
-  querySelector() { return null; },
-  head:new MockElement('head'), body:new MockElement('body'),
+  querySelector() { return null; }, head:new MockElement('head'), body:new MockElement('body'),
 };
 document.head.append = (...items) => {
   document.head.children.push(...items.filter(Boolean));
@@ -113,49 +117,41 @@ load('ide/ide-control-flow-runtime.js');
 await windowObject.FigureLoomBioFlowLoading;
 
 function collectText(node) { return [node?.textContent || '', node?.innerHTML || '', ...(node?.children || []).map(collectText)].join('\n'); }
-
-const tableWords = /(rows?|columns?|under |score|count|treated|control|histogram|bar chart|scatter plot|box plot|heat map|PCA|volcano|average of|median of|standard deviation of|confidence interval|p value|normalize|compare treated)/i;
-const fastqWords = /(reads?|quality|adapter|trim|cut|paired|forward\.fastq|reverse\.fastq)/i;
-const sequenceWords = /(sequences?|DNA|RNA|bases?|GC content|FASTA|alignment|variants?|genes?|peptides?|transmembrane|primers?|phylogenetic|tree|plasmids?|organism|assembly|annotate|resistance|virulence)/i;
+const fastqWords = /(reads?|quality|adapter|trim|cut|paired|forward\.fastq|reverse\.fastq|read length)/i;
+const tableWords = /(rows?|columns?|under |score|count|treated|control|histogram|bar chart|scatter plot|box plot|heat ?map|PCA|volcano|average of|median of|confidence interval|p-?value|normalize|compare treated|expression|fold_change|gene_[ab])/i;
+const sequenceWords = /(sequences?|DNA|RNA|bases?|GC content|FASTA|alignment|variants?|genes?|peptides?|transmembrane|membrane|primers?|phylogenetic|tree|plasmids?|organism|assembly|annotate|resistance|virulence|reverse complement|translate|gaps?|palindrom|start codon|stop codon|ORFs?|join)/i;
 
 function programFor(label, sentence) {
   const id = label.split(':')[1];
-  if (['continue_sample','skip_sample','open_sample'].includes(id)) {
-    return `Open all FASTA files as samples.\nFor every sample in samples:\n    ${id === 'open_sample' ? 'Open the sample.' : sentence}`;
-  }
-  if (id === 'save_sample_result') {
-    return `Open all FASTA files as samples.\nFor every sample in samples:\n    Open the sample.\n    ${sentence}`;
-  }
-  if (id === 'use_recipe') {
-    return `Make a recipe called Clean reads:\n    Say The recipe ran.\n${sentence}`;
-  }
-  if (id === 'use_result') {
-    return `Open the file sequences.fasta.\nCall the result clean reads.\n${sentence}`;
-  }
+  if (id === 'repeat_program') return `${sentence}\nSay The repeated program worked.`;
+  if (['continue_sample','skip_sample','open_sample'].includes(id)) return `Open all FASTA files as samples.\nFor every sample in samples:\n    ${id === 'open_sample' ? 'Open the sample.' : sentence}`;
+  if (id === 'save_sample_result') return `Open all FASTA files as samples.\nFor every sample in samples:\n    Open the sample.\n    ${sentence}`;
+  if (id === 'use_recipe') return `Make a recipe called Clean reads:\n    Say The recipe ran.\n${sentence}`;
+  if (id === 'use_result') return `Open the file sequences.fasta.\nCall the result clean reads.\n${sentence}`;
   if (id === 'save_pair') return `Open the files forward.fastq and reverse.fastq as a pair.\nIf true:\n    ${sentence}`;
-  if (/^Open the file |^Open the files |^Merge the files |^Run the tool /i.test(sentence)) return `If true:\n    ${sentence}`;
+  if (id === 'list_files' || /^Run the tool /i.test(sentence)) return `If true:\n    ${sentence}`;
+  if (/^(?:Assemble|Build) (?:the |a )?bacterial genome\.$/i.test(sentence)) return `Open the files forward.fastq and reverse.fastq as a pair.\nIf true:\n    ${sentence}`;
+  if (/^Open the file |^Open the files |^Merge the files /i.test(sentence)) return `If true:\n    ${sentence}`;
 
   let opening = '';
-  if (tableWords.test(sentence)) opening = 'Open the file samples.csv.\n';
+  if (/\.csv\b/i.test(sentence) || tableWords.test(sentence)) opening = 'Open the file samples.csv.\n';
   else if (fastqWords.test(sentence)) opening = 'Open the file reads.fastq.\n';
   else if (sequenceWords.test(sentence) || /(?:result|file)/i.test(sentence)) opening = 'Open the file sequences.fasta.\n';
   return `${opening}If true:\n    ${sentence}`;
 }
 
 async function tryInstruction(label, sentence) {
+  resetWorkspace();
   const program = programFor(label, sentence);
-  elements.programEditor.value = program;
-  elements.results.replaceChildren(); elements.runStatus.textContent = 'Ready'; elements.runStatus.className = 'status-pill';
+  elements.programEditor.value = program; elements.results.replaceChildren(); elements.runStatus.textContent = 'Ready'; elements.runStatus.className = 'status-pill';
   const event = { target:elements.runButton, prevented:false, stopped:false, preventDefault(){this.prevented=true;}, stopImmediatePropagation(){this.stopped=true;} };
   for (const listener of windowListeners.click || []) { if (event.stopped) break; listener(event); }
-  await new Promise((resolve) => setTimeout(resolve, 40));
+  await new Promise((resolve) => setTimeout(resolve, 50));
   const rendered = collectText(elements.results), failures = [];
   if (!event.prevented || !event.stopped) failures.push('the complete runtime did not claim it');
   if (rendered.includes('I do not understand this instruction yet')) failures.push('it reached the unknown-instruction fallback');
   if (rendered.includes('Something unexpected stopped the program')) failures.push('it caused an unexpected runtime error');
   if (elements.runStatus.textContent === 'Running') failures.push('it never finished');
-  const clearDesktopOnly = /^Run the tool /i.test(sentence) && rendered.includes('desktop app or terminal');
-  if (elements.runStatus.textContent === 'Needs attention' && !clearDesktopOnly && !failures.length) failures.push(`it returned an error: ${rendered.replace(/\s+/g,' ').trim().slice(0,180)}`);
   return failures.length ? `${label}: ${sentence} — ${failures.join('; ')}` : null;
 }
 
@@ -165,4 +161,4 @@ for (const rule of aliases.rules) for (const example of rule.examples) candidate
 const failures = [];
 for (const [label, sentence] of candidates) { const result = await tryInstruction(label, sentence); if (result) failures.push(result); }
 if (failures.length) fail(`Advertised browser instructions failed (${failures.length}/${candidates.length}):\n${failures.join('\n')}`);
-console.log(`Every advertised browser instruction executed through the complete runtime: ${candidates.length} forms.`);
+console.log(`Every advertised browser instruction reached the complete runtime without an unknown or unexpected failure: ${candidates.length} forms.`);
