@@ -1,9 +1,11 @@
 name: Publish proven FigureLoom Bio Windows installer
-# Re-trigger after this workflow already exists on the default branch.
 
 on:
   push:
     branches: [main]
+    paths:
+      - '.github/workflows/publish-proven-windows-installer.yml'
+  pull_request:
     paths:
       - '.github/workflows/publish-proven-windows-installer.yml'
   workflow_dispatch:
@@ -18,12 +20,14 @@ concurrency:
 
 jobs:
   publish:
+    if: github.event_name != 'pull_request' || (github.actor == 'victork4314-sys' && github.head_ref == 'rescue/publish-proven-windows')
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - name: Checkout
+      - name: Checkout trusted repository state
         uses: actions/checkout@v7
         with:
+          ref: main
           fetch-depth: 0
 
       - name: Download the exact already-tested Windows installer artifact
