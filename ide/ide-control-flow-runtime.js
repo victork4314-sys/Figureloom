@@ -4,7 +4,7 @@
   if (window.FigureLoomBioFlowLoading) return;
 
   const parts = [0, 1, 2, 3, 4].map(
-    (number) => `./ide-control-flow-runtime.part${String(number).padStart(2, '0')}?v=5`,
+    (number) => `./ide-control-flow-runtime.part${String(number).padStart(2, '0')}?v=6`,
   );
 
   async function fetchPart(url) {
