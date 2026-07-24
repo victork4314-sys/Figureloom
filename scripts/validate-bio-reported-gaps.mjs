@@ -126,7 +126,7 @@ for (const sentence of ['Stop the program.', 'End the program.', 'Quit the progr
 
 const html = read('ide/index.html');
 if (!html.includes('ide-large-file-vault-v2.js?v=1')) fail('The IDE is not loading the fixed large-file router.');
-if (!html.includes('ide-control-flow-runtime.js?v=9')) fail('The IDE did not bump the control-flow cache version.');
+if (!html.includes('ide-control-flow-runtime.js?v=10')) fail('The IDE did not bump the control-flow cache version.');
 if (!html.includes('ide-builtin-language-support.js?v=5')) fail('The IDE did not bump the program-flow highlighter cache version.');
 
 console.log('Small mixed FASTA programs stay in the complete runtime; plain Warning, End, and Quit run directly in the core browser language; and genuine huge FASTA files still stream.');
