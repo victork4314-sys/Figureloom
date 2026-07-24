@@ -27,16 +27,19 @@ jobs:
           node --check ide/ide-vocabulary-ui-copy.js
           node --check scripts/validate-bio-language-compiler.mjs
           node --check scripts/validate-bio-logic-compiler.mjs
+          node --check scripts/validate-bio-vocabulary-coverage.mjs
 
       - name: Execute browser compiler frontend tests
         run: |
           node scripts/validate-bio-language-compiler.mjs
           node scripts/validate-bio-logic-compiler.mjs
+          node scripts/validate-bio-vocabulary-coverage.mjs
 
       - name: Check compiler Python syntax
         run: |
           python3 -m py_compile \
             figureloom-bio/figureloom_bio/language_compiler.py \
+            figureloom-bio/figureloom_bio/language_compiler_extensions.py \
             figureloom-bio/figureloom_bio/language_compiler_runtime.py \
             figureloom-bio/figureloom_bio/control_flow_logic.py \
             figureloom-bio/figureloom_bio/parser.py \
@@ -44,11 +47,18 @@ jobs:
             figureloom-bio/figureloom_bio/cli.py \
             scripts/generate-bio-command-reference.py
 
+      - name: Regenerate complete language reference
+        run: python3 scripts/generate-bio-command-reference.py
+
+      - name: Upload generated complete language reference
+        uses: actions/upload-artifact@v6
+        with:
+          name: complete-bio-language-reference-${{ github.run_id }}
+          path: wiki/FigureLoom-Bio-Command-Reference.md
+          if-no-files-found: error
+
       - name: Require current complete language reference
-        shell: bash
-        run: |
-          python3 scripts/generate-bio-command-reference.py
-          git diff --exit-code -- wiki/FigureLoom-Bio-Command-Reference.md
+        run: git diff --exit-code -- wiki/FigureLoom-Bio-Command-Reference.md
 
       - name: Capture compiler regression tests
         id: compiler_tests
