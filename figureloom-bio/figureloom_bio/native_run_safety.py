@@ -8,7 +8,7 @@ from typing import Any
 from PySide6.QtWidgets import QApplication, QMessageBox
 
 from .errors import FigureLoomBioError
-from .native_core import application_data_folder, run_workspace
+from .native_core import application_data_folder, looks_like_program, run_workspace
 
 
 def _save_run_details(details: str) -> Path | None:
@@ -55,8 +55,16 @@ def _foreground_colors(editor: Any) -> set[str]:
     return colors
 
 
+def _plain_run_error(error: FigureLoomBioError) -> tuple[str, int]:
+    cause = error.__cause__
+    if cause is not None and not isinstance(cause, FigureLoomBioError):
+        details_path = _save_run_details(traceback.format_exc())
+        return _unexpected_run_message(cause, details_path), 0
+    return error.plain_message(), int(error.line_number or 0)
+
+
 def install_native_run_safety(native_ide_module: Any) -> None:
-    """Keep worker errors, startup paint, and window closing from crashing the IDE."""
+    """Make the actual desktop Run button deterministic and keep failures readable."""
 
     worker_class = native_ide_module.RunWorker
     if not getattr(worker_class, "_figureloom_safe_run_installed", False):
@@ -70,12 +78,8 @@ def install_native_run_safety(native_ide_module: Any) -> None:
                 )
                 self.finished.emit(result)
             except FigureLoomBioError as error:
-                cause = error.__cause__
-                if cause is not None and not isinstance(cause, FigureLoomBioError):
-                    details_path = _save_run_details(traceback.format_exc())
-                    self.failed.emit(_unexpected_run_message(cause, details_path), 0)
-                else:
-                    self.failed.emit(error.plain_message(), int(error.line_number or 0))
+                message, line = _plain_run_error(error)
+                self.failed.emit(message, line)
             except Exception as error:
                 details_path = _save_run_details(traceback.format_exc())
                 self.failed.emit(_unexpected_run_message(error, details_path), 0)
@@ -84,12 +88,51 @@ def install_native_run_safety(native_ide_module: Any) -> None:
         worker_class._figureloom_safe_run_installed = True
 
     window_class = native_ide_module.NativeIdeWindow
-    if not getattr(window_class, "_figureloom_safe_close_installed", False):
+    if not getattr(window_class, "_figureloom_direct_run_installed", False):
         original_close_event = window_class.closeEvent
+
+        def direct_run_current(self: Any) -> None:
+            if getattr(self, "_run_in_progress", False):
+                return
+            self.save_editor_to_workspace()
+            if not looks_like_program(self.workspace.active_file):
+                QMessageBox.warning(self, native_ide_module.APP_NAME, "Open a .flbio program before pressing Run.")
+                return
+
+            self._run_in_progress = True
+            self.run_status.setText("Running…")
+            self.run_button.setEnabled(False)
+            self.results.show_empty("Running the program…", "Results will appear here in separate sections.")
+            app = QApplication.instance()
+            if app is not None:
+                app.processEvents()
+
+            try:
+                result = run_workspace(
+                    dict(self.workspace.files),
+                    self.workspace.active_file,
+                    allow_tools=self.allow_tools.isChecked(),
+                )
+            except FigureLoomBioError as error:
+                message, line = _plain_run_error(error)
+                self.run_failed(message, line)
+            except Exception as error:
+                details_path = _save_run_details(traceback.format_exc())
+                self.run_failed(_unexpected_run_message(error, details_path), 0)
+            else:
+                self.run_finished(result)
+            finally:
+                self._run_in_progress = False
+                self.run_button.setEnabled(True)
+                self._run_worker = None
+                self._run_thread = None
+                if app is not None:
+                    app.processEvents()
 
         def safe_close_event(self: Any, event: Any) -> None:
             thread = getattr(self, "_run_thread", None)
-            if thread is not None and thread.isRunning():
+            thread_running = thread is not None and thread.isRunning()
+            if getattr(self, "_run_in_progress", False) or thread_running:
                 QMessageBox.information(
                     self,
                     native_ide_module.APP_NAME,
@@ -101,7 +144,9 @@ def install_native_run_safety(native_ide_module: Any) -> None:
                 return
             original_close_event(self, event)
 
+        window_class.run_current = direct_run_current
         window_class.closeEvent = safe_close_event
+        window_class._figureloom_direct_run_installed = True
         window_class._figureloom_safe_close_installed = True
 
     if getattr(native_ide_module, "_figureloom_painted_self_test_installed", False):
@@ -114,9 +159,28 @@ def install_native_run_safety(native_ide_module: Any) -> None:
         app = QApplication.instance() or QApplication([native_ide_module.APP_NAME, "--self-test"])
         with native_ide_module.tempfile_workspace() as workspace:
             window = native_ide_module.NativeIdeWindow(workspace)
+            window.show()
+            app.processEvents()
+
+            # Exercise the real GUI path that users trigger. The default example is the
+            # same eight-line table-cleaning program shipped in the installed IDE.
+            workspace.active_file = "example.flbio"
+            workspace.save()
+            window.refresh_all()
+            window.run_button.click()
+            app.processEvents()
+            if window.run_status.text() != "Finished":
+                raise RuntimeError(
+                    "The real native Run button did not finish the bundled eight-line program; "
+                    f"the status stayed at {window.run_status.text()!r}."
+                )
+            if not window._last_sections:
+                raise RuntimeError("The real native Run button finished without showing result sections.")
+            if getattr(window, "_run_in_progress", False):
+                raise RuntimeError("The real native Run button left the IDE marked as still running.")
+
             window.editor.setPlainText("Open the file samples.csv.")
             window.editor.highlighter.rehighlight()
-            window.show()
             app.processEvents()
             window.editor.viewport().update()
             window.editor.line_number_area.update()
