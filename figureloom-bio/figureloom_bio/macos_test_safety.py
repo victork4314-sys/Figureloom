@@ -92,7 +92,18 @@ def install_macos_test_safety(platform_qt_module: Any) -> None:
 
             self.finished.emit(success, report, str(folder))
 
+    original_test_finished = platform_qt_module.TestWindow._test_finished
+
+    def finish_and_exit_headless(self: Any, success: bool, report: str, folder: str) -> None:
+        original_test_finished(self, success, report, folder)
+        if os.environ.get("QT_QPA_PLATFORM", "").casefold() != "offscreen":
+            return
+        app = platform_qt_module.QApplication.instance()
+        if app is not None:
+            platform_qt_module.QTimer.singleShot(0, app.quit)
+
     platform_qt_module.TestWorker = MacOSTestWorker
+    platform_qt_module.TestWindow._test_finished = finish_and_exit_headless
     platform_qt_module._macos_test_safety_installed = True
 
 
