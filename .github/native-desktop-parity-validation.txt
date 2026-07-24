@@ -1,0 +1,1 @@
+Validate the exact web-matching native desktop layout and the real GUI Run button.
