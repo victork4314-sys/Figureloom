@@ -4,7 +4,7 @@
   const editor = document.getElementById('programEditor');
   const button = document.getElementById('sentenceLibraryButton');
   const dialog = document.getElementById('sentenceLibraryDialog');
-  if (!editor || !button || !dialog || !window.FigureLoomBioLanguageReady) return;
+  if (!editor || !button || !dialog) return;
 
   const grid = dialog.querySelector('.addons-grid');
   const search = dialog.querySelector('.addons-search');
@@ -12,45 +12,28 @@
   const count = dialog.querySelector('.addons-installed-count');
   if (!grid || !search || !themeSelect || !count) return;
 
-  let manifest = null;
-  let aliases = [];
+  const sourceUrl = '../figureloom-bio/figureloom_bio/language_vocabulary.json?v=1';
+  let entries = [];
 
-  const THEME_BY_ACTION = Object.freeze({
-    say:'program', show_warning:'program',
-    open_file:'files', show_file:'files', show_result:'files', save_file:'files',
-    check_file:'files', count_file:'files', copy_file:'files', rename_file:'files',
-    keep_rows:'tables', remove_rows:'tables', keep_columns:'tables', order_rows:'tables',
-    largest_first:'tables', smallest_first:'tables', remove_duplicates:'tables', replace_empty:'tables',
-    keep_min_length:'sequences', remove_shorter:'sequences', keep_strict_length:'sequences',
-    find_open_reading_frames:'sequences', find_palindromes:'sequences',
-    find_repeated_sequences:'sequences', join_sequences:'sequences',
-    compare_current_sequences:'alignment', show_alignment:'alignment',
-    read_statistic:'fastq', check_quality:'fastq', show_quality_report:'fastq',
-    remove_low_quality_default:'fastq', trim_start:'fastq', trim_end:'fastq',
-    builtin_microbiology_prepare_reads:'microbiology', assemble_current_bacterial_genome:'microbiology',
-    annotate_current_file:'microbiology', find_resistance_current_file:'microbiology',
-    find_virulence_current_file:'microbiology', identify_current_file:'microbiology',
-    find_plasmids_current_file:'microbiology',
-    find_variants:'variants', show_variants:'variants',
-    find_genes:'genes', show_genes:'genes',
-    find_signal_peptides:'proteins', find_transmembrane_regions:'proteins',
-    find_pcr_primers:'pcr', check_primers:'pcr', show_primers:'pcr',
-    build_phylogenetic_tree:'phylogenetics', show_tree:'phylogenetics',
-    summary_statistic:'statistics', calculate_minimum:'statistics', calculate_maximum:'statistics',
-    normalize_counts:'statistics', compare_groups:'statistics', permutation_p_value:'statistics',
-    histogram:'figures', create_histogram:'figures', bar_chart:'figures', create_bar_chart:'figures',
-    scatter_plot:'figures', create_scatter_plot:'figures', grouped_box_plot:'figures', box_plot:'figures',
-    heat_map_columns:'figures', heat_map:'figures', pca_plot:'figures', volcano_plot:'figures',
-  });
+  const GROUPS = Object.freeze([
+    { key:'verbs', title:'Operations', icon:'▶', description:'Words that tell FigureLoom Bio what to do.' },
+    { key:'terms', title:'Biology and data terms', icon:'🧬', description:'Targets and scientific concepts the operation acts on.' },
+    { key:'roles', title:'Role words', icon:'⇢', description:'Words that connect values, files, columns, groups, and outputs.' },
+    { key:'comparators', title:'Comparisons', icon:'≶', description:'Words that describe thresholds and ranges.' },
+  ]);
 
-  function insertSource(source) {
+  function titleCase(value) {
+    return String(value).replaceAll('_', ' ').replace(/\b\w/g, (character) => character.toUpperCase());
+  }
+
+  function insertWord(value) {
     const start = editor.selectionStart;
     const end = editor.selectionEnd;
     const before = editor.value.slice(0, start);
     const after = editor.value.slice(end);
-    const prefix = before && !before.endsWith('\n') ? '\n' : '';
-    const suffix = after && !after.startsWith('\n') ? '\n' : '';
-    const inserted = `${prefix}${source}${suffix}`;
+    const needsBefore = before && !/[\s\n]$/.test(before);
+    const needsAfter = after && !/^[\s.,:\n]/.test(after);
+    const inserted = `${needsBefore ? ' ' : ''}${value}${needsAfter ? ' ' : ''}`;
     editor.value = `${before}${inserted}${after}`;
     const cursor = before.length + inserted.length;
     editor.setSelectionRange(cursor, cursor);
@@ -58,114 +41,101 @@
     editor.focus();
   }
 
-  function themeTitle(themeId) {
-    return manifest.themes.find((theme) => theme.id === themeId)?.title || themeId;
-  }
-
-  function icon(themeId) {
-    return ({
-      program:'▶', files:'📁', tables:'▦', sequences:'🧬', fastq:'≋',
-      microbiology:'🦠', alignment:'⇄', variants:'◇', genes:'⌁', proteins:'∿',
-      pcr:'◎', phylogenetics:'⑂', statistics:'∑', figures:'▥', decisions:'◆', tools:'⌘',
-    })[themeId] || '•';
-  }
-
-  function refreshThemes() {
-    const current = themeSelect.value;
-    themeSelect.replaceChildren(new Option('All themes', ''));
-    for (const theme of manifest.themes) themeSelect.append(new Option(theme.title, theme.id));
-    if (manifest.themes.some((theme) => theme.id === current)) themeSelect.value = current;
-  }
-
-  function aliasCommands(api) {
-    const canonical = new Set(manifest.commands.map((command) => command.example.toLowerCase()));
+  function buildEntries(payload) {
     const output = [];
-    for (const rule of api.rules) {
-      const theme = THEME_BY_ACTION[rule.action] || 'program';
-      for (const [index, example] of (rule.examples || []).entries()) {
-        if (canonical.has(String(example).toLowerCase())) continue;
+    for (const group of GROUPS) {
+      const definitions = payload[group.key] || {};
+      for (const [name, forms] of Object.entries(definitions)) {
+        const unique = [...new Set((forms || []).map((value) => String(value).trim()).filter(Boolean))];
         output.push(Object.freeze({
-          id:`wording-${rule.id}-${index + 1}`,
-          theme,
-          example:String(example),
-          aliasRule:rule.id,
-          acceptedForm:true,
+          id:`${group.key}-${name}`,
+          group:group.key,
+          groupTitle:group.title,
+          icon:group.icon,
+          description:group.description,
+          name,
+          title:titleCase(name),
+          forms:unique,
+          primary:unique[0] || titleCase(name).toLowerCase(),
         }));
       }
     }
     return output;
   }
 
-  function commands() {
-    return manifest ? [...manifest.commands, ...aliases] : [];
+  function refreshThemes() {
+    const current = themeSelect.value;
+    themeSelect.replaceChildren(new Option('All kinds', ''));
+    for (const group of GROUPS) themeSelect.append(new Option(group.title, group.key));
+    if (GROUPS.some((group) => group.key === current)) themeSelect.value = current;
   }
 
   function render() {
-    if (!manifest) return;
     const wanted = search.value.trim().toLowerCase();
-    const selectedTheme = themeSelect.value;
-    const all = commands();
-    const visible = all.filter((command) => {
-      if (selectedTheme && command.theme !== selectedTheme) return false;
-      const wording = command.acceptedForm ? 'accepted wording natural words synonym' : 'canonical';
-      const haystack = `${command.id} ${themeTitle(command.theme)} ${command.example} ${wording}`.toLowerCase();
+    const selected = themeSelect.value;
+    const visible = entries.filter((entry) => {
+      if (selected && entry.group !== selected) return false;
+      const haystack = `${entry.title} ${entry.name} ${entry.groupTitle} ${entry.forms.join(' ')} ${entry.description}`.toLowerCase();
       return !wanted || haystack.includes(wanted);
     });
 
     grid.replaceChildren();
-    for (const command of visible) {
+    for (const entry of visible) {
       const card = document.createElement('article');
-      card.className = 'addon-card sentence-card';
-      card.dataset.languageCommand = command.id;
-      if (command.acceptedForm) card.dataset.acceptedWording = 'true';
+      card.className = 'addon-card sentence-card vocabulary-card';
+      card.dataset.languageVocabulary = entry.id;
       card.innerHTML = '<div class="addon-card-icon" aria-hidden="true"></div><div class="addon-card-copy"><div class="addon-card-title"><h3></h3><code></code></div><p></p><div class="addon-card-meta"><span></span></div></div>';
-      card.querySelector('.addon-card-icon').textContent = icon(command.theme);
-      card.querySelector('h3').textContent = command.example.replace(/[.:]$/, '');
-      card.querySelector('code').textContent = themeTitle(command.theme);
-      card.querySelector('p').textContent = command.example;
-      card.querySelector('.addon-card-meta span').textContent = command.acceptedForm ? 'Accepted wording' : 'Included';
-      const add = document.createElement('button');
-      add.type = 'button';
-      add.textContent = 'Add';
-      add.addEventListener('click', () => {
-        insertSource(command.example);
-        add.textContent = 'Added';
-        setTimeout(() => { add.textContent = 'Add'; }, 800);
+      card.querySelector('.addon-card-icon').textContent = entry.icon;
+      card.querySelector('h3').textContent = entry.title;
+      card.querySelector('code').textContent = entry.groupTitle;
+      card.querySelector('p').textContent = entry.forms.join(' · ');
+      card.querySelector('.addon-card-meta span').textContent = entry.description;
+
+      const insert = document.createElement('button');
+      insert.type = 'button';
+      insert.textContent = 'Insert';
+      insert.addEventListener('click', () => {
+        insertWord(entry.primary);
+        insert.textContent = 'Inserted';
+        setTimeout(() => { insert.textContent = 'Insert'; }, 800);
       });
-      card.append(add);
+      card.append(insert);
       grid.append(card);
     }
 
     if (!visible.length) {
       const empty = document.createElement('div');
       empty.className = 'addons-empty';
-      empty.textContent = 'No built-in sentences match that search.';
+      empty.textContent = 'No language words or terms match that search.';
       grid.append(empty);
     }
-    count.textContent = all.length.toLocaleString();
+
+    const uniqueForms = new Set(entries.flatMap((entry) => entry.forms.map((form) => form.toLowerCase())));
+    count.textContent = uniqueForms.size.toLocaleString();
   }
 
-  function scheduleRender() {
-    queueMicrotask(render);
-  }
-
-  button.addEventListener('click', scheduleRender);
+  button.addEventListener('click', () => queueMicrotask(render));
   search.addEventListener('input', render);
   themeSelect.addEventListener('change', render);
 
-  window.FigureLoomBioLanguageReady.then((loaded) => {
-    manifest = loaded;
-    refreshThemes();
-    render();
-    dialog.dataset.canonicalLanguageCatalog = 'true';
-  });
-
-  const aliasReady = window.FigureLoomBioLanguageAliasesReady;
-  if (aliasReady) {
-    aliasReady.then((api) => {
-      aliases = aliasCommands(api);
+  fetch(sourceUrl, { cache:'no-store' })
+    .then((response) => {
+      if (!response.ok) throw new Error(`Could not load language vocabulary (${response.status}).`);
+      return response.json();
+    })
+    .then((payload) => {
+      entries = buildEntries(payload);
+      refreshThemes();
       render();
-      dialog.dataset.exhaustiveLanguageVocabulary = 'true';
+      dialog.dataset.languageVocabularyCatalog = 'true';
+      window.FigureLoomBioVocabularyCatalog = Object.freeze({ entries:Object.freeze(entries) });
+    })
+    .catch((error) => {
+      console.error('Could not load the FigureLoom Bio vocabulary catalog', error);
+      grid.replaceChildren();
+      const empty = document.createElement('div');
+      empty.className = 'addons-empty';
+      empty.textContent = 'The language vocabulary could not be loaded.';
+      grid.append(empty);
     });
-  }
 })();

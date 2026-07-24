@@ -61,7 +61,7 @@ class NativeWebParityTests(unittest.TestCase):
         self.assertIn("self.file_tree.delete_requested.connect(self.delete_file)", source)
         self.assertIn("Open blocks editor", source)
         self.assertIn("Translate program", source)
-        self.assertIn("Open sentence library", source)
+        self.assertIn("Open words and terms library", source)
         self.assertIn("Export results", source)
         self.assertIn("Allow installed tools", source)
         self.assertIn("self._desktop_controls.hide()", source)

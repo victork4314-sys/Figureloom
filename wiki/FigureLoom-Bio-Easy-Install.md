@@ -78,7 +78,7 @@ EVERY QUICK TEST PASSED.
 
 The quick test uses real CSV, FASTA, and FASTQ inputs and also checks a real SVG figure, alignment, and phylogenetic tree.
 
-The separate exhaustive language audit runs all **161 canonical sentences** and all **99 accepted alternate wordings** through the real parser and runtime. The generated [complete command reference](FigureLoom-Bio-Command-Reference) lists all 260 tested sentences.
+The separate exhaustive language audit runs all **161 learning examples** and all **99 vocabulary forms** through the real parser and runtime. The generated [complete command reference](FigureLoom-Bio-Command-Reference) lists all 260 tested sentences.
 
 ## Update later
 

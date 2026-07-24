@@ -219,7 +219,7 @@ def install_language_aliases(runner_class: type[Any]) -> None:
     runner_class._save_current = alias_save_current
     runner_class._language_aliases_installed = True
 
-    # Translators receive canonical sentences, so aliases never become unknown
+    # Translators receive lowered compatibility instructions, so compatibility forms never become unknown
     # actions or placeholder target code.
     from . import translators as translator_module
 

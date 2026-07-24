@@ -185,7 +185,7 @@ class NativeIdeWindow(QMainWindow):
         self.examples_button = make_button("Open examples", self.open_examples, name="examples")
         self.builder_button = make_button("Build program", self.open_builder, name="builder")
         self.translate_button = make_button("Translate", self.open_translator, name="translate")
-        self.sentences_button = make_button("Sentences", self.open_sentence_library, name="sentences")
+        self.sentences_button = make_button("Words & terms", self.open_sentence_library, name="sentences")
         self.tidy_button = make_button("Tidy sentences", self.tidy_program, name="tidy")
         self.export_results_button = make_button("Export results", self.export_results, name="export_results")
         self.clear_results_button = make_button("Clear results", self.clear_results, name="clear_results")

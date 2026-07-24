@@ -20,6 +20,10 @@ on:
       - '.github/workflows/build-bio-installer.yml'
   workflow_dispatch:
 
+concurrency:
+  group: build-figureloom-bio-installer-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: write
 

@@ -110,7 +110,7 @@ Run or translate a program:
 ```bash
 flbio run program.flbio
 flbio translate program.flbio --to python
-flbio sentences
+flbio words
 ```
 
 Tool-backed microbiology workflows require explicit permission:

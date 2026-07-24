@@ -396,7 +396,7 @@ def install_web_parity(native_ide_module: Any) -> type[Any]:
             ))
 
             self.translate_button = make_button("Translate", self.open_translator, name="translate")
-            self.sentences_button = make_button("Sentences", self.open_sentence_library, name="sentences")
+            self.sentences_button = make_button("Words & terms", self.open_sentence_library, name="sentences")
             self.export_results_button = make_button("Export results", self.export_results, name="export_results")
             layout.addWidget(self._tool_group(
                 "Desktop",
