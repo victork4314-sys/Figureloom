@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from . import parser as parser_module
 from .language_compiler import CompiledInstruction, compile_sentence as compile_frontend
+from .language_compiler_extensions import compile_extended_sentence
 
 
 _ACTION_REWRITES = {
@@ -32,6 +33,8 @@ _ALIAS_SPECIALS = {
 
 def compile_for_runtime(sentence: str) -> CompiledInstruction | None:
     compiled = compile_frontend(sentence)
+    if compiled is None:
+        compiled = compile_extended_sentence(sentence)
     if compiled is None:
         return None
 
