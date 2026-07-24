@@ -118,21 +118,21 @@ def install_macos_test_safety(platform_qt_module: Any) -> None:
 
     original_test_finished = platform_qt_module.TestWindow._test_finished
 
+    @Slot(bool, str, str)
     def finish_and_exit_headless(self: Any, success: bool, report: str, folder: str) -> None:
         original_test_finished(self, success, report, folder)
         if os.environ.get("QT_QPA_PLATFORM", "").casefold() != "offscreen":
-            return
-        # The --self-test wrapper owns a nested event loop and exits it after the
-        # worker and QThread have fully finished. Quitting QApplication here can
-        # strand that nested loop. Normal headless launches still close promptly.
-        if "--self-test" in sys.argv:
             return
         app = platform_qt_module.QApplication.instance()
         if app is not None:
             platform_qt_module.QTimer.singleShot(0, app.quit)
 
     platform_qt_module.TestWorker = MacOSTestWorker
-    platform_qt_module.TestWindow._test_finished = finish_and_exit_headless
+    # During --self-test, keep TestWindow's original @Slot method. Replacing that
+    # Qt slot with a plain Python callback made PySide execute the QTextDocument
+    # update in the worker thread on Intel macOS, causing a segmentation fault.
+    if "--self-test" not in sys.argv:
+        platform_qt_module.TestWindow._test_finished = finish_and_exit_headless
     platform_qt_module._macos_test_safety_installed = True
 
 
