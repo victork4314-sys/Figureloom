@@ -15,11 +15,12 @@
   );
 
   const sequenceSummary = (data) => (data?.kind === 'seq'
-    ? data.records.map((record) => `${record.name}: ${record.sequence.length} bases`).join('\n')
+    ? data.records.map((record) => `${record.name}: ${record.sequence.length} bases`).join('\n') || 'No sequences remained.'
     : 'No FASTA or FASTQ sequences were available.');
 
   const handler = async ({ text, context, line, helpers }) => {
-    const needsSequences = sequenceAnalysis.test(String(text).trim());
+    const instruction = String(text).trim();
+    const needsSequences = sequenceAnalysis.test(instruction);
 
     if (needsSequences && context.data?.kind === 'seq') {
       context.completeSequenceSource = clone(context.data);
@@ -29,6 +30,12 @@
       && context.completeSequenceSource?.kind === 'seq'
     ) {
       context.data = clone(context.completeSequenceSource);
+    }
+
+    if (needsSequences) {
+      context.completeSequenceHistory ||= [];
+      context.completeSequenceHistory.push(`${instruction}\n${sequenceSummary(context.data)}`);
+      context.completeSequenceHistory = context.completeSequenceHistory.slice(-12);
     }
 
     let handled;
@@ -45,7 +52,8 @@
       );
     } catch (error) {
       if (needsSequences && !String(error?.message || '').includes('Sequence input received:')) {
-        error.message = `${error.message}\n\nSequence input received:\n${sequenceSummary(context.data)}`;
+        const history = (context.completeSequenceHistory || []).join('\n\n');
+        error.message = `${error.message}\n\nSequence input received:\n${sequenceSummary(context.data)}${history ? `\n\nRecent sequence steps:\n${history}` : ''}`;
       }
       throw error;
     }
