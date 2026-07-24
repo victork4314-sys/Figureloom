@@ -4,6 +4,7 @@ import unittest
 
 from figureloom_bio.language_compiler import compile_sentence, lex
 from figureloom_bio.language_compiler_extensions import compile_extended_sentence
+from figureloom_bio.language_compiler_runtime import compile_for_runtime
 from figureloom_bio.parser import parse
 from figureloom_bio.runtime import Runner
 
@@ -61,8 +62,9 @@ class FigureLoomBioCompilerTests(unittest.TestCase):
         }
         for source, expected in cases.items():
             with self.subTest(source=source):
-                instruction = parse(source)[0]
-                self.assertEqual((instruction.action, instruction.values), expected)
+                compiled = compile_for_runtime(source)
+                self.assertIsNotNone(compiled)
+                self.assertEqual((compiled.action, compiled.values), expected)
 
     def test_remaining_official_operation_words_compile(self) -> None:
         cases = {
