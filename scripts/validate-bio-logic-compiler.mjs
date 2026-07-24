@@ -71,6 +71,10 @@ assert.equal(logic.simplifyCondition('false'), 'the result is empty and the resu
 assert.equal(logic.simplifyCondition('true and the result is not empty'), 'the result is not empty');
 assert.equal(logic.simplifyCondition('false or the result is not empty'), 'the result is not empty');
 assert.equal(logic.simplifyCondition('not false'), 'the result is empty or the result is not empty');
+assert.equal(
+  logic.normalizeBlockHeaders('Make sure true and not false.'),
+  'Make sure the result is empty or the result is not empty.',
+);
 
 const original = [
   'If true and not false:',
@@ -102,11 +106,22 @@ assert.deepEqual(vocabulary.logic.or, ['or']);
 assert.deepEqual(vocabulary.logic.not, ['not']);
 assert.deepEqual(vocabulary.booleans.true, ['true']);
 assert.deepEqual(vocabulary.booleans.false, ['false']);
+assert.ok(vocabulary.flow.if.includes('if'));
 assert.ok(vocabulary.flow.else.includes('else'));
+assert.ok(vocabulary.flow.else_if.includes('else if'));
+
+const catalog = fs.readFileSync('ide/ide-language-catalog-ui.js', 'utf8');
+assert.match(catalog, /for \(const form of unique\)/, 'Every individual word or phrase must receive its own catalog entry.');
+for (const group of ['flow', 'logic', 'booleans', 'conditions', 'file_types', 'fillers']) {
+  assert.match(catalog, new RegExp(`key:'${group}'`), `${group} must be visible in Words & terms.`);
+}
 
 const index = fs.readFileSync('ide/index.html', 'utf8');
+assert.match(index, /ide-language-compiler\.js\?v=2/);
 assert.match(index, /ide-logic-compiler\.js\?v=1/);
+assert.match(index, /ide-control-flow-runtime\.js\?v=6/);
 assert.match(index, /ide-app-v2\.js\?v=3/);
+assert.match(index, /ide-vocabulary-ui-copy\.js\?v=2/);
 assert.match(index, /ide-language-catalog-ui\.js\?v=4/);
 
-console.log('Browser Boolean logic, Else aliases, free wording inside blocks, vocabulary coverage, and cache busting are validated.');
+console.log('Browser Boolean logic, Else aliases, free wording inside blocks, one-card-per-word vocabulary, and cache busting are validated.');
