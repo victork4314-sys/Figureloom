@@ -115,6 +115,23 @@
     return String(source).split(/\r?\n/).map(normalizeEverydayLine).join('\n');
   }
 
+  const parameterizedBuiltInPatterns = [
+    /^(?:Assemble|Build) (?:the |a )?bacterial genome from .+ into .+\.$/i,
+    /^(?:Check|Evaluate|Assess) (?:the )?(?:bacterial )?assembly .+ into .+\.$/i,
+    /^(?:(?:Annotate (?:the |a )?bacterial genome)|(?:Find genes in (?:the )?bacterial genome)) .+ into .+\.$/i,
+    /^Find resistance genes in .+ using .+\.$/i,
+    /^Screen .+ for resistance genes using .+\.$/i,
+    /^Find virulence genes in .+\.$/i,
+    /^Screen .+ for virulence genes\.$/i,
+    /^(?:Identify (?:the )?organism in|Classify) .+ using .+\.$/i,
+    /^(?:Find plasmids in|Reconstruct plasmids from) .+ into .+\.$/i,
+  ];
+
+  function isParameterizedBuiltIn(line) {
+    const text = String(line).trim();
+    return parameterizedBuiltInPatterns.some((pattern) => pattern.test(text));
+  }
+
   function compileBeforeRecognition(source) {
     const compiler = window.FigureLoomBioCompiler;
     if (!compiler?.compileSource) return String(source);
@@ -136,6 +153,11 @@
       window.FigureLoomBioCompleteLanguage = null;
       window.FigureLoomBioCurrentFile = null;
       window.FigureLoomBioStatementRecognizers = [];
+      if (typeof compiler.compileLine === 'function') {
+        return String(source).split(/\r?\n/).map((line) => (
+          isParameterizedBuiltIn(line) ? line : compiler.compileLine(line)
+        )).join('\n');
+      }
       return compiler.compileSource(source);
     } finally {
       window.FigureLoomBioLanguageAliases = saved.aliases;
@@ -211,6 +233,7 @@
     normalizeBlockHeaders,
     normalizeEverydayLine,
     normalizeEverydaySource,
+    isParameterizedBuiltIn,
     compileBeforeRecognition,
     normalizeSource,
   });
