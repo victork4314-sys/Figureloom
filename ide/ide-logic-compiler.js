@@ -128,14 +128,14 @@
     };
 
     try {
-      // These helpers contain broad recognizers used to choose a runtime. They
-      // must not prevent the grammar compiler from turning free-form wording
-      // into the canonical instruction that the chosen runtime executes.
+      // Runtime-selection recognizers are intentionally hidden here because
+      // they are broad. The exact manifest stays visible so an official
+      // built-in sentence such as “List the files.” is never reinterpreted as
+      // a different instruction by the free-form compiler.
       window.FigureLoomBioLanguageAliases = null;
       window.FigureLoomBioCompleteLanguage = null;
       window.FigureLoomBioCurrentFile = null;
       window.FigureLoomBioStatementRecognizers = [];
-      window.FigureLoomBioLanguage = null;
       return compiler.compileSource(source);
     } finally {
       window.FigureLoomBioLanguageAliases = saved.aliases;
