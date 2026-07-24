@@ -1,0 +1,49 @@
+name: Apply FigureLoom Bio compiler replay fix
+
+on:
+  push:
+    branches:
+      - agent/fix-word-term-grammar
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+concurrency:
+  group: apply-bio-compiler-replay-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  apply:
+    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout compiler branch
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.pull_request.head.ref || github.ref_name }}
+          fetch-depth: 0
+
+      - name: Apply and verify replay fix
+        run: |
+          python3 scripts/fix-bio-compiler-ready-replay.py
+          node --check ide/ide-language-compiler.js
+          node scripts/validate-bio-language-compiler.mjs
+
+      - name: Commit fix and remove one-time machinery
+        env:
+          HEAD_BRANCH: ${{ github.event.pull_request.head.ref || github.ref_name }}
+        run: |
+          rm -f scripts/fix-bio-compiler-ready-replay.py
+          rm -f .github/workflows/apply-bio-compiler-replay-fix.yml
+          git config user.name "FigureLoom compiler replay fix"
+          git config user.email "actions@users.noreply.github.com"
+          git add -A ide/ide-language-compiler.js scripts/fix-bio-compiler-ready-replay.py .github/workflows/apply-bio-compiler-replay-fix.yml
+          if git diff --cached --quiet; then
+            echo "Replay fix and cleanup are already applied."
+            exit 0
+          fi
+          git commit -m "Compile cold-load replays before execution"
+          git push origin HEAD:"$HEAD_BRANCH"
