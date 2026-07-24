@@ -405,6 +405,7 @@
       event.stopImmediatePropagation();
       readyPromise.then(() => {
         replaying = true;
+        compileTemporarily();
         runButton.click();
         replaying = false;
       });
@@ -421,6 +422,7 @@
       event.stopImmediatePropagation();
       readyPromise.then(() => {
         replaying = true;
+        compileTemporarily();
         runButton.click();
         replaying = false;
       });
