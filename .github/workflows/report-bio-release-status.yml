@@ -28,7 +28,7 @@ jobs:
           else
             cp /tmp/intel-log.bin /tmp/intel-full.log
           fi
-          tail -n 220 /tmp/intel-full.log > /tmp/intel-tail.log
+          tail -n 60 /tmp/intel-full.log > /tmp/intel-tail.log
           {
             echo 'Intel failed-job tail:'
             echo '```text'
