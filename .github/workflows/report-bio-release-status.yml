@@ -16,40 +16,33 @@ jobs:
   report:
     runs-on: ubuntu-latest
     steps:
-      - name: Report newest independent Mac publisher
+      - name: Report live final Mac job tails
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          gh run list \
-            --repo "$GITHUB_REPOSITORY" \
-            --workflow publish-fixed-macos-installers.yml \
-            --branch main \
-            --limit 5 \
-            --json databaseId,status,conclusion,headSha,event,number,createdAt,updatedAt,url,workflowName \
-            > /tmp/runs.json
-          latest="$(jq -r '.[0].databaseId // empty' /tmp/runs.json)"
-          if [[ -n "$latest" ]]; then
-            gh run view "$latest" \
-              --repo "$GITHUB_REPOSITORY" \
-              --json databaseId,status,conclusion,headSha,event,createdAt,updatedAt,url,jobs \
-              > /tmp/latest.json
-          else
-            printf '{}\n' > /tmp/latest.json
-          fi
-          {
-            echo 'Newest independent Mac publisher:'
-            echo '```json'
-            cat /tmp/runs.json
-            echo '```'
-            echo
-            echo 'Newest run jobs:'
-            echo '```json'
-            cat /tmp/latest.json
-            echo '```'
-          } > /tmp/status.md
+          : > /tmp/status.md
+          for item in 'Apple Silicon:89486991692' 'Intel:89486991629'; do
+            name="${item%%:*}"
+            job="${item##*:}"
+            echo "$name live log tail:" >> /tmp/status.md
+            echo '```text' >> /tmp/status.md
+            set +e
+            gh api "repos/$GITHUB_REPOSITORY/actions/jobs/$job/logs" > "/tmp/$job.bin" 2> "/tmp/$job.err"
+            result=$?
+            set -e
+            if [[ $result -eq 0 ]]; then
+              if unzip -t "/tmp/$job.bin" >/dev/null 2>&1; then
+                unzip -p "/tmp/$job.bin" | tail -n 50 >> /tmp/status.md
+              else
+                tail -n 50 "/tmp/$job.bin" >> /tmp/status.md
+              fi
+            else
+              cat "/tmp/$job.err" >> /tmp/status.md
+            fi
+            echo '```' >> /tmp/status.md
+            echo >> /tmp/status.md
+          done
           gh api --method PATCH \
             "repos/$GITHUB_REPOSITORY/issues/comments/5069780966" \
             -f "body=$(cat /tmp/status.md)"
-
-# live refresh after duplicate quick-test removal
