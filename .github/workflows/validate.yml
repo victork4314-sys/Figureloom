@@ -229,14 +229,22 @@ jobs:
           Remove-Item -Recurse -Force $unknownDir -ErrorAction SilentlyContinue
           New-Item -ItemType Directory -Force -Path $unknownDir | Out-Null
           'Create something scientific somehow.' | Set-Content -Encoding utf8 (Join-Path $unknownDir 'unknown.flbio')
-          Push-Location $unknownDir
-          try {
-            $output = & $env:FIGURELOOM_CLI run unknown.flbio 2>&1 | Out-String
-            $exit = $LASTEXITCODE
-          } finally {
-            Pop-Location
+          $stdout = Join-Path $unknownDir 'stdout.txt'
+          $stderr = Join-Path $unknownDir 'stderr.txt'
+          $process = Start-Process `
+            -FilePath $env:FIGURELOOM_CLI `
+            -ArgumentList @('run','unknown.flbio') `
+            -WorkingDirectory $unknownDir `
+            -RedirectStandardOutput $stdout `
+            -RedirectStandardError $stderr `
+            -PassThru
+          if (-not $process.WaitForExit(90000)) {
+            Stop-Process -Id $process.Id -Force -ErrorAction SilentlyContinue
+            throw 'The unknown-instruction explanation test timed out.'
           }
-          if ($exit -eq 0) { throw 'A genuinely unknown instruction was incorrectly accepted.' }
+          $output = ((Get-Content -Raw $stdout -ErrorAction SilentlyContinue) + "`n" + (Get-Content -Raw $stderr -ErrorAction SilentlyContinue)).Trim()
+          Write-Host $output
+          if ($process.ExitCode -eq 0) { throw 'A genuinely unknown instruction was incorrectly accepted.' }
           if ($output -notmatch 'What happened' -or $output -notmatch 'How to fix it|What to do') {
             throw "The installed error explanation is not simple and complete:`n$output"
           }
