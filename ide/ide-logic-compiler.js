@@ -5,8 +5,6 @@
   const runButton = document.getElementById('runButton');
   if (!editor || !runButton) return;
 
-  const TRUE_CONDITION = 'the result is empty or the result is not empty';
-  const FALSE_CONDITION = 'the result is empty and the result is not empty';
   let replayingColdRun = false;
 
   function literal(value) {
@@ -40,9 +38,9 @@
 
   function simplifyCondition(source) {
     const parts = String(source).split(/\s+or\s+/i).map(simplifyAnd);
-    if (parts.some((part) => part.kind === 'literal' && part.value)) return TRUE_CONDITION;
+    if (parts.some((part) => part.kind === 'literal' && part.value)) return 'true';
     const remaining = parts.filter((part) => part.kind !== 'literal');
-    if (!remaining.length) return FALSE_CONDITION;
+    if (!remaining.length) return 'false';
     return remaining.map((part) => part.value).join(' or ');
   }
 
@@ -64,8 +62,52 @@
     }).join('\n');
   }
 
+  function normalizeEverydayLine(line) {
+    const indent = String(line).match(/^\s*/)?.[0] || '';
+    let text = String(line).trim();
+    if (!text || text.startsWith('#') || text.endsWith(':')) return line;
+
+    text = text
+      .replace(/^Get rid of\s+/i, 'Remove ')
+      .replace(/^Look for\s+/i, 'Find ')
+      .replace(/^Put together(?=\s+(?:the |a )?(?:bacterial )?genome)/i, 'Assemble')
+      .replace(/^Label(?=\s+(?:the )?(?:current )?(?:genome|file|genes?))/i, 'Annotate')
+      .replace(/\brelationship tree\b/ig, 'phylogenetic tree')
+      .replace(/\bconfidence range\b/ig, 'confidence interval')
+      .replace(/\bspread\b/ig, 'standard deviation');
+
+    if (/^Change\b/i.test(text) && /\b(?:DNA|RNA)\b/i.test(text) && /\b(?:to|into|as)\b/i.test(text)) {
+      text = text.replace(/^Change\b/i, 'Convert');
+    }
+    if (/^Build\b/i.test(text) && /\b(?:bacterial )?genome\b/i.test(text)) {
+      text = text.replace(/^Build\b/i, 'Assemble');
+    }
+    if (/^Filter out\b/i.test(text)) text = text.replace(/^Filter out\b/i, 'Remove');
+    else if (/^Filter\b/i.test(text)) text = text.replace(/^Filter\b/i, 'Keep');
+
+    if (/^Print\b/i.test(text)) {
+      const visible = /\b(result|output|file|sequences?|reads?|rows?|alignment|variants?|genes?|primers?|tree|quality report)\b/i.test(text);
+      text = text.replace(/^Print\b/i, visible ? 'Show' : 'Say');
+    }
+    if (/^Write\b/i.test(text)) {
+      const saved = /\b(result|output|file|sequences?|reads?|alignment|variants?|genes?|tree)\b|\.(?:csv|tsv|fa|fasta|fq|fastq|nwk|svg)\b/i.test(text);
+      text = text.replace(/^Write\b/i, saved ? 'Save' : 'Say');
+    }
+    if (/^Call\b/i.test(text) && !/^Call the result\b/i.test(text)) {
+      const rename = /\b(column|sequence|file)\b/i.test(text) && /\b(?:to|as)\b/i.test(text);
+      text = text.replace(/^Call\b/i, rename ? 'Rename' : 'Find');
+    }
+
+    return indent + text;
+  }
+
+  function normalizeEverydaySource(source) {
+    return String(source).split(/\r?\n/).map(normalizeEverydayLine).join('\n');
+  }
+
   function normalizeSource(source) {
-    const headers = normalizeBlockHeaders(source);
+    const everyday = normalizeEverydaySource(source);
+    const headers = normalizeBlockHeaders(everyday);
     return window.FigureLoomBioCompiler?.compileSource?.(headers) || headers;
   }
 
@@ -118,6 +160,8 @@
   window.FigureLoomBioLogicCompiler = Object.freeze({
     simplifyCondition,
     normalizeBlockHeaders,
+    normalizeEverydayLine,
+    normalizeEverydaySource,
     normalizeSource,
   });
 })();

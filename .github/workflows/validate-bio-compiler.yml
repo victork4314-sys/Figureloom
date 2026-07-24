@@ -29,17 +29,21 @@ jobs:
           node --check scripts/validate-bio-logic-compiler.mjs
           node --check scripts/validate-bio-vocabulary-coverage.mjs
 
-      - name: Execute browser compiler frontend tests
-        run: |
-          node scripts/validate-bio-language-compiler.mjs
-          node scripts/validate-bio-logic-compiler.mjs
-          node scripts/validate-bio-vocabulary-coverage.mjs
+      - name: Test browser language compiler
+        run: node scripts/validate-bio-language-compiler.mjs
+
+      - name: Test browser decisions and everyday wording
+        run: node scripts/validate-bio-logic-compiler.mjs
+
+      - name: Test exposed vocabulary coverage
+        run: node scripts/validate-bio-vocabulary-coverage.mjs
 
       - name: Check compiler Python syntax
         run: |
           python3 -m py_compile \
             figureloom-bio/figureloom_bio/language_compiler.py \
             figureloom-bio/figureloom_bio/language_compiler_extensions.py \
+            figureloom-bio/figureloom_bio/language_compiler_disambiguation.py \
             figureloom-bio/figureloom_bio/language_compiler_runtime.py \
             figureloom-bio/figureloom_bio/control_flow_logic.py \
             figureloom-bio/figureloom_bio/parser.py \
@@ -72,7 +76,7 @@ jobs:
           exit 0
 
       - name: Upload compiler test log
-        if: always()
+        if: always() && steps.compiler_tests.outcome != 'skipped'
         uses: actions/upload-artifact@v6
         with:
           name: compiler-test-log

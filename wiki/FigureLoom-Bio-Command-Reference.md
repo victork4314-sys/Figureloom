@@ -5,7 +5,7 @@
 FigureLoom Bio is a programming language with a lexer, grammar parser, compiled instructions, validation, and a runtime. It is not a whitelist of complete sentences.
 
 **Grammar families:** 10
-**Vocabulary forms:** 386
+**Vocabulary forms:** 396
 **Learning examples:** 161
 
 Examples are examples, not a whitelist. You can write your own instruction by combining operations, targets, values, role words, comparisons, and Boolean logic in a form the grammar can resolve unambiguously.
@@ -18,7 +18,7 @@ Normal instructions end with a period. Block headers end with a colon. The curre
 | --- | --- |
 | open | `open`, `load`, `read`, `import` |
 | keep | `keep`, `retain`, `select`, `filter` |
-| remove | `remove`, `delete`, `drop`, `discard`, `exclude` |
+| remove | `remove`, `delete`, `drop`, `discard`, `exclude`, `filter out`, `get rid of` |
 | show | `show`, `display`, `view`, `print`, `list` |
 | count | `count`, `total` |
 | save | `save`, `write`, `export` |
@@ -31,15 +31,15 @@ Normal instructions end with a period. Block headers end with a colon. The curre
 | split | `split` |
 | convert | `convert`, `change`, `turn` |
 | calculate | `calculate`, `compute`, `measure`, `get` |
-| find | `find`, `detect`, `identify`, `locate`, `call`, `design`, `classify`, `reconstruct` |
+| find | `find`, `look for`, `detect`, `identify`, `locate`, `call`, `design`, `classify`, `reconstruct` |
 | create | `create`, `make`, `draw`, `build`, `plot` |
 | check | `check`, `validate`, `inspect`, `test` |
 | compare | `compare`, `align` |
 | trim | `trim`, `cut`, `clip` |
 | normalize | `normalize`, `scale` |
 | prepare | `prepare`, `clean` |
-| assemble | `assemble` |
-| annotate | `annotate` |
+| assemble | `assemble`, `put together` |
+| annotate | `annotate`, `label` |
 | translate | `translate` |
 | say | `say`, `print`, `write` |
 | run | `run`, `repeat` |
@@ -79,7 +79,7 @@ Normal instructions end with a period. Block headers end with a colon. The curre
 | variant | `variant`, `variants`, `mutation`, `mutations` |
 | primer | `primer`, `primers`, `pcr primer`, `pcr primers` |
 | alignment | `alignment`, `alignments` |
-| tree | `tree`, `phylogeny`, `phylogenetic`, `phylogenetic tree` |
+| tree | `tree`, `phylogeny`, `phylogenetic`, `phylogenetic tree`, `relationship tree`, `family tree` |
 | assembly | `assembly`, `genome`, `contig`, `contigs`, `bacterial genome` |
 | bacterial reads | `bacterial read`, `bacterial reads` |
 | organism | `organism`, `species`, `taxonomy` |
@@ -97,10 +97,10 @@ Normal instructions end with a period. Block headers end with a colon. The curre
 | volcano | `volcano plot`, `volcano` |
 | average | `average`, `mean` |
 | median | `median` |
-| standard deviation | `standard deviation`, `sd` |
+| standard deviation | `standard deviation`, `sd`, `spread`, `spread out` |
 | minimum | `minimum`, `smallest`, `lowest` |
 | maximum | `maximum`, `largest`, `highest` |
-| confidence interval | `confidence interval`, `ci` |
+| confidence interval | `confidence interval`, `confidence range`, `ci` |
 | p value | `p value`, `p-value`, `pvalue` |
 | gc content | `gc content`, `gc percentage` |
 | reverse complement | `reverse complement`, `reverse-complement` |

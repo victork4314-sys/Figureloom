@@ -17,6 +17,7 @@ from .current_file_translation import install_current_file_translation
 from .translation_completion import install_translation_completion
 from .language_aliases import install_language_aliases
 from .language_alias_precedence import install_language_alias_precedence
+from .language_compiler_disambiguation import install_language_compiler_disambiguation
 from .language_compiler_runtime import install_language_compiler
 from .generated_file_language import install_generated_file_language
 from .paired_length_parity import install_paired_length_parity
@@ -43,6 +44,7 @@ install_current_file_translation()
 install_translation_completion()
 install_language_aliases(Runner)
 install_language_alias_precedence()
+install_language_compiler_disambiguation()
 install_language_compiler()
 install_generated_file_language(Runner)
 install_paired_length_parity(Runner)

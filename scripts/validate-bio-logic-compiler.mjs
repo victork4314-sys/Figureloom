@@ -57,7 +57,9 @@ globalThis.FigureLoomBioCompiler = Object.freeze({
   compileSource(program) {
     return String(program)
       .replace('Retain rows where condition is treated.', 'Keep only rows marked treated under condition.')
-      .replace('Total the records.', 'Count the rows.');
+      .replace('Total the records.', 'Count the rows.')
+      .replace('Show the output.', 'Show the result.')
+      .replace('Save the output to clean.csv.', 'Save the result as clean.csv.');
   },
 });
 globalThis.FigureLoomBioCompilerReady = Promise.resolve(globalThis.FigureLoomBioCompiler);
@@ -66,15 +68,29 @@ vm.runInThisContext(source, { filename:'ide-logic-compiler.js' });
 
 const logic = globalThis.FigureLoomBioLogicCompiler;
 assert.ok(logic, 'The browser logic compiler must start.');
-assert.equal(logic.simplifyCondition('true'), 'the result is empty or the result is not empty');
-assert.equal(logic.simplifyCondition('false'), 'the result is empty and the result is not empty');
+assert.equal(logic.simplifyCondition('true'), 'true');
+assert.equal(logic.simplifyCondition('false'), 'false');
 assert.equal(logic.simplifyCondition('true and the result is not empty'), 'the result is not empty');
 assert.equal(logic.simplifyCondition('false or the result is not empty'), 'the result is not empty');
-assert.equal(logic.simplifyCondition('not false'), 'the result is empty or the result is not empty');
+assert.equal(logic.simplifyCondition('not false'), 'true');
 assert.equal(
   logic.normalizeBlockHeaders('Make sure true and not false.'),
-  'Make sure the result is empty or the result is not empty.',
+  'Make sure true.',
 );
+
+assert.equal(logic.normalizeEverydayLine('Change DNA into RNA.'), 'Convert DNA into RNA.');
+assert.equal(logic.normalizeEverydayLine('Build the bacterial genome.'), 'Assemble the bacterial genome.');
+assert.equal(logic.normalizeEverydayLine('Print Analysis started.'), 'Say Analysis started.');
+assert.equal(logic.normalizeEverydayLine('Print the result.'), 'Show the result.');
+assert.equal(logic.normalizeEverydayLine('Write Analysis started.'), 'Say Analysis started.');
+assert.equal(logic.normalizeEverydayLine('Write the result to clean.csv.'), 'Save the result to clean.csv.');
+assert.equal(logic.normalizeEverydayLine('Call variants.'), 'Find variants.');
+assert.equal(logic.normalizeEverydayLine('Filter out rows marked failed under status.'), 'Remove rows marked failed under status.');
+assert.equal(logic.normalizeEverydayLine('Look for genes.'), 'Find genes.');
+assert.equal(logic.normalizeEverydayLine('Get rid of gaps from the sequences.'), 'Remove gaps from the sequences.');
+assert.equal(logic.normalizeEverydayLine('Label the genome.'), 'Annotate the genome.');
+assert.equal(logic.normalizeEverydayLine('Build a relationship tree.'), 'Build a phylogenetic tree.');
+assert.equal(logic.normalizeEverydayLine('Calculate the spread of score.'), 'Calculate the standard deviation of score.');
 
 const original = [
   'If true and not false:',
@@ -83,7 +99,7 @@ const original = [
   '    Total the records.',
 ].join('\n');
 const expected = [
-  'If the result is empty or the result is not empty:',
+  'If true:',
   '    Keep only rows marked treated under condition.',
   'Otherwise:',
   '    Count the rows.',
@@ -131,4 +147,4 @@ assert.match(index, /ide-app-v2\.js\?v=3/);
 assert.match(index, /ide-vocabulary-ui-copy\.js\?v=2/);
 assert.match(index, /ide-language-catalog-ui\.js\?v=5/);
 
-console.log('Browser Boolean logic, Else aliases, free wording inside blocks, every individual vocabulary word, and cache busting are validated.');
+console.log('Browser Boolean logic, Else aliases, everyday word disambiguation, free wording inside blocks, and vocabulary exposure are validated.');
