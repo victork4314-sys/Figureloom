@@ -32,7 +32,7 @@ jobs:
         shell: bash
         run: |
           set +e
-          node scripts/validate-bio-exact-all-in-one.mjs > exact-all-in-one.log 2>&1
+          node -e "import('./scripts/validate-bio-exact-all-in-one.mjs').then(() => process.exit(0)).catch((error) => { console.error(error); process.exit(1); })" > exact-all-in-one.log 2>&1
           status=$?
           echo "status=$status" >> "$GITHUB_OUTPUT"
           exit 0
