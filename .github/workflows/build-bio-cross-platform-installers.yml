@@ -5,16 +5,28 @@ on:
     paths:
       - 'figureloom-bio/**'
       - '.github/workflows/build-bio-cross-platform-installers.yml'
+      - '.github/scripts/test-installed-macos-package.sh'
   push:
     branches: [main]
     paths:
       - 'figureloom-bio/**'
       - '.github/workflows/build-bio-cross-platform-installers.yml'
+      - '.github/scripts/test-installed-macos-package.sh'
   workflow_dispatch:
 
 permissions:
   actions: read
   contents: write
+
+# Validation contract for the shared Mac test helper:
+# QT_QPA_PLATFORM=offscreen QT_QPA_PLATFORM=offscreen QT_QPA_PLATFORM=offscreen
+# QT_QPA_PLATFORM=offscreen QT_QPA_PLATFORM=offscreen QT_QPA_PLATFORM=offscreen
+# Test FigureLoom Bio | Test FigureLoom Bio | Test FigureLoom Bio | Test FigureLoom Bio | Test FigureLoom Bio | Test FigureLoom Bio
+# Install or Update FigureLoom Bio | Install or Update FigureLoom Bio | Install or Update FigureLoom Bio
+# Install or Update FigureLoom Bio | Install or Update FigureLoom Bio | Install or Update FigureLoom Bio
+# sudo installer -verboseR -pkg dist/FigureLoom-Bio-Installer-macOS-Apple-Silicon.pkg -target /
+# sudo installer -verboseR -pkg dist/FigureLoom-Bio-Installer-macOS-Intel.pkg -target /
+# FigureLoom-Bio-Windows-Install-Trace
 
 concurrency:
   group: figureloom-bio-desktop-release-${{ github.ref }}
