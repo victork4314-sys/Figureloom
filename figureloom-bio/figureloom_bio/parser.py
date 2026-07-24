@@ -232,7 +232,8 @@ def _compile_error_message(sentence: str, error: CompileError) -> str:
         "What is missing\n"
         f"{error}\n\n"
         "FigureLoom Bio reads the operation, target, values, and role words in the instruction. "
-        "You can write the instruction in your own wording, but those parts must make one unambiguous operation.\n\n"
+        "The wording and order do not have to copy an example. Write the instruction in your own words, "
+        "but those parts must make one unambiguous operation.\n\n"
         f"I read\n{sentence}."
     )
 
