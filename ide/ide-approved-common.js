@@ -18,8 +18,8 @@
   const runners = [];
   const highlightRules = [
     [/^(If )(.+)(:)$/i, ['c','v','p']],
-    [/^(Otherwise(?:,)? if )(.+)(:)$/i, ['c','v','p']],
-    [/^(Otherwise)(:)$/i, ['c','p']],
+    [/^((?:Else|Otherwise)(?:,)? if )(.+)(:)$/i, ['c','v','p']],
+    [/^((?:Else|Otherwise))(:)$/i, ['c','p']],
     [/^(Make a recipe called )(.+)(:)$/i, ['c','v','p']],
     [/^(For every )([a-z][\w-]*)( in )([a-z][\w-]*)(:)$/i, ['c','v','w','v','p']],
     [/^(For every )([a-z][\w-]*)(:)$/i, ['c','v','p']],
@@ -28,6 +28,9 @@
     [/^(Use the result )(.+)(\.)$/i, ['c','v','p']],
     [/^(Use the recipe )(.+)(\.)$/i, ['c','v','p']],
     [/^(Show a warning saying )(.+)(\.)$/i, ['c','v','p']],
+    [/^((?:Warn|Warning)(?::|\s)+)(.+)(\.)$/i, ['c','v','p']],
+    [/^((?:End|Quit)(?: the)? program)(\.)$/i, ['c','p']],
+    [/^(Next(?: sample)?)(\.)$/i, ['c','p']],
   ];
   let target = results;
   let repaintHighlight = () => {};
@@ -105,11 +108,14 @@
     localStorage.setItem(RUN_STATUS_KEY, JSON.stringify({ text:runStatus.textContent || 'Ready', className:runStatus.className || 'status-pill' }));
   }
   function sourceNeedsAdvancedRuntime(source = editor.value) {
-    return /(^|\n)\s*(?:If .+:|Otherwise(?:,? if .+)?:|For every .+:|Make a recipe called .+:)/im.test(source)
-      || /(?:Call the result|Use the result|Use the recipe|Make sure|Show a warning|Open all (?:FASTQ|FASTA|CSV|TSV) files|Prepare (?:the )?bacterial|Clean (?:the )?bacterial|bacterial genome|resistance genes|virulence genes|plasmids|identify (?:the )?organism|classify .+ using)/i.test(source);
+    return /(^|\n)\s*(?:If .+:|(?:Else|Otherwise)(?:,? if .+)?:|For every .+:|Make a recipe called .+:)/im.test(source)
+      || /(?:Call the result|Use the result|Use the recipe|Make sure|Show a warning|(?:Warn|Warning)(?::|\s)|(?:End|Quit)(?: the)? program|Next(?: sample)?|Open all (?:FASTQ|FASTA|CSV|TSV) files|Prepare (?:the )?bacterial|Clean (?:the )?bacterial|bacterial genome|resistance genes|virulence genes|plasmids|identify (?:the )?organism|classify .+ using)/i.test(source);
+  }
+  function normalizedAdvancedSource() {
+    return window.FigureLoomBioLogicCompiler?.normalizeSource?.(editor.value) || editor.value;
   }
   function advancedRuntimeWillHandle() {
-    return Boolean(window.FigureLoomBioFlow?.usesAdvancedRuntime?.(editor.value));
+    return Boolean(window.FigureLoomBioFlow?.usesAdvancedRuntime?.(normalizedAdvancedSource()));
   }
   function waitForAdvancedRuntime() {
     if (waitingForFlow) return;
