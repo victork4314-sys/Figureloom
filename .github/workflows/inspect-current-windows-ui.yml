@@ -11,8 +11,6 @@ permissions:
   contents: read
   issues: write
 
-tasks: {}
-
 jobs:
   inspect:
     runs-on: windows-2025
