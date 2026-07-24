@@ -53,13 +53,22 @@ runButton.click = () => {
   }
 };
 
+function compileLine(program) {
+  return String(program)
+    .replace('Retain rows where condition is treated.', 'Keep only rows marked treated under condition.')
+    .replace('Total the records.', 'Count the rows.')
+    .replace('Show the output.', 'Show the result.')
+    .replace('Save the output to clean.csv.', 'Save the result as clean.csv.')
+    // These deliberately model the old destructive second pass. The logic
+    // compiler must protect canonical messages and sequence-name filters from it.
+    .replace('Say The table section worked.', 'Say table section worked.')
+    .replace('Keep sequences with names containing synthetic.', 'Keep sequences with names containing names containing synthetic.');
+}
+
 globalThis.FigureLoomBioCompiler = Object.freeze({
+  compileLine,
   compileSource(program) {
-    return String(program)
-      .replace('Retain rows where condition is treated.', 'Keep only rows marked treated under condition.')
-      .replace('Total the records.', 'Count the rows.')
-      .replace('Show the output.', 'Show the result.')
-      .replace('Save the output to clean.csv.', 'Save the result as clean.csv.');
+    return String(program).split(/\r?\n/).map(compileLine).join('\n');
   },
 });
 globalThis.FigureLoomBioCompilerReady = Promise.resolve(globalThis.FigureLoomBioCompiler);
@@ -82,6 +91,9 @@ assert.equal(logic.normalizeEverydayLine('Change DNA into RNA.'), 'Convert DNA i
 assert.equal(logic.normalizeEverydayLine('Build the bacterial genome.'), 'Assemble the bacterial genome.');
 assert.equal(logic.normalizeEverydayLine('Print Analysis started.'), 'Say Analysis started.');
 assert.equal(logic.normalizeEverydayLine('Print the result.'), 'Show the result.');
+assert.equal(logic.normalizeEverydayLine('Print Starting the alignment and tree section.'), 'Say Starting the alignment and tree section.');
+assert.equal(logic.normalizeEverydayLine('Print Starting the FASTA file section.'), 'Say Starting the FASTA file section.');
+assert.equal(logic.normalizeEverydayLine('Print The table section worked.'), 'Say The table section worked.');
 assert.equal(logic.normalizeEverydayLine('Write Analysis started.'), 'Say Analysis started.');
 assert.equal(logic.normalizeEverydayLine('Write the result to clean.csv.'), 'Save the result to clean.csv.');
 assert.equal(logic.normalizeEverydayLine('Call variants.'), 'Find variants.');
@@ -96,6 +108,17 @@ assert.equal(logic.normalizeEverydayLine('Warn: Check this sample.'), 'Show a wa
 assert.equal(logic.normalizeEverydayLine('End the program.'), 'Stop the program.');
 assert.equal(logic.normalizeEverydayLine('Quit the program.'), 'Stop the program.');
 assert.equal(logic.normalizeEverydayLine('Next sample.'), 'Continue with the next sample.');
+
+assert.equal(
+  logic.normalizeSource('Say The table section worked.'),
+  'Say The table section worked.',
+  'A second compiler pass must preserve every word in a message.',
+);
+assert.equal(
+  logic.normalizeSource('Keep sequences with names containing synthetic.'),
+  'Keep sequences with names containing synthetic.',
+  'A second compiler pass must not expand an already-canonical name filter.',
+);
 
 const original = [
   'If true and not false:',
@@ -145,6 +168,7 @@ const compiledReportedProgram = logic.normalizeSource(reportedProgram);
 assert.match(compiledReportedProgram, /Otherwise if true:/);
 assert.match(compiledReportedProgram, /Show a warning saying The second check worked\./);
 assert.match(compiledReportedProgram, /Stop the program\./);
+assert.match(compiledReportedProgram, /Say The whole program worked\./);
 assert.doesNotMatch(compiledReportedProgram, /^\s*Warning\b/m);
 assert.doesNotMatch(compiledReportedProgram, /^\s*End the program\./m);
 
@@ -183,8 +207,9 @@ for (const group of ['flow', 'logic', 'booleans', 'conditions', 'file_types', 'f
 
 const index = fs.readFileSync('ide/index.html', 'utf8');
 assert.match(index, /ide-language-compiler\.js\?v=2/);
-assert.match(index, /ide-logic-compiler\.js\?v=3/);
-assert.match(index, /ide-control-flow-runtime\.js\?v=9/);
+assert.match(index, /ide-logic-compiler\.js\?v=4/);
+assert.match(index, /ide-complete-language-bridge\.js\?v=2/);
+assert.match(index, /ide-control-flow-runtime\.js\?v=10/);
 assert.match(index, /ide-decision-core\.js\?v=2/);
 assert.match(index, /ide-large-file-vault-v2\.js\?v=1/);
 assert.match(index, /ide-app-v2\.js\?v=3/);
@@ -193,4 +218,4 @@ assert.match(index, /ide-vocabulary-ui-copy\.js\?v=2/);
 assert.match(index, /ide-language-catalog-ui\.js\?v=5/);
 assert.match(index, /ide-builtin-language-support\.js\?v=5/);
 
-console.log('The exact reported browser program, Boolean logic, Else aliases, Warning, End, everyday wording, and vocabulary exposure are validated.');
+console.log('Boolean logic, exact messages, stable sequence-name filters, aliases, Warning, End, and browser asset versions are validated.');
