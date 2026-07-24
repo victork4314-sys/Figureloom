@@ -53,7 +53,8 @@
     } catch (error) {
       if (needsSequences && !String(error?.message || '').includes('Sequence input received:')) {
         const history = (context.completeSequenceHistory || []).join('\n\n');
-        error.message = `${error.message}\n\nSequence input received:\n${sequenceSummary(context.data)}${history ? `\n\nRecent sequence steps:\n${history}` : ''}`;
+        const runtimeHistory = (context.runtimeSequenceHistory || []).join('\n\n');
+        error.message = `${error.message}\n\nSequence input received:\n${sequenceSummary(context.data)}${history ? `\n\nRecent sequence steps:\n${history}` : ''}${runtimeHistory ? `\n\nRuntime sequence trail:\n${runtimeHistory}` : ''}`;
       }
       throw error;
     }
