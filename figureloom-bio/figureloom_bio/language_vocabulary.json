@@ -10,12 +10,12 @@
     "count": ["count", "total"],
     "save": ["save", "write", "export"],
     "copy": ["copy"],
-    "use": ["use", "apply"],
+    "use": ["use"],
     "rename": ["rename", "name", "call"],
     "sort": ["sort", "order", "arrange", "put"],
     "replace": ["replace", "fill", "change"],
     "combine": ["combine", "merge", "join", "append", "add"],
-    "split": ["split", "separate"],
+    "split": ["split"],
     "convert": ["convert", "change", "turn"],
     "calculate": ["calculate", "compute", "measure", "get"],
     "find": ["find", "detect", "identify", "locate", "call", "design", "classify", "reconstruct"],
@@ -32,7 +32,7 @@
     "run": ["run", "repeat"],
     "stop": ["stop", "end", "quit"],
     "continue": ["continue", "next", "skip"],
-    "mark": ["mark", "flag"],
+    "mark": ["mark"],
     "warn": ["warn", "warning"]
   },
   "terms": {
