@@ -38,12 +38,15 @@ jobs:
           node --check ide/ide-approved-common.js
           node --check ide/ide-addon-packages.js
           node --check ide/ide-builtin-language-support.js
+          node --check ide/ide-core-language-runtime.js
           node --check scripts/validate-bio-control-flow.mjs
           node --check scripts/validate-bio-browser-example.mjs
           node --check scripts/validate-bio-current-file.mjs
           node --check scripts/validate-bio-current-file-runtime.mjs
           node --check scripts/validate-bio-language-manifest.mjs
           node --check scripts/validate-bio-language-aliases.mjs
+          node --check scripts/validate-bio-every-advertised-instruction.mjs
+          node --check scripts/validate-bio-core-translation.mjs
           node --check scripts/validate-bio-statement-registry.mjs
           node --check scripts/validate-bio-analysis-language.mjs
           node --check scripts/validate-bio-complete-language.mjs
@@ -58,6 +61,12 @@ jobs:
 
       - name: Validate every accepted browser wording and execution family
         run: node scripts/validate-bio-language-aliases.mjs
+
+      - name: Run every advertised instruction through the browser runtime
+        run: node scripts/validate-bio-every-advertised-instruction.mjs
+
+      - name: Validate real DNA translation output
+        run: node scripts/validate-bio-core-translation.mjs
 
       - name: Validate completed documentation and wiki sync
         run: node scripts/validate-bio-documentation.mjs
