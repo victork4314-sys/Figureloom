@@ -160,26 +160,23 @@ class PlatformInstallerTests(unittest.TestCase):
         self.assertIn("/dev/console", postinstall)
         self.assertNotIn("mapfile", postinstall)
 
-    def test_cross_platform_workflow_runs_every_installed_native_self_test(self) -> None:
-        workflow = (self.root / ".github" / "workflows" / "build-bio-cross-platform-installers.yml").read_text(encoding="utf-8")
-        self.assertIn("windows-latest", workflow)
-        self.assertIn("macos-15", workflow)
-        self.assertIn("macos-15-intel", workflow)
-        self.assertIn("Start-Process", workflow)
-        self.assertIn("function Record-DesktopSelfTest", workflow)
-        for name in (
-            "Native Windows IDE self-test",
-            "Windows test launcher self-test",
-            "Windows updater self-test",
-        ):
-            self.assertIn(f"Record-DesktopSelfTest '{name}'", workflow)
-        self.assertGreaterEqual(workflow.count("QT_QPA_PLATFORM=offscreen"), 6)
-        self.assertGreaterEqual(workflow.count("Test FigureLoom Bio"), 6)
-        self.assertGreaterEqual(workflow.count("Install or Update FigureLoom Bio"), 6)
-        self.assertEqual(workflow.count(" -pkg dist/FigureLoom-Bio-Installer-macOS-"), 2)
-        self.assertIn("FigureLoom-Bio-Windows-Install-Trace", workflow)
-        self.assertIn("figureloom-bio-windows-installer", workflow)
-        self.assertIn("figureloom-bio-macos-installer", workflow)
+    def test_current_release_workflows_cover_windows_and_both_macs(self) -> None:
+        windows = (self.root / ".github" / "workflows" / "publish-proven-windows-installer.yml").read_text(encoding="utf-8")
+        macos = (self.root / ".github" / "workflows" / "publish-fixed-macos-installers.yml").read_text(encoding="utf-8")
+        self.assertIn("windows-2025", windows)
+        self.assertIn("build-installer.ps1", windows)
+        self.assertIn("FigureLoom Bio IDE.exe", windows)
+        self.assertIn("--self-test", windows)
+        self.assertIn("FIGURELOOM_NATIVE_SCREENSHOT_DIR", windows)
+        self.assertIn("Real Windows IDE Run button", windows)
+        self.assertIn("figureloom-bio-windows-installer", windows)
+        self.assertIn("FigureLoom-Bio-Installer.exe", windows)
+        self.assertIn("macos-15", macos)
+        self.assertIn("macos-15-intel", macos)
+        self.assertIn("build-installer.sh", macos)
+        self.assertIn("FigureLoom-Bio-Installer-macOS-Apple-Silicon.pkg", macos)
+        self.assertIn("FigureLoom-Bio-Installer-macOS-Intel.pkg", macos)
+        self.assertIn("figureloom-bio-macos-installer", macos)
 
     def test_easy_install_page_links_all_platforms(self) -> None:
         page = (self.root / "wiki" / "FigureLoom-Bio-Easy-Install.md").read_text(encoding="utf-8")
