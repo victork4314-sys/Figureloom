@@ -42,10 +42,14 @@ python3 -m pip install \
   "cryptography==$CRYPTOGRAPHY_VERSION" \
   "$ROOT_DIR/figureloom-bio"
 python3 - <<'PY'
-from cryptography.hazmat.bindings._rust import openssl
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
-assert openssl is not None
-assert AESGCM is not None
+
+key = AESGCM.generate_key(bit_length=128)
+cipher = AESGCM(key)
+nonce = b"figureloom12"
+message = b"FigureLoom Bio macOS encryption check"
+encrypted = cipher.encrypt(nonce, message, None)
+assert cipher.decrypt(nonce, encrypted, None) == message
 PY
 
 make_icon() {
