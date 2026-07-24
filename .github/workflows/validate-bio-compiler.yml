@@ -55,10 +55,30 @@ jobs:
           cat compiler-test.log
           exit 1
 
-      - name: Run full FigureLoom Bio tests
+      - name: Capture full FigureLoom Bio tests
+        id: full_tests
+        shell: bash
         run: |
+          set +e
           cd figureloom-bio
-          python3 -m unittest discover -s tests -v
+          python3 -m unittest discover -s tests -v > ../full-bio-test.log 2>&1
+          status=$?
+          echo "status=$status" >> "$GITHUB_OUTPUT"
+          exit 0
+
+      - name: Upload full FigureLoom Bio test log
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: full-bio-test-log
+          path: full-bio-test.log
+          if-no-files-found: error
+
+      - name: Require full FigureLoom Bio tests
+        if: steps.full_tests.outputs.status != '0'
+        run: |
+          tail -n 300 full-bio-test.log
+          exit 1
 
       - name: Validate documentation
         run: node scripts/validate-bio-documentation.mjs
