@@ -20,6 +20,10 @@ jobs:
           node --check ide/ide-language-compiler.js
           node --check ide/ide-language-catalog-ui.js
           node --check ide/ide-vocabulary-ui-copy.js
+          node --check scripts/validate-bio-language-compiler.mjs
+
+      - name: Execute browser compiler frontend tests
+        run: node scripts/validate-bio-language-compiler.mjs
 
       - name: Check compiler Python syntax
         run: |
