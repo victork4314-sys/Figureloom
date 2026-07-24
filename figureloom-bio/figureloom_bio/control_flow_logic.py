@@ -71,6 +71,11 @@ def normalize_control_flow_source(source: str) -> str:
             output.append(f"{match.group(1)}Otherwise:")
             continue
 
+        match = re.fullmatch(r"(\s*)Make sure\s+(.+)\.\s*", line, re.IGNORECASE)
+        if match:
+            output.append(f"{match.group(1)}Make sure {simplify_condition(match.group(2))}.")
+            continue
+
         output.append(line)
     return "\n".join(output)
 
@@ -83,6 +88,7 @@ def install_control_flow_logic() -> None:
 
     original_parse_program = control_flow.parse_program
     original_uses_control_flow = control_flow.uses_control_flow
+    original_condition = control_flow._condition
 
     def parse_program(source: str):
         return original_parse_program(normalize_control_flow_source(source))
@@ -93,6 +99,10 @@ def install_control_flow_logic() -> None:
             re.search(r"(^|\n)\s*(?:Else|Else if)\b", source, re.IGNORECASE)
         )
 
+    def condition(text: str, context, line_number: int) -> bool:
+        return original_condition(simplify_condition(text), context, line_number)
+
     control_flow.parse_program = parse_program
     control_flow.uses_control_flow = uses_control_flow
+    control_flow._condition = condition
     control_flow._figureloom_logic_installed = True
