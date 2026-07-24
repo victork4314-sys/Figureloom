@@ -208,6 +208,7 @@ def exact_widget_stylesheet(dark: bool) -> str:
     editor_font = 'Consolas' if sys.platform.startswith("win") else 'Menlo'
     return f"""
     QWidget {{ font-family: {interface_font}; }}
+    QLabel {{ background: transparent; }}
     QPlainTextEdit#programEditor {{ font-family: {editor_font}; font-size: 15px; }}
     QTreeWidget#webFileList {{ background: transparent; border: 0; outline: 0; }}
     QTreeWidget#webFileList::item {{ min-height: 40px; padding: 0; border: 0; background: transparent; }}
