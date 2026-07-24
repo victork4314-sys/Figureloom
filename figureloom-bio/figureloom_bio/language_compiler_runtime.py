@@ -6,6 +6,12 @@ from .language_compiler import CompiledInstruction, compile_sentence as compile_
 
 _ACTION_REWRITES = {
     "assemble_current_file": "assemble_current_bacterial_genome",
+    "assemble_bacterial_pair": "builtin_microbiology_assemble_paired",
+    "assemble_bacterial_single": "builtin_microbiology_assemble_single",
+    "annotate_bacterial_genome": "builtin_microbiology_annotate",
+    "check_assembly": "builtin_microbiology_check_assembly",
+    "identify_organism": "builtin_microbiology_classify",
+    "calculate_p_value": "permutation_p_value",
     "calculate_minimum_under": "calculate_minimum",
     "calculate_maximum_under": "calculate_maximum",
 }
