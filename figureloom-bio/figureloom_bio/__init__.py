@@ -55,6 +55,6 @@ install_volcano_plot(Runner)
 install_language_diagnostics()
 install_control_flow_logic()
 
-__version__ = "0.8.1"
+__version__ = "0.8.0"
 
 __all__ = ["Runner", "__version__"]
