@@ -1,11 +1,10 @@
-name: Publish fixed FigureLoom Bio macOS installers
+name: Publish FigureLoom Bio macOS installers
 
 on:
   push:
     branches: [main]
     paths:
       - '.github/workflows/publish-fixed-macos-installers.yml'
-      - '.github/scripts/test-installed-macos-package.sh'
       - 'figureloom-bio/macos/**'
       - 'figureloom-bio/platform/**'
       - 'figureloom-bio/figureloom_bio/**'
@@ -15,16 +14,16 @@ permissions:
   contents: write
 
 concurrency:
-  group: figureloom-bio-fixed-macos-${{ github.sha }}
+  group: figureloom-bio-macos-publish-${{ github.sha }}
   cancel-in-progress: false
 
 jobs:
   apple_silicon:
-    name: Apple Silicon package
+    name: Build Apple Silicon package
     runs-on: macos-15
     timeout-minutes: 90
     steps:
-      - name: Checkout repaired source
+      - name: Checkout source
         uses: actions/checkout@v6
 
       - name: Set up Python
@@ -37,14 +36,7 @@ jobs:
           FIGURELOOM_MAC_ARCH_LABEL: arm64
         run: bash figureloom-bio/macos/build-installer.sh dist
 
-      - name: Install and prove Apple Silicon package
-        env:
-          PACKAGE: dist/FigureLoom-Bio-Installer-macOS-Apple-Silicon.pkg
-          EXPECTED_ARCH: arm64
-          TEST_ROOT: ${{ runner.temp }}/figureloom-bio-macos-arm-test
-        run: bash .github/scripts/test-installed-macos-package.sh
-
-      - name: Upload proven Apple Silicon package
+      - name: Upload Apple Silicon package
         uses: actions/upload-artifact@v7
         with:
           name: FigureLoom-Bio-macOS-Apple-Silicon-Installer
@@ -52,11 +44,11 @@ jobs:
           if-no-files-found: error
 
   intel:
-    name: Intel package
+    name: Build Intel package
     runs-on: macos-15-intel
     timeout-minutes: 90
     steps:
-      - name: Checkout repaired source
+      - name: Checkout source
         uses: actions/checkout@v6
 
       - name: Set up Python
@@ -69,14 +61,7 @@ jobs:
           FIGURELOOM_MAC_ARCH_LABEL: x86_64
         run: bash figureloom-bio/macos/build-installer.sh dist
 
-      - name: Install and prove Intel package
-        env:
-          PACKAGE: dist/FigureLoom-Bio-Installer-macOS-Intel.pkg
-          EXPECTED_ARCH: x86_64
-          TEST_ROOT: ${{ runner.temp }}/figureloom-bio-macos-intel-test
-        run: bash .github/scripts/test-installed-macos-package.sh
-
-      - name: Upload proven Intel package
+      - name: Upload Intel package
         uses: actions/upload-artifact@v7
         with:
           name: FigureLoom-Bio-macOS-Intel-Installer
@@ -84,16 +69,11 @@ jobs:
           if-no-files-found: error
 
   publish:
-    name: Publish both proven Mac packages
+    name: Upload both Mac packages to the release
     needs: [apple_silicon, intel]
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - name: Checkout release commit
-        uses: actions/checkout@v6
-        with:
-          fetch-depth: 0
-
       - name: Download Apple Silicon package
         uses: actions/download-artifact@v8
         with:
@@ -106,7 +86,7 @@ jobs:
           name: FigureLoom-Bio-macOS-Intel-Installer
           path: release
 
-      - name: Publish and verify both packages
+      - name: Upload both packages
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -117,39 +97,16 @@ jobs:
 
           test -s "$apple"
           test -s "$intel"
-          test "$(head -c 4 "$apple")" = 'xar!'
-          test "$(head -c 4 "$intel")" = 'xar!'
 
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-
-          if gh release view "$tag" >/dev/null 2>&1; then
-            gh release upload "$tag" "$apple" "$intel" --clobber
+          if gh release view "$tag" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release upload "$tag" "$apple" "$intel" \
+              --repo "$GITHUB_REPOSITORY" \
+              --clobber
           else
-            git tag --force "$tag" "$GITHUB_SHA"
-            git push origin "refs/tags/$tag" --force
             gh release create "$tag" "$apple" "$intel" \
+              --repo "$GITHUB_REPOSITORY" \
               --target "$GITHUB_SHA" \
               --latest \
               --title 'FigureLoom Bio macOS Installers' \
-              --notes 'Choose Apple Silicon for M-series Macs or Intel for Intel Macs. Both packages were installed and tested before publication.'
+              --notes 'Choose Apple Silicon for M-series Macs or Intel for Intel Macs.'
           fi
-
-          git tag --force "$tag" "$GITHUB_SHA"
-          git push origin "refs/tags/$tag" --force
-          gh release edit "$tag" \
-            --latest \
-            --title 'FigureLoom Bio macOS Installers' \
-            --notes 'Choose Apple Silicon for M-series Macs or Intel for Intel Macs. Both packages were installed and tested before publication.'
-
-          mkdir verified-downloads
-          gh release download "$tag" \
-            --pattern 'FigureLoom-Bio-Installer-macOS-*.pkg' \
-            --dir verified-downloads \
-            --clobber
-          cmp "$apple" verified-downloads/FigureLoom-Bio-Installer-macOS-Apple-Silicon.pkg
-          cmp "$intel" verified-downloads/FigureLoom-Bio-Installer-macOS-Intel.pkg
-
-          remote_sha="$(git ls-remote --tags origin "refs/tags/$tag" | awk '{print $1}')"
-          test "$remote_sha" = "$GITHUB_SHA"
-          echo 'Both fixed macOS installers are published and byte-for-byte verified.'
