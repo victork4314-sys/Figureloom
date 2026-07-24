@@ -1,0 +1,62 @@
+name: FigureLoom Bio language contract
+
+on:
+  pull_request:
+    paths:
+      - "figureloom-bio/**"
+      - "ide/ide-logic-compiler.js"
+      - "ide/ide-language-compiler.js"
+      - "ide/ide-language-aliases.js"
+      - "ide/ide-control-flow-runtime*"
+      - "scripts/validate-bio-*.mjs"
+      - ".github/workflows/figureloom-bio-language.yml"
+  push:
+    paths:
+      - "figureloom-bio/**"
+      - "ide/ide-logic-compiler.js"
+      - "ide/ide-language-compiler.js"
+      - "ide/ide-language-aliases.js"
+      - "ide/ide-control-flow-runtime*"
+      - "scripts/validate-bio-*.mjs"
+      - ".github/workflows/figureloom-bio-language.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  language-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Install FigureLoom Bio
+        run: python -m pip install -e ./figureloom-bio
+
+      - name: Run every Python language test
+        shell: bash
+        run: |
+          set -o pipefail
+          cd figureloom-bio
+          python -m unittest discover -s tests -p "test_*.py" -v 2>&1 | tee ../figureloom-bio-language-tests.log
+
+      - name: Upload complete language test log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: figureloom-bio-language-tests-${{ github.run_id }}
+          path: figureloom-bio-language-tests.log
+
+      - name: Check browser Boolean, Else, and everyday wording
+        run: node scripts/validate-bio-logic-compiler.mjs
+
+      - name: Check vocabulary coverage
+        run: node scripts/validate-bio-vocabulary-coverage.mjs
