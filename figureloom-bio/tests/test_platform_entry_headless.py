@@ -14,7 +14,10 @@ class PlatformEntryHeadlessTests(unittest.TestCase):
             with self.subTest(name=name):
                 source = (ROOT / "platform" / name).read_text(encoding="utf-8")
                 ast.parse(source)
-                self.assertIn('if "--self-test" in sys.argv', source)
+                self.assertTrue(
+                    'if "--self-test" in sys.argv' in source
+                    or 'SELF_TEST = "--self-test" in sys.argv' in source
+                )
                 self.assertIn('os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")', source)
                 self.assertIn("from figureloom_bio import platform_qt_tools", source)
                 self.assertIn("install_platform_tool_safety(platform_qt_tools)", source)
