@@ -76,11 +76,39 @@
     return { column, value };
   }
 
+  function establishedGrammarAccepts(text) {
+    const core = phrase(text);
+    const aliases = window.FigureLoomBioLanguageAliases;
+    try {
+      if (aliases?.recognizes?.(core)) return true;
+    } catch {}
+
+    try {
+      if (window.FigureLoomBioCompleteLanguage?.uses?.(text)) return true;
+    } catch {}
+
+    try {
+      const current = window.FigureLoomBioCurrentFile;
+      if (current?.normalizeSource && current.normalizeSource(text) !== text) return true;
+    } catch {}
+
+    for (const recognizer of window.FigureLoomBioStatementRecognizers || []) {
+      try {
+        if (recognizer(text) || recognizer(core)) return true;
+      } catch {}
+    }
+
+    const manifest = window.FigureLoomBioLanguage;
+    if (manifest?.commands?.some((command) => String(command.example).toLowerCase() === text.toLowerCase())) return true;
+    return false;
+  }
+
   function compileLine(raw) {
     const original = String(raw);
     const indent = original.match(/^\s*/)?.[0] || '';
     const text = original.trim();
     if (!text || text.startsWith('#') || text.endsWith(':') || !text.endsWith('.')) return original;
+    if (establishedGrammarAccepts(text)) return original;
 
     const source = phrase(text);
     const lower = source.toLowerCase();
@@ -197,8 +225,10 @@
     }
 
     if (op === 'replace') {
-      const column = after(source, 'under', 'in column');
       const replacement = after(source, 'with', 'to');
+      const column = has(lower, 'empty', 'missing', 'blank')
+        ? between(source, ['under', 'in column'], ['with', 'to'])
+        : after(source, 'under', 'in column');
       if (column && replacement && has(lower, 'empty', 'missing', 'blank')) output = `Replace empty values under ${column} with ${replacement}.`;
       else {
         const oldValue = between(source, ['change', 'replace'], ['to', 'with']);
@@ -219,8 +249,9 @@
     }
 
     if (op === 'convert') {
-      if (term(lower, 'rna')) output = 'Convert the DNA to RNA.';
-      else if (term(lower, 'dna')) output = 'Convert the RNA to DNA.';
+      const target = after(source, 'to', 'into', 'as').toLowerCase();
+      if (/\brna\b/.test(target)) output = 'Convert the DNA to RNA.';
+      else if (/\bdna\b/.test(target)) output = 'Convert the RNA to DNA.';
     }
 
     if (op === 'calculate') {

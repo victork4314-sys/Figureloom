@@ -351,8 +351,12 @@ def _compile_sort(statement: Statement) -> CompiledInstruction:
 
 
 def _compile_replace(statement: Statement) -> CompiledInstruction:
-    column = statement.after("under", "in column")
     replacement = statement.after("with", "to")
+    column = (
+        statement.between(("under", "in column"), ("with", "to"))
+        if statement.has("empty", "missing", "blank")
+        else statement.after("under", "in column")
+    )
     if statement.has("empty", "missing", "blank"):
         return CompiledInstruction("replace_empty", (_need(column, "Replacing empty values needs a column name."), _need(replacement, "Replacing empty values needs a replacement value.")))
     old = statement.between(("change", "replace"), ("to", "with"))
@@ -378,9 +382,10 @@ def _compile_combine(statement: Statement) -> CompiledInstruction:
 
 
 def _compile_convert(statement: Statement) -> CompiledInstruction:
-    if statement.has_term("rna"):
+    target = (statement.after("to", "into", "as") or "").casefold()
+    if re.search(r"\brna\b", target):
         return CompiledInstruction("to_rna")
-    if statement.has_term("dna"):
+    if re.search(r"\bdna\b", target):
         return CompiledInstruction("to_dna")
     raise CompileError("Convert needs a target such as DNA or RNA.")
 
