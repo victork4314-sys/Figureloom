@@ -20,13 +20,14 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          current_mac_run=30093844734
-          old_mac_run=30092415672
-          old_mac_status="$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$old_mac_run" --jq .status)"
-          if [[ "$old_mac_status" != completed ]]; then
-            gh api --method POST "repos/$GITHUB_REPOSITORY/actions/runs/$old_mac_run/cancel" || \
-              gh api --method POST "repos/$GITHUB_REPOSITORY/actions/runs/$old_mac_run/force-cancel" || true
-          fi
+          final_mac_run=30095038489
+          for old_mac_run in 30092415672 30093844734 30094561750; do
+            status="$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$old_mac_run" --jq .status)"
+            if [[ "$status" != completed ]]; then
+              gh api --method POST "repos/$GITHUB_REPOSITORY/actions/runs/$old_mac_run/cancel" || \
+                gh api --method POST "repos/$GITHUB_REPOSITORY/actions/runs/$old_mac_run/force-cancel" || true
+            fi
+          done
 
           combined_workflow_id=319030920
           : > /tmp/obsolete-runs.txt
@@ -38,7 +39,7 @@ jobs:
           sort -u /tmp/obsolete-runs.txt -o /tmp/obsolete-runs.txt
           while read -r run_id; do
             [[ -n "$run_id" ]] || continue
-            [[ "$run_id" != "$current_mac_run" ]] || continue
+            [[ "$run_id" != "$final_mac_run" ]] || continue
             gh api --method POST "repos/$GITHUB_REPOSITORY/actions/runs/$run_id/cancel" || \
               gh api --method POST "repos/$GITHUB_REPOSITORY/actions/runs/$run_id/force-cancel" || true
           done < /tmp/obsolete-runs.txt
