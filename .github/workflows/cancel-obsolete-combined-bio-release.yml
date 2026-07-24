@@ -15,14 +15,21 @@ jobs:
   cancel:
     runs-on: ubuntu-latest
     steps:
-      - name: Cancel only superseded combined release run
+      - name: Cancel every active superseded combined release run
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          obsolete_run=30091646906
-          status="$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$obsolete_run" --jq .status)"
-          if [[ "$status" != completed ]]; then
-            gh api --method POST "repos/$GITHUB_REPOSITORY/actions/runs/$obsolete_run/cancel"
-          fi
-          echo "Obsolete combined run status before cleanup: $status"
+          workflow_id=319030920
+          for status in queued in_progress pending waiting; do
+            gh api "repos/$GITHUB_REPOSITORY/actions/runs?status=$status&per_page=100" \
+              --jq ".workflow_runs[] | select(.workflow_id == $workflow_id) | .id" \
+              >> /tmp/obsolete-runs.txt
+          done
+          sort -u /tmp/obsolete-runs.txt -o /tmp/obsolete-runs.txt
+          while read -r run_id; do
+            [[ -n "$run_id" ]] || continue
+            echo "Cancelling obsolete combined run $run_id"
+            gh api --method POST "repos/$GITHUB_REPOSITORY/actions/runs/$run_id/cancel" || \
+              gh api --method POST "repos/$GITHUB_REPOSITORY/actions/runs/$run_id/force-cancel" || true
+          done < /tmp/obsolete-runs.txt
