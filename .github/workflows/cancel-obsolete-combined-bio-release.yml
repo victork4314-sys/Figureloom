@@ -1,4 +1,4 @@
-name: Cancel obsolete combined FigureLoom Bio release
+name: Cancel obsolete FigureLoom Bio release runs
 
 on:
   push:
@@ -15,21 +15,30 @@ jobs:
   cancel:
     runs-on: ubuntu-latest
     steps:
-      - name: Cancel every active superseded combined release run
+      - name: Cancel superseded release runs only
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          workflow_id=319030920
+          current_mac_run=30093844734
+          old_mac_run=30092415672
+          old_mac_status="$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$old_mac_run" --jq .status)"
+          if [[ "$old_mac_status" != completed ]]; then
+            gh api --method POST "repos/$GITHUB_REPOSITORY/actions/runs/$old_mac_run/cancel" || \
+              gh api --method POST "repos/$GITHUB_REPOSITORY/actions/runs/$old_mac_run/force-cancel" || true
+          fi
+
+          combined_workflow_id=319030920
+          : > /tmp/obsolete-runs.txt
           for status in queued in_progress pending waiting; do
             gh api "repos/$GITHUB_REPOSITORY/actions/runs?status=$status&per_page=100" \
-              --jq ".workflow_runs[] | select(.workflow_id == $workflow_id) | .id" \
+              --jq ".workflow_runs[] | select(.workflow_id == $combined_workflow_id) | .id" \
               >> /tmp/obsolete-runs.txt
           done
           sort -u /tmp/obsolete-runs.txt -o /tmp/obsolete-runs.txt
           while read -r run_id; do
             [[ -n "$run_id" ]] || continue
-            echo "Cancelling obsolete combined run $run_id"
+            [[ "$run_id" != "$current_mac_run" ]] || continue
             gh api --method POST "repos/$GITHUB_REPOSITORY/actions/runs/$run_id/cancel" || \
               gh api --method POST "repos/$GITHUB_REPOSITORY/actions/runs/$run_id/force-cancel" || true
           done < /tmp/obsolete-runs.txt
