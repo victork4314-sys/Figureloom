@@ -51,12 +51,11 @@ run_checked 'Native IDE self-test' 120 \
   env QT_QPA_PLATFORM=offscreen \
   '/Applications/FigureLoom Bio IDE.app/Contents/MacOS/FigureLoom Bio IDE' --self-test
 
-# Launch the installed Test app exactly as a user does. On macOS its normal
-# offscreen path runs the real quick test in a clean worker process, updates the
-# native window on the GUI thread, and exits after the result appears. The outer
-# deadline guarantees the release job can never hang indefinitely.
+# The installer intentionally creates the first Desktop test bundle as root so
+# it can place it for the target user. Remove that old bundle with sudo before
+# launching the installed Test app as the normal runner user.
 app_test_root="$HOME/Desktop/FigureLoom Bio Test Files"
-rm -rf "$app_test_root"
+sudo rm -rf "$app_test_root"
 run_checked 'Native Test app real automatic test' 180 \
   env QT_QPA_PLATFORM=offscreen MPLBACKEND=Agg \
   '/Applications/Test FigureLoom Bio.app/Contents/MacOS/Test FigureLoom Bio'
