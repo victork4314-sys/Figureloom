@@ -30,7 +30,9 @@ class CliEntrypointTests(unittest.TestCase):
             )
             self.assertEqual(completed.returncode, 0, completed.stderr)
             self.assertTrue((destination / "quick-test.flbio").is_file())
-            self.assertTrue((destination / "samples.csv").is_file())
+            self.assertTrue((destination / "measurements.csv").is_file())
+            self.assertTrue((destination / "sequences.fasta").is_file())
+            self.assertTrue((destination / "reads.fastq").is_file())
             self.assertIn("test files are ready", completed.stdout.lower())
 
 
