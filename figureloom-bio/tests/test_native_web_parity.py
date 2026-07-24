@@ -7,12 +7,14 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
 PARITY = ROOT / "figureloom_bio" / "native_web_parity.py"
+EXACT = ROOT / "figureloom_bio" / "native_desktop_exact.py"
 ENTRY = ROOT / "platform" / "ide_entry.py"
 
 
 class NativeWebParityTests(unittest.TestCase):
-    def test_parity_module_and_entry_are_valid_python(self) -> None:
+    def test_parity_exact_layout_and_entry_are_valid_python(self) -> None:
         ast.parse(PARITY.read_text(encoding="utf-8"))
+        ast.parse(EXACT.read_text(encoding="utf-8"))
         ast.parse(ENTRY.read_text(encoding="utf-8"))
 
     def test_desktop_title_and_exact_web_palette_are_present(self) -> None:
@@ -26,20 +28,53 @@ class NativeWebParityTests(unittest.TestCase):
         ):
             self.assertIn(color, source)
 
-    def test_every_existing_native_control_is_preserved(self) -> None:
-        source = PARITY.read_text(encoding="utf-8")
-        features = {
+    def test_visible_desktop_structure_matches_web_in_both_themes(self) -> None:
+        source = EXACT.read_text(encoding="utf-8")
+        self.assertIn("web_palette_stylesheet(dark)", source)
+        self.assertIn("c = DARK if dark else LIGHT", source)
+        self.assertIn("header.setFixedHeight(62)", source)
+        self.assertIn("bar.setFixedHeight(70)", source)
+        self.assertIn("files.setFixedWidth(230)", source)
+        self.assertIn("results.setMinimumWidth(320)", source)
+        self.assertIn("results.setMaximumWidth(420)", source)
+        self.assertIn('heading = QLabel("FILES")', source)
+        self.assertIn('heading = QLabel("RESULTS")', source)
+        self.assertIn('language = QLabel("FigureLoom Bio")', source)
+        self.assertIn('self.tabs.tabBar().hide()', source)
+        self.assertNotIn("QSplitter", source)
+        self.assertNotIn('self._tool_group("Desktop"', source)
+        self.assertNotIn('layout.addWidget(self.delete_file_button)', source)
+        self.assertNotIn('layout.addWidget(self.allow_tools)', source)
+
+    def test_every_native_function_is_preserved_without_changing_primary_layout(self) -> None:
+        source = EXACT.read_text(encoding="utf-8")
+        visible_features = {
             "account", "theme", "manual", "figureloom", "run", "new", "open", "save",
-            "examples", "builder", "translate", "sentences", "tidy", "export_results",
-            "clear_results", "add_file", "delete_file",
+            "examples", "builder", "tidy", "clear_results", "add_file",
         }
-        for feature in features:
+        native_only_features = {
+            "translate", "sentences", "export_results", "delete_file", "text_mode", "blocks_mode",
+        }
+        for feature in visible_features | native_only_features:
             self.assertIn(f'name="{feature}"', source)
-        self.assertIn('self.tabs.addTab(self.editor, "Text")', source)
-        self.assertIn('self.tabs.addTab(self.blocks, "Blocks")', source)
-        self.assertIn('QCheckBox("Allow installed tools")', source)
-        self.assertIn("super().__init__(*args, **kwargs)", source)
-        self.assertIn("super().load_active_file()", source)
+        self.assertIn('QCheckBox("Allow installed tools"', source)
+        self.assertIn("self.file_tree.delete_requested.connect(self.delete_file)", source)
+        self.assertIn("Open blocks editor", source)
+        self.assertIn("Translate program", source)
+        self.assertIn("Open sentence library", source)
+        self.assertIn("Export results", source)
+        self.assertIn("Allow installed tools", source)
+        self.assertIn("self._desktop_controls.hide()", source)
+
+    def test_exact_layout_wrap_is_installed_before_run_safety(self) -> None:
+        entry = ENTRY.read_text(encoding="utf-8")
+        account_position = entry.index("native_account.install_native_account(native_ide)")
+        parity_position = entry.index("install_web_parity(native_ide)")
+        exact_position = entry.index("install_exact_desktop(native_ide)")
+        safety_position = entry.index("install_native_run_safety(native_ide)")
+        self.assertLess(account_position, parity_position)
+        self.assertLess(parity_position, exact_position)
+        self.assertLess(exact_position, safety_position)
 
     def test_mac_safe_token_coloring_is_installed_after_account_support(self) -> None:
         parity = PARITY.read_text(encoding="utf-8")
