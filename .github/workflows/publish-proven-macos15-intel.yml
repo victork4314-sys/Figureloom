@@ -1,0 +1,58 @@
+name: Publish proven FigureLoom Bio Intel package on macOS 15
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/publish-proven-macos15-intel.yml'
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: write
+
+concurrency:
+  group: publish-proven-figureloom-bio-macos15-intel
+  cancel-in-progress: true
+
+jobs:
+  build_test_publish:
+    runs-on: macos-15-intel
+    timeout-minutes: 90
+    steps:
+      - name: Checkout trusted repository state
+        uses: actions/checkout@v7
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+
+      - name: Build, install-test, publish, and verify Intel package
+        env:
+          GH_TOKEN: ${{ github.token }}
+          FIGURELOOM_MAC_ARCH_LABEL: x86_64
+          FIGURELOOM_MAC_PACKAGE_NAME: FigureLoom-Bio-Installer-macOS-Intel.pkg
+          FIGURELOOM_MAC_TEST_FOLDER: figureloom-bio-macos-intel-15-rescue-test
+        run: bash .github/rescue/build-test-publish-macos.sh
+
+      - name: Upload macOS 15 Intel install traces
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: FigureLoom-Bio-macOS-15-Intel-Install-Trace
+          path: |
+            ${{ runner.temp }}/x86_64-install-test.log
+            ${{ runner.temp }}/x86_64-system-installer.log
+          if-no-files-found: warn
+
+      - name: Upload tested Intel package backup
+        if: success()
+        uses: actions/upload-artifact@v6
+        with:
+          name: FigureLoom-Bio-macOS-15-Intel-Package
+          path: dist/FigureLoom-Bio-Installer-macOS-Intel.pkg
+          if-no-files-found: error
