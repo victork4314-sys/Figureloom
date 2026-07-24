@@ -21,18 +21,50 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
+
           gh run list \
             --repo "$GITHUB_REPOSITORY" \
             --workflow build-bio-cross-platform-installers.yml \
             --branch main \
-            --limit 10 \
+            --limit 5 \
             --json databaseId,status,conclusion,headSha,event,number,createdAt,updatedAt,url,workflowName \
-            > /tmp/figureloom-bio-release-runs.json
+            > /tmp/combined-runs.json
+
+          gh run list \
+            --repo "$GITHUB_REPOSITORY" \
+            --workflow publish-fixed-macos-installers.yml \
+            --branch main \
+            --limit 5 \
+            --json databaseId,status,conclusion,headSha,event,number,createdAt,updatedAt,url,workflowName \
+            > /tmp/macos-runs.json
+
+          latest_macos="$(jq -r '.[0].databaseId // empty' /tmp/macos-runs.json)"
+          if [[ -n "$latest_macos" ]]; then
+            gh run view "$latest_macos" \
+              --repo "$GITHUB_REPOSITORY" \
+              --json databaseId,status,conclusion,headSha,event,createdAt,updatedAt,url,jobs \
+              > /tmp/latest-macos-run.json
+          else
+            printf '{}\n' > /tmp/latest-macos-run.json
+          fi
+
           {
             echo 'Live production release runs:'
             echo
+            echo 'Combined publisher:'
             echo '```json'
-            cat /tmp/figureloom-bio-release-runs.json
+            cat /tmp/combined-runs.json
+            echo '```'
+            echo
+            echo 'Independent Mac publisher:'
+            echo '```json'
+            cat /tmp/macos-runs.json
+            echo '```'
+            echo
+            echo 'Latest independent Mac jobs:'
+            echo '```json'
+            cat /tmp/latest-macos-run.json
             echo '```'
           } > /tmp/figureloom-bio-release-status.md
+
           gh issue comment 225 --repo "$GITHUB_REPOSITORY" --body-file /tmp/figureloom-bio-release-status.md
