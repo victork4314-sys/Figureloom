@@ -1,75 +1,175 @@
-name: Publish proven FigureLoom Bio Windows installer
+name: Publish FigureLoom Bio Windows installer
 
 on:
   push:
     branches: [main]
     paths:
       - '.github/workflows/publish-proven-windows-installer.yml'
-  pull_request:
-    paths:
-      - '.github/workflows/publish-proven-windows-installer.yml'
+      - 'figureloom-bio/windows/**'
+      - 'figureloom-bio/platform/**'
+      - 'figureloom-bio/figureloom_bio/**'
   workflow_dispatch:
 
 permissions:
-  actions: read
   contents: write
 
 concurrency:
-  group: publish-proven-figureloom-bio-windows
-  cancel-in-progress: true
+  group: figureloom-bio-windows-publish-${{ github.sha }}
+  cancel-in-progress: false
 
 jobs:
-  publish:
-    if: github.event_name != 'pull_request' || (github.actor == 'victork4314-sys' && github.head_ref == 'rescue/publish-proven-windows')
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
+  build_test_publish:
+    name: Build, install, test, and publish Windows
+    runs-on: windows-2025
+    timeout-minutes: 120
     steps:
-      - name: Checkout trusted repository state
-        uses: actions/checkout@v7
+      - name: Checkout current source
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
         with:
-          ref: main
-          fetch-depth: 0
+          python-version: '3.12'
 
-      - name: Download the exact already-tested Windows installer artifact
+      - name: Build current Windows installer
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          ./figureloom-bio/windows/build-installer.ps1 -OutputDir "$PWD/dist"
+          $installer = Join-Path $PWD 'dist/FigureLoom-Bio-Installer.exe'
+          if (-not (Test-Path $installer)) { throw 'The current Windows installer was not built.' }
+          $bytes = [System.IO.File]::ReadAllBytes($installer)
+          if ($bytes.Length -lt 2 -or $bytes[0] -ne 0x4D -or $bytes[1] -ne 0x5A) {
+            throw 'The built Windows installer is not a valid EXE.'
+          }
+          Get-FileHash -Algorithm SHA256 $installer | Format-List
+
+      - name: Install and test the exact built Windows package
+        shell: pwsh
+        env:
+          FIGURELOOM_NATIVE_SCREENSHOT_DIR: ${{ runner.temp }}\figureloom-native-screenshots
+        run: |
+          $ErrorActionPreference = 'Stop'
+
+          function Run-Bounded([string]$Name, [string]$FilePath, [string[]]$Arguments, [int]$Seconds) {
+            Write-Host "START: $Name"
+            $process = Start-Process -FilePath $FilePath -ArgumentList $Arguments -PassThru
+            if (-not $process.WaitForExit($Seconds * 1000)) {
+              Stop-Process -Id $process.Id -Force -ErrorAction SilentlyContinue
+              throw "$Name exceeded $Seconds seconds."
+            }
+            if ($process.ExitCode -ne 0) { throw "$Name exited with code $($process.ExitCode)." }
+            Write-Host "PASS: $Name"
+          }
+
+          $installer = Join-Path $PWD 'dist/FigureLoom-Bio-Installer.exe'
+          Run-Bounded 'Silent installation' $installer @('/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART') 300
+
+          $app = Join-Path $env:LOCALAPPDATA 'Programs/FigureLoom Bio'
+          $ide = Join-Path $app 'FigureLoom Bio IDE.exe'
+          $testApp = Join-Path $app 'Test FigureLoom Bio.exe'
+          $updater = Join-Path $app 'Install or Update FigureLoom Bio.exe'
+          $cli = Join-Path $app 'flbio.exe'
+          foreach ($path in @($ide, $testApp, $updater, $cli)) {
+            if (-not (Test-Path $path)) { throw "The installed file is missing: $path" }
+          }
+
+          $forbiddenWeb = Get-ChildItem -Path $app -Recurse -File -ErrorAction SilentlyContinue |
+            Where-Object { $_.Extension -in @('.html','.htm','.js','.mjs') } |
+            Select-Object -First 1
+          if ($forbiddenWeb) { throw "The installed native app contains a forbidden web file: $($forbiddenWeb.FullName)" }
+
+          Run-Bounded 'Real Windows IDE Run button, layout, paint, and syntax tests' $ide @('--self-test') 300
+          Run-Bounded 'Native Windows Test app' $testApp @('--self-test') 300
+          Run-Bounded 'Native Windows Updater' $updater @('--self-test') 240
+          Run-Bounded 'Installed CLI doctor' $cli @('doctor') 120
+
+          $quickRoot = Join-Path $env:RUNNER_TEMP 'figureloom-current-windows-quick-test'
+          Remove-Item -Recurse -Force $quickRoot -ErrorAction SilentlyContinue
+          Run-Bounded 'Installed language quick test' $cli @('quick-test', $quickRoot) 300
+          $resultFile = Join-Path $quickRoot 'TEST-RESULT.txt'
+          $volcano = Join-Path $quickRoot 'quick-volcano.svg'
+          if (-not (Test-Path $resultFile)) { throw 'The installed quick test did not create TEST-RESULT.txt.' }
+          if ((Get-Content -Raw $resultFile) -notmatch 'FIGURELOOM BIO QUICK TEST PASSED') {
+            throw 'The installed quick test did not report success.'
+          }
+          if (-not (Test-Path $volcano)) { throw 'The installed quick test did not create the real volcano SVG.' }
+          $svg = Get-Content -Raw $volcano
+          if ($svg -notmatch 'Higher' -or $svg -notmatch 'Lower') {
+            throw 'The installed volcano SVG is missing significance groups.'
+          }
+
+          $wordingRoot = Join-Path $env:RUNNER_TEMP 'figureloom-current-windows-vulcano'
+          Remove-Item -Recurse -Force $wordingRoot -ErrorAction SilentlyContinue
+          New-Item -ItemType Directory -Force -Path $wordingRoot | Out-Null
+          @'
+          feature,effect,p_value
+          gene-a,2.4,0.001
+          gene-b,-2.1,0.002
+          gene-c,0.2,0.7
+          '@ | Set-Content -Encoding utf8 (Join-Path $wordingRoot 'values.csv')
+          @'
+          Open the file values.csv.
+          Draw a vulcano chart from effect and p_value.
+          '@ | Set-Content -Encoding utf8 (Join-Path $wordingRoot 'program.flbio')
+          Push-Location $wordingRoot
+          try {
+            $wordingOutput = & $cli run program.flbio 2>&1 | Out-String
+            if ($LASTEXITCODE -ne 0) { throw "Known valid Vulcano wording failed:`n$wordingOutput" }
+          } finally {
+            Pop-Location
+          }
+          if (-not (Test-Path (Join-Path $wordingRoot 'volcano-plot.svg'))) {
+            throw 'Known valid Vulcano wording did not create volcano-plot.svg.'
+          }
+
+          foreach ($name in @('figureloom-bio-light.png','figureloom-bio-dark.png')) {
+            $screenshot = Join-Path $env:FIGURELOOM_NATIVE_SCREENSHOT_DIR $name
+            if (-not (Test-Path $screenshot) -or (Get-Item $screenshot).Length -eq 0) {
+              throw "The installed IDE did not capture its $name validation screenshot."
+            }
+          }
+
+      - name: Upload Windows theme screenshots
+        uses: actions/upload-artifact@v7
+        with:
+          name: FigureLoom-Bio-Windows-Light-and-Dark
+          path: ${{ runner.temp }}\figureloom-native-screenshots\*.png
+          if-no-files-found: error
+
+      - name: Upload tested Windows installer artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: FigureLoom-Bio-Windows-Installer
+          path: dist/FigureLoom-Bio-Installer.exe
+          if-no-files-found: error
+
+      - name: Replace stable Windows release with tested installer
+        shell: pwsh
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          set -euo pipefail
-          mkdir -p rescue/windows
-          gh api \
-            -H 'Accept: application/vnd.github+json' \
-            "repos/${GITHUB_REPOSITORY}/actions/artifacts/8582215395/zip" \
-            > rescue/windows-artifact.zip
-          unzip -o rescue/windows-artifact.zip -d rescue/windows
-          installer="$(find rescue/windows -type f -name 'FigureLoom-Bio-Installer.exe' -print -quit)"
-          test -n "$installer"
-          test "$(head -c 2 "$installer")" = 'MZ'
-          cp "$installer" rescue/FigureLoom-Bio-Installer.exe
-          sha256sum rescue/FigureLoom-Bio-Installer.exe
-
-      - name: Replace the stable Windows download and tag
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          set -euo pipefail
-          tag='figureloom-bio-windows-installer'
-          target='e23b6c162ca6b09fb2a3fbedc1b0f4d95635bd05'
-          asset='rescue/FigureLoom-Bio-Installer.exe'
-          title='FigureLoom Bio Windows Installer'
-          notes='Download the EXE and follow the normal installer. This is the native desktop build that passed installation, IDE startup and paint, syntax coloring, Test, Updater, CLI doctor, Desktop test files, language quick tests, and the real volcano-plot test. It contains no bundled HTML or browser interface.'
-
+          $ErrorActionPreference = 'Stop'
+          $tag = 'figureloom-bio-windows-installer'
+          $asset = Join-Path $PWD 'dist/FigureLoom-Bio-Installer.exe'
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git tag --force "$tag" "$target"
+          git tag --force $tag $env:GITHUB_SHA
+          if ($LASTEXITCODE -ne 0) { throw 'Could not create the current stable Windows tag.' }
           git push origin "refs/tags/$tag" --force
+          if ($LASTEXITCODE -ne 0) { throw 'Could not publish the current stable Windows tag.' }
 
-          if gh release view "$tag" >/dev/null 2>&1; then
-            gh release upload "$tag" "$asset" --clobber
-            gh release edit "$tag" --latest --title "$title" --notes "$notes"
-          else
-            gh release create "$tag" "$asset" --target "$target" --latest --title "$title" --notes "$notes"
-          fi
+          gh release view $tag *> $null
+          if ($LASTEXITCODE -eq 0) {
+            gh release upload $tag $asset --clobber
+            if ($LASTEXITCODE -ne 0) { throw 'Could not replace the stable Windows installer.' }
+            gh release edit $tag --latest --title 'FigureLoom Bio Windows Installer' --notes 'Current native Windows installer. Verified after installation with the real Run button, the bundled eight-line program, light and dark theme rendering, syntax colors, Test, Updater, CLI doctor, language quick tests, and the real volcano plot.'
+          } else {
+            gh release create $tag $asset --target $env:GITHUB_SHA --latest --title 'FigureLoom Bio Windows Installer' --notes 'Current native Windows installer. Verified after installation with the real Run button, the bundled eight-line program, light and dark theme rendering, syntax colors, Test, Updater, CLI doctor, language quick tests, and the real volcano plot.'
+          }
+          if ($LASTEXITCODE -ne 0) { throw 'Could not publish the stable Windows release.' }
 
-          remote_sha="$(git ls-remote --tags origin "refs/tags/$tag" | awk '{print $1}')"
-          test "$remote_sha" = "$target"
-          gh release view "$tag" --json assets --jq '.assets[].name' | grep -Fx 'FigureLoom-Bio-Installer.exe'
+          $assets = @(gh release view $tag --json assets --jq '.assets[].name')
+          if ($LASTEXITCODE -ne 0 -or $assets -notcontains 'FigureLoom-Bio-Installer.exe') {
+            throw 'The current tested Windows installer is missing from the stable release.'
+          }
