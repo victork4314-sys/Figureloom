@@ -61,7 +61,17 @@ jobs:
         run: node scripts/validate-bio-language-aliases.mjs
 
       - name: Run every advertised instruction through the browser runtime
-        run: node scripts/validate-bio-every-advertised-instruction.mjs
+        shell: bash
+        run: |
+          set -o pipefail
+          node scripts/validate-bio-every-advertised-instruction.mjs 2>&1 | tee advertised-language.log
+
+      - name: Upload advertised-language report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: advertised-language-${{ github.run_id }}
+          path: advertised-language.log
 
       - name: Validate completed documentation and wiki sync
         run: node scripts/validate-bio-documentation.mjs
