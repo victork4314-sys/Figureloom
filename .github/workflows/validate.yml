@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@v6
 
       - name: Check JavaScript syntax
         run: |
@@ -47,7 +47,7 @@ jobs:
 
       - name: Upload complete FigureLoom Bio unittest trace
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: FigureLoom-Bio-Unittest-Trace
           path: figureloom-bio-unit-tests.log
