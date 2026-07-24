@@ -4,6 +4,7 @@ from dataclasses import dataclass
 import re
 
 from .errors import FigureLoomBioError
+from .language_compiler import CompileError, compile_sentence, vocabulary_words
 
 
 @dataclass(frozen=True)
@@ -15,14 +16,18 @@ class Instruction:
 
 _BASE_COMMAND_WORDS = {
     "align", "annotate", "assemble", "ask", "build", "calculate", "call",
-    "change", "check", "clear", "close", "combine", "compare", "convert",
-    "copy", "correct", "count", "create", "cut", "delete", "download",
-    "draw", "export", "filter", "find", "for", "group", "identify", "if",
-    "import", "include", "join", "keep", "load", "make", "map", "merge",
-    "move", "name", "normalize", "open", "otherwise", "plot", "put", "read",
-    "record", "remove", "rename", "repeat", "replace", "restore", "reverse-complement",
-    "run", "save", "say", "select", "show", "sort", "split", "stop", "summarize",
-    "test", "translate", "trim", "use", "write",
+    "change", "check", "clean", "clear", "close", "combine", "compare",
+    "convert", "copy", "correct", "count", "create", "cut", "delete",
+    "detect", "discard", "display", "download", "draw", "drop", "end",
+    "exclude", "export", "filter", "find", "for", "get", "group",
+    "identify", "if", "import", "include", "inspect", "join", "keep",
+    "list", "load", "locate", "make", "map", "measure", "merge", "move",
+    "name", "normalize", "open", "otherwise", "plot", "prepare", "print",
+    "put", "read", "record", "remove", "rename", "repeat", "replace",
+    "restore", "retain", "reverse-complement", "run", "save", "say",
+    "scale", "select", "show", "sort", "split", "stop", "summarize",
+    "test", "total", "translate", "trim", "turn", "use", "validate",
+    "view", "warn", "write",
 }
 
 
@@ -196,22 +201,7 @@ _PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
 
 
 def _known_command_words() -> set[str]:
-    words = set(_BASE_COMMAND_WORDS)
-    try:
-        # This is deliberately loaded only when an instruction fails. It keeps
-        # parser startup simple while ensuring every command shown in the
-        # built-in Sentences list is automatically treated as a known command.
-        from .language_manifest import language_manifest
-
-        for command in language_manifest().commands:
-            match = re.match(r"[^\s:,.]+", command.example.strip())
-            if match:
-                words.add(match.group(0).casefold())
-    except (ImportError, OSError, KeyError, TypeError, ValueError):
-        # The base list still gives a useful explanation if the manifest itself
-        # is damaged. Manifest validation reports that separate problem later.
-        pass
-    return words
+    return set(_BASE_COMMAND_WORDS).union(vocabulary_words())
 
 
 def _split_sentences(source: str) -> list[tuple[int, str]]:
@@ -236,24 +226,37 @@ def _split_sentences(source: str) -> list[tuple[int, str]]:
     return sentences
 
 
+def _compile_error_message(sentence: str, error: CompileError) -> str:
+    return (
+        "This instruction could not be compiled.\n\n"
+        "What is missing\n"
+        f"{error}\n\n"
+        "FigureLoom Bio reads the operation, target, values, and role words in the instruction. "
+        "You can write the instruction in your own wording, but those parts must make one unambiguous operation.\n\n"
+        f"I read\n{sentence}."
+    )
+
+
 def _unknown_instruction_message(sentence: str) -> str:
     first_match = re.match(r"[^\s]+", sentence.strip())
     first_word = first_match.group(0) if first_match else ""
     if first_word.casefold() in _known_command_words():
         return (
-            f"I recognize the command word {first_word}, but I could not match the whole sentence.\n\n"
+            f"This instruction could not be compiled after the command word {first_word}.\n\n"
             "What happened\n"
-            "The words may be valid, but this exact wording or word order is not a complete FigureLoom Bio instruction.\n\n"
+            "The compiler found a known operation word, but it could not determine one complete operation, target, and set of values.\n\n"
             "What to do\n"
-            "Open Sentences and choose the closest instruction. Keep its word order, then replace only the file name, column name, number, or value.\n\n"
+            "Name the target and any value, filename, column, threshold, or output that the operation needs. "
+            "The wording and order do not have to copy an example.\n\n"
             f"I read\n{sentence}."
         )
     return (
-        "I could not match this instruction.\n\n"
+        "This instruction could not be compiled.\n\n"
         "What happened\n"
-        f"The first word {first_word or '(empty)'} is not a FigureLoom Bio command word.\n\n"
+        f"The compiler could not find an operation word in: {first_word or '(empty)'}.\n\n"
         "What to do\n"
-        "Start the sentence with a command such as Open, Keep, Remove, Count, Show, Create, Calculate, or Save.\n\n"
+        "Use an operation such as Open, Keep, Remove, Count, Show, Create, Calculate, Save, Compare, Find, or Check, "
+        "then name what that operation should act on.\n\n"
         f"I read\n{sentence}."
     )
 
@@ -262,6 +265,17 @@ def parse(source: str) -> list[Instruction]:
     instructions: list[Instruction] = []
 
     for line_number, sentence in _split_sentences(source):
+        compiler_error: CompileError | None = None
+        try:
+            compiled = compile_sentence(sentence)
+        except CompileError as error:
+            compiled = None
+            compiler_error = error
+
+        if compiled is not None:
+            instructions.append(Instruction(compiled.action, line_number, compiled.values))
+            continue
+
         for action, pattern in _PATTERNS:
             match = pattern.fullmatch(sentence)
             if match:
@@ -272,6 +286,11 @@ def parse(source: str) -> list[Instruction]:
                 instructions.append(Instruction(action, line_number, values))
                 break
         else:
+            if compiler_error is not None:
+                raise FigureLoomBioError(
+                    _compile_error_message(sentence, compiler_error),
+                    line_number=line_number,
+                )
             raise FigureLoomBioError(
                 _unknown_instruction_message(sentence),
                 line_number=line_number,
