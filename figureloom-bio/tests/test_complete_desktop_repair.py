@@ -16,6 +16,7 @@ from figureloom_bio.volcano_plot import volcano_self_test
 ROOT = Path(__file__).resolve().parents[1]
 RELIABILITY = ROOT / "figureloom_bio" / "desktop_reliability.py"
 STABILITY = ROOT / "figureloom_bio" / "native_stability.py"
+MACOS_TEST_SAFETY = ROOT / "figureloom_bio" / "macos_test_safety.py"
 IDE_ENTRY = ROOT / "platform" / "ide_entry.py"
 MANAGER_ENTRY = ROOT / "platform" / "manager_entry.py"
 TEST_ENTRY = ROOT / "platform" / "test_entry.py"
@@ -23,7 +24,14 @@ TEST_ENTRY = ROOT / "platform" / "test_entry.py"
 
 class CompleteDesktopRepairTests(unittest.TestCase):
     def test_new_desktop_modules_and_entries_are_valid_python(self) -> None:
-        for path in (RELIABILITY, STABILITY, IDE_ENTRY, MANAGER_ENTRY, TEST_ENTRY):
+        for path in (
+            RELIABILITY,
+            STABILITY,
+            MACOS_TEST_SAFETY,
+            IDE_ENTRY,
+            MANAGER_ENTRY,
+            TEST_ENTRY,
+        ):
             ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
 
     def test_actual_desktop_runtimes_use_the_final_diagnostic_parser(self) -> None:
@@ -89,6 +97,7 @@ class CompleteDesktopRepairTests(unittest.TestCase):
     def test_startup_and_worker_crash_paths_are_permanent(self) -> None:
         stability = STABILITY.read_text(encoding="utf-8")
         reliability = RELIABILITY.read_text(encoding="utf-8")
+        macos_test_safety = MACOS_TEST_SAFETY.read_text(encoding="utf-8")
         ide = IDE_ENTRY.read_text(encoding="utf-8")
         manager = MANAGER_ENTRY.read_text(encoding="utf-8")
         test = TEST_ENTRY.read_text(encoding="utf-8")
@@ -102,12 +111,16 @@ class CompleteDesktopRepairTests(unittest.TestCase):
         self.assertIn("install_desktop_tool_reliability", manager)
         self.assertIn("install_platform_tool_safety", test)
         self.assertIn("install_desktop_tool_reliability", test)
+        self.assertIn("install_macos_test_safety", test)
         self.assertGreaterEqual(reliability.count("event.ignore()"), 2)
         self.assertIn("QEventLoop", reliability)
         self.assertIn("TestWindow(auto_run=True)", reliability)
         self.assertIn("update_downloads_folder", reliability)
         self.assertIn("close_when_idle", reliability)
         self.assertIn("Crash report", reliability)
+        self.assertIn("finish_and_exit_headless", macos_test_safety)
+        self.assertIn('QT_QPA_PLATFORM", ""', macos_test_safety)
+        self.assertIn("app.quit", macos_test_safety)
 
     def test_internal_self_tests(self) -> None:
         diagnostics = language_diagnostics_self_test()
