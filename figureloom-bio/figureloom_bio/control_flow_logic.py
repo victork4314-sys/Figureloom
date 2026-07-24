@@ -79,11 +79,72 @@ def evaluate_condition(source: str, evaluate_atom: Callable[[str], bool]) -> boo
     return evaluate_atom(text)
 
 
+_NATIVE_FLOW_STATEMENT = re.compile(
+    r"(?:Say .+|Call the result .+|Make sure .+|Show a warning(?: saying .+)?|"
+    r"Open all (?:FASTQ|FASTA|CSV|TSV) files(?: in .+)? as .+|Open the sample|"
+    r"Save the (?:result|sequences|reads) using the sample name)",
+    re.IGNORECASE,
+)
+
+
+def _normalize_flow_statement(text: str) -> str:
+    """Lower accepted flow synonyms to the one instruction the runtime executes."""
+
+    warning = re.fullmatch(r"(?:Warn|Warning)(?::|\s)+(.+?)\.?", text, re.IGNORECASE)
+    if warning:
+        message = warning.group(1).rstrip(".").strip()
+        return f"Show a warning saying {message}."
+
+    from .language_aliases import normalize_sentence
+    from .language_compiler import CompileError
+    from .language_compiler_runtime import compile_for_runtime
+
+    normalized = normalize_sentence(text)
+    core = normalized[:-1].strip() if normalized.endswith(".") else normalized.strip()
+    if _NATIVE_FLOW_STATEMENT.fullmatch(core):
+        return normalized
+
+    try:
+        compiled = compile_for_runtime(core)
+    except CompileError:
+        return normalized
+    if compiled is None:
+        return normalized
+
+    action = compiled.action
+    values = compiled.values
+    if action == "repeat_program" and values:
+        return f"Run this program {values[0]} times."
+    if action == "stop_program":
+        return "Stop the program."
+    if action == "continue_sample":
+        return "Continue with the next sample."
+    if action == "skip_sample":
+        return "Skip this sample."
+    if action == "mark_review":
+        return "Mark the sample for review."
+    if action == "show_warning":
+        message = values[0] if values else "This sample needs attention."
+        return f"Show a warning saying {message}."
+    if action == "say" and values:
+        return f"Say {values[0]}."
+    if action == "use_recipe" and values:
+        return f"Use the recipe {values[0]}."
+    if action == "use_named_result" and values:
+        return f"Use the result {values[0]}."
+    return normalized
+
+
 def normalize_control_flow_source(source: str) -> str:
-    """Accept both Else and Otherwise while preserving the condition itself."""
+    """Accept ordinary flow wording while preserving the condition the user wrote."""
 
     output: list[str] = []
     for line in str(source).splitlines():
+        stripped = line.strip()
+        if not stripped or stripped.startswith("#"):
+            output.append(line)
+            continue
+
         match = re.fullmatch(
             r"(\s*)(?:Else|Otherwise)(?:,)?\s+if\s+(.+):\s*",
             line,
@@ -98,7 +159,12 @@ def normalize_control_flow_source(source: str) -> str:
             output.append(f"{match.group(1)}Otherwise:")
             continue
 
-        output.append(line)
+        if stripped.endswith(":"):
+            output.append(line)
+            continue
+
+        indent = line[: len(line) - len(line.lstrip(" \t"))]
+        output.append(indent + _normalize_flow_statement(stripped))
     return "\n".join(output)
 
 
