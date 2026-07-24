@@ -13,13 +13,39 @@ from PySide6.QtCore import QObject, Signal, Slot
 PASS_MARKER = "FIGURELOOM BIO QUICK TEST PASSED"
 
 
+def _clean_child_environment() -> dict[str, str]:
+    """Return an environment safe for launching another frozen executable.
+
+    PyInstaller one-file applications expose private runtime variables to their
+    children. If the installed Test app passes those variables to the separate
+    flbio executable, the child can reuse the Test app's temporary extraction
+    directory and hang or load the wrong bundled libraries. The reset flag and
+    cleanup below force flbio to start as a completely independent process.
+    """
+
+    environment = os.environ.copy()
+    environment["PYINSTALLER_RESET_ENVIRONMENT"] = "1"
+    environment["MPLBACKEND"] = "Agg"
+    for name in tuple(environment):
+        if name.startswith("_PYI_"):
+            environment.pop(name, None)
+    for name in (
+        "PYTHONHOME",
+        "PYTHONPATH",
+        "DYLD_LIBRARY_PATH",
+        "DYLD_FALLBACK_LIBRARY_PATH",
+    ):
+        environment.pop(name, None)
+    return environment
+
+
 def install_macos_test_safety(platform_qt_module: Any) -> None:
-    """Run the real macOS quick test outside Qt's worker thread.
+    """Run the real macOS quick test in a clean separate process.
 
     Scientific figure generation can block when it is performed inside a Qt
-    QThread in a frozen macOS application. The installed command-line tool
-    already runs the same real language test in its own process, so the Test
-    window delegates to that command on macOS and remains responsive.
+    QThread in a frozen macOS application. The installed command-line tool runs
+    the same real language test in its own process. A clean process environment
+    is essential because both programs are separate PyInstaller executables.
     """
 
     if sys.platform != "darwin":
@@ -46,15 +72,13 @@ def install_macos_test_safety(platform_qt_module: Any) -> None:
                         "The installed FigureLoom Bio command was not found at /usr/local/bin/flbio."
                     )
 
-                environment = os.environ.copy()
-                environment.setdefault("MPLBACKEND", "Agg")
                 completed = subprocess.run(
                     [str(cli), "quick-test", str(folder)],
                     capture_output=True,
                     text=True,
-                    timeout=240,
+                    timeout=120,
                     check=False,
-                    env=environment,
+                    env=_clean_child_environment(),
                 )
                 report = "\n".join(
                     part.strip()
@@ -77,7 +101,7 @@ def install_macos_test_safety(platform_qt_module: Any) -> None:
                 report = platform_qt_module.simple_error(
                     "The automatic FigureLoom Bio test",
                     RuntimeError(
-                        "The installed quick test did not finish within four minutes. "
+                        "The installed quick test did not finish within two minutes. "
                         "It was stopped so the Test window would not remain frozen."
                     ),
                 )
@@ -97,6 +121,11 @@ def install_macos_test_safety(platform_qt_module: Any) -> None:
     def finish_and_exit_headless(self: Any, success: bool, report: str, folder: str) -> None:
         original_test_finished(self, success, report, folder)
         if os.environ.get("QT_QPA_PLATFORM", "").casefold() != "offscreen":
+            return
+        # The --self-test wrapper owns a nested event loop and exits it after the
+        # worker and QThread have fully finished. Quitting QApplication here can
+        # strand that nested loop. Normal headless launches still close promptly.
+        if "--self-test" in sys.argv:
             return
         app = platform_qt_module.QApplication.instance()
         if app is not None:
