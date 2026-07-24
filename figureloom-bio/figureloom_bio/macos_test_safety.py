@@ -2,8 +2,10 @@ from __future__ import annotations
 
 from pathlib import Path
 import os
+import signal
 import subprocess
 import sys
+import tempfile
 import traceback
 from typing import Any
 
@@ -32,6 +34,54 @@ def _clean_child_environment() -> dict[str, str]:
     return environment
 
 
+def _run_installed_quick_test(cli: Path, folder: Path) -> subprocess.CompletedProcess[str]:
+    """Run the frozen CLI with a timeout that also kills PyInstaller children.
+
+    A one-file PyInstaller executable can leave its extracted child process
+    holding stdout/stderr after the launcher is killed. subprocess.run(...,
+    timeout=...) then waits forever while collecting those inherited pipes. Use
+    regular temporary files and a new process group so the whole frozen process
+    tree is stopped deterministically.
+    """
+
+    arguments = [str(cli), "quick-test", str(folder)]
+    with tempfile.TemporaryFile(mode="w+", encoding="utf-8") as stdout_file, tempfile.TemporaryFile(
+        mode="w+", encoding="utf-8"
+    ) as stderr_file:
+        process = subprocess.Popen(
+            arguments,
+            stdout=stdout_file,
+            stderr=stderr_file,
+            text=True,
+            env=_clean_child_environment(),
+            start_new_session=True,
+        )
+        try:
+            returncode = process.wait(timeout=120)
+        except subprocess.TimeoutExpired:
+            try:
+                os.killpg(process.pid, signal.SIGKILL)
+            except ProcessLookupError:
+                pass
+            try:
+                process.wait(timeout=10)
+            except subprocess.TimeoutExpired:
+                process.kill()
+                process.wait(timeout=10)
+            raise
+
+        stdout_file.flush()
+        stderr_file.flush()
+        stdout_file.seek(0)
+        stderr_file.seek(0)
+        return subprocess.CompletedProcess(
+            arguments,
+            returncode,
+            stdout_file.read(),
+            stderr_file.read(),
+        )
+
+
 def install_macos_test_safety(platform_qt_module: Any) -> None:
     """Run the real macOS quick test without unsafe Qt cross-thread UI work."""
 
@@ -51,14 +101,7 @@ def install_macos_test_safety(platform_qt_module: Any) -> None:
                     "The installed FigureLoom Bio command was not found at /usr/local/bin/flbio."
                 )
 
-            completed = subprocess.run(
-                [str(cli), "quick-test", str(folder)],
-                capture_output=True,
-                text=True,
-                timeout=120,
-                check=False,
-                env=_clean_child_environment(),
-            )
+            completed = _run_installed_quick_test(cli, folder)
             report = "\n".join(
                 part.strip()
                 for part in (completed.stdout, completed.stderr)
@@ -81,7 +124,7 @@ def install_macos_test_safety(platform_qt_module: Any) -> None:
                 "The automatic FigureLoom Bio test",
                 RuntimeError(
                     "The installed quick test did not finish within two minutes. "
-                    "It was stopped so the Test window would not remain frozen."
+                    "It and every frozen child process were stopped so the Test window could not remain frozen."
                 ),
             )
             platform_qt_module.save_failure_details(folder, report, repr(error))
@@ -108,13 +151,7 @@ def install_macos_test_safety(platform_qt_module: Any) -> None:
     original_test_finished = platform_qt_module.TestWindow._test_finished
 
     def deterministic_self_test() -> int:
-        """Prove the installed command and real Test window on the UI thread.
-
-        The ordinary Test app still uses MacOSTestWorker in the background. The
-        command-line --self-test path does not need a nested QThread/QEventLoop;
-        running it directly makes CI deterministic and still applies the real
-        result to a real native TestWindow before checking the visible status.
-        """
+        """Prove the installed command and real Test window on the UI thread."""
 
         app = platform_qt_module.application()
         window = platform_qt_module.TestWindow(auto_run=False)
