@@ -116,6 +116,7 @@
   }
 
   const parameterizedBuiltInPatterns = [
+    /^(?:Keep|Remove) sequences with names containing .+\.$/i,
     /^(?:Assemble|Build) (?:the |a )?bacterial genome from .+ into .+\.$/i,
     /^(?:Check|Evaluate|Assess) (?:the )?(?:bacterial )?assembly .+ into .+\.$/i,
     /^(?:(?:Annotate (?:the |a )?bacterial genome)|(?:Find genes in (?:the )?bacterial genome)) .+ into .+\.$/i,
@@ -145,10 +146,6 @@
     };
 
     try {
-      // Runtime-selection recognizers are intentionally hidden here because
-      // they are broad. The exact manifest stays visible so an official
-      // built-in sentence such as “List the files.” is never reinterpreted as
-      // a different instruction by the free-form compiler.
       window.FigureLoomBioLanguageAliases = null;
       window.FigureLoomBioCompleteLanguage = null;
       window.FigureLoomBioCurrentFile = null;
