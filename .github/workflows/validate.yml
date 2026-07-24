@@ -79,3 +79,164 @@ jobs:
           test -f external-packs.js
           test -f expanded-library.js
           test -f fun-design-tools.js
+
+  exact_published_windows:
+    if: ${{ github.event_name == 'pull_request' && github.head_ref == 'validation/exact-published-windows' }}
+    name: Exact published Windows package
+    runs-on: windows-latest
+    timeout-minutes: 35
+    steps:
+      - name: Download exact public Windows installer
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          New-Item -ItemType Directory -Force -Path release | Out-Null
+          gh release download figureloom-bio-windows-installer `
+            --repo $env:GITHUB_REPOSITORY `
+            --pattern 'FigureLoom-Bio-Installer.exe' `
+            --dir release `
+            --clobber
+          if ($LASTEXITCODE -ne 0) { throw 'The current public Windows installer could not be downloaded.' }
+          $installer = (Resolve-Path 'release\FigureLoom-Bio-Installer.exe').Path
+          $bytes = [System.IO.File]::ReadAllBytes($installer)
+          if ($bytes.Length -lt 2 -or $bytes[0] -ne 0x4D -or $bytes[1] -ne 0x5A) {
+            throw 'The current public Windows download is not a valid EXE.'
+          }
+          Get-FileHash -Algorithm SHA256 $installer | Format-List
+          "FIGURELOOM_INSTALLER=$installer" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
+      - name: Install exact public Windows installer
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $process = Start-Process -FilePath $env:FIGURELOOM_INSTALLER -ArgumentList @('/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART') -PassThru
+          if (-not $process.WaitForExit(300000)) {
+            Stop-Process -Id $process.Id -Force -ErrorAction SilentlyContinue
+            throw 'The public Windows installer did not finish within five minutes.'
+          }
+          if ($process.ExitCode -ne 0) { throw "The public Windows installer exited with code $($process.ExitCode)." }
+          $app = Join-Path $env:LOCALAPPDATA 'Programs\FigureLoom Bio'
+          "FIGURELOOM_APP=$app" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "FIGURELOOM_IDE=$(Join-Path $app 'FigureLoom Bio IDE.exe')" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "FIGURELOOM_TEST=$(Join-Path $app 'Test FigureLoom Bio.exe')" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "FIGURELOOM_UPDATER=$(Join-Path $app 'Install or Update FigureLoom Bio.exe')" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "FIGURELOOM_CLI=$(Join-Path $app 'flbio.exe')" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
+      - name: Verify installed native files
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          foreach ($path in @($env:FIGURELOOM_IDE, $env:FIGURELOOM_TEST, $env:FIGURELOOM_UPDATER, $env:FIGURELOOM_CLI)) {
+            if (-not (Test-Path $path)) { throw "The installed file is missing: $path" }
+          }
+          $forbiddenWeb = Get-ChildItem -Path $env:FIGURELOOM_APP -Recurse -File -ErrorAction SilentlyContinue |
+            Where-Object { $_.Extension -in @('.html','.htm','.js','.mjs') } |
+            Select-Object -First 1
+          if ($forbiddenWeb) { throw "The installed native app contains a forbidden web file: $($forbiddenWeb.FullName)" }
+
+      - name: Test native Windows IDE startup paint and syntax colors
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $process = Start-Process -FilePath $env:FIGURELOOM_IDE -ArgumentList '--self-test' -PassThru
+          if (-not $process.WaitForExit(180000)) {
+            Stop-Process -Id $process.Id -Force -ErrorAction SilentlyContinue
+            throw 'The native Windows IDE self-test timed out.'
+          }
+          if ($process.ExitCode -ne 0) { throw "The native Windows IDE self-test exited with code $($process.ExitCode)." }
+
+      - name: Test native Windows Test app
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $process = Start-Process -FilePath $env:FIGURELOOM_TEST -ArgumentList '--self-test' -PassThru
+          if (-not $process.WaitForExit(240000)) {
+            Stop-Process -Id $process.Id -Force -ErrorAction SilentlyContinue
+            throw 'The native Windows Test app self-test timed out.'
+          }
+          if ($process.ExitCode -ne 0) { throw "The native Windows Test app self-test exited with code $($process.ExitCode)." }
+
+      - name: Test native Windows Updater
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $process = Start-Process -FilePath $env:FIGURELOOM_UPDATER -ArgumentList '--self-test' -PassThru
+          if (-not $process.WaitForExit(180000)) {
+            Stop-Process -Id $process.Id -Force -ErrorAction SilentlyContinue
+            throw 'The native Windows Updater self-test timed out.'
+          }
+          if ($process.ExitCode -ne 0) { throw "The native Windows Updater self-test exited with code $($process.ExitCode)." }
+
+      - name: Test installed CLI doctor
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          & $env:FIGURELOOM_CLI doctor
+          if ($LASTEXITCODE -ne 0) { throw "Installed CLI doctor exited with code $LASTEXITCODE." }
+
+      - name: Test installed language and real volcano output
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $quickRoot = Join-Path $env:RUNNER_TEMP 'published-figureloom-bio-windows-test'
+          Remove-Item -Recurse -Force $quickRoot -ErrorAction SilentlyContinue
+          & $env:FIGURELOOM_CLI quick-test $quickRoot
+          if ($LASTEXITCODE -ne 0) { throw "Installed language quick test exited with code $LASTEXITCODE." }
+          $resultFile = Join-Path $quickRoot 'TEST-RESULT.txt'
+          $quickVolcano = Join-Path $quickRoot 'quick-volcano.svg'
+          if (-not (Test-Path $resultFile)) { throw 'The installed quick test did not create TEST-RESULT.txt.' }
+          if ((Get-Content -Raw $resultFile) -notmatch 'FIGURELOOM BIO QUICK TEST PASSED') {
+            throw 'The installed quick test did not report success.'
+          }
+          if (-not (Test-Path $quickVolcano)) { throw 'The installed quick test did not create the real volcano SVG.' }
+          $quickSvg = Get-Content -Raw $quickVolcano
+          if ($quickSvg -notmatch 'data-significance="higher"' -or $quickSvg -notmatch 'data-significance="lower"') {
+            throw 'The installed volcano SVG is missing higher or lower significance groups.'
+          }
+          "FIGURELOOM_QUICK_ROOT=$quickRoot" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
+      - name: Test known valid Vulcano wording
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $languageDir = Join-Path $env:RUNNER_TEMP 'published-figureloom-bio-windows-known-language'
+          Remove-Item -Recurse -Force $languageDir -ErrorAction SilentlyContinue
+          New-Item -ItemType Directory -Force -Path $languageDir | Out-Null
+          Copy-Item (Join-Path $env:FIGURELOOM_QUICK_ROOT 'measurements.csv') (Join-Path $languageDir 'measurements.csv')
+          @(
+            'Open the file measurements.csv.'
+            'Draw a vulcano chart from effect and p_value.'
+          ) | Set-Content -Encoding utf8 (Join-Path $languageDir 'known-language.flbio')
+          Push-Location $languageDir
+          try {
+            $output = & $env:FIGURELOOM_CLI run known-language.flbio 2>&1 | Out-String
+            if ($LASTEXITCODE -ne 0) { throw "Known valid Vulcano wording failed:`n$output" }
+          } finally {
+            Pop-Location
+          }
+          if (-not (Test-Path (Join-Path $languageDir 'volcano-plot.svg'))) {
+            throw 'Known valid Vulcano wording did not create volcano-plot.svg.'
+          }
+          if ($output -notmatch 'Volcano plot') { throw 'Known valid Vulcano wording did not report a Volcano plot result.' }
+
+      - name: Test simple detailed unknown-instruction explanation
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $unknownDir = Join-Path $env:RUNNER_TEMP 'published-figureloom-bio-windows-error-explanation'
+          Remove-Item -Recurse -Force $unknownDir -ErrorAction SilentlyContinue
+          New-Item -ItemType Directory -Force -Path $unknownDir | Out-Null
+          'Create something scientific somehow.' | Set-Content -Encoding utf8 (Join-Path $unknownDir 'unknown.flbio')
+          Push-Location $unknownDir
+          try {
+            $output = & $env:FIGURELOOM_CLI run unknown.flbio 2>&1 | Out-String
+            $exit = $LASTEXITCODE
+          } finally {
+            Pop-Location
+          }
+          if ($exit -eq 0) { throw 'A genuinely unknown instruction was incorrectly accepted.' }
+          if ($output -notmatch 'What happened' -or $output -notmatch 'How to fix it|What to do') {
+            throw "The installed error explanation is not simple and complete:`n$output"
+          }
