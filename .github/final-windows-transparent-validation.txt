@@ -1,0 +1,1 @@
+Validate the final native Windows web-parity UI with transparent labels in light and dark mode.
