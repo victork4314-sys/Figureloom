@@ -26,6 +26,7 @@ concurrency:
 jobs:
   windows:
     runs-on: windows-latest
+    timeout-minutes: 90
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -135,7 +136,8 @@ jobs:
           if-no-files-found: error
 
   macos_apple_silicon:
-    runs-on: macos-15
+    runs-on: macos-26
+    timeout-minutes: 90
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -194,7 +196,8 @@ jobs:
           if-no-files-found: error
 
   macos_intel:
-    runs-on: macos-15-intel
+    runs-on: macos-26-intel
+    timeout-minutes: 90
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -252,9 +255,9 @@ jobs:
           path: dist/FigureLoom-Bio-Installer-macOS-Intel.pkg
           if-no-files-found: error
 
-  publish:
+  publish_windows:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    needs: [windows, macos_apple_silicon, macos_intel]
+    needs: [windows]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -268,6 +271,41 @@ jobs:
           name: FigureLoom-Bio-Windows-Installer
           path: release/windows
 
+      - name: Publish stable Windows download
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          tag='figureloom-bio-windows-installer'
+          title='FigureLoom Bio Windows Installer'
+          notes='Download the EXE and follow the normal installer. It contains the native desktop IDE, complete language vocabulary, updater, shortcuts, and automatic tests. It contains no bundled HTML or browser interface.'
+          asset='release/windows/FigureLoom-Bio-Installer.exe'
+
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+
+          if gh release view "$tag" >/dev/null 2>&1; then
+            gh release upload "$tag" "$asset" --clobber
+            gh release edit "$tag" --latest --title "$title" --notes "$notes"
+            git tag --force "$tag" "$GITHUB_SHA"
+            git push origin "refs/tags/$tag" --force
+          else
+            gh release create "$tag" "$asset" --target "$GITHUB_SHA" --latest --title "$title" --notes "$notes"
+          fi
+
+          remote_sha="$(git ls-remote --tags origin "refs/tags/$tag" | awk '{print $1}')"
+          test "$remote_sha" = "$GITHUB_SHA"
+
+  publish_macos:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [macos_apple_silicon, macos_intel]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
       - name: Download Apple Silicon installer
         uses: actions/download-artifact@v7
         with:
@@ -280,40 +318,28 @@ jobs:
           name: FigureLoom-Bio-macOS-Intel-Installer
           path: release/macos
 
-      - name: Publish stable Windows and macOS downloads
+      - name: Publish stable macOS downloads
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
+          tag='figureloom-bio-macos-installer'
+          title='FigureLoom Bio macOS Installers'
+          notes='Choose Apple Silicon for M-series Macs or Intel for Intel Macs. Each package contains the native desktop IDE, complete language vocabulary, updater, app shortcuts, and automatic tests. It contains no bundled HTML or browser interface.'
+          apple_asset='release/macos/FigureLoom-Bio-Installer-macOS-Apple-Silicon.pkg'
+          intel_asset='release/macos/FigureLoom-Bio-Installer-macOS-Intel.pkg'
+
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
 
-          publish_release() {
-            local tag="$1"
-            local title="$2"
-            local notes="$3"
-            shift 3
+          if gh release view "$tag" >/dev/null 2>&1; then
+            gh release upload "$tag" "$apple_asset" "$intel_asset" --clobber
+            gh release edit "$tag" --latest --title "$title" --notes "$notes"
             git tag --force "$tag" "$GITHUB_SHA"
             git push origin "refs/tags/$tag" --force
-            if gh release view "$tag" >/dev/null 2>&1; then
-              gh release upload "$tag" "$@" --clobber
-              gh release edit "$tag" --latest --title "$title" --notes "$notes"
-            else
-              gh release create "$tag" "$@" --latest --title "$title" --notes "$notes"
-            fi
-            remote_sha="$(git ls-remote --tags origin "refs/tags/$tag" | awk '{print $1}')"
-            test "$remote_sha" = "$GITHUB_SHA"
-          }
+          else
+            gh release create "$tag" "$apple_asset" "$intel_asset" --target "$GITHUB_SHA" --latest --title "$title" --notes "$notes"
+          fi
 
-          publish_release \
-            figureloom-bio-windows-installer \
-            'FigureLoom Bio Windows Installer' \
-            'Download the EXE and follow the normal installer. It contains the native desktop IDE, complete language vocabulary, updater, shortcuts, and automatic tests. It contains no bundled HTML or browser interface.' \
-            release/windows/FigureLoom-Bio-Installer.exe
-
-          publish_release \
-            figureloom-bio-macos-installer \
-            'FigureLoom Bio macOS Installers' \
-            'Choose Apple Silicon for M-series Macs or Intel for Intel Macs. Each package contains the native desktop IDE, complete language vocabulary, updater, app shortcuts, and automatic tests. It contains no bundled HTML or browser interface.' \
-            release/macos/FigureLoom-Bio-Installer-macOS-Apple-Silicon.pkg \
-            release/macos/FigureLoom-Bio-Installer-macOS-Intel.pkg
+          remote_sha="$(git ls-remote --tags origin "refs/tags/$tag" | awk '{print $1}')"
+          test "$remote_sha" = "$GITHUB_SHA"
