@@ -50,7 +50,7 @@
       ],
       [
         "async function statement(n,c,p){let t=repl(n.t,c),m;",
-        "async function statement(n,c,p){let t=repl(n.t,c),m;c.runtimeSequenceHistory=c.runtimeSequenceHistory||[];let sd=c.data,ss=sd?.kind==='seq'?(sd.records||[]).map(r=>`${r.name}: ${r.sequence.length}`).join(', ')||'no sequences':sd?.kind||'no data';c.runtimeSequenceHistory.push(`Line ${n.l} ${t}\\n${ss}`);c.runtimeSequenceHistory=c.runtimeSequenceHistory.slice(-40);if(c.completeSequenceSource?.kind==='seq'&&c.data?.kind==='table'&&/^(?:Show the sequences|Save the sequences as |Split the sequences into files with |Join the sequences$)/i.test(t))c.data=cl(c.completeSequenceSource);",
+        "async function statement(n,c,p){let t=repl(n.t,c),m;if(c.completeSequenceSource?.kind==='seq'&&c.data?.kind==='table'&&/^(?:Show the sequences|Save the sequences as |Split the sequences into files with |Join the sequences$)/i.test(t))c.data=cl(c.completeSequenceSource);",
       ],
       [
         "async function nodes(a,c,p){for(let n of a){if(n.type==='recipe')continue;if(n.type==='s'){await statement(n,c,p);continue}",
