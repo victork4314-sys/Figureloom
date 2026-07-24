@@ -85,6 +85,16 @@
     if (/^Filter out\b/i.test(text)) text = text.replace(/^Filter out\b/i, 'Remove');
     else if (/^Filter\b/i.test(text)) text = text.replace(/^Filter\b/i, 'Keep');
 
+    if (/^(?:Warn|Warning)(?::|\s)+/i.test(text)) {
+      text = text.replace(/^(?:Warn|Warning)(?::|\s)+/i, 'Show a warning saying ');
+    }
+    if (/^(?:End|Quit)(?: the)? program\.?$/i.test(text)) {
+      text = 'Stop the program.';
+    }
+    if (/^Next(?: sample)?\.?$/i.test(text)) {
+      text = 'Continue with the next sample.';
+    }
+
     if (/^Print\b/i.test(text)) {
       const visible = /\b(result|output|file|sequences?|reads?|rows?|alignment|variants?|genes?|primers?|tree|quality report)\b/i.test(text);
       text = text.replace(/^Print\b/i, visible ? 'Show' : 'Say');

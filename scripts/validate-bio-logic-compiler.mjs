@@ -91,6 +91,11 @@ assert.equal(logic.normalizeEverydayLine('Get rid of gaps from the sequences.'),
 assert.equal(logic.normalizeEverydayLine('Label the genome.'), 'Annotate the genome.');
 assert.equal(logic.normalizeEverydayLine('Build a relationship tree.'), 'Build a phylogenetic tree.');
 assert.equal(logic.normalizeEverydayLine('Calculate the spread of score.'), 'Calculate the standard deviation of score.');
+assert.equal(logic.normalizeEverydayLine('Warning The second check worked.'), 'Show a warning saying The second check worked.');
+assert.equal(logic.normalizeEverydayLine('Warn: Check this sample.'), 'Show a warning saying Check this sample.');
+assert.equal(logic.normalizeEverydayLine('End the program.'), 'Stop the program.');
+assert.equal(logic.normalizeEverydayLine('Quit the program.'), 'Stop the program.');
+assert.equal(logic.normalizeEverydayLine('Next sample.'), 'Continue with the next sample.');
 
 const original = [
   'If true and not false:',
@@ -106,15 +111,52 @@ const expected = [
 ].join('\n');
 assert.equal(logic.normalizeSource(original), expected);
 
+const reportedProgram = [
+  'Say The test started.',
+  '',
+  'If true and not false:',
+  '    Print The first check worked.',
+  'Else:',
+  '    Print This line should not appear.',
+  '',
+  'If false:',
+  '    Print This line should not appear either.',
+  'Else if true:',
+  '    Warning The second check worked.',
+  'Else:',
+  '    Print This line should also not appear.',
+  '',
+  'If false or true:',
+  '    Print The OR check worked.',
+  'Else:',
+  '    Print The OR check failed.',
+  '',
+  'If true and true:',
+  '    Print The AND check worked.',
+  'Else:',
+  '    Print The AND check failed.',
+  '',
+  'Print The whole program worked.',
+  'End the program.',
+  '',
+  'Print This line must never appear.',
+].join('\n');
+const compiledReportedProgram = logic.normalizeSource(reportedProgram);
+assert.match(compiledReportedProgram, /Otherwise if true:/);
+assert.match(compiledReportedProgram, /Show a warning saying The second check worked\./);
+assert.match(compiledReportedProgram, /Stop the program\./);
+assert.doesNotMatch(compiledReportedProgram, /^\s*Warning\b/m);
+assert.doesNotMatch(compiledReportedProgram, /^\s*End the program\./m);
+
 let runtimeSaw = null;
 clickListeners.push(() => { runtimeSaw = editor.value; });
-editor.value = original;
-editor.selectionStart = original.length;
-editor.selectionEnd = original.length;
+editor.value = reportedProgram;
+editor.selectionStart = reportedProgram.length;
+editor.selectionEnd = reportedProgram.length;
 runButton.click();
-assert.equal(runtimeSaw, expected, 'The window-level control-flow runtime must see compiled source.');
+assert.equal(runtimeSaw, compiledReportedProgram, 'The live runtime must receive the fully compiled reported program.');
 await Promise.resolve();
-assert.equal(editor.value, original, 'The editor must keep the wording the user wrote.');
+assert.equal(editor.value, reportedProgram, 'The editor must keep the wording the user wrote.');
 
 const vocabulary = JSON.parse(fs.readFileSync('figureloom-bio/figureloom_bio/language_vocabulary.json', 'utf8'));
 assert.equal(vocabulary.version, 3);
@@ -141,10 +183,12 @@ for (const group of ['flow', 'logic', 'booleans', 'conditions', 'file_types', 'f
 
 const index = fs.readFileSync('ide/index.html', 'utf8');
 assert.match(index, /ide-language-compiler\.js\?v=2/);
-assert.match(index, /ide-logic-compiler\.js\?v=1/);
+assert.match(index, /ide-logic-compiler\.js\?v=2/);
 assert.match(index, /ide-control-flow-runtime\.js\?v=6/);
+assert.match(index, /ide-decision-core\.js\?v=2/);
 assert.match(index, /ide-app-v2\.js\?v=3/);
+assert.match(index, /ide-approved-common\.js\?v=5/);
 assert.match(index, /ide-vocabulary-ui-copy\.js\?v=2/);
 assert.match(index, /ide-language-catalog-ui\.js\?v=5/);
 
-console.log('Browser Boolean logic, Else aliases, everyday word disambiguation, free wording inside blocks, and vocabulary exposure are validated.');
+console.log('The exact reported browser program, Boolean logic, Else aliases, Warning, End, everyday wording, and vocabulary exposure are validated.');

@@ -2,7 +2,7 @@ name: Validate FigureLoom Bio flow
 
 on:
   push:
-    branches: [main]
+    branches: [main, agent/fix-live-bio-run-path]
   pull_request:
   workflow_dispatch:
 
@@ -24,6 +24,7 @@ jobs:
           node --check ide/ide-decision-core.js
           node --check ide/ide-current-file-language.js
           node --check ide/ide-language-manifest.js
+          node --check ide/ide-language-compiler.js
           node --check ide/ide-language-aliases.js
           node --check ide/ide-generated-current-file.js
           node --check ide/ide-language-translation-bridge.js
@@ -105,6 +106,19 @@ jobs:
 
       - name: Leave the loading status
         run: node scripts/validate-bio-runtime-race.mjs left-waiting
+
+      - name: Run the exact reported program through the production path
+        shell: bash
+        run: |
+          set -o pipefail
+          node scripts/validate-bio-runtime-race.mjs exact-program 2>&1 | tee exact-program.log
+
+      - name: Upload exact-program diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: exact-program-diagnostics-${{ github.run_id }}
+          path: exact-program.log
 
       - name: Run control flow tests
         run: |
