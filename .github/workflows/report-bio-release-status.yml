@@ -16,23 +16,36 @@ jobs:
   report:
     runs-on: ubuntu-latest
     steps:
-      - name: Report exact Intel failure tail
+      - name: Report newest independent Mac publisher
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          intel_job=89478464392
-          gh api "repos/$GITHUB_REPOSITORY/actions/jobs/$intel_job/logs" > /tmp/intel-log.bin
-          if unzip -t /tmp/intel-log.bin >/dev/null 2>&1; then
-            unzip -p /tmp/intel-log.bin > /tmp/intel-full.log
+          gh run list \
+            --repo "$GITHUB_REPOSITORY" \
+            --workflow publish-fixed-macos-installers.yml \
+            --branch main \
+            --limit 5 \
+            --json databaseId,status,conclusion,headSha,event,number,createdAt,updatedAt,url,workflowName \
+            > /tmp/runs.json
+          latest="$(jq -r '.[0].databaseId // empty' /tmp/runs.json)"
+          if [[ -n "$latest" ]]; then
+            gh run view "$latest" \
+              --repo "$GITHUB_REPOSITORY" \
+              --json databaseId,status,conclusion,headSha,event,createdAt,updatedAt,url,jobs \
+              > /tmp/latest.json
           else
-            cp /tmp/intel-log.bin /tmp/intel-full.log
+            printf '{}\n' > /tmp/latest.json
           fi
-          tail -n 60 /tmp/intel-full.log > /tmp/intel-tail.log
           {
-            echo 'Intel failed-job tail:'
-            echo '```text'
-            cat /tmp/intel-tail.log
+            echo 'Newest independent Mac publisher:'
+            echo '```json'
+            cat /tmp/runs.json
+            echo '```'
+            echo
+            echo 'Newest run jobs:'
+            echo '```json'
+            cat /tmp/latest.json
             echo '```'
           } > /tmp/status.md
           gh api --method PATCH \
