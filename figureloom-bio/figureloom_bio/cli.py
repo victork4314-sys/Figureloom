@@ -34,8 +34,14 @@ OPTIONAL_TOOLS = (
 VOCABULARY_GROUPS = {
     "operations": ("verbs", "Operations"),
     "terms": ("terms", "Biology and data terms"),
+    "flow": ("flow", "If, else, loops, and recipes"),
+    "logic": ("logic", "Boolean logic"),
+    "booleans": ("booleans", "True and false"),
+    "conditions": ("conditions", "Decision terms"),
     "roles": ("roles", "Role words"),
     "comparisons": ("comparators", "Comparisons"),
+    "file-types": ("file_types", "File types"),
+    "fillers": ("fillers", "Optional plain-English words"),
 }
 
 
@@ -104,11 +110,23 @@ def translate_program(path: Path, target: str, output: Path | None) -> int:
     return 0
 
 
+def _vocabulary_concepts(key: str) -> dict[str, tuple[str, ...]]:
+    source = VOCABULARY.get(key, {})
+    if isinstance(source, list):
+        return {str(value): (str(value),) for value in source}
+    if not isinstance(source, dict):
+        return {}
+    return {
+        str(concept): tuple(str(value) for value in values)
+        for concept, values in source.items()
+    }
+
+
 def _vocabulary_forms() -> set[str]:
     forms: set[str] = set()
     for key, _ in VOCABULARY_GROUPS.values():
-        for values in VOCABULARY.get(key, {}).values():
-            forms.update(str(value) for value in values)
+        for values in _vocabulary_concepts(key).values():
+            forms.update(values)
     return forms
 
 
@@ -133,16 +151,16 @@ def show_words(group_name: str | None = None) -> int:
         key, title = selected
         print(title)
         print()
-        for concept, forms in VOCABULARY.get(key, {}).items():
-            print(f"{concept.replace('_', ' ')}: {', '.join(str(value) for value in forms)}")
+        for concept, forms in _vocabulary_concepts(key).items():
+            print(f"{concept.replace('_', ' ')}: {', '.join(forms)}")
         return 0
 
     print("FigureLoom Bio words and terms\n")
     for key, title in VOCABULARY_GROUPS.values():
-        concepts = VOCABULARY.get(key, {})
-        forms = {str(value) for values in concepts.values() for value in values}
+        concepts = _vocabulary_concepts(key)
+        forms = {value for values in concepts.values() for value in values}
         print(f"{title}: {len(concepts)} concepts, {len(forms)} forms")
-    print(f"\n{len(_vocabulary_forms())} unique word and term forms are built into the compiler vocabulary.")
+    print(f"\n{len(_vocabulary_forms())} unique word and term forms are built into the language vocabulary.")
     print("They combine through the grammar. They are not a list of complete allowed sentences.")
     return 0
 
@@ -192,7 +210,7 @@ def doctor() -> int:
     print(f"Version: {installed_version}")
     print(f"Python: {platform.python_version()}")
     print(f"Package: {Path(__file__).resolve().parent}")
-    print(f"Compiler vocabulary: {VOCABULARY.get('version', 1)} ({len(_vocabulary_forms())} word and term forms)")
+    print(f"Language vocabulary: {VOCABULARY.get('version', 1)} ({len(_vocabulary_forms())} word and term forms)")
     print(f"Learning examples: {len(manifest.commands)}")
     print("Translation targets: " + ", ".join(TARGET_LABELS[key] for key in TARGET_LABELS))
     print("\nOptional installed tools:")
@@ -248,9 +266,9 @@ def build_parser() -> argparse.ArgumentParser:
 
     words = subcommands.add_parser(
         "words",
-        help="List compiler words and terms or print one vocabulary group.",
+        help="List every language word and term or print one vocabulary group.",
     )
-    words.add_argument("group", nargs="?", help="Operations, terms, roles, or comparisons")
+    words.add_argument("group", nargs="?", help="Vocabulary group, such as Boolean logic or File types")
 
     examples = subcommands.add_parser(
         "examples",
