@@ -71,6 +71,24 @@ Say continued.
             output = run_flow_program(Path(folder), source).render()
         self.assertIn("continued", output)
 
+    def test_flow_synonyms_lower_to_the_same_real_instructions(self):
+        source = """If true:
+    Print branch started.
+    Warning Check this sample.
+    End the program.
+"""
+        normalized = normalize_control_flow_source(source)
+        self.assertIn("Say branch started.", normalized)
+        self.assertIn("Show a warning saying Check this sample.", normalized)
+        self.assertIn("Stop the program.", normalized)
+        self.assertTrue(uses_control_flow(source))
+
+        with TemporaryDirectory() as folder:
+            output = run_flow_program(Path(folder), source).render()
+        self.assertIn("branch started", output)
+        self.assertIn("Check this sample", output)
+        self.assertIn("Program stopped", output)
+
     def test_words_command_counts_control_flow_and_boolean_words(self):
         self.assertIn("flow", VOCABULARY_GROUPS)
         self.assertIn("logic", VOCABULARY_GROUPS)
