@@ -1,32 +1,30 @@
+from pathlib import Path
+from tempfile import TemporaryDirectory
 import unittest
 
 from figureloom_bio.cli import VOCABULARY_GROUPS, _vocabulary_forms
-from figureloom_bio.control_flow import IfBlock, Statement, parse_program, uses_control_flow
-from figureloom_bio.control_flow_logic import normalize_control_flow_source, simplify_condition
+from figureloom_bio.control_flow import IfBlock, Statement, parse_program, run_flow_program, uses_control_flow
+from figureloom_bio.control_flow_logic import (
+    evaluate_condition,
+    normalize_control_flow_source,
+    simplify_condition,
+)
 
 
 class ControlFlowLogicTests(unittest.TestCase):
-    def test_boolean_literals_simplify_with_and_or_not(self):
-        self.assertEqual(
-            simplify_condition("true"),
-            "the result is empty or the result is not empty",
-        )
-        self.assertEqual(
-            simplify_condition("false"),
-            "the result is empty and the result is not empty",
-        )
-        self.assertEqual(
-            simplify_condition("true and the result is not empty"),
-            "the result is not empty",
-        )
-        self.assertEqual(
-            simplify_condition("false or the result is not empty"),
-            "the result is not empty",
-        )
-        self.assertEqual(
-            simplify_condition("not false"),
-            "the result is empty or the result is not empty",
-        )
+    def test_boolean_literals_are_real_language_values(self):
+        self.assertEqual(simplify_condition("true"), "true")
+        self.assertEqual(simplify_condition("false"), "false")
+        self.assertEqual(simplify_condition("true and the result is not empty"), "the result is not empty")
+        self.assertEqual(simplify_condition("false or the result is not empty"), "the result is not empty")
+        self.assertEqual(simplify_condition("not false"), "true")
+
+        atom = lambda value: value.casefold() == "the result is not empty"
+        self.assertTrue(evaluate_condition("true", atom))
+        self.assertFalse(evaluate_condition("false", atom))
+        self.assertTrue(evaluate_condition("true and not false", atom))
+        self.assertTrue(evaluate_condition("false or the result is not empty", atom))
+        self.assertFalse(evaluate_condition("not the result is not empty", atom))
 
     def test_else_and_else_if_are_normal_language_aliases(self):
         source = """If false:
@@ -37,11 +35,9 @@ Else:
     Say third.
 """
         normalized = normalize_control_flow_source(source)
-        self.assertIn(
-            "Otherwise if the result is empty or the result is not empty:",
-            normalized,
-        )
+        self.assertIn("Otherwise if true:", normalized)
         self.assertIn("Otherwise:", normalized)
+        self.assertNotIn("the result is empty or the result is not empty", normalized)
 
         program = parse_program(source)
         self.assertTrue(uses_control_flow(source))
@@ -53,12 +49,27 @@ Else:
         self.assertIsInstance(block.branches[1].body[0], Statement)
         self.assertIsInstance(block.otherwise[0], Statement)
 
-    def test_make_sure_accepts_boolean_literals(self):
-        normalized = normalize_control_flow_source("Make sure true and not false.")
-        self.assertEqual(
-            normalized,
-            "Make sure the result is empty or the result is not empty.",
-        )
+    def test_else_and_boolean_literals_execute_in_the_real_runner(self):
+        source = """If false:
+    This sentence is deliberately unsupported.
+Else if true and not false:
+    Say second branch ran.
+Else:
+    Say wrong branch ran.
+"""
+        with TemporaryDirectory() as folder:
+            output = run_flow_program(Path(folder), source).render()
+        self.assertIn("second branch ran", output)
+        self.assertNotIn("wrong branch ran", output)
+        self.assertNotIn("deliberately unsupported", output)
+
+    def test_make_sure_accepts_boolean_literals_during_execution(self):
+        source = """Make sure true and not false.
+Say continued.
+"""
+        with TemporaryDirectory() as folder:
+            output = run_flow_program(Path(folder), source).render()
+        self.assertIn("continued", output)
 
     def test_words_command_counts_control_flow_and_boolean_words(self):
         self.assertIn("flow", VOCABULARY_GROUPS)
