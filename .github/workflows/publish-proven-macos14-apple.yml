@@ -1,4 +1,5 @@
 name: Publish proven FigureLoom Bio Apple Silicon package on macOS 14
+# Restricted macOS 14 rescue trigger.
 
 on:
   pull_request:
