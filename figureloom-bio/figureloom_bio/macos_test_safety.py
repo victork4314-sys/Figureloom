@@ -35,14 +35,7 @@ def _clean_child_environment() -> dict[str, str]:
 
 
 def _run_installed_quick_test(cli: Path, folder: Path) -> subprocess.CompletedProcess[str]:
-    """Run the frozen CLI with a timeout that also kills PyInstaller children.
-
-    A one-file PyInstaller executable can leave its extracted child process
-    holding stdout/stderr after the launcher is killed. subprocess.run(...,
-    timeout=...) then waits forever while collecting those inherited pipes. Use
-    regular temporary files and a new process group so the whole frozen process
-    tree is stopped deterministically.
-    """
+    """Run the frozen CLI with a timeout that also kills PyInstaller children."""
 
     arguments = [str(cli), "quick-test", str(folder)]
     with tempfile.TemporaryFile(mode="w+", encoding="utf-8") as stdout_file, tempfile.TemporaryFile(
@@ -149,7 +142,7 @@ def install_macos_test_safety(platform_qt_module: Any) -> None:
             self.finished.emit(*execute_installed_test(self.destination))
 
     original_test_finished = platform_qt_module.TestWindow._test_finished
-    original_thread_finished = platform_qt_module.TestWindow._thread_finished
+    original_show_test_window = platform_qt_module.show_test_window
 
     def deterministic_self_test() -> int:
         """Prove the installed command and real Test window on the UI thread."""
@@ -174,24 +167,47 @@ def install_macos_test_safety(platform_qt_module: Any) -> None:
         app.processEvents()
         return 0
 
-    @Slot()
-    def finish_thread_and_exit_headless(self: Any) -> None:
-        # QThread.finished reaches this callback only after the worker has emitted
-        # its result and the thread event loop has stopped. Clear the references
-        # first, then let an offscreen automatic test close the application. Quitting
-        # from _test_finished was too early and could tear down Qt while its worker
-        # thread was still finishing, causing a macOS segmentation fault.
-        original_thread_finished(self)
-        if os.environ.get("QT_QPA_PLATFORM", "").casefold() != "offscreen":
-            return
-        app = platform_qt_module.QApplication.instance()
-        if app is not None:
-            platform_qt_module.QTimer.singleShot(0, app.quit)
+    def gui_thread_offscreen_test() -> int:
+        """Run the normal Test app and exit CI only from the Qt GUI thread."""
 
+        if "--self-test" in sys.argv:
+            return original_show_test_window()
+        if os.environ.get("QT_QPA_PLATFORM", "").casefold() != "offscreen":
+            return original_show_test_window()
+
+        app = platform_qt_module.application()
+        app.setQuitOnLastWindowClosed(False)
+        window = platform_qt_module.TestWindow(auto_run=True)
+        window.show()
+
+        timer = platform_qt_module.QTimer()
+        timer.setInterval(50)
+
+        def poll_finished() -> None:
+            status = window.status.text()
+            thread = getattr(window, "_thread", None)
+            thread_done = thread is None or not thread.isRunning()
+            if status not in {"Quick test passed", "Quick test failed"} or not thread_done:
+                return
+
+            timer.stop()
+            success = status == "Quick test passed"
+            if not success:
+                print(window.report.toPlainText(), file=sys.stderr, flush=True)
+            window.close()
+            app.exit(0 if success else 1)
+
+        timer.timeout.connect(poll_finished)
+        timer.start()
+        platform_qt_module.QTimer.singleShot(0, poll_finished)
+        return app.exec()
+
+    # TestWindow._test_finished and _thread_finished stay untouched. They are the
+    # original Qt-bound callbacks, so worker results and cleanup remain on the GUI
+    # thread. CI watches completion with its own GUI-thread timer instead.
     platform_qt_module.TestWorker = MacOSTestWorker
-    platform_qt_module.TestWindow._thread_finished = finish_thread_and_exit_headless
-    if "--self-test" in sys.argv:
-        platform_qt_module.test_window_self_test = deterministic_self_test
+    platform_qt_module.test_window_self_test = deterministic_self_test
+    platform_qt_module.show_test_window = gui_thread_offscreen_test
     platform_qt_module._macos_test_safety_installed = True
 
 
