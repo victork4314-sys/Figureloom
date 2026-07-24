@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  actions: read
+  actions: write
   issues: write
   contents: read
 
@@ -16,36 +16,26 @@ jobs:
   report:
     runs-on: ubuntu-latest
     steps:
-      - name: Report newest bounded Mac publisher
+      - name: Cancel superseded Mac publishers and report final run
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          gh run list \
+
+          # Run 6 (30095516492, commit 32ea461) is the fully bounded final run.
+          # Runs 4 and 5 are superseded and must not keep either Mac runner.
+          gh run cancel 30095038489 --repo "$GITHUB_REPOSITORY" || true
+          gh run cancel 30095454327 --repo "$GITHUB_REPOSITORY" || true
+
+          sleep 5
+          gh run view 30095516492 \
             --repo "$GITHUB_REPOSITORY" \
-            --workflow publish-fixed-macos-installers.yml \
-            --branch main \
-            --limit 10 \
-            --json databaseId,status,conclusion,headSha,number,createdAt,updatedAt,url \
-            > /tmp/runs.json
-          latest="$(jq -r '.[0].databaseId // empty' /tmp/runs.json)"
-          if [[ -n "$latest" ]]; then
-            gh run view "$latest" \
-              --repo "$GITHUB_REPOSITORY" \
-              --json databaseId,status,conclusion,headSha,createdAt,updatedAt,url,jobs \
-              > /tmp/latest.json
-          else
-            printf '{}\n' > /tmp/latest.json
-          fi
+            --json databaseId,status,conclusion,headSha,createdAt,updatedAt,url,jobs \
+            > /tmp/final.json
           {
-            echo 'Mac publisher runs:'
+            echo 'Final bounded Mac publisher:'
             echo '```json'
-            cat /tmp/runs.json
-            echo '```'
-            echo
-            echo 'Newest bounded run:'
-            echo '```json'
-            cat /tmp/latest.json
+            cat /tmp/final.json
             echo '```'
           } > /tmp/status.md
           gh api --method PATCH \
