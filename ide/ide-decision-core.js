@@ -7,8 +7,8 @@
   const results = document.getElementById('results');
   if (!editor || !runButton) return;
 
-  const decisionHeader = /^\s*(?:If .+|Otherwise(?:,? if .+)?)\s*:\s*$/i;
-  const advancedProgram = /(^|\n)\s*(?:If .+:|Otherwise(?:,? if .+)?:|For every .+:|Make a recipe called .+:)/im;
+  const decisionHeader = /^\s*(?:If .+|(?:Else|Otherwise)(?:,? if .+)?)\s*:\s*$/i;
+  const advancedProgram = /(^|\n)\s*(?:If .+:|(?:Else|Otherwise)(?:,? if .+)?:|For every .+:|Make a recipe called .+:)/im;
   let waiting = false;
   let highlightObserver = null;
   let registered = false;
@@ -18,7 +18,8 @@
   }
 
   function runtimeClaims(source = editor.value) {
-    return Boolean(window.FigureLoomBioFlow?.usesAdvancedRuntime?.(String(source)));
+    const normalized = window.FigureLoomBioLogicCompiler?.normalizeSource?.(String(source)) || String(source);
+    return Boolean(window.FigureLoomBioFlow?.usesAdvancedRuntime?.(normalized));
   }
 
   function showLoading() {
@@ -105,12 +106,12 @@
   }
 
   function decisionMarkup(text) {
-    const otherwise = String(text).match(/^(Otherwise)(:)$/i);
+    const otherwise = String(text).match(/^((?:Else|Otherwise))(:)$/i);
     if (otherwise) {
       return `<span class="syntax-command">${escapeHtml(otherwise[1])}</span><span class="syntax-punctuation">:</span>`;
     }
     const conditional = String(text).match(/^(If )(.+)(:)$/i)
-      || String(text).match(/^(Otherwise(?:,)? if )(.+)(:)$/i);
+      || String(text).match(/^((?:Else|Otherwise)(?:,)? if )(.+)(:)$/i);
     if (!conditional) return null;
     return `<span class="syntax-command">${escapeHtml(conditional[1])}</span><span class="syntax-value">${escapeHtml(conditional[2])}</span><span class="syntax-punctuation">:</span>`;
   }
@@ -134,8 +135,8 @@
     if (api && !registered) {
       registered = true;
       api.registerHighlight(/^(If )(.+)(:)$/i, ['c', 'v', 'p']);
-      api.registerHighlight(/^(Otherwise(?:,)? if )(.+)(:)$/i, ['c', 'v', 'p']);
-      api.registerHighlight(/^(Otherwise)(:)$/i, ['c', 'p']);
+      api.registerHighlight(/^((?:Else|Otherwise)(?:,)? if )(.+)(:)$/i, ['c', 'v', 'p']);
+      api.registerHighlight(/^((?:Else|Otherwise))(:)$/i, ['c', 'p']);
     }
 
     const highlight = document.getElementById('syntaxHighlight');
@@ -158,6 +159,7 @@
     exactHeaders: Object.freeze([
       'If the assembly has more than 4 contigs:',
       'If resistance genes were found:',
+      'Else:',
       'Otherwise:'
     ])
   });
