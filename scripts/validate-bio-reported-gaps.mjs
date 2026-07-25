@@ -125,8 +125,10 @@ for (const sentence of ['Stop the program.', 'End the program.', 'Quit the progr
 }
 
 const html = read('ide/index.html');
+if (!html.includes('ide-large-import-support.js?v=1')) fail('The IDE is not loading general large-file imports.');
 if (!html.includes('ide-large-file-vault-v2.js?v=1')) fail('The IDE is not loading the fixed large-file router.');
-if (!html.includes('ide-control-flow-runtime.js?v=10')) fail('The IDE did not bump the control-flow cache version.');
+if (!html.includes('ide-control-flow-runtime.js?v=11')) fail('The IDE did not bump the control-flow cache version.');
 if (!html.includes('ide-builtin-language-support.js?v=5')) fail('The IDE did not bump the program-flow highlighter cache version.');
+if (!runtimeLoader.includes('FigureLoomBioLargeImport?.openStatement')) fail('The complete runtime does not open vault-backed data files.');
 
-console.log('Small mixed FASTA programs stay in the complete runtime; plain Warning, End, and Quit run directly in the core browser language; and genuine huge FASTA files still stream.');
+console.log('Small mixed FASTA programs stay in the complete runtime; plain Warning, End, and Quit run directly; general large imports load before the runtime; and genuine huge FASTA files still stream.');
