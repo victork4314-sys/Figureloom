@@ -4,7 +4,7 @@
   if (window.FigureLoomBioFlowLoading) return;
 
   const parts = [0, 1, 2, 3, 4].map(
-    (number) => `./ide-control-flow-runtime.part${String(number).padStart(2, '0')}?v=7`,
+    (number) => `./ide-control-flow-runtime.part${String(number).padStart(2, '0')}?v=8`,
   );
 
   async function fetchPart(url) {
@@ -69,6 +69,14 @@
       }
       patched = patched.replace(before, after);
     }
+
+    if (!patched.includes('saveFiles(c.files)')) {
+      throw new Error('The FigureLoom Bio browser runtime is missing its workspace save hook.');
+    }
+    patched = patched.replaceAll(
+      'saveFiles(c.files)',
+      'saveFiles(window.FigureLoomBioLargeImport?.stripVaultFiles?.(c.files)||c.files)',
+    );
     return patched;
   }
 
