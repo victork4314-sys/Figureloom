@@ -50,7 +50,7 @@
       ],
       [
         "async function statement(n,c,p){let t=repl(n.t,c),m;",
-        "async function statement(n,c,p){let t=repl(n.t,c),m;if(c.completeSequenceSource?.kind==='seq'&&c.data?.kind==='table'&&/^(?:Show the sequences|Save the sequences as |Split the sequences into files with |Join the sequences$)/i.test(t))c.data=cl(c.completeSequenceSource);",
+        "async function statement(n,c,p){let t=repl(n.t,c),m;if(window.FigureLoomBioLargeImport?.openStatement&&await window.FigureLoomBioLargeImport.openStatement(t,c,n.l,{section:sec,Error:X,open:(name)=>open(c,name,n.l)}))return;if(c.completeSequenceSource?.kind==='seq'&&c.data?.kind==='table'&&/^(?:Show the sequences|Save the sequences as |Split the sequences into files with |Join the sequences$)/i.test(t))c.data=cl(c.completeSequenceSource);",
       ],
       [
         "async function nodes(a,c,p){for(let n of a){if(n.type==='recipe')continue;if(n.type==='s'){await statement(n,c,p);continue}",
