@@ -1,0 +1,26 @@
+name: Validate FigureLoom Bio large web imports
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  large_web_import:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Check browser import files
+        run: |
+          node --check ide/ide-large-import-support.js
+          node --check ide/ide-control-flow-runtime.js
+          node --check scripts/validate-bio-large-web-import.mjs
+
+      - name: Import the exact large program from a crowded workspace
+        run: node scripts/validate-bio-large-web-import.mjs
