@@ -1,0 +1,20 @@
+name: Validate FigureLoom Bio iOS file picker
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  ios_file_picker:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Keep custom FigureLoom Bio files selectable on iOS
+        run: node scripts/validate-bio-ios-file-picker.mjs
