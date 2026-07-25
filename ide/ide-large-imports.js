@@ -43,6 +43,8 @@
   function workspace() { return objectFromStorage(FILES_KEY); }
   function isProgram(name) { return /\.flbio(?:\.txt)?$/i.test(String(name)); }
   function isFasta(name) { return /\.(?:fa|fasta|fna|ffn|faa|frn)$/i.test(String(name)); }
+  function isFastq(name) { return /\.(?:fq|fastq)$/i.test(String(name)); }
+  function isTable(name) { return /\.(?:csv|tsv)$/i.test(String(name)); }
   function markerFor(name) { return `${MARKER}# ${name}\n`; }
   function byteLength(value) { return new Blob([String(value)]).size; }
 
@@ -206,7 +208,7 @@
 
       try {
         persistWorkspace(files, large, activeName, deleted);
-      } catch (error) {
+      } catch {
         await compactWorkspace(files, large, new Set([activeName.toLowerCase()]));
         persistWorkspace(files, large, activeName, deleted);
       }
@@ -219,6 +221,116 @@
       console.error(error);
       showError(`${error?.message || error}\n\nThe browser kept your existing files unchanged.`);
     }
+  }
+
+  function splitDelimitedLine(line, delimiter) {
+    const values = [];
+    let value = '';
+    let quoted = false;
+    for (let index = 0; index < line.length; index += 1) {
+      const character = line[index];
+      if (character === '"') {
+        if (quoted && line[index + 1] === '"') { value += '"'; index += 1; }
+        else quoted = !quoted;
+      } else if (character === delimiter && !quoted) {
+        values.push(value); value = '';
+      } else value += character;
+    }
+    values.push(value);
+    return values;
+  }
+
+  function decodeTable(name, source) {
+    const delimiter = /\.tsv$/i.test(name) ? '\t' : ',';
+    const lines = String(source).replace(/^\uFEFF/, '').split(/\r?\n/).filter((line) => line.length);
+    if (!lines.length) return { kind:'table', columns:[], rows:[], delimiter, sourceName:name };
+    const columns = splitDelimitedLine(lines[0], delimiter).map((value) => value.trim());
+    const rows = lines.slice(1).map((line) => {
+      const values = splitDelimitedLine(line, delimiter);
+      return Object.fromEntries(columns.map((column, index) => [column, values[index] ?? '']));
+    });
+    return { kind:'table', columns, rows, delimiter, sourceName:name };
+  }
+
+  function decodeFasta(name, source) {
+    const records = [];
+    let current = null;
+    for (const raw of String(source).split(/\r?\n/)) {
+      const line = raw.trim();
+      if (!line) continue;
+      if (line.startsWith('>')) {
+        current = { name:line.slice(1).trim() || `sequence-${records.length + 1}`, sequence:'', quality:null };
+        records.push(current);
+      } else if (current) current.sequence += line.replace(/\s+/g, '');
+    }
+    return { kind:'seq', format:'fasta', records, sourceName:name };
+  }
+
+  function decodeFastq(name, source) {
+    const lines = String(source).split(/\r?\n/);
+    const records = [];
+    for (let index = 0; index < lines.length;) {
+      if (!lines[index]) { index += 1; continue; }
+      const header = lines[index++];
+      const sequence = lines[index++] || '';
+      const plus = lines[index++] || '';
+      const quality = lines[index++] || '';
+      if (!header.startsWith('@') || !plus.startsWith('+')) throw new Error(`${name} is not valid FASTQ near line ${Math.max(1, index - 3)}.`);
+      records.push({ name:header.slice(1).trim() || `read-${records.length + 1}`, sequence:sequence.trim(), quality:quality.trim() });
+    }
+    return { kind:'seq', format:'fastq', records, sourceName:name };
+  }
+
+  function decodeFile(name, source) {
+    if (isTable(name)) return decodeTable(name, source);
+    if (isFasta(name)) return decodeFasta(name, source);
+    if (isFastq(name)) return decodeFastq(name, source);
+    throw new Error(`${name} is not a CSV, TSV, FASTA, or FASTQ data file.`);
+  }
+
+  function actualVaultName(requested) {
+    const lower = String(requested).toLowerCase();
+    return Object.keys(manifest()).find((name) => name.toLowerCase() === lower) || null;
+  }
+
+  async function vaultText(name) {
+    const actual = actualVaultName(name);
+    if (!actual) return null;
+    const record = await getRecord(actual);
+    if (!record?.blob) throw new Error(`I could not open ${actual} from browser large-file storage.`);
+    return { name:actual, text:await record.blob.text() };
+  }
+
+  async function openStatement(text, context, line, helpers) {
+    let match = String(text).match(/^Open the file (.+)$/i);
+    if (match) {
+      const stored = await vaultText(match[1]);
+      if (!stored) return false;
+      context.data = decodeFile(stored.name, stored.text);
+      helpers.section(`Opened ${stored.name}`, { p:[context.data.kind === 'table' ? `Rows\n${context.data.rows.length}` : `Sequences\n${context.data.records.length}`] });
+      return true;
+    }
+
+    match = String(text).match(/^Open the files (.+?) and (.+?) as a pair$/i);
+    if (match) {
+      const leftVault = await vaultText(match[1]);
+      const rightVault = await vaultText(match[2]);
+      if (!leftVault && !rightVault) return false;
+      const left = leftVault ? decodeFile(leftVault.name, leftVault.text) : helpers.open(match[1]);
+      const right = rightVault ? decodeFile(rightVault.name, rightVault.text) : helpers.open(match[2]);
+      if (left.kind !== 'seq' || right.kind !== 'seq' || left.format !== 'fastq' || right.format !== 'fastq') throw new helpers.Error('Open two FASTQ files as a pair.', line);
+      context.data = { kind:'pair', a:left, b:right, sourceName:`${match[1]} + ${match[2]}` };
+      helpers.section('Opened the FASTQ pair', { p:[match[1], match[2], `Read pairs\n${Math.min(left.records.length, right.records.length)}`] });
+      return true;
+    }
+
+    const lower = String(text).toLowerCase();
+    for (const name of Object.keys(manifest())) {
+      if (isProgram(name) || !lower.includes(name.toLowerCase())) continue;
+      const stored = await vaultText(name);
+      if (stored) context.files[stored.name] = stored.text;
+    }
+    return false;
   }
 
   async function hydrateActiveVaultProgram() {
@@ -252,20 +364,6 @@
     large[activeVaultProgram] = { ...(large[activeVaultProgram] || {}), size:byteLength(source), type:'text/plain', updatedAt:Date.now(), source:'edited', kind:'program' };
     localStorage.setItem(MANIFEST_KEY, JSON.stringify(large));
     if (saveStatus) saveStatus.textContent = 'Saved in browser large-file storage';
-  }
-
-  async function prepareProgramFiles(source) {
-    const large = manifest();
-    const lower = String(source).toLowerCase();
-    const prepared = {};
-    for (const [name, info] of Object.entries(large)) {
-      if (info?.kind === 'program' || !lower.includes(name.toLowerCase())) continue;
-      if (isFasta(name) && Number(info.size || 0) >= 2 * 1024 * 1024) continue;
-      const record = await getRecord(name);
-      if (record?.blob) prepared[name] = await record.blob.text();
-    }
-    window.FigureLoomBioPreparedFiles = prepared;
-    return prepared;
   }
 
   function stripVaultFiles(files) {
@@ -341,6 +439,8 @@
     }
   }, true);
 
-  window.FigureLoomBioLargeImports = Object.freeze({ prepareProgramFiles, stripVaultFiles, getRecord, putBlob });
+  const api = Object.freeze({ openStatement, stripVaultFiles, getRecord, putBlob, decodeFile });
+  window.FigureLoomBioLargeImport = api;
+  window.FigureLoomBioLargeImports = api;
   void hydrateActiveVaultProgram();
 })();
