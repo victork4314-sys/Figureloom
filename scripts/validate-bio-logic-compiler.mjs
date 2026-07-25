@@ -209,7 +209,8 @@ const index = fs.readFileSync('ide/index.html', 'utf8');
 assert.match(index, /ide-language-compiler\.js\?v=2/);
 assert.match(index, /ide-logic-compiler\.js\?v=4/);
 assert.match(index, /ide-complete-language-bridge\.js\?v=2/);
-assert.match(index, /ide-control-flow-runtime\.js\?v=10/);
+assert.match(index, /ide-large-import-support\.js\?v=1/);
+assert.match(index, /ide-control-flow-runtime\.js\?v=11/);
 assert.match(index, /ide-decision-core\.js\?v=2/);
 assert.match(index, /ide-large-file-vault-v2\.js\?v=1/);
 assert.match(index, /ide-app-v2\.js\?v=3/);
@@ -218,4 +219,4 @@ assert.match(index, /ide-vocabulary-ui-copy\.js\?v=2/);
 assert.match(index, /ide-language-catalog-ui\.js\?v=5/);
 assert.match(index, /ide-builtin-language-support\.js\?v=5/);
 
-console.log('Boolean logic, exact messages, stable sequence-name filters, aliases, Warning, End, and browser asset versions are validated.');
+console.log('Boolean logic, exact messages, stable sequence-name filters, aliases, Warning, End, large imports, and browser asset versions are validated.');
