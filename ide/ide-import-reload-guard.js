@@ -45,6 +45,8 @@
     try { restoreMissingImport(); } catch (error) { console.error('Could not protect the imported FigureLoom Bio program', error); }
   }
 
+  window.FigureLoomBioImportReloadGuard = Object.freeze({ restoreMissingImport });
+
   // These listeners are registered after the original IDE listeners. During an
   // import-triggered reload they run last and repair the stale workspace write.
   window.addEventListener('pagehide', protectReloadHandoff);
@@ -61,6 +63,4 @@
     }
   }
   sessionStorage.removeItem(RECOVERY_KEY);
-
-  window.FigureLoomBioImportReloadGuard = Object.freeze({ restoreMissingImport });
 })();
