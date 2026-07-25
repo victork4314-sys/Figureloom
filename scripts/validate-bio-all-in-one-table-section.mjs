@@ -96,10 +96,12 @@ const part04 = read('ide/ide-control-flow-runtime.part04');
 assert.match(part04, /ide-core-language-runtime\.js\?v=2/);
 assert.match(part04, /FigureLoomBioLogicCompiler\?\.normalizeSource/);
 const loader = read('ide/ide-control-flow-runtime.js');
-assert.match(loader, /runtime\.part\$\{String\(number\).*\?v=7/);
+assert.match(loader, /runtime\.part\$\{String\(number\).*\?v=8/);
+assert.match(loader, /FigureLoomBioLargeImport\?\.openStatement/);
 const html = read('ide/index.html');
 assert.match(html, /ide-logic-compiler\.js\?v=4/);
 assert.match(html, /ide-complete-language-bridge\.js\?v=2/);
-assert.match(html, /ide-control-flow-runtime\.js\?v=10/);
+assert.match(html, /ide-large-import-support\.js\?v=1/);
+assert.match(html, /ide-control-flow-runtime\.js\?v=11/);
 
 console.log('The exact all-in-one table mutation chain executes correctly and every browser runtime cache layer is refreshed.');
