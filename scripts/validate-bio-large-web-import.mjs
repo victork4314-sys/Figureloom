@@ -125,10 +125,14 @@ elements.activeFileLabel.textContent = 'old-program.flbio';
 elements.programName.value = 'old-program.flbio';
 elements.programEditor.value = oldProgram;
 
-const lines = Array.from({ length:426 }, (_, index) => `Print Large imported program line ${String(index + 1).padStart(3, '0')} ${'word '.repeat(3)}.`);
-let largeProgram = lines.join('\n');
-if (largeProgram.length < 11312) largeProgram += `\n# ${'x'.repeat(11312 - largeProgram.length - 3)}`;
-largeProgram = largeProgram.slice(0, 11312);
+const largeLines = Array.from({ length:426 }, (_, index) => `Print L${String(index + 1).padStart(3, '0')}.`);
+let remaining = 11312 - largeLines.join('\n').length;
+for (let index = 0; remaining > 0; index = (index + 1) % largeLines.length) {
+  const addition = Math.min(remaining, 25);
+  largeLines[index] = `${largeLines[index].slice(0, -1)}${'x'.repeat(addition)}.`;
+  remaining -= addition;
+}
+const largeProgram = largeLines.join('\n');
 assert.equal(largeProgram.length, 11312);
 assert.equal(largeProgram.split('\n').length, 426);
 const selected = new Blob([largeProgram], { type:'text/plain' });
