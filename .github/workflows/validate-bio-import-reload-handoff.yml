@@ -1,0 +1,25 @@
+name: Validate FigureLoom Bio import reload handoff
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  import_reload_handoff:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Check reload guard syntax
+        run: |
+          node --check ide/ide-import-reload-guard.js
+          node --check scripts/validate-bio-import-reload-handoff.mjs
+
+      - name: Keep the exact imported program through reload
+        run: node scripts/validate-bio-import-reload-handoff.mjs
