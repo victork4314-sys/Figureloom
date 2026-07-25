@@ -69,14 +69,6 @@
       }
       patched = patched.replace(before, after);
     }
-
-    if (!patched.includes('saveFiles(c.files)')) {
-      throw new Error('The FigureLoom Bio browser runtime is missing its workspace save hook.');
-    }
-    patched = patched.replaceAll(
-      'saveFiles(c.files)',
-      'saveFiles(window.FigureLoomBioLargeImport?.stripVaultFiles?.(c.files)||c.files)',
-    );
     return patched;
   }
 
