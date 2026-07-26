@@ -57,7 +57,6 @@ def _semantic_contract(
     """
 
     core = _core(sentence)
-    lower = core.casefold()
     action = compiled.action
     values = compiled.values
 
@@ -69,9 +68,17 @@ def _semantic_contract(
         if wanted:
             return CompiledInstruction(action, (wanted[0],))
 
-    if action == "trim_start" and re.search(r"\bcut\b", lower):
+    if action == "trim_start" and re.fullmatch(
+        r"cut \d+(?:\.\d+)? bases? from the beginning of each read",
+        core,
+        re.IGNORECASE,
+    ):
         return CompiledInstruction("cut_start", values)
-    if action == "trim_end" and re.search(r"\bcut\b", lower):
+    if action == "trim_end" and re.fullmatch(
+        r"cut \d+(?:\.\d+)? bases? from the end of each read",
+        core,
+        re.IGNORECASE,
+    ):
         return CompiledInstruction("cut_end", values)
 
     if re.fullmatch(r"compare the file with .+", core, re.IGNORECASE):
