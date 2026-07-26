@@ -30,7 +30,7 @@ const source = [
 
 const program = language.parseProgram(source);
 assert.deepEqual(
-  program.body.map((node) => node.action),
+  Array.from(program.body, (node) => node.action),
   ['keep_rows', 'remove_rows', 'keep_columns', 'rename_column', 'replace_empty', 'order_rows', 'remove_duplicates'],
 );
 assert.ok(program.body.every((node) => node.type === 'instruction'));
