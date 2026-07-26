@@ -5,7 +5,7 @@ import unittest
 from pathlib import Path
 
 from figureloom_bio import Runner
-from figureloom_bio.bio_expansion import EXPANSION, parse_expanded_instruction
+from figureloom_bio.bio_expansion import EXPANSION, classify_expansion_phrase, parse_expanded_instruction
 from figureloom_bio.parser import parse
 
 
@@ -48,7 +48,7 @@ class BioExpansionTests(unittest.TestCase):
                 self.assertTrue(node.operation)
                 self.assertTrue(node.targets)
 
-    def test_every_declared_word_is_recognized_inside_its_group(self) -> None:
+    def test_every_declared_phrase_maps_to_its_exact_group_and_meaning(self) -> None:
         for category in ("operations", "targets", "comparisons", "roles", "modifiers"):
             for canonical, forms in EXPANSION[category].items():
                 for form in forms:
@@ -56,6 +56,7 @@ class BioExpansionTests(unittest.TestCase):
                         self.assertTrue(form.strip())
                         self.assertEqual(form, form.lower())
                         self.assertNotRegex(form, r"[{}\[\];]")
+                        self.assertEqual(classify_expansion_phrase(category, form), canonical)
 
     def test_python_public_parser_uses_the_expansion(self) -> None:
         instructions = parse("\n".join(CASES))
