@@ -44,7 +44,7 @@ jobs:
           test "$actual" = "$expected" || { echo "Patch checksum mismatch: $actual"; exit 1; }
           git apply --check /tmp/verified-semantic.patch
           git apply --index /tmp/verified-semantic.patch
-          git rm "${parts[@]}" .github/workflows/export-semantic-worktree.yml
+          git rm "${parts[@]}" .github/workflows/export-semantic-worktree.yml .github/verified-semantic-trigger.txt
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git commit -m "Install verified structured semantic language"
