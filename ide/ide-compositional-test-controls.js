@@ -4,20 +4,10 @@
   const FILES_KEY = 'figureloom-bio-ide-files-v1';
   const ACTIVE_KEY = 'figureloom-bio-ide-active-v1';
   const DELETED_KEY = 'figureloom-bio-ide-deleted-files-v1';
-  const PENDING_KEY = 'figureloom-bio-compositional-tests-pending-v1';
+  const RESULTS_KEY = 'figureloom-bio-ide-results-v1';
+  const RUN_STATUS_KEY = 'figureloom-bio-ide-run-status-v1';
+  const PENDING_KEY = 'figureloom-bio-compositional-tests-pending-v2';
 
-  const readObject = (key) => {
-    try {
-      const value = JSON.parse(localStorage.getItem(key) || '{}');
-      return value && typeof value === 'object' && !Array.isArray(value) ? value : {};
-    } catch { return {}; }
-  };
-  const readArray = (key) => {
-    try {
-      const value = JSON.parse(localStorage.getItem(key) || '[]');
-      return Array.isArray(value) ? value : [];
-    } catch { return []; }
-  };
   const makeId = () => {
     const values = globalThis.crypto?.getRandomValues
       ? globalThis.crypto.getRandomValues(new Uint32Array(2))
@@ -32,13 +22,14 @@
     let pending;
     try { pending = JSON.parse(raw); } catch { return; }
     if (!pending?.files || !pending?.active) return;
-    const files = readObject(FILES_KEY);
-    Object.assign(files, pending.files);
-    const names = new Set(Object.keys(pending.files).map((name) => name.toLowerCase()));
-    const deleted = readArray(DELETED_KEY).map(String).filter((name) => !names.has(name.toLowerCase()));
-    localStorage.setItem(FILES_KEY, JSON.stringify(files));
-    localStorage.setItem(DELETED_KEY, JSON.stringify(deleted));
+
+    // Tests and clearing intentionally replace the whole browser workspace.
+    // This prevents bundled examples and previous test files from surviving.
+    localStorage.setItem(FILES_KEY, JSON.stringify(pending.files));
+    localStorage.setItem(DELETED_KEY, '[]');
     localStorage.setItem(ACTIVE_KEY, pending.active);
+    localStorage.removeItem(RESULTS_KEY);
+    localStorage.removeItem(RUN_STATUS_KEY);
   }
   applyPendingBeforeIde();
 
@@ -142,9 +133,7 @@
       '',
       ...passed.map((item, index) => `${String(index + 1).padStart(3, '0')} | ${item.action} | ${item.source}`),
     ];
-    if (failures.length) {
-      lines.push('', 'FAILURES', ...failures.map((item) => `${item.source}\n    ${item.error}`));
-    }
+    if (failures.length) lines.push('', 'FAILURES', ...failures.map((item) => `${item.source}\n    ${item.error}`));
     return lines.join('\n');
   }
 
@@ -163,7 +152,7 @@
     return { passed, failures };
   }
 
-  function queueWorkspace(files, active) {
+  function replaceWorkspace(files, active) {
     localStorage.setItem(PENDING_KEY, JSON.stringify({ files, active }));
     location.reload();
   }
@@ -184,10 +173,8 @@
       [indexName]: `# 240 generated grammar cases\n# Open ${reportName} to see the parsed AST action for every case.\n\n${grouped.join('\n')}`,
       [reportName]: reportFile('FigureLoom Bio grammar tests', id, cases, passed, failures),
     };
-    if (passed.length < 200) {
-      files[indexName] = `# TEST FAILED\n# Only ${passed.length} of ${cases.length} generated grammar cases parsed.\n# Open ${reportName} for exact failures.\n` + files[indexName];
-    }
-    queueWorkspace(files, indexName);
+    if (passed.length < 200) files[indexName] = `# TEST FAILED\n# Only ${passed.length} of ${cases.length} generated grammar cases parsed.\n# Open ${reportName} for exact failures.\n` + files[indexName];
+    replaceWorkspace(files, indexName);
   }
 
   async function runCompositionProof() {
@@ -209,20 +196,26 @@
       [dataName]: `sample,${column},${group}\nalpha,${oldValue},${keepValue}\nbeta,other_${id},control_${id}\ngamma,${oldValue},${keepValue}\n`,
       [reportName]: reportFile('FigureLoom Bio composition proof', id, candidates, passed, failures),
     };
-    if (passed.length < 200) {
-      files[proofName] = `# COMPOSITION PROOF FAILED\n# Only ${passed.length} of ${candidates.length} generated combinations parsed.\n# Open ${reportName} for exact failures.\n\n${runnable}`;
-    }
-    queueWorkspace(files, proofName);
+    if (passed.length < 200) files[proofName] = `# COMPOSITION PROOF FAILED\n# Only ${passed.length} of ${candidates.length} generated combinations parsed.\n# Open ${reportName} for exact failures.\n\n${runnable}`;
+    replaceWorkspace(files, proofName);
+  }
+
+  function clearAllFiles() {
+    if (!window.confirm('Clear every file and result from this browser workspace?')) return;
+    replaceWorkspace({ 'new-program.flbio': '' }, 'new-program.flbio');
   }
 
   function bindControls() {
     const grammarButton = document.getElementById('exampleButton');
     const compositionButton = document.getElementById('allroundTestButton');
-    if (!grammarButton || !compositionButton) return;
+    const clearButton = document.getElementById('clearAllFilesButton');
+    if (!grammarButton || !compositionButton || !clearButton) return;
     grammarButton.textContent = 'Grammar tests';
-    grammarButton.title = 'Generate and parse 240 focused grammar cases across 24 families';
+    grammarButton.title = 'Replace the workspace with 240 focused generated grammar cases';
     compositionButton.textContent = 'Composition proof';
-    compositionButton.title = 'Generate hundreds of fresh combinations across verbs, targets, roles, comparisons, values, files, numbers, and outputs';
+    compositionButton.title = 'Replace the workspace with hundreds of fresh generated combinations';
+    clearButton.title = 'Delete every program, input, generated result, and test file from this browser';
+
     grammarButton.addEventListener('click', (event) => {
       event.preventDefault();
       event.stopImmediatePropagation();
@@ -232,6 +225,11 @@
       event.preventDefault();
       event.stopImmediatePropagation();
       void runCompositionProof();
+    }, { capture: true });
+    clearButton.addEventListener('click', (event) => {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      clearAllFiles();
     }, { capture: true });
   }
 
