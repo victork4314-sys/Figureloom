@@ -3,139 +3,109 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 
 const read = (file) => fs.readFileSync(file, 'utf8');
-const vocabulary = JSON.parse(read('figureloom-bio/figureloom_bio/language_vocabulary.json'));
-
-const windowListeners = {};
-const documentListeners = {};
-
-class FakeElement {
-  constructor(id = '') {
-    this.id = id;
-    this.value = '';
-    this.selectionStart = 0;
-    this.selectionEnd = 0;
-  }
-  addEventListener(type, listener) {
-    (this.listeners ||= {})[type] ||= [];
-    this.listeners[type].push(listener);
-  }
-  closest(selector) {
-    return selector === `#${this.id}` ? this : null;
-  }
-  setSelectionRange(start, end) {
-    this.selectionStart = start;
-    this.selectionEnd = end;
-  }
-  dispatchEvent() {}
-  click() {
-    const event = {
-      target:this,
-      defaultPrevented:false,
-      stopped:false,
-      preventDefault() { this.defaultPrevented = true; },
-      stopImmediatePropagation() { this.stopped = true; },
-    };
-    for (const listener of windowListeners.click || []) {
-      listener(event);
-      if (event.stopped) break;
-    }
-    for (const listener of this.listeners?.click || []) {
-      listener(event);
-      if (event.stopped) break;
-    }
-  }
-}
-
-const editor = new FakeElement('programEditor');
-const runButton = new FakeElement('runButton');
-const elements = { programEditor:editor, runButton };
-
-const windowObject = {
-  addEventListener(type, listener) {
-    (windowListeners[type] ||= []).push(listener);
-  },
-  dispatchEvent() {},
-  FigureLoomBioStatementRecognizers:[() => true],
-  FigureLoomBioCompleteLanguage:{ uses:() => true },
-  FigureLoomBioCurrentFile:{ normalizeSource:(source) => `${source}\n` },
-  FigureLoomBioLanguage:{ commands:[{ example:'anything.' }] },
-};
-
-const documentObject = {
-  getElementById(id) { return elements[id] || null; },
-  addEventListener(type, listener) {
-    (documentListeners[type] ||= []).push(listener);
-  },
-};
-
-const context = vm.createContext({
+const grammar = JSON.parse(read('figureloom-bio/figureloom_bio/language_grammar.json'));
+const sandbox = {
+  window:{ dispatchEvent(){} },
+  CustomEvent:class {},
+  fetch:async () => ({ ok:true, json:async () => grammar }),
   console,
-  window:windowObject,
-  document:documentObject,
-  Element:FakeElement,
-  Event:class Event { constructor(type, options = {}) { this.type = type; this.bubbles = Boolean(options.bubbles); } },
-  CustomEvent:class CustomEvent { constructor(type, options = {}) { this.type = type; this.detail = options.detail; } },
-  fetch:async () => ({ ok:true, status:200, json:async () => vocabulary }),
-  queueMicrotask,
-  Promise,
   Map,
   Set,
-  Object,
-  String,
-  Number,
-  RegExp,
-});
-windowObject.window = windowObject;
-windowObject.document = documentObject;
-
-new vm.Script(read('ide/ide-language-compiler.js'), { filename:'ide-language-compiler.js' }).runInContext(context);
-await windowObject.FigureLoomBioCompilerReady;
-
-windowObject.FigureLoomBioLanguageAliases = {
-  recognizes:() => true,
-  normalizeSource:(source) => String(source),
 };
+vm.createContext(sandbox);
+vm.runInContext(read('ide/ide-semantic-language.js'), sandbox);
+vm.runInContext(read('ide/ide-semantic-runtime.js'), sandbox);
+const language = await sandbox.window.FigureLoomBioSemanticLanguageReady;
+const runtime = sandbox.window.FigureLoomBioSemanticRuntime;
 
-new vm.Script(read('ide/ide-logic-compiler.js'), { filename:'ide-logic-compiler.js' }).runInContext(context);
-
-const source = [
+const sourceLines = [
   'Read the file example-samples.csv.',
   'Retain records where condition equals treated.',
   'Filter out records where status equals failed.',
   'Total the records.',
   'Display the output.',
-].join('\n');
+];
+const source = sourceLines.join('\n');
+const program = language.parseProgram(source);
 
-const expected = [
-  'Open the file example-samples.csv.',
-  'Keep only rows marked treated under condition.',
-  'Remove rows marked failed under status.',
-  'Count the rows.',
-  'Show the result.',
-].join('\n');
-
-assert.equal(
-  windowObject.FigureLoomBioLogicCompiler.normalizeSource(source),
-  expected,
-  'Every red sentence from the screenshot must compile before broad runtime recognition.',
+assert.deepEqual(
+  Array.from(program.body, (node) => node.action),
+  ['open_file', 'keep_rows', 'remove_rows', 'count_rows', 'show_result'],
 );
+assert.deepEqual(
+  Array.from(program.body, (node) => `${node.source}.`),
+  sourceLines,
+  'The AST must retain the exact user instructions instead of rewritten sentences.',
+);
+assert.ok(program.body.every((node) => node.type === 'instruction'));
 
-const freeformRecognizer = windowObject.FigureLoomBioStatementRecognizers.at(-1);
-assert.equal(typeof freeformRecognizer, 'function');
-assert.equal(freeformRecognizer(source), true, 'The syntax layer must recognize the free-form program as valid.');
+const files = {
+  'example-samples.csv':{
+    kind:'table',
+    columns:['sample', 'condition', 'status'],
+    rows:[
+      { sample:'one', condition:'treated', status:'passed' },
+      { sample:'two', condition:'control', status:'passed' },
+      { sample:'three', condition:'treated', status:'failed' },
+    ],
+    delimiter:',',
+    sourceName:'example-samples.csv',
+  },
+};
 
-let runtimeSaw = null;
-windowListeners.click.push(() => { runtimeSaw = editor.value; });
-editor.value = source;
-editor.selectionStart = source.length;
-editor.selectionEnd = source.length;
-runButton.click();
+const dispatched = [];
+const executor = runtime.createExecutor({
+  executeInstruction:async (node, context) => {
+    dispatched.push(node.action);
+    const values = node.arguments.runtime_values || [];
+    switch (node.action) {
+      case 'open_file':
+        context.data = JSON.parse(JSON.stringify(files[values[0]]));
+        break;
+      case 'keep_rows': {
+        const [wanted, column] = values;
+        context.data.rows = context.data.rows.filter((row) => String(row[column]) === String(wanted));
+        break;
+      }
+      case 'remove_rows': {
+        const [unwanted, column] = values;
+        context.data.rows = context.data.rows.filter((row) => String(row[column]) !== String(unwanted));
+        break;
+      }
+      case 'count_rows':
+        context.rowCount = context.data.rows.length;
+        break;
+      case 'show_result':
+        context.shown = JSON.parse(JSON.stringify(context.data));
+        break;
+      default:
+        assert.fail(`Unexpected semantic action: ${node.action}`);
+    }
+    return context.data;
+  },
+});
 
-assert.equal(runtimeSaw, expected, 'The later production runtime must receive canonical instructions.');
-await Promise.resolve();
-assert.equal(editor.value, source, 'The editor must keep the exact wording the user wrote.');
+const context = await executor.executeProgram(program, { files });
+assert.deepEqual(dispatched, ['open_file', 'keep_rows', 'remove_rows', 'count_rows', 'show_result']);
+assert.equal(context.rowCount, 1);
+assert.deepEqual(context.data.rows, [{ sample:'one', condition:'treated', status:'passed' }]);
+assert.deepEqual(context.shown.rows, context.data.rows);
+assert.equal(source, sourceLines.join('\n'), 'Execution must not replace the user source.');
 
 const html = read('ide/index.html');
-assert.match(html, /ide-logic-compiler\.js\?v=4/);
+assert.match(html, /ide-semantic-language\.js/);
+assert.match(html, /ide-semantic-runtime\.js/);
+assert.match(html, /ide-semantic-run-authority\.js/);
+assert.equal(html.includes('ide-language-compiler.js'), false);
+assert.equal(html.includes('ide-logic-compiler.js'), false);
 
-console.log('The exact red stress-test lines compile before runtime recognition, appear valid to the highlighter, execute canonically, and remain unchanged in the editor.');
+const app = read('ide/ide-app-v2.js');
+const runStart = app.indexOf('async function runProgram()');
+const runEnd = app.indexOf('const builderTemplates', runStart);
+const runSource = app.slice(runStart, runEnd);
+assert.match(runSource, /parseProgram\(elements\.editor\.value\)/);
+assert.match(runSource, /semanticRuntime\.createExecutor/);
+assert.equal(runSource.includes('normalizeSource'), false);
+assert.equal(runSource.includes('compileLine'), false);
+
+console.log('The exact five free-form stress instructions parse into semantic AST nodes, execute directly, and keep the original source unchanged.');
