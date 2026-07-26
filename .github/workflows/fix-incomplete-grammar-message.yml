@@ -1,0 +1,39 @@
+name: Fix incomplete grammar diagnostic
+
+on:
+  push:
+    branches:
+      - agent/max-real-semantic-language
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/max-real-semantic-language
+          fetch-depth: 0
+      - name: Make incomplete-operation error explicitly grammatical
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('figureloom-bio/figureloom_bio/parser.py')
+          text = path.read_text(encoding='utf-8')
+          old = 'message = f"{detail} {operation.title()} needs a target."'
+          new = 'message = f"FigureLoom Bio’s grammar parsed the operation, but {detail.casefold()} {operation.title()} needs a target."'
+          if text.count(old) != 1:
+              raise SystemExit(f'Expected one parser diagnostic target, found {text.count(old)}')
+          path.write_text(text.replace(old, new), encoding='utf-8')
+          PY
+          PYTHONPATH=figureloom-bio python -m unittest figureloom-bio/tests/test_parser_explanations.py -v
+          git add figureloom-bio/figureloom_bio/parser.py
+          git rm .github/workflows/fix-incomplete-grammar-message.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "Explain incomplete instructions as grammar errors"
+          git push origin HEAD:agent/max-real-semantic-language
