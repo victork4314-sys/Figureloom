@@ -68,6 +68,7 @@ const firstCompatibilityIndex = indexSource.indexOf('ide-current-file-language.j
 assert.ok(semanticLanguageIndex >= 0 && semanticRuntimeIndex > semanticLanguageIndex);
 assert.ok(semanticAuthorityIndex > semanticRuntimeIndex && semanticAuthorityIndex < firstCompatibilityIndex);
 assert.equal(indexSource.includes('ide-language-compiler.js'), false);
+assert.equal(indexSource.includes('ide-logic-compiler.js'), false);
 
 const appSource = fs.readFileSync('ide/ide-app-v2.js', 'utf8');
 const runStart = appSource.indexOf('async function runProgram()');
@@ -85,4 +86,81 @@ assert.match(highlighterSource, /parseProgram/);
 assert.equal(highlighterSource.includes('canonicalizeSentence'), false);
 assert.equal(highlighterSource.includes('FigureLoomBioLanguageAliases'), false);
 
+const captureListeners = { click: [] };
+const keyListeners = { keydown: [] };
+let semanticRequests = 0;
+let legacyRuns = 0;
+const editorState = { value: 'Read the file example-samples.csv.' };
+class FakeElement {
+  constructor(id) { this.id = id; }
+  closest(selector) { return selector === `#${this.id}` ? this : null; }
+}
+class FakeCustomEvent {
+  constructor(type) { this.type = type; }
+}
+const authorityWindow = {
+  addEventListener(type, listener) {
+    (captureListeners[type] ||= []).push(listener);
+  },
+  dispatchEvent(event) {
+    if (event.type === 'figureloom-bio-semantic-run-requested') semanticRequests += 1;
+  },
+};
+const authorityDocument = {
+  addEventListener(type, listener) {
+    (keyListeners[type] ||= []).push(listener);
+  },
+};
+const authoritySandbox = {
+  window: authorityWindow,
+  document: authorityDocument,
+  Element: FakeElement,
+  CustomEvent: FakeCustomEvent,
+};
+vm.createContext(authoritySandbox);
+vm.runInContext(fs.readFileSync('ide/ide-semantic-run-authority.js', 'utf8'), authoritySandbox);
+
+authorityWindow.addEventListener('click', () => {
+  legacyRuns += 1;
+  editorState.value = 'Open the file example-samples.csv.';
+}, true);
+
+const runButton = new FakeElement('runButton');
+const clickEvent = {
+  target: runButton,
+  defaultPrevented: false,
+  immediateStopped: false,
+  preventDefault() { this.defaultPrevented = true; },
+  stopImmediatePropagation() { this.immediateStopped = true; },
+};
+for (const listener of captureListeners.click) {
+  listener(clickEvent);
+  if (clickEvent.immediateStopped) break;
+}
+assert.equal(clickEvent.defaultPrevented, true);
+assert.equal(clickEvent.immediateStopped, true);
+assert.equal(semanticRequests, 1);
+assert.equal(legacyRuns, 0);
+assert.equal(editorState.value, 'Read the file example-samples.csv.');
+
+const keyEvent = {
+  ctrlKey: true,
+  metaKey: false,
+  key: 'Enter',
+  defaultPrevented: false,
+  immediateStopped: false,
+  preventDefault() { this.defaultPrevented = true; },
+  stopImmediatePropagation() { this.immediateStopped = true; },
+};
+for (const listener of keyListeners.keydown) {
+  listener(keyEvent);
+  if (keyEvent.immediateStopped) break;
+}
+assert.equal(keyEvent.defaultPrevented, true);
+assert.equal(keyEvent.immediateStopped, true);
+assert.equal(semanticRequests, 2);
+assert.equal(legacyRuns, 0);
+assert.equal(editorState.value, 'Read the file example-samples.csv.');
+
+console.log('Run authority blocks later legacy interceptors before they can execute or rewrite the source.');
 console.log('Run authority and syntax validation use the semantic parser without canonical sentence rewriting.');
