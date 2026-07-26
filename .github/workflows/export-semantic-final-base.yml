@@ -1,0 +1,26 @@
+name: Export semantic final base
+
+on:
+  pull_request:
+    branches:
+      - main
+    types:
+      - reopened
+
+permissions:
+  contents: read
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/semantic-language-takeover
+      - run: rm -rf .git
+      - uses: actions/upload-artifact@v4
+        with:
+          name: semantic-final-base
+          path: .
+          include-hidden-files: true
+          retention-days: 1
