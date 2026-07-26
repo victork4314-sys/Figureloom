@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - agent/real-semantic-language
+  pull_request:
+    branches:
+      - main
 
 permissions:
   contents: read
