@@ -1,6 +1,0 @@
-status=1
-head=dc504104a7f747cb30e4927684ad26bb35b7d0ec
-checkpoint_present=yes
-checkpoint_bytes=15225
-patch_sha256=unavailable
---- apply check ---
