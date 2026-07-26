@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - agent/verified-semantic-language
+  pull_request:
+    branches:
+      - main
 
 permissions:
   contents: write
@@ -31,10 +34,7 @@ jobs:
             .github/verified-semantic.part07
           )
           for part in "${parts[@]}"; do
-            if [ ! -f "$part" ]; then
-              echo "Verified patch is not complete yet."
-              exit 0
-            fi
+            test -f "$part" || { echo "Missing verified patch chunk: $part"; exit 1; }
           done
           cat "${parts[@]}" > /tmp/verified-semantic.patch.b64
           base64 --decode /tmp/verified-semantic.patch.b64 > /tmp/verified-semantic.patch.gz
