@@ -87,6 +87,45 @@ for (let index = 0; index < browserNodes.length; index += 1) {
   assert.deepEqual(Array.from(browserNodes[index].targets), pythonNodes[index].targets);
 }
 
+const blockSource = `
+Make a recipe called inspect variants:
+    Summarize variants.
+If true:
+    Use the recipe inspect variants.
+Otherwise:
+    Check contamination.
+For every file in files:
+    Check duplicate names.
+`;
+const browserProgram = api.parseProgram(blockSource);
+assert.equal(browserProgram.body[0].type, 'recipe');
+assert.equal(browserProgram.body[0].body[0].action, 'summarize_variants');
+assert.equal(browserProgram.body[1].otherwise[0].action, 'check_contamination');
+assert.equal(browserProgram.body[2].body[0].action, 'check_duplicate_names');
+
+const pythonBlock = spawnSync('python3', ['-c', `
+import json
+from figureloom_bio.parser import parse_program
+source=input()
+program=parse_program(source)
+print(json.dumps({
+  "recipe":program.body[0].body[0].action,
+  "otherwise":program.body[1].otherwise[0].action,
+  "loop":program.body[2].body[0].action,
+}))
+`], {
+  cwd:'figureloom-bio',
+  input:blockSource,
+  encoding:'utf8',
+  env:{ ...process.env, PYTHONPATH:'.' },
+});
+assert.equal(pythonBlock.status, 0, pythonBlock.stderr);
+assert.deepEqual(JSON.parse(pythonBlock.stdout), {
+  recipe:'summarize_variants',
+  otherwise:'check_contamination',
+  loop:'check_duplicate_names',
+});
+
 const runtime = windowObject.FigureLoomBioSemanticRuntime;
 const sections = [];
 const sequenceContext = { data:{ kind:'sequences', format:'fasta', records:[
@@ -131,4 +170,4 @@ assert.ok(html.indexOf('ide-bio-expansion-runtime.js') > html.indexOf('ide-seman
 assert.ok(html.indexOf('ide-bio-expansion-language.js') < html.indexOf('ide-app-v2.js'));
 assert.ok(html.indexOf('ide-bio-expansion-runtime.js') < html.indexOf('ide-app-v2.js'));
 
-console.log(`Validated ${browserNodes.length} simple bioinformatics actions, every declared expansion phrase, browser/Python AST parity, and direct runtime checks.`);
+console.log(`Validated ${browserNodes.length} simple bioinformatics actions, every declared expansion phrase, browser/Python AST parity, control-flow composition, and direct runtime checks.`);
