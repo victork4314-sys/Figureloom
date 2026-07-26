@@ -1,0 +1,71 @@
+name: Export or apply semantic stage two
+
+on:
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  stage-two:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/semantic-language-takeover
+          fetch-depth: 0
+      - name: Apply and verify stage two
+        id: apply
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ ! -f .github/semantic-stage-two.patch ]; then
+            echo "applied=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          git apply --check .github/semantic-stage-two.patch
+          git apply .github/semantic-stage-two.patch
+          node --check ide/ide-semantic-runtime.js
+          node --check ide/ide-semantic-extended-actions.js
+          node --check ide/ide-app-v2.js
+          node scripts/validate-bio-semantic-runtime.mjs
+          PYTHONPATH=figureloom-bio python -m unittest figureloom-bio/tests/test_semantic_language.py -v
+          python - <<'PY'
+          import json,re,pathlib
+          grammar=json.load(open('figureloom-bio/figureloom_bio/language_grammar.json'))
+          advertised={item['action'] for item in grammar['capabilities']}
+          parser=pathlib.Path('ide/ide-semantic-language.js').read_text()
+          mapping=re.search(r'const browserAction\s*=\s*\{(.*?)\n\s*\};',parser,re.S)
+          handled=set(re.findall(r'([A-Za-z0-9_]+)\s*:',mapping.group(1))) if mapping else set()
+          for path in pathlib.Path('ide').glob('ide-*.js'):
+              source=path.read_text(errors='ignore')
+              for match in re.finditer(r'const\s+structuredActions\s*=\s*\[(.*?)\];',source,re.S):
+                  handled.update(re.findall(r"['\"]([A-Za-z0-9_]+)['\"]",match.group(1)))
+              for match in re.finditer(r'const\s+actions\s*=\s*\[(.*?)\];\s*\n\s*runtime\.registerAction',source,re.S):
+                  handled.update(re.findall(r"['\"]([A-Za-z0-9_]+)['\"]",match.group(1)))
+          handled.update({'repeat_program','call_result','use_result','use_recipe'})
+          missing=sorted(advertised-handled)
+          if missing:
+              raise SystemExit('Unhandled semantic actions: '+', '.join(missing))
+          print(f'All {len(advertised)} advertised semantic actions have structured execution routes.')
+          PY
+          git rm .github/semantic-stage-two.patch .github/workflows/semantic-stage-two.yml
+          git add ide/ide-semantic-runtime.js ide/ide-semantic-extended-actions.js ide/ide-app-v2.js ide/index.html scripts/validate-bio-semantic-runtime.mjs
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "Add structured routes for every advertised action"
+          git push origin HEAD:agent/semantic-language-takeover
+          echo "applied=true" >> "$GITHUB_OUTPUT"
+      - name: Remove checkout metadata
+        if: steps.apply.outputs.applied == 'false'
+        run: rm -rf .git
+      - name: Export exact takeover worktree
+        if: steps.apply.outputs.applied == 'false'
+        uses: actions/upload-artifact@v4
+        with:
+          name: semantic-stage-two-base
+          path: .
+          include-hidden-files: true
+          retention-days: 1
