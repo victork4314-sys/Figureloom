@@ -1,0 +1,27 @@
+name: Export PR 260 worktree
+
+on:
+  push:
+    branches:
+      - agent/real-semantic-language
+
+permissions:
+  contents: read
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/real-semantic-language
+      - name: Remove checkout metadata
+        run: rm -rf .git
+      - name: Upload exact worktree
+        uses: actions/upload-artifact@v4
+        with:
+          name: pr260-worktree
+          path: .
+          include-hidden-files: true
+          retention-days: 1
+          # This export is a temporary review aid and must be removed before merge.
