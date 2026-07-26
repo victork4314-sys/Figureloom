@@ -1,0 +1,78 @@
+{
+  "version": 1,
+  "description": "Simple bioinformatics-only grammar expansion shared by browser and Python.",
+  "operations": {
+    "count": ["count", "total"],
+    "find": ["find", "look for", "detect"],
+    "check": ["check", "inspect", "test"],
+    "keep": ["keep", "retain", "filter"],
+    "remove": ["remove", "drop", "exclude"],
+    "annotate": ["annotate", "label"],
+    "summarize": ["summarize", "describe"],
+    "create": ["create", "make", "plot"],
+    "extract": ["extract", "take out"]
+  },
+  "targets": {
+    "kmer": ["dna words", "k-mers", "kmers"],
+    "contig": ["contigs", "contig"],
+    "gene": ["genes", "gene"],
+    "protein": ["proteins", "protein"],
+    "orf": ["open reading frames", "reading frames", "orfs"],
+    "snp": ["single base changes", "snps", "snp"],
+    "indel": ["small insertions and deletions", "indels", "indel"],
+    "primer": ["primers", "primer pairs"],
+    "contamination": ["contamination", "mixed samples"],
+    "duplicate_name": ["duplicate names", "repeated names"],
+    "read_pair": ["read pairs", "paired reads"],
+    "variant": ["variants", "variant calls"],
+    "expression": ["gene expression", "expression data"],
+    "alignment": ["alignment", "aligned sequences"],
+    "feature": ["features", "annotations"],
+    "heatmap": ["heatmap", "heat map"],
+    "pca_plot": ["pca plot", "pca chart"],
+    "ma_plot": ["ma plot", "ma chart"],
+    "box_plot": ["box plot", "box chart"]
+  },
+  "comparisons": {
+    "at_least": ["at least", "no less than"],
+    "greater": ["over", "more than"],
+    "equals": ["equals", "is"]
+  },
+  "roles": {
+    "source": ["from", "in"],
+    "using": ["using", "with"],
+    "column": ["under", "by"],
+    "destination": ["to", "as"]
+  },
+  "modifiers": {
+    "pass": ["pass", "passed"],
+    "unique": ["unique"],
+    "all": ["all", "every"]
+  },
+  "capabilities": [
+    {"operation":"count","target":"kmer","action":"count_kmers","needs_number":true},
+    {"operation":"count","target":"contig","action":"count_contigs"},
+    {"operation":"count","target":"gene","action":"count_genes"},
+    {"operation":"count","target":"protein","action":"count_proteins"},
+    {"operation":"find","target":"orf","action":"find_orfs"},
+    {"operation":"find","target":"snp","action":"find_snps"},
+    {"operation":"find","target":"indel","action":"find_indels"},
+    {"operation":"find","target":"primer","action":"find_primers"},
+    {"operation":"check","target":"contamination","action":"check_contamination"},
+    {"operation":"check","target":"duplicate_name","action":"check_duplicate_names"},
+    {"operation":"check","target":"read_pair","action":"check_read_pairs"},
+    {"operation":"keep","target":"variant","action":"keep_variant_quality","needs_number":true},
+    {"operation":"keep","target":"variant","action":"keep_pass_variants","modifier":"pass"},
+    {"operation":"remove","target":"variant","action":"remove_low_quality_variants","needs_number":true},
+    {"operation":"annotate","target":"variant","action":"annotate_variants","needs_file":true},
+    {"operation":"annotate","target":"gene","action":"annotate_genes","needs_file":true},
+    {"operation":"summarize","target":"variant","action":"summarize_variants"},
+    {"operation":"summarize","target":"expression","action":"summarize_expression"},
+    {"operation":"summarize","target":"alignment","action":"summarize_alignment"},
+    {"operation":"extract","target":"feature","action":"extract_features"},
+    {"operation":"create","target":"heatmap","action":"create_heatmap"},
+    {"operation":"create","target":"pca_plot","action":"create_pca_plot"},
+    {"operation":"create","target":"ma_plot","action":"create_ma_plot"},
+    {"operation":"create","target":"box_plot","action":"create_box_plot"}
+  ]
+}
