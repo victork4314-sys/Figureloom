@@ -15,8 +15,9 @@ class Instruction:
     values: tuple[str, ...] = ()
 
 
-# Compatibility extensions may append old regex rules here. They are deliberately
-# fallback-only: the compositional compiler always gets the sentence first.
+# Existing production and compatibility modules append their proven sentence
+# forms here. Exact matches preserve their established runtime action/value
+# shape. Sentences that do not match them go through the compositional compiler.
 _PATTERNS: tuple[tuple[str, Pattern[str]], ...] = ()
 
 _BASE_COMMAND_WORDS = {
@@ -56,7 +57,8 @@ def _split_sentences(source: str) -> list[tuple[int, str]]:
 
 def _compile_error_message(sentence: str, error: CompileError) -> str:
     return (
-        "This instruction has a known operation, but one required meaning is missing.\n\n"
+        "This instruction could not be compiled.\n\n"
+        "It has a known operation, but one required meaning is missing.\n\n"
         "What is missing\n"
         f"{error}\n\n"
         "How FigureLoom Bio read it\n"
@@ -69,22 +71,30 @@ def _compile_error_message(sentence: str, error: CompileError) -> str:
 
 def _unknown_instruction_message(sentence: str) -> str:
     words = re.findall(r"[A-Za-z0-9_]+(?:-[A-Za-z0-9_]+)*", sentence.casefold())
-    known = _known_command_words()
-    recognized = [word for word in words if word in known]
-    if recognized:
+    operation_words = [word for word in words if word in _BASE_COMMAND_WORDS]
+    known_words = _known_command_words()
+    recognized = [word for word in words if word in known_words]
+    if operation_words:
         return (
-            "This instruction contains known FigureLoom Bio words, but they do not form one complete operation.\n\n"
-            "Words I recognized\n"
-            f"{', '.join(dict.fromkeys(recognized))}\n\n"
+            "This instruction could not be compiled after a known operation word.\n\n"
+            "Operation words I recognized\n"
+            f"{', '.join(dict.fromkeys(operation_words))}\n\n"
             "What to add\n"
             "Name what the operation acts on and provide any filename, column, value, threshold, "
             "comparison, source, or output that operation needs. Word order and exact example wording are not required.\n\n"
             f"I read\n{sentence}."
         )
+    recognized_text = ""
+    if recognized:
+        recognized_text = (
+            "\n\nOther known words I recognized\n"
+            f"{', '.join(dict.fromkeys(recognized))}"
+        )
     return (
-        "This instruction does not contain a FigureLoom Bio operation word.\n\n"
+        "This instruction could not find an operation word.\n\n"
         "Start with or include an operation such as Open, Keep, Remove, Count, Show, Create, "
-        "Calculate, Save, Compare, Find, Check, or one of their listed alternatives.\n\n"
+        "Calculate, Save, Compare, Find, Check, or one of their listed alternatives."
+        f"{recognized_text}\n\n"
         f"I read\n{sentence}."
     )
 
@@ -101,31 +111,26 @@ def _compatibility_match(sentence: str) -> tuple[str, tuple[str, ...]] | None:
 def parse(source: str) -> list[Instruction]:
     instructions: list[Instruction] = []
     for line_number, sentence in _split_sentences(source):
-        compile_error: CompileError | None = None
-        compiled = None
-        try:
-            compiled = compile_sentence(sentence)
-        except CompileError as error:
-            # A known operation with missing semantic roles must not hide an older,
-            # explicitly supported command. Compatibility grammar is tried only
-            # after the compositional compiler has had first refusal.
-            compile_error = error
-
-        if compiled is not None:
-            instructions.append(Instruction(compiled.action, line_number, compiled.values))
-            continue
-
+        # Preserve the exact action/value shape of already-supported production
+        # sentences. This is a compatibility fast path, not a whitelist: every
+        # non-matching sentence proceeds to the compositional compiler below.
         fallback = _compatibility_match(sentence)
         if fallback is not None:
             action, values = fallback
             instructions.append(Instruction(action, line_number, values))
             continue
 
-        if compile_error is not None:
+        try:
+            compiled = compile_sentence(sentence)
+        except CompileError as error:
             raise FigureLoomBioError(
-                _compile_error_message(sentence, compile_error),
+                _compile_error_message(sentence, error),
                 line_number=line_number,
-            ) from compile_error
+            ) from error
+
+        if compiled is not None:
+            instructions.append(Instruction(compiled.action, line_number, compiled.values))
+            continue
 
         raise FigureLoomBioError(
             _unknown_instruction_message(sentence),
