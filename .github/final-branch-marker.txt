@@ -1,1 +1,0 @@
-Verified semantic-language checkpoint before isolated final branch.
