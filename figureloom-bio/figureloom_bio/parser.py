@@ -16,9 +16,10 @@ class Instruction:
 
 
 # Existing production and compatibility modules append their proven sentence
-# forms here. Exact matches preserve their established runtime action/value
-# shape. Sentences that do not match them go through the compositional compiler.
+# forms here. Core productions preserve their established action/value shape.
+# Broad language aliases remain fallback-only behind the compositional compiler.
 _PATTERNS: tuple[tuple[str, Pattern[str]], ...] = ()
+_ALIAS_PREFIX = "language_alias__"
 
 _BASE_COMMAND_WORDS = {
     "align", "annotate", "assemble", "build", "calculate", "call", "change",
@@ -63,8 +64,8 @@ def _compile_error_message(sentence: str, error: CompileError) -> str:
         f"{error}\n\n"
         "How FigureLoom Bio read it\n"
         "The compiler found words for an operation, a target, relationships, and values. "
-        "You may put those parts in ordinary English order and use any listed synonym; "
-        "the sentence does not need to copy an example.\n\n"
+        "The wording and order do not have to copy an example. You may use any listed synonym, "
+        "but the words still need to describe one unambiguous operation.\n\n"
         f"I read\n{sentence}."
     )
 
@@ -81,7 +82,7 @@ def _unknown_instruction_message(sentence: str) -> str:
             f"{', '.join(dict.fromkeys(operation_words))}\n\n"
             "What to add\n"
             "Name what the operation acts on and provide any filename, column, value, threshold, "
-            "comparison, source, or output that operation needs. Word order and exact example wording are not required.\n\n"
+            "comparison, source, or output that operation needs. The wording and order do not have to copy an example.\n\n"
             f"I read\n{sentence}."
         )
     recognized_text = ""
@@ -92,15 +93,22 @@ def _unknown_instruction_message(sentence: str) -> str:
         )
     return (
         "This instruction could not find an operation word.\n\n"
-        "Start with or include an operation such as Open, Keep, Remove, Count, Show, Create, "
-        "Calculate, Save, Compare, Find, Check, or one of their listed alternatives."
+        "Use an operation such as Open, Keep, Remove, Count, Show, Create, Calculate, Save, "
+        "Compare, Find, or Check, or use one of their listed alternatives."
         f"{recognized_text}\n\n"
         f"I read\n{sentence}."
     )
 
 
-def _compatibility_match(sentence: str) -> tuple[str, tuple[str, ...]] | None:
+def _compatibility_match(
+    sentence: str,
+    *,
+    alias_only: bool,
+) -> tuple[str, tuple[str, ...]] | None:
     for action, pattern in _PATTERNS:
+        is_alias = action.startswith(_ALIAS_PREFIX)
+        if is_alias != alias_only:
+            continue
         match = pattern.fullmatch(sentence)
         if match:
             values = tuple(value.strip() if value is not None else "" for value in match.groups())
@@ -111,26 +119,38 @@ def _compatibility_match(sentence: str) -> tuple[str, tuple[str, ...]] | None:
 def parse(source: str) -> list[Instruction]:
     instructions: list[Instruction] = []
     for line_number, sentence in _split_sentences(source):
-        # Preserve the exact action/value shape of already-supported production
-        # sentences. This is a compatibility fast path, not a whitelist: every
-        # non-matching sentence proceeds to the compositional compiler below.
-        fallback = _compatibility_match(sentence)
-        if fallback is not None:
-            action, values = fallback
+        # Preserve exact core/current-file production semantics. These rules have
+        # proven runtime action/value shapes and are not the definition of legality.
+        core_match = _compatibility_match(sentence, alias_only=False)
+        if core_match is not None:
+            action, values = core_match
             instructions.append(Instruction(action, line_number, values))
             continue
 
+        compile_error: CompileError | None = None
+        compiled = None
         try:
             compiled = compile_sentence(sentence)
         except CompileError as error:
-            raise FigureLoomBioError(
-                _compile_error_message(sentence, error),
-                line_number=line_number,
-            ) from error
+            compile_error = error
 
         if compiled is not None:
             instructions.append(Instruction(compiled.action, line_number, compiled.values))
             continue
+
+        # Broad old aliases are accepted only if the compositional compiler could
+        # not resolve the sentence. They cannot steal normal user-written wording.
+        alias_match = _compatibility_match(sentence, alias_only=True)
+        if alias_match is not None:
+            action, values = alias_match
+            instructions.append(Instruction(action, line_number, values))
+            continue
+
+        if compile_error is not None:
+            raise FigureLoomBioError(
+                _compile_error_message(sentence, compile_error),
+                line_number=line_number,
+            ) from compile_error
 
         raise FigureLoomBioError(
             _unknown_instruction_message(sentence),
