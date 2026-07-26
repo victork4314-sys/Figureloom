@@ -7,50 +7,18 @@ import re
 from statistics import mean, median, stdev
 from typing import Any
 
-from . import parser as parser_module
 from .errors import FigureLoomBioError
 
 
-PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
-    (
-        "summary_statistic",
-        re.compile(
-            r"calculate the (average|median|standard deviation|confidence interval) of (.+)",
-            re.IGNORECASE,
-        ),
-    ),
-    (
-        "permutation_p_value",
-        re.compile(
-            r"calculate the p value for (.+?) between (.+?) and (.+?) under (.+)",
-            re.IGNORECASE,
-        ),
-    ),
-    ("histogram", re.compile(r"create a histogram of (.+)", re.IGNORECASE)),
-    ("bar_chart", re.compile(r"create a bar chart of (.+)", re.IGNORECASE)),
-    (
-        "scatter_plot",
-        re.compile(r"create a scatter plot of (.+?) and (.+)", re.IGNORECASE),
-    ),
-    ("box_plot", re.compile(r"create a box plot of (.+)", re.IGNORECASE)),
-    ("heat_map", re.compile(r"create a heat map", re.IGNORECASE)),
-    ("pca_plot", re.compile(r"create a PCA plot", re.IGNORECASE)),
-    (
-        "volcano_plot",
-        re.compile(r"create a volcano plot using (.+?) and (.+)", re.IGNORECASE),
-    ),
-)
-ACTIONS = {action for action, _ in PATTERNS}
 
+
+# Runtime actions are selected by the shared semantic parser.
+ACTIONS = {'bar_chart', 'box_plot', 'heat_map', 'histogram', 'pca_plot', 'permutation_p_value', 'scatter_plot', 'summary_statistic', 'volcano_plot'}
 
 def install_analysis_language(runner_class: type[Any]) -> None:
     if getattr(runner_class, "_analysis_language_installed", False):
         return
 
-    existing = {action for action, _ in parser_module._PATTERNS}
-    additions = tuple(item for item in PATTERNS if item[0] not in existing)
-    if additions:
-        parser_module._PATTERNS = additions + parser_module._PATTERNS
 
     original_run_instruction = runner_class._run_instruction
 

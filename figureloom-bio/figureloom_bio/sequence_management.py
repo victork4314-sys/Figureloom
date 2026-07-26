@@ -3,46 +3,19 @@ from __future__ import annotations
 import re
 from typing import Any
 
-from . import parser as parser_module
 from .errors import FigureLoomBioError
 
 
-EXTRA_PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
-    ("remove_named_sequence", re.compile(r"remove the sequence named (.+)", re.IGNORECASE)),
-    ("rename_sequence", re.compile(r"rename the sequence (.+?) to (.+)", re.IGNORECASE)),
-    (
-        "prefix_sequence_names",
-        re.compile(r"add (.+) to the start of every sequence name", re.IGNORECASE),
-    ),
-    (
-        "suffix_sequence_names",
-        re.compile(r"add (.+) to the end of every sequence name", re.IGNORECASE),
-    ),
-    ("remove_duplicate_sequences", re.compile(r"remove duplicate sequences", re.IGNORECASE)),
-    ("shortest_sequences_first", re.compile(r"put the shortest sequences first", re.IGNORECASE)),
-    ("longest_sequences_first", re.compile(r"put the longest sequences first", re.IGNORECASE)),
-    ("show_sequence_lengths", re.compile(r"show the sequence lengths", re.IGNORECASE)),
-    ("find_shortest_sequence", re.compile(r"find the shortest sequence", re.IGNORECASE)),
-    ("find_longest_sequence", re.compile(r"find the longest sequence", re.IGNORECASE)),
-    (
-        "keep_base_range",
-        re.compile(r"keep bases ([1-9][0-9]*) to ([1-9][0-9]*)", re.IGNORECASE),
-    ),
-)
-EXTRA_ACTIONS = {action for action, _ in EXTRA_PATTERNS}
 
+
+# Runtime actions are selected by the shared semantic parser.
+EXTRA_ACTIONS = {'find_longest_sequence', 'find_shortest_sequence', 'keep_base_range', 'longest_sequences_first', 'prefix_sequence_names', 'remove_duplicate_sequences', 'remove_named_sequence', 'rename_sequence', 'shortest_sequences_first', 'show_sequence_lengths', 'suffix_sequence_names'}
 
 def install_sequence_management(runner_class: type[Any]) -> None:
     """Add simple sequence-selection and sequence-name commands."""
     if getattr(runner_class, "_sequence_management_installed", False):
         return
 
-    existing = {action for action, _ in parser_module._PATTERNS}
-    new_patterns = tuple(
-        item for item in EXTRA_PATTERNS if item[0] not in existing
-    )
-    if new_patterns:
-        parser_module._PATTERNS = new_patterns + parser_module._PATTERNS
 
     original_run_instruction = runner_class._run_instruction
 

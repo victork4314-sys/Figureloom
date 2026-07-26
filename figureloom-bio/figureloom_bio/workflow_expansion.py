@@ -5,33 +5,23 @@ import shlex
 import subprocess
 from typing import Any
 
-from . import parser as parser_module
 from .errors import FigureLoomBioError
 from .parser import Instruction
 from .runtime import Table
 
 
-EXTRA_PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
-    ("open_files_together", re.compile(r"open the files (.+) together", re.IGNORECASE)),
-    ("merge_files", re.compile(r"merge the files (.+)", re.IGNORECASE)),
-    ("merge_result", re.compile(r"merge (?:the result|it) with (.+)", re.IGNORECASE)),
-    ("append_rows", re.compile(r"add the rows from (.+)", re.IGNORECASE)),
-    ("run_tool", re.compile(r"run the tool ([^ ]+) with (.+)", re.IGNORECASE)),
-)
-EXTRA_ACTIONS = {action for action, _ in EXTRA_PATTERNS}
 FASTA_SUFFIXES = {".fa", ".fasta", ".fna", ".ffn", ".faa", ".frn"}
 TABLE_SUFFIXES = {".csv", ".tsv"}
 
+
+# Runtime actions are selected by the shared semantic parser.
+EXTRA_ACTIONS = {'append_rows', 'merge_files', 'merge_result', 'open_files_together', 'run_tool'}
 
 def install_workflow_expansion(runner_class: type[Any]) -> None:
     """Add multi-file workflows, table appends, and guarded installed tools."""
     if getattr(runner_class, "_workflow_expansion_installed", False):
         return
 
-    existing = {action for action, _ in parser_module._PATTERNS}
-    additions = tuple(item for item in EXTRA_PATTERNS if item[0] not in existing)
-    if additions:
-        parser_module._PATTERNS = additions + parser_module._PATTERNS
 
     original_init = runner_class.__init__
     original_run_instruction = runner_class._run_instruction
@@ -48,7 +38,7 @@ def install_workflow_expansion(runner_class: type[Any]) -> None:
             return
 
         if action in {"open_files_together", "merge_files"}:
-            names = _natural_list(values[0])
+            names = list(values) if len(values) > 1 else _natural_list(values[0])
             if len(names) < 2:
                 raise FigureLoomBioError("Name at least two files to open together.")
             self._open_file(names[0])
@@ -107,7 +97,7 @@ def normalize_streaming_instructions(instructions: list[Instruction]) -> list[In
             continue
 
         if action in {"open_files_together", "merge_files"}:
-            names = _natural_list(values[0])
+            names = list(values) if len(values) > 1 else _natural_list(values[0])
             kinds = {_file_kind(name) for name in names}
             if len(names) >= 2 and kinds == {"fasta"}:
                 normalized.append(Instruction("open_file", instruction.line_number, (names[0],)))

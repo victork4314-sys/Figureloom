@@ -1,0 +1,4903 @@
+{
+  "version": 1,
+  "description": "Deterministic grammar and semantic capability registry. Complete sentences are not grammar entries.",
+  "punctuation": {
+    "instruction": ".",
+    "block": ":",
+    "indent": 4,
+    "comment": "#"
+  },
+  "operations": {
+    "open": [
+      "open",
+      "load",
+      "read",
+      "import"
+    ],
+    "keep": [
+      "keep",
+      "retain",
+      "select",
+      "filter"
+    ],
+    "remove": [
+      "remove",
+      "delete",
+      "drop",
+      "discard",
+      "exclude",
+      "filter out",
+      "get rid of"
+    ],
+    "show": [
+      "show",
+      "display",
+      "view",
+      "list",
+      "print"
+    ],
+    "count": [
+      "count",
+      "total"
+    ],
+    "save": [
+      "save",
+      "write",
+      "export"
+    ],
+    "copy": [
+      "copy"
+    ],
+    "use": [
+      "use"
+    ],
+    "rename": [
+      "rename",
+      "name",
+      "call"
+    ],
+    "sort": [
+      "sort",
+      "order",
+      "arrange",
+      "put"
+    ],
+    "replace": [
+      "replace",
+      "change",
+      "fill"
+    ],
+    "combine": [
+      "combine",
+      "merge",
+      "join",
+      "append",
+      "add",
+      "put together",
+      "put"
+    ],
+    "split": [
+      "split"
+    ],
+    "convert": [
+      "convert",
+      "turn",
+      "change"
+    ],
+    "calculate": [
+      "calculate",
+      "compute",
+      "measure",
+      "get"
+    ],
+    "find": [
+      "find",
+      "look for",
+      "detect",
+      "identify",
+      "locate",
+      "design",
+      "classify",
+      "reconstruct",
+      "call"
+    ],
+    "create": [
+      "create",
+      "make",
+      "draw",
+      "build",
+      "plot"
+    ],
+    "check": [
+      "check",
+      "validate",
+      "inspect",
+      "test",
+      "evaluate",
+      "assess"
+    ],
+    "compare": [
+      "compare",
+      "align"
+    ],
+    "trim": [
+      "trim",
+      "cut",
+      "clip"
+    ],
+    "normalize": [
+      "normalize",
+      "scale"
+    ],
+    "prepare": [
+      "prepare",
+      "clean"
+    ],
+    "assemble": [
+      "assemble",
+      "build",
+      "put together",
+      "put"
+    ],
+    "annotate": [
+      "annotate",
+      "label"
+    ],
+    "translate": [
+      "translate"
+    ],
+    "say": [
+      "say",
+      "print",
+      "write"
+    ],
+    "run": [
+      "run",
+      "repeat"
+    ],
+    "stop": [
+      "stop",
+      "end",
+      "quit"
+    ],
+    "continue": [
+      "continue",
+      "next"
+    ],
+    "skip": [
+      "skip"
+    ],
+    "mark": [
+      "mark"
+    ],
+    "warn": [
+      "warn",
+      "warning"
+    ],
+    "assert": [
+      "make sure"
+    ]
+  },
+  "targets": {
+    "file": [
+      "file",
+      "files",
+      "data",
+      "dataset",
+      "input"
+    ],
+    "result": [
+      "result",
+      "results",
+      "output"
+    ],
+    "program": [
+      "program",
+      "programs"
+    ],
+    "sample": [
+      "sample",
+      "samples"
+    ],
+    "recipe": [
+      "recipe",
+      "recipes"
+    ],
+    "folder": [
+      "folder",
+      "directory"
+    ],
+    "tool": [
+      "tool",
+      "tools"
+    ],
+    "reference": [
+      "reference",
+      "database",
+      "reference database"
+    ],
+    "review": [
+      "review",
+      "review list"
+    ],
+    "pair": [
+      "pair",
+      "paired files",
+      "read pair",
+      "mates"
+    ],
+    "row": [
+      "row",
+      "rows",
+      "record",
+      "records"
+    ],
+    "column": [
+      "column",
+      "columns",
+      "field",
+      "fields"
+    ],
+    "value": [
+      "value",
+      "values"
+    ],
+    "sequence": [
+      "sequence",
+      "sequences",
+      "sequence length",
+      "sequence lengths"
+    ],
+    "read": [
+      "read",
+      "reads"
+    ],
+    "base": [
+      "base",
+      "bases",
+      "nucleotide",
+      "nucleotides"
+    ],
+    "name": [
+      "name",
+      "names",
+      "identifier",
+      "identifiers",
+      "id",
+      "ids"
+    ],
+    "quality": [
+      "quality",
+      "read quality",
+      "average quality",
+      "low-quality",
+      "low quality"
+    ],
+    "quality_report": [
+      "quality report",
+      "read quality report"
+    ],
+    "adapter": [
+      "adapter",
+      "adapters",
+      "adapter sequence",
+      "adapter sequences"
+    ],
+    "statistics": [
+      "statistics",
+      "sequence statistics"
+    ],
+    "count_data": [
+      "count",
+      "counts"
+    ],
+    "dna": [
+      "dna"
+    ],
+    "rna": [
+      "rna"
+    ],
+    "protein": [
+      "protein",
+      "proteins",
+      "amino acid",
+      "amino acids",
+      "peptide",
+      "peptides"
+    ],
+    "gene": [
+      "gene",
+      "genes"
+    ],
+    "variant": [
+      "variant",
+      "variants",
+      "mutation",
+      "mutations"
+    ],
+    "primer": [
+      "primer",
+      "primers",
+      "pcr primer",
+      "pcr primers"
+    ],
+    "alignment": [
+      "alignment",
+      "alignments"
+    ],
+    "tree": [
+      "tree",
+      "phylogeny",
+      "phylogenetic tree",
+      "relationship tree",
+      "family tree"
+    ],
+    "assembly": [
+      "assembly",
+      "genome",
+      "contig",
+      "contigs",
+      "bacterial genome"
+    ],
+    "bacterial_reads": [
+      "bacterial read",
+      "bacterial reads"
+    ],
+    "organism": [
+      "organism",
+      "species",
+      "taxonomy"
+    ],
+    "resistance": [
+      "resistance",
+      "resistance gene",
+      "resistance genes",
+      "amr"
+    ],
+    "virulence": [
+      "virulence",
+      "virulence gene",
+      "virulence genes"
+    ],
+    "plasmid": [
+      "plasmid",
+      "plasmids"
+    ],
+    "signal_peptide": [
+      "signal peptide",
+      "signal peptides"
+    ],
+    "transmembrane": [
+      "transmembrane region",
+      "transmembrane regions",
+      "membrane region",
+      "membrane regions"
+    ],
+    "histogram": [
+      "histogram"
+    ],
+    "bar_chart": [
+      "bar chart",
+      "bar plot"
+    ],
+    "scatter_plot": [
+      "scatter plot",
+      "scatter chart"
+    ],
+    "box_plot": [
+      "box plot",
+      "boxplot"
+    ],
+    "heat_map": [
+      "heat map",
+      "heatmap"
+    ],
+    "pca": [
+      "pca plot",
+      "pca",
+      "principal component analysis plot",
+      "principal component analysis"
+    ],
+    "volcano": [
+      "volcano plot",
+      "volcano",
+      "vulcano chart",
+      "vulcano plot",
+      "vulcano"
+    ],
+    "average": [
+      "average",
+      "mean",
+      "average quality"
+    ],
+    "median": [
+      "median"
+    ],
+    "standard_deviation": [
+      "standard deviation",
+      "spread"
+    ],
+    "minimum": [
+      "minimum"
+    ],
+    "maximum": [
+      "maximum"
+    ],
+    "confidence_interval": [
+      "confidence interval",
+      "confidence range",
+      "ci"
+    ],
+    "p_value": [
+      "p value",
+      "p-value",
+      "pvalue"
+    ],
+    "gc_content": [
+      "gc content",
+      "gc percentage"
+    ],
+    "reverse_complement": [
+      "reverse complement",
+      "reverse-complement"
+    ],
+    "open_reading_frame": [
+      "open reading frame",
+      "open reading frames",
+      "orf",
+      "orfs"
+    ],
+    "start_codon": [
+      "start codon",
+      "start codons"
+    ],
+    "stop_codon": [
+      "stop codon",
+      "stop codons"
+    ],
+    "palindrome": [
+      "palindrome",
+      "palindromes",
+      "palindromic",
+      "palindromic sequence",
+      "palindromic sequences"
+    ],
+    "duplicate": [
+      "duplicate",
+      "duplicates",
+      "repeated",
+      "identical"
+    ],
+    "ambiguous": [
+      "ambiguous base",
+      "ambiguous bases",
+      "ambiguous",
+      "unknown base",
+      "unknown bases"
+    ],
+    "gap": [
+      "gap",
+      "gaps"
+    ],
+    "length": [
+      "length",
+      "sequence length",
+      "read length",
+      "sequence lengths"
+    ],
+    "warning": [
+      "warning"
+    ],
+    "package": [
+      ".microbiology",
+      ".genomics",
+      ".sequences",
+      ".fastq"
+    ]
+  },
+  "comparisons": {
+    "equals": [
+      "equals",
+      "equal to",
+      "is"
+    ],
+    "not_equals": [
+      "does not equal",
+      "not equal to",
+      "is not",
+      "is not equal to"
+    ],
+    "greater": [
+      "greater than",
+      "more than",
+      "above",
+      "over",
+      "longer than",
+      "is above",
+      "is over",
+      "is greater than"
+    ],
+    "at_least": [
+      "at least",
+      "no less than",
+      "is at least"
+    ],
+    "less": [
+      "less than",
+      "fewer than",
+      "below",
+      "under",
+      "shorter than",
+      "is below"
+    ],
+    "at_most": [
+      "at most",
+      "no more than",
+      "is at most"
+    ],
+    "contains": [
+      "contains",
+      "containing",
+      "that contain",
+      "which contain",
+      "with names containing"
+    ],
+    "not_contains": [
+      "does not contain",
+      "without"
+    ],
+    "before": [
+      "before"
+    ],
+    "after": [
+      "after"
+    ],
+    "between": [
+      "between"
+    ]
+  },
+  "roles": {
+    "source": [
+      "from",
+      "inside",
+      "within"
+    ],
+    "destination": [
+      "to",
+      "into",
+      "as"
+    ],
+    "column": [
+      "under",
+      "in column",
+      "under column",
+      "from column",
+      "by column"
+    ],
+    "using": [
+      "using",
+      "by",
+      "grouped by"
+    ],
+    "with": [
+      "with"
+    ],
+    "of": [
+      "of",
+      "for"
+    ],
+    "where": [
+      "where",
+      "whose"
+    ],
+    "named": [
+      "named",
+      "called"
+    ],
+    "range": [
+      "through"
+    ],
+    "in": [
+      "in"
+    ]
+  },
+  "modifiers": {
+    "all": [
+      "all",
+      "every",
+      "each"
+    ],
+    "only": [
+      "only"
+    ],
+    "current": [
+      "current"
+    ],
+    "cleaned": [
+      "cleaned",
+      "filtered",
+      "prepared"
+    ],
+    "pair": [
+      "pair",
+      "paired"
+    ],
+    "together": [
+      "together"
+    ],
+    "first": [
+      "first"
+    ],
+    "last": [
+      "last"
+    ],
+    "shortest": [
+      "shortest"
+    ],
+    "longest": [
+      "longest"
+    ],
+    "largest": [
+      "largest",
+      "highest"
+    ],
+    "smallest": [
+      "smallest",
+      "lowest"
+    ],
+    "duplicate": [
+      "duplicate",
+      "duplicates",
+      "repeated"
+    ],
+    "empty": [
+      "empty",
+      "missing",
+      "blank"
+    ],
+    "low": [
+      "low",
+      "low-quality",
+      "low quality"
+    ],
+    "average": [
+      "average"
+    ],
+    "unique": [
+      "unique"
+    ],
+    "start": [
+      "start",
+      "beginning",
+      "left"
+    ],
+    "end": [
+      "end",
+      "right"
+    ],
+    "review": [
+      "review"
+    ],
+    "bacterial": [
+      "bacterial"
+    ]
+  },
+  "units": {
+    "base": [
+      "base",
+      "bases",
+      "nucleotide",
+      "nucleotides"
+    ],
+    "percent": [
+      "percent",
+      "percentage"
+    ],
+    "time": [
+      "time",
+      "times"
+    ]
+  },
+  "booleans": {
+    "true": [
+      "true"
+    ],
+    "false": [
+      "false"
+    ],
+    "and": [
+      "and"
+    ],
+    "or": [
+      "or"
+    ],
+    "not": [
+      "not"
+    ]
+  },
+  "articles": [
+    "the",
+    "a",
+    "an"
+  ],
+  "fillers": [
+    "please",
+    "kindly",
+    "then",
+    "now",
+    "just",
+    "can",
+    "could",
+    "would",
+    "you",
+    "me",
+    "my",
+    "these",
+    "those",
+    "that",
+    "which",
+    "are",
+    "is"
+  ],
+  "file_extensions": [
+    "csv",
+    "tsv",
+    "txt",
+    "fa",
+    "fasta",
+    "fna",
+    "ffn",
+    "faa",
+    "frn",
+    "fq",
+    "fastq",
+    "nwk",
+    "svg",
+    "flbio"
+  ],
+  "capabilities": [
+    {
+      "action": "say",
+      "operation": "say",
+      "all_targets": [],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [],
+      "files": 0,
+      "numbers": 0,
+      "bind": [
+        "payload"
+      ],
+      "priority": 20
+    },
+    {
+      "action": "repeat_program",
+      "operation": "run",
+      "all_targets": [
+        "program"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [],
+      "files": 0,
+      "numbers": 1,
+      "bind": [
+        "number"
+      ],
+      "priority": 100
+    },
+    {
+      "action": "show_warning",
+      "operation": "show",
+      "all_targets": [
+        "warning"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [],
+      "files": 0,
+      "numbers": 0,
+      "bind": [
+        "payload"
+      ],
+      "priority": 90
+    },
+    {
+      "action": "show_warning",
+      "operation": "warn",
+      "all_targets": [],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [],
+      "files": 0,
+      "numbers": 0,
+      "bind": [
+        "payload"
+      ],
+      "priority": 90
+    },
+    {
+      "action": "stop_program",
+      "operation": "stop",
+      "all_targets": [
+        "program"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [],
+      "files": 0,
+      "numbers": 0,
+      "bind": [],
+      "priority": 100
+    },
+    {
+      "action": "continue_sample",
+      "operation": "continue",
+      "all_targets": [],
+      "any_targets": [
+        "sample"
+      ],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [],
+      "files": 0,
+      "numbers": 0,
+      "bind": [],
+      "priority": 90
+    },
+    {
+      "action": "skip_sample",
+      "operation": "skip",
+      "all_targets": [],
+      "any_targets": [
+        "sample"
+      ],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [],
+      "files": 0,
+      "numbers": 0,
+      "bind": [],
+      "priority": 90
+    },
+    {
+      "action": "mark_review",
+      "operation": "mark",
+      "all_targets": [
+        "sample",
+        "review"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [],
+      "files": 0,
+      "numbers": 0,
+      "bind": [],
+      "priority": 100
+    },
+    {
+      "action": "open_pair",
+      "operation": "open",
+      "all_targets": [
+        "file"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [
+        "pair"
+      ],
+      "roles": [],
+      "files": 2,
+      "numbers": 0,
+      "bind": [
+        "file0",
+        "file1"
+      ],
+      "priority": 100
+    },
+    {
+      "action": "open_files_together",
+      "operation": "open",
+      "all_targets": [
+        "file"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [
+        "together"
+      ],
+      "roles": [],
+      "files": 2,
+      "numbers": 0,
+      "bind": [
+        "file0",
+        "file1"
+      ],
+      "priority": 90
+    },
+    {
+      "action": "open_file",
+      "operation": "open",
+      "all_targets": [],
+      "any_targets": [
+        "file",
+        "sample"
+      ],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [],
+      "files": 1,
+      "numbers": 0,
+      "bind": [
+        "file0"
+      ],
+      "priority": 40
+    },
+    {
+      "action": "merge_files",
+      "operation": "combine",
+      "all_targets": [
+        "file"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [],
+      "files": 2,
+      "numbers": 0,
+      "bind": [
+        "file0",
+        "file1"
+      ],
+      "priority": 95
+    },
+    {
+      "action": "merge_result",
+      "operation": "combine",
+      "all_targets": [
+        "result"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [],
+      "files": 1,
+      "numbers": 0,
+      "bind": [
+        "file0"
+      ],
+      "priority": 90
+    },
+    {
+      "action": "append_rows",
+      "operation": "combine",
+      "all_targets": [
+        "row"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [],
+      "files": 1,
+      "numbers": 0,
+      "bind": [
+        "file0"
+      ],
+      "priority": 90
+    },
+    {
+      "action": "call_result",
+      "operation": "rename",
+      "all_targets": [
+        "result"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [
+        "name"
+      ],
+      "files": 0,
+      "numbers": 0,
+      "bind": [
+        "name"
+      ],
+      "priority": 90
+    },
+    {
+      "action": "use_result",
+      "operation": "use",
+      "all_targets": [
+        "result"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [
+        "name"
+      ],
+      "files": 0,
+      "numbers": 0,
+      "bind": [
+        "name"
+      ],
+      "priority": 90
+    },
+    {
+      "action": "use_recipe",
+      "operation": "use",
+      "all_targets": [
+        "recipe"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [
+        "name"
+      ],
+      "files": 0,
+      "numbers": 0,
+      "bind": [
+        "name"
+      ],
+      "priority": 90
+    },
+    {
+      "action": "use_sequence",
+      "operation": "use",
+      "all_targets": [
+        "sequence"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [
+        "name"
+      ],
+      "files": 0,
+      "numbers": 0,
+      "bind": [
+        "name"
+      ],
+      "priority": 90
+    },
+    {
+      "action": "show_result",
+      "operation": "show",
+      "all_targets": [
+        "result"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [],
+      "files": 0,
+      "numbers": 0,
+      "bind": [],
+      "priority": 50
+    },
+    {
+      "action": "show_file",
+      "operation": "show",
+      "all_targets": [
+        "file"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [],
+      "files": 0,
+      "numbers": 0,
+      "bind": [],
+      "priority": 40
+    },
+    {
+      "action": "save_pair",
+      "operation": "save",
+      "all_targets": [
+        "pair"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [],
+      "files": 2,
+      "numbers": 0,
+      "bind": [
+        "file0",
+        "file1"
+      ],
+      "priority": 100
+    },
+    {
+      "action": "save_sequences",
+      "operation": "save",
+      "all_targets": [],
+      "any_targets": [
+        "sequence",
+        "read"
+      ],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [],
+      "files": 1,
+      "numbers": 0,
+      "bind": [
+        "destination"
+      ],
+      "priority": 80
+    },
+    {
+      "action": "save_alignment",
+      "operation": "save",
+      "all_targets": [
+        "alignment"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [],
+      "files": 1,
+      "numbers": 0,
+      "bind": [
+        "destination"
+      ],
+      "priority": 90
+    },
+    {
+      "action": "save_variants",
+      "operation": "save",
+      "all_targets": [
+        "variant"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [],
+      "files": 1,
+      "numbers": 0,
+      "bind": [
+        "destination"
+      ],
+      "priority": 90
+    },
+    {
+      "action": "save_genes",
+      "operation": "save",
+      "all_targets": [
+        "gene"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [],
+      "files": 1,
+      "numbers": 0,
+      "bind": [
+        "destination"
+      ],
+      "priority": 90
+    },
+    {
+      "action": "save_tree",
+      "operation": "save",
+      "all_targets": [
+        "tree"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [],
+      "files": 1,
+      "numbers": 0,
+      "bind": [
+        "destination"
+      ],
+      "priority": 90
+    },
+    {
+      "action": "save_file",
+      "operation": "save",
+      "all_targets": [
+        "file"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [],
+      "files": 1,
+      "numbers": 0,
+      "bind": [
+        "destination"
+      ],
+      "priority": 70
+    },
+    {
+      "action": "save_sample_result",
+      "operation": "save",
+      "all_targets": [
+        "sample"
+      ],
+      "any_targets": [
+        "result",
+        "read",
+        "sequence"
+      ],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [],
+      "files": 0,
+      "numbers": 0,
+      "bind": [],
+      "priority": 110
+    },
+    {
+      "action": "save_result",
+      "operation": "save",
+      "all_targets": [
+        "result"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [],
+      "files": 1,
+      "numbers": 0,
+      "bind": [
+        "destination"
+      ],
+      "priority": 60
+    },
+    {
+      "action": "copy_file",
+      "operation": "copy",
+      "all_targets": [
+        "file"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [],
+      "files": 1,
+      "numbers": 0,
+      "bind": [
+        "destination"
+      ],
+      "priority": 80
+    },
+    {
+      "action": "rename_file",
+      "operation": "rename",
+      "all_targets": [
+        "file"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [],
+      "files": 1,
+      "numbers": 0,
+      "bind": [
+        "destination"
+      ],
+      "priority": 80
+    },
+    {
+      "action": "list_files",
+      "operation": "show",
+      "all_targets": [
+        "file"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [
+        "all"
+      ],
+      "roles": [],
+      "files": 0,
+      "numbers": 0,
+      "bind": [],
+      "priority": 80
+    },
+    {
+      "action": "check_file",
+      "operation": "check",
+      "all_targets": [
+        "file"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [],
+      "files": 0,
+      "numbers": 0,
+      "bind": [],
+      "priority": 40
+    },
+    {
+      "action": "count_file",
+      "operation": "count",
+      "all_targets": [
+        "file"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [],
+      "files": 0,
+      "numbers": 0,
+      "bind": [],
+      "priority": 40
+    },
+    {
+      "action": "keep_rows",
+      "operation": "keep",
+      "all_targets": [
+        "row"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [
+        "condition"
+      ],
+      "files": 0,
+      "numbers": 0,
+      "bind": [
+        "condition_value",
+        "condition_column"
+      ],
+      "priority": 100
+    },
+    {
+      "action": "remove_rows",
+      "operation": "remove",
+      "all_targets": [
+        "row"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [
+        "condition"
+      ],
+      "files": 0,
+      "numbers": 0,
+      "bind": [
+        "condition_value",
+        "condition_column"
+      ],
+      "priority": 100
+    },
+    {
+      "action": "keep_columns",
+      "operation": "keep",
+      "all_targets": [
+        "column"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [],
+      "files": 0,
+      "numbers": 0,
+      "bind": [
+        "list"
+      ],
+      "priority": 80
+    },
+    {
+      "action": "rename_column",
+      "operation": "rename",
+      "all_targets": [
+        "column"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [
+        "source_value",
+        "destination_value"
+      ],
+      "files": 0,
+      "numbers": 0,
+      "bind": [
+        "source_value",
+        "destination_value"
+      ],
+      "priority": 100
+    },
+    {
+      "action": "order_rows",
+      "operation": "sort",
+      "all_targets": [
+        "row"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [
+        "column"
+      ],
+      "files": 0,
+      "numbers": 0,
+      "bind": [
+        "column"
+      ],
+      "priority": 70
+    },
+    {
+      "action": "largest_first",
+      "operation": "sort",
+      "all_targets": [],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [
+        "largest",
+        "first"
+      ],
+      "roles": [
+        "column"
+      ],
+      "files": 0,
+      "numbers": 0,
+      "bind": [
+        "column"
+      ],
+      "priority": 90
+    },
+    {
+      "action": "smallest_first",
+      "operation": "sort",
+      "all_targets": [],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [
+        "smallest",
+        "first"
+      ],
+      "roles": [
+        "column"
+      ],
+      "files": 0,
+      "numbers": 0,
+      "bind": [
+        "column"
+      ],
+      "priority": 90
+    },
+    {
+      "action": "remove_duplicates",
+      "operation": "remove",
+      "all_targets": [
+        "row",
+        "duplicate"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [
+        "column"
+      ],
+      "files": 0,
+      "numbers": 0,
+      "bind": [
+        "column"
+      ],
+      "priority": 100
+    },
+    {
+      "action": "replace_empty",
+      "operation": "replace",
+      "all_targets": [
+        "value"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [
+        "empty"
+      ],
+      "roles": [
+        "column",
+        "destination_value"
+      ],
+      "files": 0,
+      "numbers": 0,
+      "bind": [
+        "column",
+        "destination_value"
+      ],
+      "priority": 100
+    },
+    {
+      "action": "combine_file",
+      "operation": "combine",
+      "all_targets": [],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [
+        "source",
+        "column"
+      ],
+      "files": 1,
+      "numbers": 0,
+      "bind": [
+        "file0",
+        "column"
+      ],
+      "priority": 70
+    },
+    {
+      "action": "change_value",
+      "operation": "replace",
+      "all_targets": [],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [
+        "source_value",
+        "destination_value",
+        "column"
+      ],
+      "files": 0,
+      "numbers": 0,
+      "bind": [
+        "source_value",
+        "destination_value",
+        "column"
+      ],
+      "priority": 100
+    },
+    {
+      "action": "count_rows",
+      "operation": "count",
+      "all_targets": [
+        "row"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [],
+      "files": 0,
+      "numbers": 0,
+      "bind": [],
+      "priority": 60
+    },
+    {
+      "action": "count_sequences",
+      "operation": "count",
+      "all_targets": [],
+      "any_targets": [
+        "sequence",
+        "read"
+      ],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [],
+      "files": 0,
+      "numbers": 0,
+      "bind": [],
+      "priority": 60
+    },
+    {
+      "action": "count_bases",
+      "operation": "count",
+      "all_targets": [
+        "base"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [],
+      "files": 0,
+      "numbers": 0,
+      "bind": [],
+      "priority": 60
+    },
+    {
+      "action": "show_sequence_names",
+      "operation": "show",
+      "all_targets": [
+        "sequence",
+        "name"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [],
+      "files": 0,
+      "numbers": 0,
+      "bind": [],
+      "priority": 100
+    },
+    {
+      "action": "show_first_sequences",
+      "operation": "show",
+      "all_targets": [],
+      "any_targets": [
+        "sequence",
+        "read"
+      ],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [
+        "first"
+      ],
+      "roles": [],
+      "files": 0,
+      "numbers": 1,
+      "bind": [
+        "number"
+      ],
+      "priority": 90
+    },
+    {
+      "action": "show_sequences",
+      "operation": "show",
+      "all_targets": [],
+      "any_targets": [
+        "sequence",
+        "read"
+      ],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [],
+      "files": 0,
+      "numbers": 0,
+      "bind": [],
+      "priority": 50
+    },
+    {
+      "action": "keep_strict_length",
+      "operation": "keep",
+      "all_targets": [],
+      "any_targets": [
+        "sequence",
+        "read"
+      ],
+      "no_targets": [],
+      "comparisons": [
+        "greater"
+      ],
+      "modifiers": [],
+      "roles": [],
+      "files": 0,
+      "numbers": 1,
+      "bind": [
+        "number"
+      ],
+      "priority": 100
+    },
+    {
+      "action": "keep_min_length",
+      "operation": "keep",
+      "all_targets": [],
+      "any_targets": [
+        "sequence",
+        "read"
+      ],
+      "no_targets": [],
+      "comparisons": [
+        "at_least"
+      ],
+      "modifiers": [],
+      "roles": [],
+      "files": 0,
+      "numbers": 1,
+      "bind": [
+        "number"
+      ],
+      "priority": 100
+    },
+    {
+      "action": "remove_shorter",
+      "operation": "remove",
+      "all_targets": [],
+      "any_targets": [
+        "sequence",
+        "read"
+      ],
+      "no_targets": [],
+      "comparisons": [
+        "less"
+      ],
+      "modifiers": [],
+      "roles": [],
+      "files": 0,
+      "numbers": 1,
+      "bind": [
+        "number"
+      ],
+      "priority": 100
+    },
+    {
+      "action": "keep_motif",
+      "operation": "keep",
+      "all_targets": [],
+      "any_targets": [
+        "sequence",
+        "read"
+      ],
+      "no_targets": [],
+      "comparisons": [
+        "contains"
+      ],
+      "modifiers": [],
+      "roles": [],
+      "files": 0,
+      "numbers": 0,
+      "bind": [
+        "comparison_value"
+      ],
+      "priority": 90
+    },
+    {
+      "action": "remove_motif",
+      "operation": "remove",
+      "all_targets": [],
+      "any_targets": [
+        "sequence",
+        "read"
+      ],
+      "no_targets": [],
+      "comparisons": [
+        "contains"
+      ],
+      "modifiers": [],
+      "roles": [],
+      "files": 0,
+      "numbers": 0,
+      "bind": [
+        "comparison_value"
+      ],
+      "priority": 90
+    },
+    {
+      "action": "remove_named_sequence",
+      "operation": "remove",
+      "all_targets": [
+        "sequence"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [
+        "name"
+      ],
+      "files": 0,
+      "numbers": 0,
+      "bind": [
+        "name"
+      ],
+      "priority": 100
+    },
+    {
+      "action": "rename_sequence",
+      "operation": "rename",
+      "all_targets": [
+        "sequence"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [
+        "source_value",
+        "destination_value"
+      ],
+      "files": 0,
+      "numbers": 0,
+      "bind": [
+        "source_value",
+        "destination_value"
+      ],
+      "priority": 100
+    },
+    {
+      "action": "prefix_sequence_names",
+      "operation": "combine",
+      "all_targets": [
+        "sequence",
+        "name"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [
+        "start"
+      ],
+      "roles": [],
+      "files": 0,
+      "numbers": 0,
+      "bind": [
+        "bare_value"
+      ],
+      "priority": 100
+    },
+    {
+      "action": "suffix_sequence_names",
+      "operation": "combine",
+      "all_targets": [
+        "sequence",
+        "name"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [
+        "end"
+      ],
+      "roles": [],
+      "files": 0,
+      "numbers": 0,
+      "bind": [
+        "bare_value"
+      ],
+      "priority": 100
+    },
+    {
+      "action": "remove_duplicate_sequences",
+      "operation": "remove",
+      "all_targets": [
+        "sequence",
+        "duplicate"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [],
+      "files": 0,
+      "numbers": 0,
+      "bind": [],
+      "priority": 100
+    },
+    {
+      "action": "shortest_sequences_first",
+      "operation": "sort",
+      "all_targets": [
+        "sequence"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [
+        "shortest",
+        "first"
+      ],
+      "roles": [],
+      "files": 0,
+      "numbers": 0,
+      "bind": [],
+      "priority": 100
+    },
+    {
+      "action": "longest_sequences_first",
+      "operation": "sort",
+      "all_targets": [
+        "sequence"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [
+        "longest",
+        "first"
+      ],
+      "roles": [],
+      "files": 0,
+      "numbers": 0,
+      "bind": [],
+      "priority": 100
+    },
+    {
+      "action": "show_sequence_lengths",
+      "operation": "show",
+      "all_targets": [
+        "sequence",
+        "length"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [],
+      "files": 0,
+      "numbers": 0,
+      "bind": [],
+      "priority": 100
+    },
+    {
+      "action": "find_shortest_sequence",
+      "operation": "find",
+      "all_targets": [
+        "sequence"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [
+        "shortest"
+      ],
+      "roles": [],
+      "files": 0,
+      "numbers": 0,
+      "bind": [],
+      "priority": 100
+    },
+    {
+      "action": "find_longest_sequence",
+      "operation": "find",
+      "all_targets": [
+        "sequence"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [
+        "longest"
+      ],
+      "roles": [],
+      "files": 0,
+      "numbers": 0,
+      "bind": [],
+      "priority": 100
+    },
+    {
+      "action": "keep_base_range",
+      "operation": "keep",
+      "all_targets": [
+        "base"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [],
+      "files": 0,
+      "numbers": 2,
+      "bind": [
+        "number0",
+        "number1"
+      ],
+      "priority": 100
+    },
+    {
+      "action": "reverse_complement",
+      "operation": "find",
+      "all_targets": [
+        "reverse_complement"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [],
+      "files": 0,
+      "numbers": 0,
+      "bind": [],
+      "priority": 100
+    },
+    {
+      "action": "translate",
+      "operation": "translate",
+      "all_targets": [],
+      "any_targets": [
+        "sequence",
+        "dna",
+        "rna"
+      ],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [],
+      "files": 0,
+      "numbers": 0,
+      "bind": [],
+      "priority": 80
+    },
+    {
+      "action": "gc_content",
+      "operation": "calculate",
+      "all_targets": [
+        "gc_content"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [],
+      "files": 0,
+      "numbers": 0,
+      "bind": [],
+      "priority": 100
+    },
+    {
+      "action": "compare_sequences",
+      "operation": "compare",
+      "all_targets": [],
+      "any_targets": [
+        "sequence",
+        "read"
+      ],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [],
+      "files": 1,
+      "numbers": 0,
+      "bind": [
+        "file0"
+      ],
+      "priority": 80
+    },
+    {
+      "action": "merge_sequences",
+      "operation": "combine",
+      "all_targets": [],
+      "any_targets": [
+        "sequence",
+        "read"
+      ],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [],
+      "files": 1,
+      "numbers": 0,
+      "bind": [
+        "file0"
+      ],
+      "priority": 80
+    },
+    {
+      "action": "sequence_statistics",
+      "operation": "calculate",
+      "all_targets": [
+        "statistics"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [],
+      "files": 0,
+      "numbers": 0,
+      "bind": [],
+      "priority": 80
+    },
+    {
+      "action": "remove_sequence_gaps",
+      "operation": "remove",
+      "all_targets": [
+        "sequence",
+        "gap"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [],
+      "files": 0,
+      "numbers": 0,
+      "bind": [],
+      "priority": 100
+    },
+    {
+      "action": "keep_sequence_names_containing",
+      "operation": "keep",
+      "all_targets": [
+        "sequence",
+        "name"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [
+        "contains"
+      ],
+      "modifiers": [],
+      "roles": [],
+      "files": 0,
+      "numbers": 0,
+      "bind": [
+        "comparison_value"
+      ],
+      "priority": 100
+    },
+    {
+      "action": "remove_sequence_names_containing",
+      "operation": "remove",
+      "all_targets": [
+        "sequence",
+        "name"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [
+        "contains"
+      ],
+      "modifiers": [],
+      "roles": [],
+      "files": 0,
+      "numbers": 0,
+      "bind": [
+        "comparison_value"
+      ],
+      "priority": 100
+    },
+    {
+      "action": "make_sequence_names_unique",
+      "operation": "create",
+      "all_targets": [
+        "sequence",
+        "name",
+        "duplicate"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [
+        "unique"
+      ],
+      "roles": [],
+      "files": 0,
+      "numbers": 0,
+      "bind": [],
+      "priority": 100
+    },
+    {
+      "action": "remove_ambiguous_sequences",
+      "operation": "remove",
+      "all_targets": [
+        "sequence",
+        "ambiguous"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [],
+      "files": 0,
+      "numbers": 0,
+      "bind": [],
+      "priority": 100
+    },
+    {
+      "action": "keep_max_ambiguous",
+      "operation": "keep",
+      "all_targets": [
+        "sequence",
+        "ambiguous"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [
+        "at_most"
+      ],
+      "modifiers": [],
+      "roles": [],
+      "files": 0,
+      "numbers": 1,
+      "bind": [
+        "number"
+      ],
+      "priority": 100
+    },
+    {
+      "action": "validate_sequences",
+      "operation": "check",
+      "all_targets": [],
+      "any_targets": [
+        "sequence",
+        "read"
+      ],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [],
+      "files": 0,
+      "numbers": 0,
+      "bind": [],
+      "priority": 70
+    },
+    {
+      "action": "split_sequences",
+      "operation": "split",
+      "all_targets": [],
+      "any_targets": [
+        "sequence",
+        "read"
+      ],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [],
+      "files": 1,
+      "numbers": 1,
+      "bind": [
+        "number",
+        "destination"
+      ],
+      "priority": 90
+    },
+    {
+      "action": "find_repeated_sequences",
+      "operation": "find",
+      "all_targets": [
+        "duplicate"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [],
+      "files": 0,
+      "numbers": 0,
+      "bind": [],
+      "priority": 90
+    },
+    {
+      "action": "find_palindromes",
+      "operation": "find",
+      "all_targets": [
+        "palindrome"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [],
+      "files": 0,
+      "numbers": 0,
+      "bind": [],
+      "priority": 90
+    },
+    {
+      "action": "find_start_codons",
+      "operation": "find",
+      "all_targets": [
+        "start_codon"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [],
+      "files": 0,
+      "numbers": 0,
+      "bind": [],
+      "priority": 90
+    },
+    {
+      "action": "find_stop_codons",
+      "operation": "find",
+      "all_targets": [
+        "stop_codon"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [],
+      "files": 0,
+      "numbers": 0,
+      "bind": [],
+      "priority": 90
+    },
+    {
+      "action": "find_open_reading_frames",
+      "operation": "find",
+      "all_targets": [
+        "open_reading_frame"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [],
+      "files": 0,
+      "numbers": 0,
+      "bind": [],
+      "priority": 90
+    },
+    {
+      "action": "join_sequences",
+      "operation": "combine",
+      "all_targets": [
+        "sequence"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [],
+      "files": 0,
+      "numbers": 0,
+      "bind": [],
+      "priority": 50
+    },
+    {
+      "action": "keep_min_quality",
+      "operation": "keep",
+      "all_targets": [
+        "read",
+        "quality"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [
+        "at_least"
+      ],
+      "modifiers": [],
+      "roles": [],
+      "files": 0,
+      "numbers": 1,
+      "bind": [
+        "number"
+      ],
+      "priority": 100
+    },
+    {
+      "action": "remove_low_quality",
+      "operation": "remove",
+      "all_targets": [
+        "read",
+        "quality"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [
+        "less"
+      ],
+      "modifiers": [],
+      "roles": [],
+      "files": 0,
+      "numbers": 1,
+      "bind": [
+        "number"
+      ],
+      "priority": 100
+    },
+    {
+      "action": "remove_low_quality_default",
+      "operation": "remove",
+      "all_targets": [
+        "read",
+        "quality"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [
+        "low"
+      ],
+      "roles": [],
+      "files": 0,
+      "numbers": 0,
+      "bind": [],
+      "priority": 90
+    },
+    {
+      "action": "check_quality",
+      "operation": "check",
+      "all_targets": [
+        "quality"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [],
+      "files": 0,
+      "numbers": 0,
+      "bind": [],
+      "priority": 60
+    },
+    {
+      "action": "show_quality_report",
+      "operation": "show",
+      "all_targets": [
+        "quality_report"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [],
+      "files": 0,
+      "numbers": 0,
+      "bind": [],
+      "priority": 100
+    },
+    {
+      "action": "remove_adapters",
+      "operation": "remove",
+      "all_targets": [
+        "adapter"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [],
+      "files": 0,
+      "numbers": 0,
+      "bind": [],
+      "priority": 80
+    },
+    {
+      "action": "cut_start",
+      "operation": "trim",
+      "all_targets": [
+        "read",
+        "base"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [
+        "start"
+      ],
+      "roles": [],
+      "files": 0,
+      "numbers": 1,
+      "bind": [
+        "number"
+      ],
+      "priority": 90
+    },
+    {
+      "action": "cut_end",
+      "operation": "trim",
+      "all_targets": [
+        "read",
+        "base"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [
+        "end"
+      ],
+      "roles": [],
+      "files": 0,
+      "numbers": 1,
+      "bind": [
+        "number"
+      ],
+      "priority": 90
+    },
+    {
+      "action": "trim_start",
+      "operation": "trim",
+      "all_targets": [
+        "base"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [
+        "start"
+      ],
+      "roles": [],
+      "files": 0,
+      "numbers": 1,
+      "bind": [
+        "number"
+      ],
+      "priority": 80
+    },
+    {
+      "action": "trim_end",
+      "operation": "trim",
+      "all_targets": [
+        "base"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [
+        "end"
+      ],
+      "roles": [],
+      "files": 0,
+      "numbers": 1,
+      "bind": [
+        "number"
+      ],
+      "priority": 80
+    },
+    {
+      "action": "builtin_microbiology_prepare_reads",
+      "operation": "prepare",
+      "all_targets": [],
+      "any_targets": [
+        "bacterial_reads",
+        "read"
+      ],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [
+        "bacterial"
+      ],
+      "roles": [],
+      "files": 0,
+      "numbers": 0,
+      "bind": [],
+      "priority": 90
+    },
+    {
+      "action": "builtin_microbiology_assemble_paired",
+      "operation": "assemble",
+      "all_targets": [
+        "assembly"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [
+        "pair"
+      ],
+      "roles": [
+        "destination"
+      ],
+      "files": 2,
+      "numbers": 0,
+      "bind": [
+        "file0",
+        "file1",
+        "destination_value"
+      ],
+      "priority": 100
+    },
+    {
+      "action": "builtin_microbiology_assemble_single",
+      "operation": "assemble",
+      "all_targets": [
+        "assembly"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [
+        "destination"
+      ],
+      "files": 1,
+      "numbers": 0,
+      "bind": [
+        "file0",
+        "destination_value"
+      ],
+      "priority": 90
+    },
+    {
+      "action": "assemble_current_bacterial_genome",
+      "operation": "assemble",
+      "all_targets": [
+        "assembly"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [],
+      "files": 0,
+      "numbers": 0,
+      "bind": [],
+      "priority": 50
+    },
+    {
+      "action": "builtin_microbiology_check_assembly",
+      "operation": "check",
+      "all_targets": [
+        "assembly"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [
+        "destination"
+      ],
+      "files": 1,
+      "numbers": 0,
+      "bind": [
+        "file0",
+        "destination_value"
+      ],
+      "priority": 90
+    },
+    {
+      "action": "builtin_microbiology_annotate",
+      "operation": "annotate",
+      "all_targets": [
+        "assembly"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [
+        "destination"
+      ],
+      "files": 1,
+      "numbers": 0,
+      "bind": [
+        "file0",
+        "destination_value"
+      ],
+      "priority": 90
+    },
+    {
+      "action": "annotate_current_file",
+      "operation": "annotate",
+      "all_targets": [
+        "file"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [],
+      "files": 0,
+      "numbers": 0,
+      "bind": [],
+      "priority": 50
+    },
+    {
+      "action": "builtin_microbiology_resistance",
+      "operation": "find",
+      "all_targets": [
+        "resistance"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [
+        "using"
+      ],
+      "files": 1,
+      "numbers": 0,
+      "bind": [
+        "file0",
+        "using"
+      ],
+      "priority": 90
+    },
+    {
+      "action": "find_resistance_current_file",
+      "operation": "find",
+      "all_targets": [
+        "resistance",
+        "file"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [],
+      "files": 0,
+      "numbers": 0,
+      "bind": [],
+      "priority": 100
+    },
+    {
+      "action": "builtin_microbiology_virulence",
+      "operation": "find",
+      "all_targets": [
+        "virulence"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [],
+      "files": 1,
+      "numbers": 0,
+      "bind": [
+        "file0"
+      ],
+      "priority": 90
+    },
+    {
+      "action": "find_virulence_current_file",
+      "operation": "find",
+      "all_targets": [
+        "virulence",
+        "file"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [],
+      "files": 0,
+      "numbers": 0,
+      "bind": [],
+      "priority": 100
+    },
+    {
+      "action": "builtin_microbiology_classify",
+      "operation": "find",
+      "all_targets": [
+        "organism"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [
+        "using"
+      ],
+      "files": 1,
+      "numbers": 0,
+      "bind": [
+        "file0",
+        "using"
+      ],
+      "priority": 90
+    },
+    {
+      "action": "identify_current_file",
+      "operation": "find",
+      "all_targets": [
+        "organism",
+        "file"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [
+        "using"
+      ],
+      "files": 0,
+      "numbers": 0,
+      "bind": [
+        "using"
+      ],
+      "priority": 100
+    },
+    {
+      "action": "builtin_microbiology_plasmids",
+      "operation": "find",
+      "all_targets": [
+        "plasmid"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [
+        "destination"
+      ],
+      "files": 1,
+      "numbers": 0,
+      "bind": [
+        "file0",
+        "destination_value"
+      ],
+      "priority": 90
+    },
+    {
+      "action": "find_plasmids_current_file",
+      "operation": "find",
+      "all_targets": [
+        "plasmid",
+        "file"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [],
+      "files": 0,
+      "numbers": 0,
+      "bind": [],
+      "priority": 100
+    },
+    {
+      "action": "compare_current_sequences",
+      "operation": "compare",
+      "all_targets": [],
+      "any_targets": [
+        "sequence",
+        "read"
+      ],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [],
+      "files": 0,
+      "numbers": 0,
+      "bind": [],
+      "priority": 30
+    },
+    {
+      "action": "show_alignment",
+      "operation": "show",
+      "all_targets": [
+        "alignment"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [],
+      "files": 0,
+      "numbers": 0,
+      "bind": [],
+      "priority": 80
+    },
+    {
+      "action": "find_variants",
+      "operation": "find",
+      "all_targets": [
+        "variant"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [],
+      "files": 0,
+      "numbers": 0,
+      "bind": [],
+      "priority": 80
+    },
+    {
+      "action": "count_variants",
+      "operation": "count",
+      "all_targets": [
+        "variant"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [],
+      "files": 0,
+      "numbers": 0,
+      "bind": [],
+      "priority": 80
+    },
+    {
+      "action": "show_variants",
+      "operation": "show",
+      "all_targets": [
+        "variant"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [],
+      "files": 0,
+      "numbers": 0,
+      "bind": [],
+      "priority": 80
+    },
+    {
+      "action": "find_genes",
+      "operation": "find",
+      "all_targets": [
+        "gene"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [],
+      "files": 0,
+      "numbers": 0,
+      "bind": [],
+      "priority": 80
+    },
+    {
+      "action": "count_genes",
+      "operation": "count",
+      "all_targets": [
+        "gene"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [],
+      "files": 0,
+      "numbers": 0,
+      "bind": [],
+      "priority": 80
+    },
+    {
+      "action": "show_genes",
+      "operation": "show",
+      "all_targets": [
+        "gene"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [],
+      "files": 0,
+      "numbers": 0,
+      "bind": [],
+      "priority": 80
+    },
+    {
+      "action": "find_signal_peptides",
+      "operation": "find",
+      "all_targets": [
+        "signal_peptide"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [],
+      "files": 0,
+      "numbers": 0,
+      "bind": [],
+      "priority": 80
+    },
+    {
+      "action": "find_transmembrane_regions",
+      "operation": "find",
+      "all_targets": [
+        "transmembrane"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [],
+      "files": 0,
+      "numbers": 0,
+      "bind": [],
+      "priority": 80
+    },
+    {
+      "action": "find_pcr_primers",
+      "operation": "find",
+      "all_targets": [
+        "primer"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [],
+      "files": 0,
+      "numbers": 0,
+      "bind": [],
+      "priority": 80
+    },
+    {
+      "action": "check_primers",
+      "operation": "check",
+      "all_targets": [
+        "primer"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [],
+      "files": 0,
+      "numbers": 0,
+      "bind": [],
+      "priority": 80
+    },
+    {
+      "action": "show_primers",
+      "operation": "show",
+      "all_targets": [
+        "primer"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [],
+      "files": 0,
+      "numbers": 0,
+      "bind": [],
+      "priority": 80
+    },
+    {
+      "action": "build_phylogenetic_tree",
+      "operation": "create",
+      "all_targets": [
+        "tree"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [],
+      "files": 0,
+      "numbers": 0,
+      "bind": [],
+      "priority": 80
+    },
+    {
+      "action": "show_tree",
+      "operation": "show",
+      "all_targets": [
+        "tree"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [],
+      "files": 0,
+      "numbers": 0,
+      "bind": [],
+      "priority": 80
+    },
+    {
+      "action": "calculate_average",
+      "operation": "calculate",
+      "all_targets": [
+        "average"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [
+        "column"
+      ],
+      "files": 0,
+      "numbers": 0,
+      "bind": [
+        "column"
+      ],
+      "priority": 90
+    },
+    {
+      "action": "calculate_median",
+      "operation": "calculate",
+      "all_targets": [
+        "median"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [
+        "column"
+      ],
+      "files": 0,
+      "numbers": 0,
+      "bind": [
+        "column"
+      ],
+      "priority": 90
+    },
+    {
+      "action": "calculate_standard_deviation",
+      "operation": "calculate",
+      "all_targets": [
+        "standard_deviation"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [
+        "column"
+      ],
+      "files": 0,
+      "numbers": 0,
+      "bind": [
+        "column"
+      ],
+      "priority": 90
+    },
+    {
+      "action": "calculate_minimum",
+      "operation": "calculate",
+      "all_targets": [
+        "minimum"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [
+        "column"
+      ],
+      "files": 0,
+      "numbers": 0,
+      "bind": [
+        "column"
+      ],
+      "priority": 90
+    },
+    {
+      "action": "calculate_maximum",
+      "operation": "calculate",
+      "all_targets": [
+        "maximum"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [
+        "column"
+      ],
+      "files": 0,
+      "numbers": 0,
+      "bind": [
+        "column"
+      ],
+      "priority": 90
+    },
+    {
+      "action": "normalize_counts",
+      "operation": "normalize",
+      "all_targets": [
+        "count_data"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [
+        "column"
+      ],
+      "files": 0,
+      "numbers": 0,
+      "bind": [
+        "column"
+      ],
+      "priority": 90
+    },
+    {
+      "action": "compare_groups",
+      "operation": "compare",
+      "all_targets": [],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [
+        "column"
+      ],
+      "files": 0,
+      "numbers": 0,
+      "bind": [
+        "bare_value0",
+        "bare_value1",
+        "column"
+      ],
+      "priority": 50
+    },
+    {
+      "action": "summary_statistic",
+      "operation": "calculate",
+      "all_targets": [
+        "average"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [
+        "of"
+      ],
+      "files": 0,
+      "numbers": 0,
+      "bind": [
+        "statistic",
+        "of"
+      ],
+      "priority": 100
+    },
+    {
+      "action": "summary_statistic",
+      "operation": "calculate",
+      "all_targets": [
+        "median"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [
+        "of"
+      ],
+      "files": 0,
+      "numbers": 0,
+      "bind": [
+        "statistic",
+        "of"
+      ],
+      "priority": 100
+    },
+    {
+      "action": "summary_statistic",
+      "operation": "calculate",
+      "all_targets": [
+        "standard_deviation"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [
+        "of"
+      ],
+      "files": 0,
+      "numbers": 0,
+      "bind": [
+        "statistic",
+        "of"
+      ],
+      "priority": 100
+    },
+    {
+      "action": "summary_statistic",
+      "operation": "calculate",
+      "all_targets": [
+        "confidence_interval"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [
+        "of"
+      ],
+      "files": 0,
+      "numbers": 0,
+      "bind": [
+        "statistic",
+        "of"
+      ],
+      "priority": 100
+    },
+    {
+      "action": "permutation_p_value",
+      "operation": "calculate",
+      "all_targets": [
+        "p_value"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [
+        "of",
+        "column"
+      ],
+      "files": 0,
+      "numbers": 0,
+      "bind": [
+        "of",
+        "bare_value0",
+        "bare_value1",
+        "column"
+      ],
+      "priority": 100
+    },
+    {
+      "action": "create_histogram",
+      "operation": "create",
+      "all_targets": [
+        "histogram"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [
+        "source"
+      ],
+      "files": 0,
+      "numbers": 0,
+      "bind": [
+        "source_list"
+      ],
+      "priority": 80
+    },
+    {
+      "action": "create_bar_chart",
+      "operation": "create",
+      "all_targets": [
+        "bar_chart"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [
+        "source"
+      ],
+      "files": 0,
+      "numbers": 0,
+      "bind": [
+        "source_list"
+      ],
+      "priority": 80
+    },
+    {
+      "action": "create_scatter_plot",
+      "operation": "create",
+      "all_targets": [
+        "scatter_plot"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [
+        "source"
+      ],
+      "files": 0,
+      "numbers": 0,
+      "bind": [
+        "source_list"
+      ],
+      "priority": 80
+    },
+    {
+      "action": "create_box_plot",
+      "operation": "create",
+      "all_targets": [
+        "box_plot"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [
+        "source"
+      ],
+      "files": 0,
+      "numbers": 0,
+      "bind": [
+        "source_list"
+      ],
+      "priority": 80
+    },
+    {
+      "action": "histogram",
+      "operation": "create",
+      "all_targets": [
+        "histogram"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [
+        "of"
+      ],
+      "files": 0,
+      "numbers": 0,
+      "bind": [
+        "of_list"
+      ],
+      "priority": 90
+    },
+    {
+      "action": "bar_chart",
+      "operation": "create",
+      "all_targets": [
+        "bar_chart"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [
+        "of"
+      ],
+      "files": 0,
+      "numbers": 0,
+      "bind": [
+        "of_list"
+      ],
+      "priority": 90
+    },
+    {
+      "action": "scatter_plot",
+      "operation": "create",
+      "all_targets": [
+        "scatter_plot"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [
+        "of"
+      ],
+      "files": 0,
+      "numbers": 0,
+      "bind": [
+        "of_list"
+      ],
+      "priority": 90
+    },
+    {
+      "action": "box_plot",
+      "operation": "create",
+      "all_targets": [
+        "box_plot"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [
+        "of"
+      ],
+      "files": 0,
+      "numbers": 0,
+      "bind": [
+        "of_list"
+      ],
+      "priority": 90
+    },
+    {
+      "action": "heat_map",
+      "operation": "create",
+      "all_targets": [
+        "heat_map"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [],
+      "files": 0,
+      "numbers": 0,
+      "bind": [],
+      "priority": 80
+    },
+    {
+      "action": "pca_plot",
+      "operation": "create",
+      "all_targets": [
+        "pca"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [],
+      "files": 0,
+      "numbers": 0,
+      "bind": [],
+      "priority": 80
+    },
+    {
+      "action": "volcano_plot",
+      "operation": "create",
+      "all_targets": [
+        "volcano"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [
+        "using"
+      ],
+      "files": 0,
+      "numbers": 0,
+      "bind": [
+        "using_list"
+      ],
+      "priority": 100
+    },
+    {
+      "action": "open_all_files",
+      "operation": "open",
+      "all_targets": [
+        "file"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [
+        "all"
+      ],
+      "roles": [
+        "name"
+      ],
+      "files": 0,
+      "numbers": 0,
+      "bind": [
+        "file_type",
+        "name"
+      ],
+      "priority": 100
+    },
+    {
+      "action": "open_sample",
+      "operation": "open",
+      "all_targets": [
+        "sample"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [],
+      "files": 0,
+      "numbers": 0,
+      "bind": [],
+      "priority": 100
+    },
+    {
+      "action": "run_tool",
+      "operation": "run",
+      "all_targets": [
+        "tool"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [
+        "using"
+      ],
+      "files": 0,
+      "numbers": 0,
+      "bind": [
+        "name",
+        "using"
+      ],
+      "priority": 90
+    },
+    {
+      "action": "to_rna",
+      "operation": "convert",
+      "all_targets": [],
+      "any_targets": [
+        "dna",
+        "sequence"
+      ],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [
+        "destination"
+      ],
+      "files": 0,
+      "numbers": 0,
+      "bind": [],
+      "priority": 120,
+      "role_equals": {
+        "destination_target": "rna"
+      }
+    },
+    {
+      "action": "to_dna",
+      "operation": "convert",
+      "all_targets": [],
+      "any_targets": [
+        "rna",
+        "sequence"
+      ],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [
+        "destination"
+      ],
+      "files": 0,
+      "numbers": 0,
+      "bind": [],
+      "priority": 120,
+      "role_equals": {
+        "destination_target": "dna"
+      }
+    },
+    {
+      "action": "annotate_current_file",
+      "operation": "annotate",
+      "all_targets": [
+        "assembly"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [],
+      "files": 0,
+      "numbers": 0,
+      "bind": [],
+      "priority": 70
+    },
+    {
+      "action": "find_resistance_current_file",
+      "operation": "find",
+      "all_targets": [
+        "resistance"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [],
+      "files": 0,
+      "numbers": 0,
+      "bind": [],
+      "priority": 60
+    },
+    {
+      "action": "find_virulence_current_file",
+      "operation": "find",
+      "all_targets": [
+        "virulence"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [],
+      "files": 0,
+      "numbers": 0,
+      "bind": [],
+      "priority": 60
+    },
+    {
+      "action": "find_plasmids_current_file",
+      "operation": "find",
+      "all_targets": [
+        "plasmid"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [],
+      "files": 0,
+      "numbers": 0,
+      "bind": [],
+      "priority": 60
+    },
+    {
+      "action": "compare_current_sequences",
+      "operation": "create",
+      "all_targets": [
+        "alignment"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [],
+      "files": 0,
+      "numbers": 0,
+      "bind": [],
+      "priority": 80
+    },
+    {
+      "action": "builtin_microbiology_prepare_reads",
+      "operation": "prepare",
+      "all_targets": [],
+      "any_targets": [
+        "bacterial_reads",
+        "read"
+      ],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [],
+      "files": 0,
+      "numbers": 0,
+      "bind": [],
+      "priority": 95
+    },
+    {
+      "action": "read_statistic",
+      "operation": "calculate",
+      "all_targets": [
+        "average",
+        "quality"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [],
+      "files": 0,
+      "numbers": 0,
+      "bind": [
+        "statistic",
+        "metric"
+      ],
+      "priority": 115
+    },
+    {
+      "action": "read_statistic",
+      "operation": "calculate",
+      "all_targets": [
+        "average",
+        "length"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [],
+      "files": 0,
+      "numbers": 0,
+      "bind": [
+        "statistic",
+        "metric"
+      ],
+      "priority": 115
+    },
+    {
+      "action": "read_statistic",
+      "operation": "calculate",
+      "all_targets": [
+        "median",
+        "quality"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [],
+      "files": 0,
+      "numbers": 0,
+      "bind": [
+        "statistic",
+        "metric"
+      ],
+      "priority": 115
+    },
+    {
+      "action": "read_statistic",
+      "operation": "calculate",
+      "all_targets": [
+        "median",
+        "length"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [],
+      "files": 0,
+      "numbers": 0,
+      "bind": [
+        "statistic",
+        "metric"
+      ],
+      "priority": 115
+    },
+    {
+      "action": "read_statistic",
+      "operation": "calculate",
+      "all_targets": [
+        "minimum",
+        "quality"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [],
+      "files": 0,
+      "numbers": 0,
+      "bind": [
+        "statistic",
+        "metric"
+      ],
+      "priority": 115
+    },
+    {
+      "action": "read_statistic",
+      "operation": "calculate",
+      "all_targets": [
+        "minimum",
+        "length"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [],
+      "files": 0,
+      "numbers": 0,
+      "bind": [
+        "statistic",
+        "metric"
+      ],
+      "priority": 115
+    },
+    {
+      "action": "read_statistic",
+      "operation": "calculate",
+      "all_targets": [
+        "maximum",
+        "quality"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [],
+      "files": 0,
+      "numbers": 0,
+      "bind": [
+        "statistic",
+        "metric"
+      ],
+      "priority": 115
+    },
+    {
+      "action": "read_statistic",
+      "operation": "calculate",
+      "all_targets": [
+        "maximum",
+        "length"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [],
+      "files": 0,
+      "numbers": 0,
+      "bind": [
+        "statistic",
+        "metric"
+      ],
+      "priority": 115
+    },
+    {
+      "action": "read_statistic",
+      "operation": "find",
+      "all_targets": [
+        "average",
+        "quality"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [],
+      "files": 0,
+      "numbers": 0,
+      "bind": [
+        "statistic",
+        "metric"
+      ],
+      "priority": 115
+    },
+    {
+      "action": "read_statistic",
+      "operation": "find",
+      "all_targets": [
+        "average",
+        "length"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [],
+      "files": 0,
+      "numbers": 0,
+      "bind": [
+        "statistic",
+        "metric"
+      ],
+      "priority": 115
+    },
+    {
+      "action": "read_statistic",
+      "operation": "find",
+      "all_targets": [
+        "median",
+        "quality"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [],
+      "files": 0,
+      "numbers": 0,
+      "bind": [
+        "statistic",
+        "metric"
+      ],
+      "priority": 115
+    },
+    {
+      "action": "read_statistic",
+      "operation": "find",
+      "all_targets": [
+        "median",
+        "length"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [],
+      "files": 0,
+      "numbers": 0,
+      "bind": [
+        "statistic",
+        "metric"
+      ],
+      "priority": 115
+    },
+    {
+      "action": "read_statistic",
+      "operation": "find",
+      "all_targets": [
+        "minimum",
+        "quality"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [],
+      "files": 0,
+      "numbers": 0,
+      "bind": [
+        "statistic",
+        "metric"
+      ],
+      "priority": 115
+    },
+    {
+      "action": "read_statistic",
+      "operation": "find",
+      "all_targets": [
+        "minimum",
+        "length"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [],
+      "files": 0,
+      "numbers": 0,
+      "bind": [
+        "statistic",
+        "metric"
+      ],
+      "priority": 115
+    },
+    {
+      "action": "read_statistic",
+      "operation": "find",
+      "all_targets": [
+        "maximum",
+        "quality"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [],
+      "files": 0,
+      "numbers": 0,
+      "bind": [
+        "statistic",
+        "metric"
+      ],
+      "priority": 115
+    },
+    {
+      "action": "read_statistic",
+      "operation": "find",
+      "all_targets": [
+        "maximum",
+        "length"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [],
+      "files": 0,
+      "numbers": 0,
+      "bind": [
+        "statistic",
+        "metric"
+      ],
+      "priority": 115
+    },
+    {
+      "action": "read_statistic",
+      "operation": "show",
+      "all_targets": [
+        "average",
+        "quality"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [],
+      "files": 0,
+      "numbers": 0,
+      "bind": [
+        "statistic",
+        "metric"
+      ],
+      "priority": 115
+    },
+    {
+      "action": "read_statistic",
+      "operation": "show",
+      "all_targets": [
+        "average",
+        "length"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [],
+      "files": 0,
+      "numbers": 0,
+      "bind": [
+        "statistic",
+        "metric"
+      ],
+      "priority": 115
+    },
+    {
+      "action": "read_statistic",
+      "operation": "show",
+      "all_targets": [
+        "median",
+        "quality"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [],
+      "files": 0,
+      "numbers": 0,
+      "bind": [
+        "statistic",
+        "metric"
+      ],
+      "priority": 115
+    },
+    {
+      "action": "read_statistic",
+      "operation": "show",
+      "all_targets": [
+        "median",
+        "length"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [],
+      "files": 0,
+      "numbers": 0,
+      "bind": [
+        "statistic",
+        "metric"
+      ],
+      "priority": 115
+    },
+    {
+      "action": "read_statistic",
+      "operation": "show",
+      "all_targets": [
+        "minimum",
+        "quality"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [],
+      "files": 0,
+      "numbers": 0,
+      "bind": [
+        "statistic",
+        "metric"
+      ],
+      "priority": 115
+    },
+    {
+      "action": "read_statistic",
+      "operation": "show",
+      "all_targets": [
+        "minimum",
+        "length"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [],
+      "files": 0,
+      "numbers": 0,
+      "bind": [
+        "statistic",
+        "metric"
+      ],
+      "priority": 115
+    },
+    {
+      "action": "read_statistic",
+      "operation": "show",
+      "all_targets": [
+        "maximum",
+        "quality"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [],
+      "files": 0,
+      "numbers": 0,
+      "bind": [
+        "statistic",
+        "metric"
+      ],
+      "priority": 115
+    },
+    {
+      "action": "read_statistic",
+      "operation": "show",
+      "all_targets": [
+        "maximum",
+        "length"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [],
+      "files": 0,
+      "numbers": 0,
+      "bind": [
+        "statistic",
+        "metric"
+      ],
+      "priority": 115
+    },
+    {
+      "action": "calculate_minimum",
+      "operation": "calculate",
+      "all_targets": [
+        "minimum"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [
+        "of"
+      ],
+      "files": 0,
+      "numbers": 0,
+      "bind": [
+        "of"
+      ],
+      "priority": 110
+    },
+    {
+      "action": "calculate_maximum",
+      "operation": "calculate",
+      "all_targets": [
+        "maximum"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [
+        "of"
+      ],
+      "files": 0,
+      "numbers": 0,
+      "bind": [
+        "of"
+      ],
+      "priority": 110
+    },
+    {
+      "action": "summary_statistic",
+      "operation": "find",
+      "all_targets": [
+        "average"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [
+        "of"
+      ],
+      "files": 0,
+      "numbers": 0,
+      "bind": [
+        "statistic",
+        "of"
+      ],
+      "priority": 110
+    },
+    {
+      "action": "summary_statistic",
+      "operation": "find",
+      "all_targets": [
+        "median"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [
+        "of"
+      ],
+      "files": 0,
+      "numbers": 0,
+      "bind": [
+        "statistic",
+        "of"
+      ],
+      "priority": 110
+    },
+    {
+      "action": "summary_statistic",
+      "operation": "find",
+      "all_targets": [
+        "standard_deviation"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [
+        "of"
+      ],
+      "files": 0,
+      "numbers": 0,
+      "bind": [
+        "statistic",
+        "of"
+      ],
+      "priority": 110
+    },
+    {
+      "action": "summary_statistic",
+      "operation": "find",
+      "all_targets": [
+        "confidence_interval"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [
+        "of"
+      ],
+      "files": 0,
+      "numbers": 0,
+      "bind": [
+        "statistic",
+        "of"
+      ],
+      "priority": 110
+    },
+    {
+      "action": "calculate_minimum",
+      "operation": "find",
+      "all_targets": [
+        "minimum"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [
+        "of"
+      ],
+      "files": 0,
+      "numbers": 0,
+      "bind": [
+        "of"
+      ],
+      "priority": 110
+    },
+    {
+      "action": "calculate_maximum",
+      "operation": "find",
+      "all_targets": [
+        "maximum"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [
+        "of"
+      ],
+      "files": 0,
+      "numbers": 0,
+      "bind": [
+        "of"
+      ],
+      "priority": 110
+    },
+    {
+      "action": "summary_statistic",
+      "operation": "show",
+      "all_targets": [
+        "average"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [
+        "of"
+      ],
+      "files": 0,
+      "numbers": 0,
+      "bind": [
+        "statistic",
+        "of"
+      ],
+      "priority": 110
+    },
+    {
+      "action": "summary_statistic",
+      "operation": "show",
+      "all_targets": [
+        "median"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [
+        "of"
+      ],
+      "files": 0,
+      "numbers": 0,
+      "bind": [
+        "statistic",
+        "of"
+      ],
+      "priority": 110
+    },
+    {
+      "action": "summary_statistic",
+      "operation": "show",
+      "all_targets": [
+        "standard_deviation"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [
+        "of"
+      ],
+      "files": 0,
+      "numbers": 0,
+      "bind": [
+        "statistic",
+        "of"
+      ],
+      "priority": 110
+    },
+    {
+      "action": "summary_statistic",
+      "operation": "show",
+      "all_targets": [
+        "confidence_interval"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [
+        "of"
+      ],
+      "files": 0,
+      "numbers": 0,
+      "bind": [
+        "statistic",
+        "of"
+      ],
+      "priority": 110
+    },
+    {
+      "action": "calculate_minimum",
+      "operation": "show",
+      "all_targets": [
+        "minimum"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [
+        "of"
+      ],
+      "files": 0,
+      "numbers": 0,
+      "bind": [
+        "of"
+      ],
+      "priority": 110
+    },
+    {
+      "action": "calculate_maximum",
+      "operation": "show",
+      "all_targets": [
+        "maximum"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [
+        "of"
+      ],
+      "files": 0,
+      "numbers": 0,
+      "bind": [
+        "of"
+      ],
+      "priority": 110
+    },
+    {
+      "action": "normalize_counts",
+      "operation": "normalize",
+      "all_targets": [],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [
+        "column"
+      ],
+      "files": 0,
+      "numbers": 0,
+      "bind": [
+        "column"
+      ],
+      "priority": 100
+    },
+    {
+      "action": "volcano_plot",
+      "operation": "create",
+      "all_targets": [
+        "volcano"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [
+        "source"
+      ],
+      "files": 0,
+      "numbers": 0,
+      "bind": [
+        "source_list"
+      ],
+      "priority": 115
+    },
+    {
+      "action": "grouped_box_plot",
+      "operation": "create",
+      "all_targets": [
+        "box_plot"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [
+        "source",
+        "column"
+      ],
+      "files": 0,
+      "numbers": 0,
+      "bind": [
+        "source",
+        "column"
+      ],
+      "priority": 125
+    },
+    {
+      "action": "heat_map_columns",
+      "operation": "create",
+      "all_targets": [
+        "heat_map"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [
+        "source"
+      ],
+      "files": 0,
+      "numbers": 0,
+      "bind": [
+        "source_list"
+      ],
+      "priority": 120
+    },
+    {
+      "action": "make_sure",
+      "operation": "assert",
+      "all_targets": [],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [
+        "condition_ast"
+      ],
+      "files": 0,
+      "numbers": 0,
+      "bind": [
+        "condition_ast"
+      ],
+      "priority": 100
+    },
+    {
+      "action": "use_reference",
+      "operation": "use",
+      "all_targets": [],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [
+        "name"
+      ],
+      "files": 0,
+      "numbers": 0,
+      "bind": [
+        "name"
+      ],
+      "priority": 30
+    },
+    {
+      "action": "compare_file",
+      "operation": "compare",
+      "all_targets": [
+        "file"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [],
+      "files": 1,
+      "numbers": 0,
+      "bind": [
+        "file0"
+      ],
+      "priority": 120
+    },
+    {
+      "action": "find_genes_current_file",
+      "operation": "find",
+      "all_targets": [
+        "gene",
+        "file"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [],
+      "files": 0,
+      "numbers": 0,
+      "bind": [],
+      "priority": 120
+    },
+    {
+      "action": "find_resistance_current_file",
+      "operation": "find",
+      "all_targets": [
+        "resistance",
+        "file"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [
+        "using"
+      ],
+      "files": 0,
+      "numbers": 0,
+      "bind": [
+        "using"
+      ],
+      "priority": 130
+    },
+    {
+      "action": "find_plasmids_current_file",
+      "operation": "find",
+      "all_targets": [
+        "plasmid",
+        "file"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [
+        "destination"
+      ],
+      "files": 0,
+      "numbers": 0,
+      "bind": [
+        "destination_value"
+      ],
+      "priority": 130
+    },
+    {
+      "action": "legacy_capability_declaration",
+      "operation": "use",
+      "all_targets": [
+        "package"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [],
+      "files": 0,
+      "numbers": 0,
+      "bind": [],
+      "priority": 200
+    },
+    {
+      "action": "read_statistic",
+      "operation": "calculate",
+      "all_targets": [
+        "standard_deviation",
+        "quality"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [],
+      "files": 0,
+      "numbers": 0,
+      "bind": [
+        "statistic",
+        "metric"
+      ],
+      "priority": 125
+    },
+    {
+      "action": "read_statistic",
+      "operation": "calculate",
+      "all_targets": [
+        "standard_deviation",
+        "length"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [],
+      "files": 0,
+      "numbers": 0,
+      "bind": [
+        "statistic",
+        "metric"
+      ],
+      "priority": 125
+    },
+    {
+      "action": "read_statistic",
+      "operation": "find",
+      "all_targets": [
+        "standard_deviation",
+        "quality"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [],
+      "files": 0,
+      "numbers": 0,
+      "bind": [
+        "statistic",
+        "metric"
+      ],
+      "priority": 125
+    },
+    {
+      "action": "read_statistic",
+      "operation": "find",
+      "all_targets": [
+        "standard_deviation",
+        "length"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [],
+      "files": 0,
+      "numbers": 0,
+      "bind": [
+        "statistic",
+        "metric"
+      ],
+      "priority": 125
+    },
+    {
+      "action": "read_statistic",
+      "operation": "show",
+      "all_targets": [
+        "standard_deviation",
+        "quality"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [],
+      "files": 0,
+      "numbers": 0,
+      "bind": [
+        "statistic",
+        "metric"
+      ],
+      "priority": 125
+    },
+    {
+      "action": "read_statistic",
+      "operation": "show",
+      "all_targets": [
+        "standard_deviation",
+        "length"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [],
+      "files": 0,
+      "numbers": 0,
+      "bind": [
+        "statistic",
+        "metric"
+      ],
+      "priority": 125
+    },
+    {
+      "action": "grouped_box_plot",
+      "operation": "create",
+      "all_targets": [
+        "box_plot"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [
+        "of",
+        "column"
+      ],
+      "files": 0,
+      "numbers": 0,
+      "bind": [
+        "of",
+        "column"
+      ],
+      "priority": 135
+    },
+    {
+      "action": "grouped_box_plot",
+      "operation": "create",
+      "all_targets": [
+        "box_plot"
+      ],
+      "any_targets": [],
+      "no_targets": [],
+      "comparisons": [],
+      "modifiers": [],
+      "roles": [
+        "of",
+        "using"
+      ],
+      "files": 0,
+      "numbers": 0,
+      "bind": [
+        "of",
+        "using"
+      ],
+      "priority": 135
+    }
+  ]
+}

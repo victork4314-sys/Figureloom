@@ -3,21 +3,16 @@ from __future__ import annotations
 from html import escape
 from importlib.resources import files
 import json
-import math
 from pathlib import Path
-import re
 import shutil
 from statistics import fmean, median, pstdev
 from typing import Any
 
-from . import parser as parser_module
 from .errors import FigureLoomBioError
 from .parser import Instruction
 from .runtime import Table
 
 
-_ALIAS_PREFIX = "language_alias__"
-_NEW_ACTIONS = {"read_statistic", "grouped_box_plot", "heat_map_columns"}
 _FIGURE_FILES = {
     "create_histogram": "histogram.svg",
     "create_bar_chart": "bar-chart.svg",
@@ -58,69 +53,29 @@ _CLEAR_GENERATED = {
 def _load_rules() -> tuple[dict[str, Any], ...]:
     path = files("figureloom_bio").joinpath("language_aliases.json")
     payload = json.loads(path.read_text(encoding="utf-8"))
-    rules = tuple(payload.get("rules", ()))
-    if not rules:
-        raise RuntimeError("The FigureLoom Bio language alias catalog is empty.")
-    return rules
+    return tuple(payload.get("rules", ()))
 
 
+# The catalog remains available for documentation and migration audits only.
+# It is not consulted by the parser or runtime.
 RULES = _load_rules()
-RULES_BY_ID = {str(rule["id"]): rule for rule in RULES}
-
-
-def _alias_action(rule_id: str) -> str:
-    return f"{_ALIAS_PREFIX}{rule_id}"
-
-
-def _install_patterns() -> None:
-    existing_actions = {action for action, _ in parser_module._PATTERNS}
-    additions: list[tuple[str, re.Pattern[str]]] = []
-    # Longer patterns go first so two-column forms beat one-column forms.
-    for rule in sorted(RULES, key=lambda item: len(str(item["pattern"])), reverse=True):
-        action = _alias_action(str(rule["id"]))
-        if action in existing_actions:
-            continue
-        additions.append((action, re.compile(str(rule["pattern"]), re.IGNORECASE)))
-    parser_module._PATTERNS = parser_module._PATTERNS + tuple(additions)
-
-
-def _canonical(rule: dict[str, Any], values: tuple[str, ...]) -> str:
-    text = str(rule["canonical"])
-    for index, value in enumerate(values, start=1):
-        text = text.replace(f"${index}", value)
-    if str(rule["id"]) == "average_column":
-        text = re.sub(r"\bmean\b", "average", text, count=1, flags=re.IGNORECASE)
-    return text
 
 
 def normalize_sentence(sentence: str) -> str:
-    text = str(sentence).strip()
-    ending = text[-1:] if text.endswith((".", ":")) else ""
-    core = text[:-1].strip() if ending else text
-    for rule in sorted(RULES, key=lambda item: len(str(item["pattern"])), reverse=True):
-        match = re.fullmatch(str(rule["pattern"]), core, re.IGNORECASE)
-        if not match:
-            continue
-        if str(rule["action"]) in _NEW_ACTIONS or str(rule["action"]) == "show_warning":
-            return text
-        return _canonical(rule, tuple(value.strip() for value in match.groups()))
-    return text
+    """Deprecated compatibility API that preserves source exactly."""
+    return str(sentence)
 
 
 def normalize_source(source: str) -> str:
-    output: list[str] = []
-    for raw in str(source).splitlines():
-        indent = raw[: len(raw) - len(raw.lstrip(" \t"))]
-        text = raw.strip()
-        if not text or text.startswith("#") or text.endswith(":"):
-            output.append(raw)
-            continue
-        output.append(indent + normalize_sentence(text))
-    return "\n".join(output)
+    """Deprecated compatibility API that preserves source exactly."""
+    return str(source)
 
 
 def install_language_aliases(runner_class: type[Any]) -> None:
-    _install_patterns()
+    """Install generated-file tracking and direct structured action handlers.
+
+    No sentence matching or canonical source generation occurs here.
+    """
     if getattr(runner_class, "_language_aliases_installed", False):
         return
 
@@ -144,14 +99,9 @@ def install_language_aliases(runner_class: type[Any]) -> None:
             path = self._path(generated)
             if path.exists():
                 self.output.add(
-                    "The file",
-                    generated,
-                    "",
-                    "Type",
-                    path.suffix.lstrip(".").upper() or "file",
-                    "",
-                    "Size",
-                    f"{path.stat().st_size:,} bytes",
+                    "The file", generated, "", "Type",
+                    path.suffix.lstrip(".").upper() or "file", "",
+                    "Size", f"{path.stat().st_size:,} bytes",
                 )
                 return
         original_show_current(self)
@@ -178,33 +128,17 @@ def install_language_aliases(runner_class: type[Any]) -> None:
 
     def alias_run_instruction(self: Any, instruction: Instruction) -> None:
         action = instruction.action
-        if action.startswith(_ALIAS_PREFIX):
-            rule_id = action[len(_ALIAS_PREFIX):]
-            rule = RULES_BY_ID[rule_id]
-            target_action = str(rule["action"])
-            if target_action == "read_statistic":
-                _read_statistic(self, rule_id, instruction.values)
-                return
-            if target_action == "grouped_box_plot":
-                _grouped_box_plot(self, *instruction.values)
-                self.current_generated_file = "box-plot.svg"
-                return
-            if target_action == "heat_map_columns":
-                _heat_map_columns(self, instruction.values[0])
-                self.current_generated_file = "heat-map.svg"
-                return
-            if target_action == "show_warning":
-                message = instruction.values[0] if instruction.values else "This sample needs attention."
-                self.output.add("Warning", message)
-                return
-            canonical = _canonical(rule, instruction.values)
-            parsed = parser_module.parse(canonical)
-            if len(parsed) != 1:
-                raise FigureLoomBioError(f"The alias {rule_id} did not resolve to one instruction.")
-            resolved = parsed[0]
-            self._run_instruction(Instruction(resolved.action, instruction.line_number, resolved.values))
+        if action == "read_statistic":
+            _read_statistic(self, instruction.values)
             return
-
+        if action == "grouped_box_plot":
+            _grouped_box_plot(self, *instruction.values)
+            self.current_generated_file = "box-plot.svg"
+            return
+        if action == "heat_map_columns":
+            _heat_map_columns(self, instruction.values[0])
+            self.current_generated_file = "heat-map.svg"
+            return
         if action in _CLEAR_GENERATED:
             self.current_generated_file = None
         original_run_instruction(self, instruction)
@@ -219,28 +153,6 @@ def install_language_aliases(runner_class: type[Any]) -> None:
     runner_class._save_current = alias_save_current
     runner_class._language_aliases_installed = True
 
-    # Translators receive lowered compatibility instructions, so compatibility forms never become unknown
-    # actions or placeholder target code.
-    from . import translators as translator_module
-
-    if not getattr(translator_module, "_language_alias_translation_installed", False):
-        original_translate = translator_module.translate_source
-
-        def translate_source(
-            source: str,
-            target: str,
-            *,
-            program_name: str = "program.flbio",
-        ):
-            return original_translate(
-                normalize_source(source),
-                target,
-                program_name=program_name,
-            )
-
-        translator_module.translate_source = translate_source
-        translator_module._language_alias_translation_installed = True
-
 
 def _read_records(runner: Any) -> list[Any]:
     pair = getattr(runner, "sequence_pair", None)
@@ -250,15 +162,13 @@ def _read_records(runner: Any) -> list[Any]:
     return list(records)
 
 
-def _read_statistic(runner: Any, rule_id: str, values: tuple[str, ...]) -> None:
-    if rule_id == "standard_deviation_of_quality":
-        operation = "standard deviation"
-        metric = values[0]
-    else:
-        operation, metric = values
+def _read_statistic(runner: Any, values: tuple[str, ...]) -> None:
+    operation, metric = values
     operation = operation.casefold()
     if operation == "mean":
         operation = "average"
+    if operation == "standard_deviation":
+        operation = "standard deviation"
     metric = metric.casefold()
     records = _read_records(runner)
     if metric == "quality":
