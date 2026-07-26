@@ -6,6 +6,22 @@
   const activeFile = document.getElementById('activeFileLabel');
   if (!editor || !highlight || !activeFile) return;
 
+  const COMMAND_WORDS = new Set([
+    'open','save','show','say','keep','remove','replace','rename','put','combine','count','calculate',
+    'check','prepare','trim','convert','find','translate','compare','assemble','annotate','identify',
+    'make','call','create','use','sort','filter','merge','split','export','import','read','write','select',
+    'group','join','reverse-complement','run','repeat','stop','continue','warn'
+  ]);
+  const CONTROL_WORDS = new Set([
+    'if','otherwise','else','when','while','until','for','each','times','true','false','and','or','not','then'
+  ]);
+  const STRUCTURE_WORDS = new Set([
+    'the','a','an','only','all','with','without','of','in','on','at','from','to','into','as','by','under',
+    'using','between','than','least','most','more','less','first','last','before','after','through','per'
+  ]);
+  const FIELD_PREPOSITIONS = new Set(['under','by','using','between','into','as']);
+  const FILE_PATTERN = /(?:^|[/\\])[A-Za-z0-9_.-]+\.(?:flbio|csv|tsv|txt|fa|fasta|fna|ffn|faa|frn|fq|fastq|sam|bam|vcf|gff|gff3|gb|gbk|svg|png|jpg|jpeg|json|yaml|yml)$/i;
+
   const escapeHtml = (value) => String(value)
     .replaceAll('&', '&amp;')
     .replaceAll('<', '&lt;')
@@ -13,8 +29,12 @@
     .replaceAll('"', '&quot;')
     .replaceAll("'", '&#039;');
 
+  function languageApi() {
+    return window.FigureLoomBioSemanticLanguage;
+  }
+
   function acceptedProgram(source) {
-    const language = window.FigureLoomBioSemanticLanguage;
+    const language = languageApi();
     if (!language?.parseProgram) return false;
     try {
       language.parseProgram(String(source));
@@ -30,35 +50,61 @@
     return acceptedProgram(text);
   }
 
-  function genericHighlight(raw) {
-    const leading = raw.match(/^\s*/)?.[0] || '';
-    const trailing = raw.match(/\s*$/)?.[0] || '';
-    const end = trailing ? raw.length - trailing.length : raw.length;
-    const middle = raw.slice(leading.length, end);
-    const punctuation = middle.endsWith(':') ? ':' : middle.endsWith('.') ? '.' : '';
-    const words = punctuation ? middle.slice(0, -1) : middle;
-    return `${escapeHtml(leading)}<span class="syntax-valid"><span class="syntax-command">${escapeHtml(words)}</span>${punctuation ? `<span class="syntax-punctuation">${punctuation}</span>` : ''}</span>${escapeHtml(trailing)}`;
+  function lineIsStructurallyValid(line, wholeProgramAccepted) {
+    const text = String(line).trim();
+    if (!text || text.startsWith('#')) return true;
+    if (wholeProgramAccepted) return true;
+    if (/^(?:otherwise|else)\s*:\s*$/i.test(text)) return true;
+    if (/^(?:if|when|while|until|for each|repeat)\b.*:\s*$/i.test(text)) return true;
+    return acceptedSentence(text);
+  }
+
+  function tokenClass(token, previousWord, wordIndex) {
+    const lower = token.toLowerCase();
+    if (wordIndex === 0 || COMMAND_WORDS.has(lower)) return 'syntax-command';
+    if (CONTROL_WORDS.has(lower)) return 'syntax-field';
+    if (FILE_PATTERN.test(token) || /\.(?:csv|tsv|fastq|fq|fasta|fa|fna|bam|sam|vcf|gff3?|svg)$/i.test(token)) return 'syntax-file';
+    if (/^-?\d+(?:\.\d+)?$/.test(token) || /^(?:true|false|yes|no)$/i.test(token)) return 'syntax-value';
+    if (FIELD_PREPOSITIONS.has(previousWord)) return 'syntax-field';
+    if (STRUCTURE_WORDS.has(lower)) return 'syntax-word';
+    if (/^[ACGTUNRYKMSWBDHV-]{3,}$/i.test(token)) return 'syntax-value';
+    return 'syntax-value';
+  }
+
+  function paintLine(raw, valid) {
+    if (!raw) return '';
+    const trimmed = raw.trimStart();
+    if (trimmed.startsWith('#')) {
+      const leading = raw.slice(0, raw.length - trimmed.length);
+      return `${escapeHtml(leading)}<span class="syntax-comment">${escapeHtml(trimmed)}</span>`;
+    }
+    if (!valid) return `<span class="syntax-invalid">${escapeHtml(raw)}</span>`;
+
+    const tokens = raw.match(/\s+|(?:[A-Za-z0-9_.\\/-]+\.(?:flbio|csv|tsv|txt|fa|fasta|fna|ffn|faa|frn|fq|fastq|sam|bam|vcf|gff|gff3|gb|gbk|svg|png|jpg|jpeg|json|yaml|yml))|[A-Za-z_][A-Za-z0-9_-]*|-?\d+(?:\.\d+)?|[:.,()[\]]|./g) || [];
+    let previousWord = '';
+    let wordIndex = 0;
+    return tokens.map((token) => {
+      if (/^\s+$/.test(token)) return escapeHtml(token);
+      if (/^[:.,()[\]]$/.test(token)) return `<span class="syntax-punctuation">${escapeHtml(token)}</span>`;
+      if (!/^[A-Za-z0-9_.\\/-]+$/.test(token)) return escapeHtml(token);
+      const className = tokenClass(token, previousWord, wordIndex);
+      const lower = token.toLowerCase();
+      previousWord = lower;
+      wordIndex += 1;
+      return `<span class="${className}">${escapeHtml(token)}</span>`;
+    }).join('');
   }
 
   let scheduled = false;
   function repaint() {
     scheduled = false;
     if (!/\.flbio(?:\.txt)?$/i.test(activeFile.textContent.trim())) return;
-    if (!acceptedProgram(editor.value)) return;
-
-    const sourceLines = editor.value.split('\n');
-    const paintedLines = highlight.innerHTML.split('\n');
-    if (paintedLines.length < sourceLines.length) return;
-
-    let changed = false;
-    for (let index = 0; index < sourceLines.length; index += 1) {
-      const line = sourceLines[index];
-      if (!line.trim() || line.trimStart().startsWith('#')) continue;
-      if (!paintedLines[index]?.includes('syntax-invalid')) continue;
-      paintedLines[index] = genericHighlight(line);
-      changed = true;
-    }
-    if (changed) highlight.innerHTML = paintedLines.join('\n');
+    const source = editor.value;
+    const wholeProgramAccepted = acceptedProgram(source);
+    const painted = source.split('\n').map((line) => paintLine(line, lineIsStructurallyValid(line, wholeProgramAccepted))).join('\n');
+    if (highlight.innerHTML !== painted) highlight.innerHTML = painted;
+    highlight.scrollTop = editor.scrollTop;
+    highlight.scrollLeft = editor.scrollLeft;
   }
 
   function schedule() {
@@ -70,7 +116,9 @@
   editor.addEventListener('input', schedule);
   editor.addEventListener('scroll', schedule);
   window.addEventListener('figureloom-bio-semantic-language-ready', schedule);
+  window.addEventListener('figureloom-bio-semantic-run-requested', schedule);
   new MutationObserver(schedule).observe(activeFile, { childList:true, subtree:true, characterData:true });
+  new MutationObserver(schedule).observe(highlight, { childList:true, subtree:true, characterData:true });
 
   window.FigureLoomBioGrammar = Object.freeze({
     acceptsSentence:acceptedSentence,
