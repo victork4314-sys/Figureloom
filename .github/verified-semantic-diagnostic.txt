@@ -1,0 +1,32 @@
+missing=0
+cat_status=0
+decode_status=0
+gzip_status=0
+check_status=1
+base64_bytes=47240
+gzip_bytes=35428
+patch_bytes=152633
+actual_sha256=bf76a28fb2a0650a0b642d988196280e09945e566c4d328598613aea7e91b0c3
+expected_sha256=bf76a28fb2a0650a0b642d988196280e09945e566c4d328598613aea7e91b0c3
+--- part bytes ---
+.github/verified-semantic.part00 6000
+.github/verified-semantic.part01 6000
+.github/verified-semantic.part02 6000
+.github/verified-semantic.part03 6000
+.github/verified-semantic.part04 6000
+.github/verified-semantic.part05 6000
+.github/verified-semantic.part06 6000
+.github/verified-semantic.part07 5240
+--- cat ---
+--- decode ---
+--- gzip ---
+--- apply check ---
+error: patch failed: figureloom-bio/figureloom_bio/parser.py:3
+error: figureloom-bio/figureloom_bio/parser.py: patch does not apply
+error: figureloom-bio/figureloom_bio/semantic_language.py: No such file or directory
+error: figureloom-bio/tests/test_semantic_language.py: No such file or directory
+error: patch failed: ide/ide-app-v2.js:1043
+error: ide/ide-app-v2.js: patch does not apply
+error: ide/ide-semantic-language.js: No such file or directory
+error: patch failed: ide/index.html:69
+error: ide/index.html: patch does not apply
