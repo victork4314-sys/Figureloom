@@ -33,7 +33,7 @@ jobs:
           node --check ide/ide-complete-language.js
           node --check ide/ide-language-highlighter.js
           node --check ide/ide-workspace-cleanup.js
-          node --check ide/ide-compositional-test-controls.js
+          node --check ide/ide-grammar-composition-tests.js
           node --check ide/ide-app-v2.js
           node --check scripts/validate-bio-semantic-runtime.mjs
           node --check scripts/validate-bio-logic-compiler.mjs
@@ -46,7 +46,7 @@ jobs:
       - name: Validate tokenizer grammar AST runtime and advertised actions
         run: node scripts/validate-bio-semantic-runtime.mjs
 
-      - name: Validate 240 focused grammar cases and mixed composition proof
+      - name: Validate every declared word and 200 differently ordered programs
         run: node scripts/validate-bio-240-compositional-tests.mjs
 
       - name: Validate test workspace replacement and clear controls
