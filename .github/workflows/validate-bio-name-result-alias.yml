@@ -1,0 +1,26 @@
+name: Validate FigureLoom Bio named-result alias
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  named_result_alias:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Check changed browser files
+        run: |
+          node --check ide/ide-control-flow-runtime.js
+          node --check ide/ide-builtin-language-support.js
+          node --check scripts/validate-bio-name-result-alias.mjs
+
+      - name: Run exact Name and Use regression
+        run: node scripts/validate-bio-name-result-alias.mjs
