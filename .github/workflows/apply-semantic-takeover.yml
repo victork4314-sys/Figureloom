@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - agent/semantic-language-takeover
+  pull_request:
+    branches:
+      - main
 
 permissions:
   contents: write
@@ -47,7 +50,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          git rm .github/takeover-language.patch .github/takeover-app.patch .github/takeover-index.patch .github/workflows/apply-semantic-takeover.yml
+          git rm .github/takeover-language.patch .github/takeover-app.patch .github/takeover-index.patch .github/workflows/apply-semantic-takeover.yml .github/takeover-trigger.txt
           git add ide/ide-semantic-language.js ide/ide-semantic-runtime.js ide/ide-semantic-run-authority.js ide/ide-app-v2.js ide/index.html scripts/validate-bio-semantic-runtime.mjs
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
