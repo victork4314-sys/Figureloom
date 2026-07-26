@@ -1,0 +1,24 @@
+name: Export semantic worktree
+
+on:
+  push:
+    branches:
+      - agent/real-semantic-language
+
+permissions:
+  contents: read
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Remove checkout metadata
+        run: rm -rf .git
+      - name: Upload exact branch worktree
+        uses: actions/upload-artifact@v4
+        with:
+          name: semantic-worktree
+          path: .
+          include-hidden-files: true
+          retention-days: 1
