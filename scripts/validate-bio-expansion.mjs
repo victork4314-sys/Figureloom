@@ -116,10 +116,11 @@ assert.equal(tableContext.data.rows.length, 2);
 const declared = new Set(expansion.capabilities.map((rule) => rule.action));
 assert.deepEqual(new Set(Object.values(cases)), declared);
 for (const category of ['operations','targets','comparisons','roles','modifiers']) {
-  for (const forms of Object.values(expansion[category])) {
+  for (const [canonical, forms] of Object.entries(expansion[category])) {
     for (const form of forms) {
       assert.equal(form, form.toLowerCase(), `${category} phrase must stay simple and lowercase: ${form}`);
       assert.doesNotMatch(form, /[{}\[\];]/, `${category} phrase contains code punctuation: ${form}`);
+      assert.equal(api.classifyExpansionPhrase(category, form), canonical, `${category}.${canonical} did not classify correctly: ${form}`);
     }
   }
 }
@@ -130,4 +131,4 @@ assert.ok(html.indexOf('ide-bio-expansion-runtime.js') > html.indexOf('ide-seman
 assert.ok(html.indexOf('ide-bio-expansion-language.js') < html.indexOf('ide-app-v2.js'));
 assert.ok(html.indexOf('ide-bio-expansion-runtime.js') < html.indexOf('ide-app-v2.js'));
 
-console.log(`Validated ${browserNodes.length} simple bioinformatics actions with browser/Python AST parity and direct runtime checks.`);
+console.log(`Validated ${browserNodes.length} simple bioinformatics actions, every declared expansion phrase, browser/Python AST parity, and direct runtime checks.`);
