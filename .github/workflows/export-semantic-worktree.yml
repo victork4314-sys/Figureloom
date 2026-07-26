@@ -23,8 +23,45 @@ jobs:
         id: apply
         shell: bash
         run: |
+          if [ -f .github/semantic-apply-error.txt ]; then
+            cat .github/semantic-apply-error.txt
+            exit 1
+          fi
           if [ -f .github/semantic-checkpoint.part04 ]; then
-            cat .github/semantic-checkpoint.part* | base64 --decode | gzip -d > /tmp/semantic-checkpoint.patch
+            set +e
+            cat .github/semantic-checkpoint.part* > /tmp/semantic-checkpoint.b64
+            base64 --decode /tmp/semantic-checkpoint.b64 > /tmp/semantic-checkpoint.patch.gz 2>/tmp/decode.err
+            decode_status=$?
+            gzip -d -c /tmp/semantic-checkpoint.patch.gz > /tmp/semantic-checkpoint.patch 2>/tmp/gzip.err
+            gzip_status=$?
+            git apply --check /tmp/semantic-checkpoint.patch 2>/tmp/check.err
+            check_status=$?
+            if [ "$decode_status" -ne 0 ] || [ "$gzip_status" -ne 0 ] || [ "$check_status" -ne 0 ]; then
+              {
+                echo "decode_status=$decode_status"
+                echo "gzip_status=$gzip_status"
+                echo "check_status=$check_status"
+                echo "b64_bytes=$(wc -c < /tmp/semantic-checkpoint.b64)"
+                echo "gzip_bytes=$(wc -c < /tmp/semantic-checkpoint.patch.gz)"
+                echo "patch_bytes=$(wc -c < /tmp/semantic-checkpoint.patch)"
+                echo "b64_sha256=$(sha256sum /tmp/semantic-checkpoint.b64 | cut -d' ' -f1)"
+                echo "gzip_sha256=$(sha256sum /tmp/semantic-checkpoint.patch.gz | cut -d' ' -f1)"
+                echo "patch_sha256=$(sha256sum /tmp/semantic-checkpoint.patch | cut -d' ' -f1)"
+                echo "--- decode ---"
+                cat /tmp/decode.err
+                echo "--- gzip ---"
+                cat /tmp/gzip.err
+                echo "--- apply check ---"
+                cat /tmp/check.err
+              } > .github/semantic-apply-error.txt
+              git config user.name "github-actions[bot]"
+              git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+              git add .github/semantic-apply-error.txt
+              git commit -m "Record semantic checkpoint apply failure"
+              git push origin HEAD:agent/real-semantic-language
+              exit 1
+            fi
+            set -e
             git apply --index /tmp/semantic-checkpoint.patch
             git rm .github/semantic-checkpoint.part*
             git config user.name "github-actions[bot]"
