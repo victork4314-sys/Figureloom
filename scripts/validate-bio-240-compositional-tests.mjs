@@ -15,7 +15,7 @@ const document = {
   addEventListener(){},
   getElementById(){ return null; },
 };
-const windowObject = { dispatchEvent(){}, localStorage };
+const windowObject = { dispatchEvent(){}, localStorage, confirm(){ return true; } };
 const sandbox = {
   window:windowObject,
   globalThis:null,
@@ -43,44 +43,43 @@ sandbox.globalThis = sandbox;
 windowObject.window = windowObject;
 vm.createContext(sandbox);
 new vm.Script(read('ide/ide-semantic-language.js'), { filename:'ide-semantic-language.js' }).runInContext(sandbox);
-new vm.Script(read('ide/ide-compositional-test-controls.js'), { filename:'ide-compositional-test-controls.js' }).runInContext(sandbox);
+new vm.Script(read('ide/ide-grammar-composition-tests.js'), { filename:'ide-grammar-composition-tests.js' }).runInContext(sandbox);
 
-const api = await windowObject.FigureLoomBioSemanticLanguageReady;
-const tests = windowObject.FigureLoomBioCompositionalTests;
-assert.ok(tests, 'Compositional test generator did not load.');
+const proof = windowObject.FigureLoomBioStructuralProof;
+assert.ok(proof, 'The structural composition proof did not load.');
+const workspace = await proof.buildWorkspace('validation');
 
-const grammarCases = tests.makeGrammarCases('validation');
-assert.equal(grammarCases.length, 240, 'Grammar tests must generate exactly 240 focused cases.');
-const grammarFailures = [];
-for (const item of grammarCases) {
-  try { api.parseSemanticInstruction(item.source.replace(/\.$/, ''), 1); }
-  catch (error) { grammarFailures.push(`${item.source} => ${error.message}`); }
-}
-assert.deepEqual(grammarFailures, [], `Focused grammar cases failed:\n${grammarFailures.join('\n')}`);
+assert.equal(workspace.programs.length, 200, 'The proof must generate exactly 200 separate programs.');
+assert.equal(workspace.passed.length, 200, `Every generated program must parse into an AST.\n${workspace.failures.map(item => `${item.name}: ${item.error}`).join('\n')}`);
+assert.deepEqual(workspace.failures, [], 'Generated program failures are not allowed.');
+assert.deepEqual(workspace.vocabularyFailures, [], `Every declared grammar phrase must tokenize to its declared semantic category.\n${workspace.vocabularyFailures.join('\n')}`);
+assert.ok(workspace.vocabulary.length >= 100, `Expected broad declared-vocabulary coverage, received ${workspace.vocabulary.length}.`);
+assert.ok(workspace.actionOrders.size >= 20, `Expected at least 20 different instruction-order signatures, received ${workspace.actionOrders.size}.`);
 
-const candidates = tests.makeCompositionCandidates('validation');
-assert.ok(candidates.length >= 600, `Expected at least 600 mixed candidates, received ${candidates.length}.`);
-const passed = [];
-const failed = [];
-for (const source of candidates) {
-  try {
-    const node = api.parseSemanticInstruction(source.replace(/\.$/, ''), 1);
-    passed.push({ source, action:node.action, operation:node.operation, targets:node.targets, roles:node.roles });
-  } catch (error) {
-    failed.push(`${source} => ${error.message}`);
-  }
-}
-assert.ok(passed.length >= 200, `Only ${passed.length} mixed compositional cases parsed; at least 200 are required.\n${failed.slice(0, 50).join('\n')}`);
-assert.ok(new Set(passed.map(item => item.source)).size >= 200, 'At least 200 distinct complete instructions must parse.');
-assert.ok(new Set(passed.map(item => item.action)).size >= 12, 'The proof must cover at least 12 different semantic actions.');
-assert.ok(new Set(passed.map(item => item.operation)).size >= 8, 'The proof must cover at least 8 different operations.');
+const tablePrograms = workspace.programs.filter(name => name.startsWith('table-program-'));
+const fastaPrograms = workspace.programs.filter(name => name.startsWith('fasta-program-'));
+const fastqPrograms = workspace.programs.filter(name => name.startsWith('fastq-program-'));
+const controlPrograms = workspace.programs.filter(name => name.startsWith('control-program-'));
+assert.equal(tablePrograms.length, 60);
+assert.equal(fastaPrograms.length, 50);
+assert.equal(fastqPrograms.length, 50);
+assert.equal(controlPrograms.length, 40);
+assert.ok(Object.keys(workspace.files).some(name => name.endsWith('.csv')), 'Generated CSV input files are required.');
+assert.ok(Object.keys(workspace.files).some(name => name.endsWith('.fasta')), 'Generated FASTA input files are required.');
+assert.ok(Object.keys(workspace.files).some(name => name.endsWith('.fastq')), 'Generated FASTQ input files are required.');
+
+const source = read('ide/ide-grammar-composition-tests.js');
+assert.doesNotMatch(source, /const\s+(?:sentences|commands|canonicalSentences)\s*=\s*\[/i, 'The proof must not contain a complete-sentence catalog.');
+assert.match(source, /rotate\(/, 'Instruction order must be varied algorithmically.');
+assert.match(source, /api\.parseProgram\(/, 'Every complete generated program must be parsed into an AST.');
+assert.match(source, /api\.tokenize\(/, 'Every declared vocabulary form must be checked by the tokenizer.');
 
 const html = read('ide/index.html');
 assert.match(html, /id="exampleButton"[^>]*>Grammar tests<\/button>/);
 assert.match(html, /id="allroundTestButton"[^>]*>Composition proof<\/button>/);
-assert.doesNotMatch(html, /ide-allround-test\.js/);
-assert.doesNotMatch(html, /ide-composition-proof\.js/);
-assert.match(html, /ide-compositional-test-controls\.js\?v=20260727-240-cases/);
-assert.ok(html.indexOf('ide-compositional-test-controls.js') < html.indexOf('ide-bio-examples.js'), 'Test controls must bind before the old examples handler.');
+assert.match(html, /id="clearAllFilesButton"[^>]*>Clear all files<\/button>/);
+assert.match(html, /ide-grammar-composition-tests\.js\?v=20260727-200-programs/);
+assert.doesNotMatch(html, /ide-compositional-test-controls\.js/);
+assert.ok(html.indexOf('ide-grammar-composition-tests.js') < html.indexOf('ide-app-v2.js'), 'The proof must restore its workspace before the IDE initializes.');
 
-console.log(`Validated ${grammarCases.length} focused grammar cases and ${passed.length}/${candidates.length} fresh mixed compositional instructions across ${new Set(passed.map(item => item.action)).size} actions.`);
+console.log(`Validated all ${workspace.vocabulary.length} declared vocabulary phrases and ${workspace.passed.length} generated programs across ${workspace.actionOrders.size} instruction-order signatures.`);
