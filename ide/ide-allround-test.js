@@ -4,6 +4,7 @@
   const FILES_KEY = 'figureloom-bio-ide-files-v1';
   const ACTIVE_KEY = 'figureloom-bio-ide-active-v1';
   const DELETED_KEY = 'figureloom-bio-ide-deleted-files-v1';
+  const PENDING_KEY = 'figureloom-bio-allround-test-pending-v2';
 
   const suite = Object.freeze({
     'allround-table-test.flbio': `# Table language and colors
@@ -106,39 +107,48 @@ Say The control test is finished.
     }
   }
 
-  function installSuite() {
+  function applySuiteBeforeIde() {
+    if (localStorage.getItem(PENDING_KEY) !== '1') return false;
     const files = readObject(FILES_KEY);
-    const currentName = (localStorage.getItem(ACTIVE_KEY) || document.getElementById('programName')?.value || '').trim();
-    const editor = document.getElementById('programEditor');
-    if (currentName && editor) files[currentName] = editor.value;
     Object.assign(files, suite);
     const suiteNames = new Set(Object.keys(suite).map((name) => name.toLowerCase()));
     const deleted = readArray(DELETED_KEY).map(String).filter((name) => !suiteNames.has(name.toLowerCase()));
     localStorage.setItem(FILES_KEY, JSON.stringify(files));
     localStorage.setItem(DELETED_KEY, JSON.stringify(deleted));
     localStorage.setItem(ACTIVE_KEY, 'allround-table-test.flbio');
+    localStorage.removeItem(PENDING_KEY);
+    return true;
+  }
+
+  function requestSuiteInstall() {
+    localStorage.setItem(PENDING_KEY, '1');
     location.reload();
   }
 
-  function addButton() {
-    const existing = document.getElementById('allroundTestButton');
-    if (existing) return;
+  function bindButton() {
     const exampleButton = document.getElementById('exampleButton');
     if (!exampleButton?.parentElement) return;
-    const button = document.createElement('button');
-    button.id = 'allroundTestButton';
-    button.type = 'button';
-    button.textContent = 'All-round test';
-    button.title = 'Add broad table, FASTQ, FASTA, and control-flow test programs';
+    let button = document.getElementById('allroundTestButton');
+    if (!button) {
+      button = document.createElement('button');
+      button.id = 'allroundTestButton';
+      button.type = 'button';
+      button.textContent = 'All-round test';
+      button.title = 'Add broad table, FASTQ, FASTA, and control-flow test programs';
+      exampleButton.insertAdjacentElement('afterend', button);
+    }
+    if (button.dataset.allroundBound === '1') return;
+    button.dataset.allroundBound = '1';
     button.addEventListener('click', (event) => {
       event.preventDefault();
       event.stopImmediatePropagation();
-      installSuite();
+      requestSuiteInstall();
     }, { capture:true });
-    exampleButton.insertAdjacentElement('afterend', button);
   }
 
   window.FigureLoomBioAllroundTestFiles = suite;
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', addButton, { once:true });
-  else addButton();
+  window.FigureLoomBioApplyPendingAllroundTest = applySuiteBeforeIde;
+  applySuiteBeforeIde();
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', bindButton, { once:true });
+  else bindButton();
 })();
