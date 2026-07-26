@@ -187,6 +187,7 @@
       else if (term(lower, 'length') && term(lower, 'sequence')) output = 'Show the sequence lengths.';
       else if (nums[0] && has(lower, 'first') && term(lower, 'sequence')) output = `Show the first ${nums[0]} sequences.`;
       else if (term(lower, 'sequence')) output = 'Show the sequences.';
+      else if (has(lower, 'list') && has(lower, 'files')) output = 'List the files.';
       else if (term(lower, 'file')) output = 'Show the file.';
       else if (term(lower, 'result') || has(lower, 'output')) output = 'Show the result.';
     }
