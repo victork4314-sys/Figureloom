@@ -1,0 +1,73 @@
+name: Apply readable semantic role patch
+
+on:
+  push:
+    branches:
+      - agent/real-semantic-language
+
+permissions:
+  contents: write
+
+concurrency:
+  group: apply-readable-semantic-role-patch
+  cancel-in-progress: false
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/real-semantic-language
+          fetch-depth: 0
+
+      - name: Verify and apply the readable parser patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          patch=.github/semantic-role-boundaries.patch
+          expected=9e0e45640c69f242aac366c62c38f191280dc214428c9a787086a800cfa15004
+          test -f "$patch"
+          actual="$(sha256sum "$patch" | cut -d' ' -f1)"
+          test "$actual" = "$expected" || {
+            echo "Patch checksum mismatch: $actual"
+            exit 1
+          }
+          git apply --check "$patch"
+          git apply --index "$patch"
+
+      - name: Check changed parser syntax
+        run: |
+          node --check ide/ide-semantic-language.js
+          python3 -m py_compile figureloom-bio/figureloom_bio/semantic_language.py
+
+      - name: Test semantic AST and direct runtime
+        run: node scripts/validate-bio-semantic-runtime.mjs
+
+      - name: Test exact structured table chain
+        run: node scripts/validate-bio-all-in-one-table-section.mjs
+
+      - name: Run complete FigureLoom Bio regression suite
+        env:
+          PYTHONPATH: figureloom-bio
+        run: python3 -m unittest discover -s figureloom-bio/tests -v
+
+      - name: Validate retained scientific browser handlers
+        run: |
+          node scripts/validate-bio-exact-all-in-one.mjs
+          node scripts/validate-bio-core-translation.mjs
+          node scripts/validate-bio-analysis-language.mjs
+          node scripts/validate-bio-current-file-runtime.mjs
+          node scripts/validate-bio-no-placeholders.mjs
+          node scripts/validate-bio-documentation.mjs
+
+      - name: Commit only the tested parser changes
+        shell: bash
+        run: |
+          set -euo pipefail
+          git rm .github/semantic-role-boundaries.patch
+          git rm .github/workflows/apply-readable-semantic-role-patch.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "Fix semantic role boundaries and structured lists"
+          git push origin HEAD:agent/real-semantic-language
