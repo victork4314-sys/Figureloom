@@ -161,6 +161,13 @@ def _need(value: str | None, message: str) -> str:
     return cleaned
 
 
+def _need_text(value: str | None, message: str) -> str:
+    text = str(value or "").strip().strip("\"'").strip(" ,")
+    if not text:
+        raise CompileError(message)
+    return text
+
+
 def _row_parts(statement: Statement) -> tuple[str, str]:
     column = statement.after("under", "in column", "from column", "by column")
     value = statement.between(("marked", "equal to", "is", "where"), ("under", "in column", "from column", "by column"))
@@ -626,9 +633,9 @@ def compile_sentence(sentence: str) -> CompiledInstruction | None:
     if statement.verb == "reverse_complement":
         return CompiledInstruction("reverse_complement")
     if statement.verb == "say":
-        return CompiledInstruction("say", (_need(statement.after_verb(), "Say needs text to display."),))
+        return CompiledInstruction("say", (_need_text(statement.after_verb(), "Say needs text to display."),))
     if statement.verb == "warn":
-        return CompiledInstruction("show_warning", (_need(statement.after_verb(), "Warn needs a message."),))
+        return CompiledInstruction("show_warning", (_need_text(statement.after_verb(), "Warn needs a message."),))
     if statement.verb == "run":
         return CompiledInstruction("repeat_program", (_need(statement.first_number(), "Run needs the number of repetitions."),))
     if statement.verb == "stop":
