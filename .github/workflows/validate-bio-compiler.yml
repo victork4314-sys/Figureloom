@@ -19,21 +19,37 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
-      - name: Check compiler JavaScript syntax
+      - name: Check semantic language JavaScript syntax
         run: |
-          node --check ide/ide-language-compiler.js
-          node --check ide/ide-logic-compiler.js
+          node --check ide/ide-semantic-language.js
+          node --check ide/ide-semantic-runtime.js
+          node --check ide/ide-core-language-runtime.js
+          node --check ide/ide-semantic-microbiology-runtime.js
+          node --check ide/ide-semantic-run-authority.js
+          node --check ide/ide-current-file-language.js
+          node --check ide/ide-generated-current-file.js
+          node --check ide/ide-app-v2.js
           node --check ide/ide-language-catalog-ui.js
           node --check ide/ide-vocabulary-ui-copy.js
-          node --check scripts/validate-bio-language-compiler.mjs
           node --check scripts/validate-bio-logic-compiler.mjs
+          node --check scripts/validate-bio-semantic-runtime.mjs
+          node --check scripts/validate-bio-semantic-browser.mjs
           node --check scripts/validate-bio-vocabulary-coverage.mjs
 
-      - name: Test browser language compiler
-        run: node scripts/validate-bio-language-compiler.mjs
+      - name: Test semantic tokenizer, grammar, AST, and runtime
+        run: node scripts/validate-bio-semantic-runtime.mjs
 
-      - name: Test browser decisions and everyday wording
+      - name: Test Boolean logic and structured control flow
         run: node scripts/validate-bio-logic-compiler.mjs
+
+      - name: Install real-browser test dependency
+        run: npm install --no-audit --no-fund
+
+      - name: Install Chromium for semantic Run tests
+        run: npx playwright install --with-deps chromium
+
+      - name: Test the production Run button with semantic programs
+        run: node scripts/validate-bio-semantic-browser.mjs
 
       - name: Test exposed vocabulary coverage
         run: node scripts/validate-bio-vocabulary-coverage.mjs

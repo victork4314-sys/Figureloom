@@ -12,9 +12,9 @@ def install_language_label_parity() -> None:
 
     original_read_statistic = language_aliases._read_statistic
 
-    def read_statistic(runner: Any, rule_id: str, values: tuple[str, ...]) -> None:
+    def read_statistic(runner: Any, values: tuple[str, ...]) -> None:
         start = len(runner.output.sections)
-        original_read_statistic(runner, rule_id, values)
+        original_read_statistic(runner, values)
         for section in runner.output.sections[start:]:
             if section.title.startswith("Standard Deviation "):
                 section.title = section.title.replace(

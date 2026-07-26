@@ -1,5 +1,6 @@
 (() => {
   'use strict';
+  if (window.FigureLoomBioCoreLanguageRuntime?.version === 2) return;
 
   const handlers = window.FigureLoomBioStatementHandlers = window.FigureLoomBioStatementHandlers || [];
   const recognizers = window.FigureLoomBioStatementRecognizers = window.FigureLoomBioStatementRecognizers || [];
@@ -87,7 +88,7 @@
   function sequenceSets(context, helpers, line) {
     const data = requireData(context, helpers, line);
     if (data.kind === 'pair') return [data.a, data.b];
-    if (data.kind !== 'seq') error(helpers, line, 'This instruction needs an open FASTA or FASTQ file.');
+    if (!['seq','sequences'].includes(data.kind)) error(helpers, line, 'This instruction needs an open FASTA or FASTQ file.');
     return [data];
   }
 
@@ -140,7 +141,7 @@
         sourceName:left.sourceName || null,
       };
     }
-    if (left.kind === 'seq' && right.kind === 'seq') {
+    if (['seq','sequences'].includes(left.kind) && ['seq','sequences'].includes(right.kind)) {
       return { ...left, records:[...left.records, ...right.records].map((record) => structuredClone(record)) };
     }
     error(helpers, line, 'Both files must be the same kind: two tables or two sequence files.');
@@ -168,6 +169,160 @@
         r:shown.map((record) => ({ name:record.name, length:String(record.sequence.length), sequence:record.sequence })),
       },
     });
+  }
+
+  const structuredActions = [
+    'show_warning','stop_program','continue_sample','skip_sample','mark_review',
+    'open_pair','open_files_together','merge_files','merge_result','append_rows','save_pair','save_sample_result','check_file','count_file','save_file',
+    'show_first_sequences','use_sequence','remove_named_sequence','rename_sequence','prefix_sequence_names','suffix_sequence_names','remove_duplicate_sequences',
+    'shortest_sequences_first','longest_sequences_first','show_sequence_lengths','find_shortest_sequence','find_longest_sequence','keep_base_range',
+    'merge_sequences','sequence_statistics','remove_sequence_gaps','keep_sequence_names_containing','remove_sequence_names_containing',
+    'make_sequence_names_unique','remove_ambiguous_sequences','keep_max_ambiguous','validate_sequences','split_sequences',
+    'remove_low_quality_default','check_quality','show_quality_report','remove_adapters','cut_start','cut_end','open_all_files','open_sample','run_tool','compare_file','read_statistic'
+  ];
+
+  function nodeValues(node){return node?.arguments?.runtime_values || node?.values || [];}
+  function sequenceKind(data){return data && ['seq','sequences'].includes(data.kind);}
+  function sampleStem(context){
+    const raw=context.currentSample?.name || context.currentFile || 'sample';
+    return String(raw).split(/[\\/]/).at(-1).replace(/\.[^.]+$/,'') || 'sample';
+  }
+  function qualitySummary(context,helpers,line){
+    const all=records(context,helpers,line);
+    if(all.some((record)=>record.quality==null))error(helpers,line,'This instruction needs FASTQ reads with quality values.');
+    const lengths=all.map((record)=>record.sequence.length), qualities=all.map(averageQuality);
+    return {count:context.data?.kind==='pair'?(context.data.a.records||[]).length:all.length,average_quality:qualities.length?qualities.reduce((a,b)=>a+b,0)/qualities.length:0,average_length:lengths.length?lengths.reduce((a,b)=>a+b,0)/lengths.length:0,shortest:lengths.length?Math.min(...lengths):0,longest:lengths.length?Math.max(...lengths):0};
+  }
+  function saveData(context,helpers,line,name,data=context.data){
+    if(!data)error(helpers,line,'There is no result to save yet.');
+    context.files[name]=helpers.encode(data,name); context.changed=1;
+    helpers.section('Saved the result',{file:name});
+  }
+
+  async function structuredHandler({node,context,line,helpers}){
+    const action=node.action, values=nodeValues(node), roles=node.roles||{};
+    if(action==='show_warning'){helpers.section('Warning',{kind:'warning',p:[values[0]||node.arguments?.payload||'This sample needs attention.']});return true;}
+    if(action==='stop_program'){context.flowSignal='stop';return true;}
+    if(action==='continue_sample'){context.flowSignal='continue';return true;}
+    if(action==='skip_sample'){context.flowSignal='skip';return true;}
+    if(action==='mark_review'){const name=context.currentSample?.name||context.currentFile||'Current result';context.flags?.set?.(`review:${name}`,true);helpers.section('Marked for review',{p:[name]});return true;}
+    if(action==='run_tool')error(helpers,line,`The browser cannot start ${values[0]||'this installed tool'} directly.\n\nRun this same FigureLoom Bio program in the desktop app or terminal, where installed tools are available.`);
+    if(action==='compare_file'){
+      await helpers.execute('compare',[values[0]]);
+      return true;
+    }
+    if(action==='read_statistic'){
+      const statistic=String(values[0]||node.arguments?.statistic||'average').toLowerCase();
+      const metric=String(values[1]||node.arguments?.metric||'quality').toLowerCase();
+      const all=records(context,helpers,line);
+      const samples=metric==='quality'
+        ? all.map(averageQuality).filter((value)=>value!==null)
+        : all.map((record)=>record.sequence.length);
+      if(!samples.length)error(helpers,line,metric==='quality'?'This instruction needs FASTQ reads with quality values.':'There are no sequences to measure.');
+      const ordered=[...samples].sort((a,b)=>a-b);
+      const average=samples.reduce((sum,value)=>sum+value,0)/samples.length;
+      const median=ordered.length%2?ordered[(ordered.length-1)/2]:(ordered[ordered.length/2-1]+ordered[ordered.length/2])/2;
+      const variance=samples.reduce((sum,value)=>sum+(value-average)**2,0)/samples.length;
+      const result=statistic==='median'?median
+        : statistic==='minimum'?ordered[0]
+        : statistic==='maximum'?ordered.at(-1)
+        : statistic==='standard deviation'?Math.sqrt(variance)
+        : average;
+      helpers.section(`${statistic[0].toUpperCase()+statistic.slice(1)} read ${metric}`,{big:String(Number(result.toFixed(4))),p:[`${samples.length} reads measured`]});
+      return true;
+    }
+    if(action==='open_all_files'){
+      const fileType=String(values[0]||node.arguments?.file_type||'').toLowerCase(), collection=String(values[1]||node.arguments?.name||roles.name||'samples').toLowerCase();
+      const extensions=fileType==='fastq'?['.fastq','.fq']:fileType==='fasta'?['.fasta','.fa','.fna','.ffn','.faa','.frn']:fileType==='csv'?['.csv']:fileType==='tsv'?['.tsv']:[];
+      const names=Object.keys(context.files||{}).filter((name)=>extensions.some((extension)=>name.toLowerCase().endsWith(extension)));
+      context.variables.set(collection,names);helpers.section('Sample collection',{p:[`${collection}\n${names.length} files`,...names]});return true;
+    }
+    if(action==='open_sample'){
+      const value=context.variables.get('sample')??context.currentSample?.name??context.currentRow?.name;const name=typeof value==='object'?(value.name||value.file):value;
+      if(!name)error(helpers,line,'Open the sample must be inside a sample loop.');context.currentSample={name:String(name)};context.data=helpers.open(String(name));helpers.section('Opened the sample',{p:[String(name)]});return true;
+    }
+
+    if(['open_files_together','merge_files'].includes(action)){
+      const first=helpers.open(values[0]),second=helpers.open(values[1]);context.data=mergeData(first,second,helpers,line);helpers.section(action==='open_files_together'?'Combined the files':'Merged the files',{p:[values[0],values[1]]});return true;
+    }
+    if(action==='open_pair'){
+      const first=helpers.open(values[0]),second=helpers.open(values[1]);
+      if(!sequenceKind(first)||!sequenceKind(second))error(helpers,line,'Both members of a read pair must be FASTA or FASTQ sequence files.');
+      if(first.records.length!==second.records.length)error(helpers,line,'The two read-pair files contain different numbers of reads.');
+      context.data={kind:'pair',a:structuredClone(first),b:structuredClone(second),sourceName:null};
+      helpers.section('Opened the read pair',{p:[values[0],values[1]],big:String(first.records.length)});return true;
+    }
+    if(action==='merge_result'){context.data=mergeData(requireData(context,helpers,line),helpers.open(values[0]),helpers,line);helpers.section('Merged the result',{p:[values[0]]});return true;}
+    if(action==='append_rows'){
+      const table=requireTable(context,helpers,line),other=helpers.open(values[0]);if(other.kind!=='table')error(helpers,line,`${values[0]} is not a table.`);
+      context.data=mergeData(table,other,helpers,line);helpers.section('Added the rows',{big:String(other.rows.length)});return true;
+    }
+    if(action==='save_pair'){
+      const data=requireData(context,helpers,line);if(data.kind!=='pair')error(helpers,line,'There is no open read pair to save.');
+      const names=[values[0],values[1]];context.files[names[0]]=helpers.encode(data.a,names[0]);context.files[names[1]]=helpers.encode(data.b,names[1]);context.changed=1;
+      helpers.section('Saved the read pair',{p:names});return true;
+    }
+    if(action==='save_sample_result'){
+      const data=requireData(context,helpers,line), stem=sampleStem(context), ext=data.kind==='table'?'.csv':data.kind==='pair'?null:(data.format==='fastq'?'.fastq':'.fasta');
+      if(data.kind==='pair'){
+        const first=`${stem}-forward-result.fastq`,second=`${stem}-reverse-result.fastq`;context.files[first]=helpers.encode(data.a,first);context.files[second]=helpers.encode(data.b,second);context.changed=1;helpers.section('Saved the sample result',{p:[first,second]});return true;
+      }
+      saveData(context,helpers,line,`${stem}-result${ext}`,data);return true;
+    }
+    if(action==='check_file'){
+      const data=requireData(context,helpers,line);
+      if(data.kind==='table')helpers.section('File check',{p:[`Rows\n${data.rows.length}`,`Columns\n${data.columns.length}`]});
+      else{const all=records(context,helpers,line),bases=all.reduce((sum,r)=>sum+r.sequence.length,0),q=all.map(averageQuality).filter((v)=>v!==null);helpers.section('File check',{p:[`${data.kind==='pair'?'Read pairs':'Sequences'}\n${data.kind==='pair'?data.a.records.length:all.length}`,`Bases\n${bases}`,...(q.length?[`Average quality\n${(q.reduce((a,b)=>a+b,0)/q.length).toFixed(1)}`]:[])]});}
+      return true;
+    }
+    if(action==='count_file'){
+      const data=requireData(context,helpers,line);const count=data.kind==='table'?data.rows.length:data.kind==='pair'?data.a.records.length:records(context,helpers,line).length;helpers.section(data.kind==='table'?'Rows':data.kind==='pair'?'Read pairs':'Sequences',{big:String(count)});return true;
+    }
+    if(action==='save_file'){saveData(context,helpers,line,values[0]);return true;}
+
+    if(action==='show_first_sequences'){showSequences(context,helpers,line,Number(values[0]));return true;}
+    if(action==='use_sequence'){
+      const name=String(values[0]),found=records(context,helpers,line).find((record)=>record.name.toLowerCase()===name.toLowerCase());if(!found)error(helpers,line,`I could not find a sequence named ${name}.`);
+      context.data={kind:'sequences',format:found.quality==null?'fasta':'fastq',records:[structuredClone(found)],sourceName:null};return true;
+    }
+    if(action==='remove_named_sequence'){const name=String(values[0]).toLowerCase();sequenceSets(context,helpers,line).forEach((data)=>{data.records=data.records.filter((record)=>record.name.toLowerCase()!==name);});return true;}
+    if(action==='rename_sequence'){
+      const oldName=String(roles.name||values[0]).replace(/^(?:the\s+)?sequence\s+/i,''),newName=String(values.at(-1));const all=records(context,helpers,line),record=all.find((item)=>item.name.toLowerCase()===oldName.toLowerCase());
+      if(!record)error(helpers,line,`I could not find a sequence named ${oldName}.`);if(all.some((item)=>item!==record&&item.name.toLowerCase()===newName.toLowerCase()))error(helpers,line,`A sequence named ${newName} already exists.`);record.name=newName;return true;
+    }
+    if(action==='prefix_sequence_names'||action==='suffix_sequence_names'){const value=String(values[0]);records(context,helpers,line).forEach((record)=>{record.name=action==='prefix_sequence_names'?`${value}${record.name}`:`${record.name}${value}`;});return true;}
+    if(action==='remove_duplicate_sequences'){const seen=new Set();sequenceSets(context,helpers,line).forEach((data)=>{data.records=data.records.filter((record)=>{const key=record.sequence.toUpperCase();if(seen.has(key))return false;seen.add(key);return true;});});return true;}
+    if(action==='shortest_sequences_first'||action==='longest_sequences_first'){const direction=action==='longest_sequences_first'?-1:1;sequenceSets(context,helpers,line).forEach((data)=>data.records.sort((a,b)=>direction*(a.sequence.length-b.sequence.length||a.name.localeCompare(b.name))));return true;}
+    if(action==='show_sequence_lengths'){helpers.section('Sequence lengths',{table:{c:['name','length'],r:records(context,helpers,line).map((record)=>({name:record.name,length:String(record.sequence.length)}))}});return true;}
+    if(action==='find_shortest_sequence'||action==='find_longest_sequence'){
+      const all=records(context,helpers,line);if(!all.length)error(helpers,line,'There are no sequences left.');const sorted=[...all].sort((a,b)=>a.sequence.length-b.sequence.length||a.name.localeCompare(b.name)),record=action==='find_shortest_sequence'?sorted[0]:sorted.at(-1);helpers.section(action==='find_shortest_sequence'?'Shortest sequence':'Longest sequence',{p:[record.name],big:String(record.sequence.length)});return true;
+    }
+    if(action==='keep_base_range'){
+      const start=Number(values[0]),end=Number(values[1]);if(end<start)error(helpers,line,'The ending base must come after the starting base.');records(context,helpers,line).forEach((record)=>{record.sequence=record.sequence.slice(start-1,end);if(record.quality!=null)record.quality=record.quality.slice(start-1,end);});return true;
+    }
+    if(action==='merge_sequences'){
+      const data=requireData(context,helpers,line),other=helpers.open(values[0]);if(!sequenceKind(data)||!sequenceKind(other))error(helpers,line,'Both files must be FASTA or FASTQ sequence files.');data.records.push(...other.records.map((record)=>structuredClone(record)));return true;
+    }
+    if(action==='sequence_statistics'){
+      const all=records(context,helpers,line),lengths=all.map((record)=>record.sequence.length),total=lengths.reduce((a,b)=>a+b,0);helpers.section('Sequence statistics',{p:[`Sequences\n${all.length}`,`Bases\n${total}`,`Shortest\n${lengths.length?Math.min(...lengths):0}`,`Longest\n${lengths.length?Math.max(...lengths):0}`]});return true;
+    }
+    if(action==='remove_sequence_gaps'){records(context,helpers,line).forEach((record)=>{const kept=[];for(let i=0;i<record.sequence.length;i++)if(record.sequence[i]!=='-'&&record.sequence[i]!=='.')kept.push(i);record.sequence=kept.map((i)=>record.sequence[i]).join('');if(record.quality!=null)record.quality=kept.map((i)=>record.quality[i]||'').join('');});return true;}
+    if(action==='keep_sequence_names_containing'||action==='remove_sequence_names_containing'){const keep=action==='keep_sequence_names_containing',needle=String(values[0]).toLowerCase();sequenceSets(context,helpers,line).forEach((data)=>{data.records=data.records.filter((record)=>record.name.toLowerCase().includes(needle)===keep);});return true;}
+    if(action==='make_sequence_names_unique'){const counts=new Map();records(context,helpers,line).forEach((record)=>{const base=record.name,key=base.toLowerCase(),number=(counts.get(key)||0)+1;counts.set(key,number);if(number>1)record.name=`${base}-${number}`;});return true;}
+    if(action==='remove_ambiguous_sequences'){sequenceSets(context,helpers,line).forEach((data)=>{data.records=data.records.filter((record)=>!/[NRYKMSWBDHV]/i.test(record.sequence));});return true;}
+    if(action==='keep_max_ambiguous'){const maximum=Number(values[0]);sequenceSets(context,helpers,line).forEach((data)=>{data.records=data.records.filter((record)=>(record.sequence.match(/[NRYKMSWBDHV]/ig)||[]).length<=maximum);});return true;}
+    if(action==='validate_sequences'){const invalid=records(context,helpers,line).filter((record)=>/[^ACGTURYSWKMBDHVN*.-]/i.test(record.sequence));helpers.section('Sequence validation',{p:[invalid.length?`${invalid.length} sequences contain unsupported characters.`:'All sequences use supported characters.']});return true;}
+    if(action==='split_sequences'){
+      const size=Number(values[0]),template=String(values[1]),all=records(context,helpers,line),dot=template.lastIndexOf('.'),stem=dot>0?template.slice(0,dot):template,extension=dot>0?template.slice(dot):'.fasta';if(size<1)error(helpers,line,'Use at least one sequence per file.');
+      for(let start=0,part=1;start<all.length;start+=size,part++){const name=`${stem}-${part}${extension}`;context.files[name]=helpers.encode({kind:'sequences',format:extension.toLowerCase().includes('fastq')?'fastq':'fasta',records:all.slice(start,start+size),sourceName:name},name);context.changed=1;}helpers.section('Split the sequences',{big:String(Math.ceil(all.length/size))});return true;
+    }
+    if(action==='check_quality'||action==='show_quality_report'){
+      const report=qualitySummary(context,helpers,line);context.qualityReport=report;if(action==='check_quality')helpers.section('Quality checked',{p:[context.data?.kind==='pair'?'Read pairs':'Reads'],big:String(report.count)});else helpers.section('Quality report',{p:[`${context.data?.kind==='pair'?'Read pairs':'Reads'}\n${report.count}`,`Average quality\n${report.average_quality.toFixed(1)}`,`Average length\n${report.average_length.toFixed(1)}`,`Shortest read\n${report.shortest}`,`Longest read\n${report.longest}`]});return true;
+    }
+    if(action==='remove_low_quality_default'){sequenceSets(context,helpers,line).forEach((data)=>{if(data.records.some((record)=>record.quality==null))error(helpers,line,'This instruction needs FASTQ reads with quality values.');data.records=data.records.filter((record)=>averageQuality(record)>=20);});return true;}
+    if(action==='remove_adapters'){const all=records(context,helpers,line);if(all.some((record)=>record.quality==null))error(helpers,line,'This instruction needs FASTQ reads with quality values.');all.forEach((record)=>{const positions=ADAPTERS.map((adapter)=>record.sequence.toUpperCase().indexOf(adapter)).filter((position)=>position>=0);if(!positions.length)return;const end=Math.min(...positions);record.sequence=record.sequence.slice(0,end);record.quality=record.quality.slice(0,end);});return true;}
+    if(action==='cut_start'||action==='cut_end'){const amount=Number(values[0]),fromStart=action==='cut_start';records(context,helpers,line).forEach((record)=>{record.sequence=fromStart?record.sequence.slice(amount):(amount<record.sequence.length?record.sequence.slice(0,-amount):'');if(record.quality!=null)record.quality=fromStart?record.quality.slice(amount):(amount<record.quality.length?record.quality.slice(0,-amount):'');});return true;}
+    return false;
   }
 
   async function handler({ text, context, line, helpers }) {
@@ -444,5 +599,6 @@
 
   if (!handlers.includes(handler)) handlers.push(handler);
   if (!recognizers.includes(recognizer)) recognizers.push(recognizer);
-  window.FigureLoomBioCoreLanguageRuntime = Object.freeze({ handler, recognizer, recognizesLine });
+  window.FigureLoomBioSemanticRuntime?.registerAction?.(structuredActions, structuredHandler);
+  window.FigureLoomBioCoreLanguageRuntime = Object.freeze({ version:2, handler, structuredHandler, recognizer, recognizesLine });
 })();

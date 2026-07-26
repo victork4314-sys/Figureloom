@@ -3,24 +3,38 @@ from __future__ import annotations
 from copy import deepcopy
 from dataclasses import dataclass, field
 from pathlib import Path
-import re
 from typing import Iterable
 
-from .addon_packages import COMMANDS, COMMAND_TO_PACKAGE, PACKAGES, normalize_addon_name
+from .addon_packages import COMMANDS, COMMAND_TO_PACKAGE
 from .errors import FigureLoomBioError
-from .parser import parse
+from .parser import Instruction
 from .runtime import Runner
+from .semantic_language import (
+    BranchNode as SemanticBranch,
+    ConditionNode,
+    IfNode as SemanticIf,
+    InstructionNode,
+    LanguageError,
+    LoopNode as SemanticLoop,
+    RecipeNode as SemanticRecipe,
+    parse_condition,
+    parse_program as parse_semantic_program,
+)
 
 
 @dataclass
 class Statement:
-    text: str
+    instruction: InstructionNode
     line_number: int
+
+    @property
+    def text(self) -> str:
+        return self.instruction.source
 
 
 @dataclass
 class Branch:
-    condition: str
+    condition: ConditionNode
     body: list["Node"]
     line_number: int
 
@@ -91,123 +105,78 @@ class _NextSample(Exception):
     pass
 
 
-_FLOW_RE = re.compile(
-    r"(^|\n)\s*(?:If .+:|Otherwise(?:,)?(?: if .+)?:|For every .+:|Make a recipe called .+:)",
-    re.IGNORECASE,
-)
-_FLOW_SENTENCE_RE = re.compile(
-    r"\b(?:Call the result|Make sure|Show a warning|Open all (?:FASTQ|FASTA|CSV|TSV) files|"
-    r"Continue with the next sample|Skip this sample|Mark the sample for review|Stop the program)\b",
-    re.IGNORECASE,
-)
+_FLOW_ACTIONS = {
+    "repeat_program", "open_all_files", "open_sample", "call_result",
+    "use_result", "use_recipe", "make_sure", "show_warning", "stop_program",
+    "continue_sample", "skip_sample", "mark_review", "save_sample_result",
+}
 
 
-def uses_control_flow(source: str) -> bool:
-    return bool(_FLOW_RE.search(source) or _FLOW_SENTENCE_RE.search(source))
+def _language_error(error: LanguageError) -> FigureLoomBioError:
+    message = str(error)
+    if error.code:
+        message = f"{message}\n\nLanguage error: {error.code.replace('_', ' ')}."
+    return FigureLoomBioError(message, line_number=error.line)
+
+
+def _convert_node(node) -> Node:
+    if isinstance(node, InstructionNode):
+        return Statement(node, node.line)
+    if isinstance(node, SemanticIf):
+        return IfBlock(
+            [Branch(branch.condition, [_convert_node(child) for child in branch.body], branch.line) for branch in node.branches],
+            [_convert_node(child) for child in node.otherwise],
+            node.line,
+        )
+    if isinstance(node, SemanticLoop):
+        return ForEvery(node.item, node.collection, [_convert_node(child) for child in node.body], node.line)
+    if isinstance(node, SemanticRecipe):
+        return Recipe(node.name, [_convert_node(child) for child in node.body], node.line)
+    raise TypeError(f"Unknown semantic program node: {type(node).__name__}")
 
 
 def parse_program(source: str) -> Program:
-    root: list[Node] = []
-    recipes: dict[str, Recipe] = {}
-    stack: list[tuple[int, list[Node]]] = [(-4, root)]
-    last_if: dict[int, IfBlock] = {}
-
-    for line_number, raw in enumerate(source.splitlines(), start=1):
-        text = raw.strip()
-        if not text or text.startswith("#"):
-            continue
-
-        leading = raw[: len(raw) - len(raw.lstrip(" \t"))]
-        if "\t" in leading or len(leading) % 4:
-            raise FigureLoomBioError(
-                "Indent decisions, loops, and recipes with four spaces.",
-                line_number=line_number,
-            )
-        indent = len(leading)
-        while len(stack) > 1 and indent <= stack[-1][0]:
-            stack.pop()
-        parent_indent, body = stack[-1]
-        if indent != parent_indent + 4:
-            raise FigureLoomBioError(
-                "This line is indented farther than the block above it.",
-                line_number=line_number,
-            )
-
-        recipe_match = re.fullmatch(r"Make a recipe called (.+):", text, re.IGNORECASE)
-        if recipe_match:
-            recipe = Recipe(recipe_match.group(1).strip(), [], line_number)
-            body.append(recipe)
-            recipes[recipe.name.casefold()] = recipe
-            stack.append((indent, recipe.body))
-            last_if.pop(indent, None)
-            continue
-
-        if_match = re.fullmatch(r"If (.+):", text, re.IGNORECASE)
-        if if_match:
-            branch = Branch(if_match.group(1).strip(), [], line_number)
-            block = IfBlock([branch], [], line_number)
-            body.append(block)
-            last_if[indent] = block
-            stack.append((indent, branch.body))
-            continue
-
-        otherwise_if_match = re.fullmatch(
-            r"Otherwise(?:,)? if (.+):", text, re.IGNORECASE
-        )
-        if otherwise_if_match:
-            block = last_if.get(indent)
-            if block is None:
-                raise FigureLoomBioError(
-                    "Put Otherwise if directly after an If block.",
-                    line_number=line_number,
-                )
-            branch = Branch(otherwise_if_match.group(1).strip(), [], line_number)
-            block.branches.append(branch)
-            stack.append((indent, branch.body))
-            continue
-
-        if re.fullmatch(r"Otherwise:", text, re.IGNORECASE):
-            block = last_if.get(indent)
-            if block is None:
-                raise FigureLoomBioError(
-                    "Put Otherwise directly after an If block.",
-                    line_number=line_number,
-                )
-            stack.append((indent, block.otherwise))
-            continue
-
-        loop_match = re.fullmatch(
-            r"For every ([a-z][\w-]*)(?: in ([a-z][\w-]*))?:",
-            text,
-            re.IGNORECASE,
-        )
-        if loop_match:
-            item_name = loop_match.group(1)
-            collection = loop_match.group(2) or f"{item_name}s"
-            loop = ForEvery(item_name, collection.casefold(), [], line_number)
-            body.append(loop)
-            stack.append((indent, loop.body))
-            last_if.pop(indent, None)
-            continue
-
-        if not text.endswith("."):
-            raise FigureLoomBioError(
-                "This instruction needs a period at the end.\n\n"
-                f"I read: {text}",
-                line_number=line_number,
-            )
-        body.append(Statement(text[:-1].strip(), line_number))
-        last_if.pop(indent, None)
-
-    return Program(root, recipes)
+    try:
+        parsed = parse_semantic_program(source)
+    except LanguageError as error:
+        raise _language_error(error) from error
+    body = [_convert_node(node) for node in parsed.body]
+    recipes = {
+        name: Recipe(recipe.name, [_convert_node(node) for node in recipe.body], recipe.line)
+        for name, recipe in parsed.recipes.items()
+    }
+    # Reuse the same Recipe instances that appear in the body.
+    body_recipes = {node.name.casefold(): node for node in body if isinstance(node, Recipe)}
+    recipes.update(body_recipes)
+    return Program(body, recipes)
 
 
-def run_flow_program(
-    path: Path,
-    source: str,
-    *,
-    allow_tools: bool = False,
-):
+def _walk(nodes: Iterable[Node]):
+    for node in nodes:
+        yield node
+        if isinstance(node, IfBlock):
+            for branch in node.branches:
+                yield from _walk(branch.body)
+            yield from _walk(node.otherwise)
+        elif isinstance(node, (ForEvery, Recipe)):
+            yield from _walk(node.body)
+
+
+def uses_control_flow(source: str) -> bool:
+    try:
+        program = parse_program(source)
+    except FigureLoomBioError:
+        # A block marker still routes to the structured parser so its precise
+        # grammar error is reported instead of the flat runner taking over.
+        return any(line.strip().endswith(":") for line in str(source).splitlines())
+    return any(
+        isinstance(node, (IfBlock, ForEvery, Recipe))
+        or (isinstance(node, Statement) and node.instruction.action in _FLOW_ACTIONS)
+        for node in _walk(program.body)
+    )
+
+
+def run_flow_program(path: Path, source: str, *, allow_tools: bool = False):
     program = parse_program(source)
     repeat_count, body = _repeat_count(program.body)
     runner = Runner(path.resolve())
@@ -235,11 +204,7 @@ def run_flow_program(
 
 
 def _repeat_count(nodes: list[Node]) -> tuple[int, list[Node]]:
-    statements = [
-        node for node in nodes
-        if isinstance(node, Statement)
-        and re.fullmatch(r"Run this program ([1-9][0-9]*) times?", node.text, re.IGNORECASE)
-    ]
+    statements = [node for node in nodes if isinstance(node, Statement) and node.instruction.action == "repeat_program"]
     if not statements:
         return 1, nodes
     first = statements[0]
@@ -253,9 +218,7 @@ def _repeat_count(nodes: list[Node]) -> tuple[int, list[Node]]:
             "Put the repeat instruction at the beginning of the program.",
             line_number=first.line_number,
         )
-    count = int(re.fullmatch(
-        r"Run this program ([1-9][0-9]*) times?", first.text, re.IGNORECASE
-    ).group(1))
+    count = int(first.instruction.values[0])
     if count > Runner.MAX_REPEATS:
         raise FigureLoomBioError(
             f"This program can run at most {Runner.MAX_REPEATS:,} times at once.",
@@ -274,8 +237,8 @@ def _run_nodes(nodes: Iterable[Node], context: Context) -> None:
         if isinstance(node, IfBlock):
             followed = False
             for branch in node.branches:
-                value = _condition(branch.condition, context, branch.line_number)
-                _decision(context, branch.condition, value, "If" if value else "next choice", branch.line_number)
+                value = _condition_node(branch.condition, context, branch.line_number)
+                _decision(context, branch.condition.source, value, "If" if value else "next choice", branch.line_number)
                 if value:
                     _run_nodes(branch.body, context)
                     followed = True
@@ -297,10 +260,7 @@ def _run_nodes(nodes: Iterable[Node], context: Context) -> None:
                 )
             for index, sample in enumerate(samples, start=1):
                 context.sample = sample
-                context.runner.output.add(
-                    f"Sample {index} of {len(samples)}",
-                    sample.name,
-                )
+                context.runner.output.add(f"Sample {index} of {len(samples)}", sample.name)
                 try:
                     _run_nodes(node.body, context)
                 except _NextSample:
@@ -308,38 +268,24 @@ def _run_nodes(nodes: Iterable[Node], context: Context) -> None:
             context.sample = None
 
 
+def _replace_runtime_value(value: str, context: Context) -> str:
+    return _replace_sample(str(value), context)
+
+
+def _runtime_instruction(node: Statement, context: Context) -> Instruction:
+    values = tuple(_replace_runtime_value(value, context) for value in node.instruction.values)
+    return Instruction(node.instruction.action, node.line_number, values, node.instruction)
+
+
 def _run_statement(node: Statement, context: Context) -> None:
-    text = _replace_sample(node.text, context)
+    instruction = _runtime_instruction(node, context)
+    action = instruction.action
+    values = instruction.values
     runner = context.runner
 
-    match = re.fullmatch(
-        r"(?:Use|Load|Enable|Install)(?: the)? \.?([a-z0-9][a-z0-9-]*)(?: add-on| package)?",
-        text,
-        re.IGNORECASE,
-    )
-    if match:
-        name = normalize_addon_name(match.group(1))
-        package = PACKAGES.get(name)
-        if package is None:
-            raise FigureLoomBioError(
-                f"I could not find the .{name} add-on.",
-                line_number=node.line_number,
-            )
-        if package.status == "planned":
-            raise FigureLoomBioError(
-                f"The .{name} add-on is listed in the catalog but is not ready yet.",
-                line_number=node.line_number,
-            )
-        context.active_addons.add(name)
-        return
-
-    match = re.fullmatch(
-        r"Open all (FASTQ|FASTA|CSV|TSV) files(?: in (.+?))? as ([\w-]+)",
-        text,
-        re.IGNORECASE,
-    )
-    if match:
-        kind, folder, collection = match.groups()
+    if action == "open_all_files":
+        kind, collection = values[:2]
+        folder = values[2] if len(values) > 2 else None
         context.collections[collection.casefold()] = [
             Sample(name) for name in _matching_files(runner.folder, kind, folder)
         ]
@@ -351,106 +297,97 @@ def _run_statement(node: Statement, context: Context) -> None:
         )
         return
 
-    if re.fullmatch(r"Open the sample", text, re.IGNORECASE):
+    if action == "open_sample":
         if context.sample is None:
-            raise FigureLoomBioError(
-                "Open the sample must be inside a sample loop.",
-                line_number=node.line_number,
-            )
+            raise FigureLoomBioError("Open the sample must be inside a sample loop.", line_number=node.line_number)
         runner._open_file(context.sample.name)
         return
 
-    match = re.fullmatch(r"Call the result (.+)", text, re.IGNORECASE)
-    if match:
+    if action == "call_result":
         if not _has_result(runner):
-            raise FigureLoomBioError(
-                "There is no result to name.",
-                line_number=node.line_number,
-            )
-        context.named_results[match.group(1).casefold()] = _snapshot(runner)
-        runner.output.add("Named result", match.group(1))
+            raise FigureLoomBioError("There is no result to name.", line_number=node.line_number)
+        name = values[0]
+        context.named_results[name.casefold()] = _snapshot(runner)
+        runner.output.add("Named result", name)
         return
 
-    match = re.fullmatch(r"Use (?:the result )?(.+)", text, re.IGNORECASE)
-    if match and match.group(1).casefold() in context.named_results:
-        _restore(runner, context.named_results[match.group(1).casefold()])
-        runner.output.add("Using named result", match.group(1))
+    if action == "use_result":
+        name = values[0]
+        snapshot = context.named_results.get(name.casefold())
+        if snapshot is None:
+            raise FigureLoomBioError(f"I could not find a named result called {name}.", line_number=node.line_number)
+        _restore(runner, snapshot)
+        runner.output.add("Using named result", name)
         return
 
-    recipe_name = text.casefold()
-    explicit_recipe = re.fullmatch(r"Use the recipe (.+)", text, re.IGNORECASE)
-    if explicit_recipe:
-        recipe_name = explicit_recipe.group(1).casefold()
-    recipe = context.recipes.get(recipe_name)
-    if recipe is not None:
+    if action == "use_recipe":
+        name = values[0]
+        recipe = context.recipes.get(name.casefold())
+        if recipe is None:
+            raise FigureLoomBioError(f"I could not find a recipe called {name}.", line_number=node.line_number)
         _run_nodes(recipe.body, context)
         return
 
-    match = re.fullmatch(r"Make sure (.+)", text, re.IGNORECASE)
-    if match:
-        value = _condition(match.group(1), context, node.line_number)
-        _decision(context, match.group(1), value, "continue" if value else "stop", node.line_number)
-        if not value:
-            raise FigureLoomBioError(
-                "The program stopped because this check was not true:\n"
-                f"{match.group(1)}.",
-                line_number=node.line_number,
-            )
-        return
-
-    match = re.fullmatch(r"Show a warning(?: saying (.+))?", text, re.IGNORECASE)
-    if match:
-        runner.output.add("Warning", match.group(1) or "This sample needs attention.")
-        return
-
-    if re.fullmatch(r"Stop the program", text, re.IGNORECASE):
-        raise _StopProgram
-
-    if re.fullmatch(
-        r"(?:Continue with the next sample|Skip this sample)",
-        text,
-        re.IGNORECASE,
-    ):
-        if context.sample is None:
-            raise FigureLoomBioError(
-                "This instruction can only be used inside a sample loop.",
-                line_number=node.line_number,
-            )
-        raise _NextSample
-
-    if re.fullmatch(r"Mark the sample for review", text, re.IGNORECASE):
-        name = (
-            context.sample.name
-            if context.sample is not None
-            else runner.file_name or "Current result"
+    if action == "use_reference":
+        name = values[0]
+        snapshot = context.named_results.get(name.casefold())
+        if snapshot is not None:
+            _restore(runner, snapshot)
+            runner.output.add("Using named result", name)
+            return
+        recipe = context.recipes.get(name.casefold())
+        if recipe is not None:
+            _run_nodes(recipe.body, context)
+            return
+        raise FigureLoomBioError(
+            f"I could not find a named result or recipe called {name}.",
+            line_number=node.line_number,
         )
+
+    if action == "make_sure":
+        condition = node.instruction.arguments.get("condition_ast")
+        if not isinstance(condition, ConditionNode):
+            condition = parse_condition(values[0], line=node.line_number)
+        result = _condition_node(condition, context, node.line_number)
+        _decision(context, condition.source, result, "continue" if result else "stop", node.line_number)
+        if not result:
+            raise FigureLoomBioError(
+                f"The program stopped because this check was not true:\n{condition.source}.",
+                line_number=node.line_number,
+            )
+        return
+
+    if action == "show_warning":
+        runner.output.add("Warning", values[0] if values else "This sample needs attention.")
+        return
+    if action == "stop_program":
+        raise _StopProgram
+    if action in {"continue_sample", "skip_sample"}:
+        if context.sample is None:
+            raise FigureLoomBioError("This instruction can only be used inside a sample loop.", line_number=node.line_number)
+        raise _NextSample
+    if action == "mark_review":
+        name = context.sample.name if context.sample is not None else runner.file_name or "Current result"
         context.review.add(str(name))
         runner.output.add("Marked for review", str(name))
         return
-
-    if re.fullmatch(
-        r"Save the (?:result|sequences|reads) using the sample name",
-        text,
-        re.IGNORECASE,
-    ):
+    if action == "save_sample_result":
         stem = _sample_stem(context.sample.name if context.sample else runner.file_name or "sample")
-        suffix = ".csv" if runner.table is not None else (
-            ".fastq" if runner.sequence_format == "fastq" else ".fasta"
-        )
+        suffix = ".csv" if runner.table is not None else (".fastq" if runner.sequence_format == "fastq" else ".fasta")
         runner._save_current(f"{stem}-result{suffix}")
         return
+    if action == "repeat_program":
+        return
 
-    instruction = parse(text + ".")[0]
-    package = COMMAND_TO_PACKAGE.get(instruction.action)
+    package = COMMAND_TO_PACKAGE.get(action)
     instructions = [instruction]
     if package is not None:
         if package.name not in context.active_addons:
             raise FigureLoomBioError(
-                f"This sentence belongs to the .{package.name} add-on.\n\n"
-                f"Add this near the beginning of the program:\nUse .{package.name}.",
+                f"This instruction belongs to the .{package.name} add-on.",
                 line_number=node.line_number,
             )
-        instructions = COMMANDS[instruction.action].expand(instruction)
+        instructions = COMMANDS[action].expand(instruction)
 
     for expanded in instructions:
         try:
@@ -461,98 +398,73 @@ def _run_statement(node: Statement, context: Context) -> None:
             raise
 
 
+def _condition_node(node: ConditionNode, context: Context, line_number: int) -> bool:
+    if node.kind == "literal":
+        return bool(node.value)
+    if node.kind == "not":
+        return not _condition_node(node.value, context, line_number)
+    if node.kind == "boolean":
+        if node.operator == "and":
+            return _condition_node(node.left, context, line_number) and _condition_node(node.right, context, line_number)
+        if node.operator == "or":
+            return _condition_node(node.left, context, line_number) or _condition_node(node.right, context, line_number)
+    if node.kind == "predicate":
+        left = node.left or {}
+        kind = left.get("kind") if isinstance(left, dict) else None
+        if kind == "file" and node.operator == "exists":
+            return context.runner._path(_replace_sample(str(left.get("name", "")), context)).exists()
+        if kind == "file" and node.operator in {"empty", "not_empty"}:
+            count = _result_count(context.runner)
+            return count == 0 if node.operator == "empty" else count > 0
+        if kind == "result":
+            count = _result_count(context.runner)
+            return count == 0 if node.operator == "empty" else count > 0
+        if kind == "flag":
+            found = context.flags.get(str(left.get("name", "")), 0) > 0
+            return not found if node.operator == "not_found" else found
+        if kind == "sample_name" and node.operator == "contains":
+            return bool(context.sample and str(node.right).casefold() in context.sample.name.casefold())
+    if node.kind == "comparison":
+        left = node.left or {}
+        if not isinstance(left, dict) or left.get("kind") != "metric":
+            raise FigureLoomBioError("This comparison does not name a runtime metric.", line_number=line_number)
+        metric = left.get("metric")
+        target = str(left.get("target", "result"))
+        if metric == "count":
+            actual = float(_count(context.runner, target))
+        elif metric == "average_quality":
+            actual = _average_quality(context.runner)
+        elif metric == "gc_content":
+            actual = _gc_content(context.runner)
+        else:
+            raise FigureLoomBioError(f"The condition metric {metric} is not implemented.", line_number=line_number)
+        return _compare_canonical(actual, str(node.operator), float(node.right))
+    raise FigureLoomBioError(f"This condition is not executable: {node.source}", line_number=line_number)
+
+
 def _condition(text: str, context: Context, line_number: int) -> bool:
-    parts = re.split(r"\s+or\s+", text, flags=re.IGNORECASE)
-    if len(parts) > 1:
-        return any(_condition(part, context, line_number) for part in parts)
-    parts = re.split(r"\s+and\s+", text, flags=re.IGNORECASE)
-    if len(parts) > 1:
-        return all(_condition(part, context, line_number) for part in parts)
-    if re.match(r"^not\s+", text, re.IGNORECASE):
-        return not _condition(re.sub(r"^not\s+", "", text, flags=re.IGNORECASE), context, line_number)
-
-    match = re.fullmatch(
-        r"(fewer than|less than|more than|over|at least|at most) ([0-9]+) "
-        r"(reads|sequences|rows|contigs|bases)(?: remain)?",
-        text,
-        re.IGNORECASE,
-    )
-    if match:
-        return _compare(_count(context.runner, match.group(3)), match.group(1), float(match.group(2)))
-
-    match = re.fullmatch(
-        r"(?:the )?(read|sequence|row|contig|base) count "
-        r"(is below|is above|is at least|is at most|equals) ([0-9]+)",
-        text,
-        re.IGNORECASE,
-    )
-    if match:
-        return _compare(_count(context.runner, match.group(1)), match.group(2), float(match.group(3)))
-
-    match = re.fullmatch(
-        r"the average quality (is below|is above|is at least|is at most) ([0-9]+(?:\.[0-9]+)?)",
-        text,
-        re.IGNORECASE,
-    )
-    if match:
-        return _compare(_average_quality(context.runner), match.group(1), float(match.group(2)))
-
-    match = re.fullmatch(
-        r"the GC content (is below|is above|is at least|is at most) "
-        r"([0-9]+(?:\.[0-9]+)?) percent",
-        text,
-        re.IGNORECASE,
-    )
-    if match:
-        return _compare(_gc_content(context.runner), match.group(1), float(match.group(2)))
-
-    match = re.fullmatch(
-        r"the assembly has (fewer than|more than|at least|at most) ([0-9]+) contigs",
-        text,
-        re.IGNORECASE,
-    )
-    if match:
-        return _compare(_count(context.runner, "contigs"), match.group(1), float(match.group(2)))
-
-    match = re.fullmatch(r"the file (.+) exists", text, re.IGNORECASE)
-    if match:
-        return context.runner._path(_replace_sample(match.group(1), context)).exists()
-
-    if re.fullmatch(r"the result is empty", text, re.IGNORECASE):
-        return _result_count(context.runner) == 0
-    if re.fullmatch(r"the result is not empty", text, re.IGNORECASE):
-        return _result_count(context.runner) > 0
-
-    if re.fullmatch(r"resistance genes were found", text, re.IGNORECASE):
-        return context.flags.get("resistance", 0) > 0
-    if re.fullmatch(r"no resistance genes were found", text, re.IGNORECASE):
-        return context.flags.get("resistance", 0) == 0
-    if re.fullmatch(r"virulence genes were found", text, re.IGNORECASE):
-        return context.flags.get("virulence", 0) > 0
-    if re.fullmatch(r"plasmids were found", text, re.IGNORECASE):
-        return context.flags.get("plasmids", 0) > 0
-
-    match = re.fullmatch(r"the sample name contains (.+)", text, re.IGNORECASE)
-    if match:
-        return bool(
-            context.sample
-            and match.group(1).casefold() in context.sample.name.casefold()
-        )
-
-    raise FigureLoomBioError(
-        "I do not understand this decision yet.\n\n"
-        f"I read: {text}",
-        line_number=line_number,
-    )
+    try:
+        node = parse_condition(text, line=line_number)
+    except LanguageError as error:
+        raise _language_error(error) from error
+    return _condition_node(node, context, line_number)
 
 
-def _decision(
-    context: Context,
-    condition: str,
-    value: bool,
-    path: str,
-    line_number: int,
-) -> None:
+def _compare_canonical(left: float, operator: str, right: float) -> bool:
+    if operator == "less":
+        return left < right
+    if operator == "greater":
+        return left > right
+    if operator == "at_least":
+        return left >= right
+    if operator == "at_most":
+        return left <= right
+    if operator == "not_equals":
+        return left != right
+    return left == right
+
+
+def _decision(context: Context, condition: str, value: bool, path: str, line_number: int) -> None:
     context.runner.output.add(
         "Decision",
         f"Line {line_number}: {condition}",

@@ -4,39 +4,10 @@ from pathlib import Path
 import re
 from typing import Any
 
-from . import parser as parser_module
 from .errors import FigureLoomBioError
 from .parser import Instruction
 
 
-_CURRENT_FILE_PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
-    ("check_file", re.compile(r"check the file", re.IGNORECASE)),
-    ("count_file", re.compile(r"count the file", re.IGNORECASE)),
-    ("save_file", re.compile(r"save the file as (.+)", re.IGNORECASE)),
-    ("compare_file", re.compile(r"compare the file with (.+)", re.IGNORECASE)),
-    (
-        "assemble_current_bacterial_genome",
-        re.compile(r"assemble (?:the |a )?bacterial genome", re.IGNORECASE),
-    ),
-    ("annotate_current_file", re.compile(r"annotate the file", re.IGNORECASE)),
-    ("find_genes_current_file", re.compile(r"find genes in the file", re.IGNORECASE)),
-    (
-        "find_resistance_current_file",
-        re.compile(r"find resistance genes in the file(?: using (.+))?", re.IGNORECASE),
-    ),
-    (
-        "find_virulence_current_file",
-        re.compile(r"find virulence genes in the file", re.IGNORECASE),
-    ),
-    (
-        "identify_current_file",
-        re.compile(r"identify (?:the )?organism in the file using (.+)", re.IGNORECASE),
-    ),
-    (
-        "find_plasmids_current_file",
-        re.compile(r"find plasmids in the file(?: into (.+))?", re.IGNORECASE),
-    ),
-)
 
 _MUTATING_ACTIONS = {
     "keep_rows",
@@ -72,16 +43,8 @@ _MUTATING_ACTIONS = {
 }
 
 
-def _install_patterns() -> None:
-    existing = {action for action, _ in parser_module._PATTERNS}
-    additions = [
-        (action, pattern)
-        for action, pattern in _CURRENT_FILE_PATTERNS
-        if action not in existing
-    ]
-    if additions:
-        parser_module._PATTERNS = tuple(additions) + parser_module._PATTERNS
-
+# Runtime actions are selected by the shared semantic parser.
+_CURRENT_FILE_ACTIONS = {'annotate_current_file', 'assemble_current_bacterial_genome', 'check_file', 'compare_file', 'count_file', 'find_genes_current_file', 'find_plasmids_current_file', 'find_resistance_current_file', 'find_virulence_current_file', 'identify_current_file', 'save_file'}
 
 def _kind_from_name(name: str) -> str:
     lowered = str(name).casefold()
@@ -228,7 +191,6 @@ def _count_current(runner: Any) -> None:
 
 
 def install_current_file_language(runner_class: type[Any]) -> None:
-    _install_patterns()
     if getattr(runner_class, "_current_file_language_installed", False):
         return
 
@@ -361,6 +323,3 @@ def install_current_file_language(runner_class: type[Any]) -> None:
     runner_class._open_file = current_open_file
     runner_class._run_instruction = current_run_instruction
     runner_class._current_file_language_installed = True
-
-
-_install_patterns()

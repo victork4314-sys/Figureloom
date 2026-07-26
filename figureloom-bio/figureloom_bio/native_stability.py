@@ -124,7 +124,8 @@ def install_native_stability(native_ide_module: Any) -> type[Any]:
 
 
 def native_stability_self_test(native_ide_module: Any) -> dict[str, bool]:
-    os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
+    if sys.platform != "darwin":
+        os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
     app = QApplication.instance() or QApplication(["FigureLoom Bio Desktop", "--stability-self-test"])
     folder = Path(tempfile.mkdtemp(prefix="figureloom-native-stability-test-"))
     try:
