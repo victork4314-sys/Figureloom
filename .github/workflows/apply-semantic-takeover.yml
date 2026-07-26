@@ -1,0 +1,55 @@
+name: Apply semantic language takeover
+
+on:
+  push:
+    branches:
+      - agent/semantic-language-takeover
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: ${{ hashFiles('.github/takeover-language.patch') != '' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/semantic-language-takeover
+          fetch-depth: 0
+      - name: Apply reviewable source diffs
+        shell: bash
+        run: |
+          set -euo pipefail
+          patches=(
+            .github/takeover-language.patch
+            .github/takeover-app.patch
+            .github/takeover-index.patch
+          )
+          for patch in "${patches[@]}"; do
+            test -f "$patch"
+            git apply --check "$patch"
+            git apply "$patch"
+          done
+      - name: Verify structured language implementation
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check ide/ide-semantic-language.js
+          node --check ide/ide-semantic-runtime.js
+          node --check ide/ide-semantic-run-authority.js
+          node --check ide/ide-app-v2.js
+          node scripts/validate-bio-semantic-runtime.mjs
+          PYTHONPATH=figureloom-bio python -m unittest figureloom-bio/tests/test_semantic_language.py -v
+          grep -q 'ide-semantic-runtime.js' ide/index.html
+          grep -q 'ide-semantic-run-authority.js' ide/index.html
+      - name: Commit actual source files
+        shell: bash
+        run: |
+          set -euo pipefail
+          git rm .github/takeover-language.patch .github/takeover-app.patch .github/takeover-index.patch .github/workflows/apply-semantic-takeover.yml
+          git add ide/ide-semantic-language.js ide/ide-semantic-runtime.js ide/ide-semantic-run-authority.js ide/ide-app-v2.js ide/index.html scripts/validate-bio-semantic-runtime.mjs
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "Wire structured semantic parser into browser Run"
+          git push origin HEAD:agent/semantic-language-takeover
