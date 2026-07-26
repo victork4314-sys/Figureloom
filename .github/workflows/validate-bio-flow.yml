@@ -23,7 +23,9 @@ jobs:
       - name: Check semantic browser JavaScript syntax
         run: |
           node --check ide/ide-semantic-language.js
+          node --check ide/ide-bio-expansion-language.js
           node --check ide/ide-semantic-runtime.js
+          node --check ide/ide-bio-expansion-runtime.js
           node --check ide/ide-core-language-runtime.js
           node --check ide/ide-semantic-microbiology-runtime.js
           node --check ide/ide-semantic-run-authority.js
@@ -36,6 +38,7 @@ jobs:
           node --check ide/ide-grammar-composition-tests.js
           node --check ide/ide-app-v2.js
           node --check scripts/validate-bio-semantic-runtime.mjs
+          node --check scripts/validate-bio-expansion.mjs
           node --check scripts/validate-bio-logic-compiler.mjs
           node --check scripts/validate-bio-semantic-browser.mjs
           node --check scripts/validate-bio-freeform-stress-start.mjs
@@ -45,6 +48,9 @@ jobs:
 
       - name: Validate tokenizer grammar AST runtime and advertised actions
         run: node scripts/validate-bio-semantic-runtime.mjs
+
+      - name: Validate simple bioinformatics expansion in browser and Python
+        run: node scripts/validate-bio-expansion.mjs
 
       - name: Validate every declared word and 200 differently ordered programs
         run: node scripts/validate-bio-240-compositional-tests.mjs
