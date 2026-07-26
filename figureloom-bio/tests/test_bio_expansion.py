@@ -6,7 +6,7 @@ from pathlib import Path
 
 from figureloom_bio import Runner
 from figureloom_bio.bio_expansion import EXPANSION, classify_expansion_phrase, parse_expanded_instruction
-from figureloom_bio.parser import parse
+from figureloom_bio.parser import parse, parse_program
 
 
 CASES = {
@@ -61,6 +61,24 @@ class BioExpansionTests(unittest.TestCase):
     def test_python_public_parser_uses_the_expansion(self) -> None:
         instructions = parse("\n".join(CASES))
         self.assertEqual([item.action for item in instructions], list(CASES.values()))
+
+    def test_expansion_composes_inside_if_recipe_and_loop_blocks(self) -> None:
+        program = parse_program(
+            "Make a recipe called inspect variants:\n"
+            "    Summarize variants.\n"
+            "If true:\n"
+            "    Use the recipe inspect variants.\n"
+            "Otherwise:\n"
+            "    Check contamination.\n"
+            "For every file in files:\n"
+            "    Check duplicate names.\n"
+        )
+        self.assertEqual(program.body[0].type, "recipe")
+        self.assertEqual(program.body[0].body[0].action, "summarize_variants")
+        self.assertEqual(program.body[1].type, "if")
+        self.assertEqual(program.body[1].otherwise[0].action, "check_contamination")
+        self.assertEqual(program.body[2].type, "loop")
+        self.assertEqual(program.body[2].body[0].action, "check_duplicate_names")
 
     def test_fasta_expansion_executes(self) -> None:
         with tempfile.TemporaryDirectory() as folder_name:
