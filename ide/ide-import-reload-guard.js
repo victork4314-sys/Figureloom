@@ -34,7 +34,8 @@
     if (!name) return false;
     const files = readObject(localStorage, FILES_KEY);
     const existing = Object.keys(files).find((entry) => entry.toLowerCase() === name.toLowerCase());
-    if (existing) return false;
+    if (existing && String(files[existing] || '').startsWith(MARKER_PREFIX)) return false;
+    if (existing && existing !== name) delete files[existing];
     files[name] = marker(name);
     localStorage.setItem(FILES_KEY, JSON.stringify(files));
     localStorage.setItem(ACTIVE_KEY, name);
@@ -46,14 +47,9 @@
   }
 
   window.FigureLoomBioImportReloadGuard = Object.freeze({ restoreMissingImport });
-
-  // These listeners are registered after the original IDE listeners. During an
-  // import-triggered reload they run last and repair the stale workspace write.
   window.addEventListener('pagehide', protectReloadHandoff);
   window.addEventListener('beforeunload', protectReloadHandoff);
 
-  // iOS can occasionally skip one of the exit events. Repair once on the next
-  // startup too, before asking the user to import the same file again.
   if (restoreMissingImport()) {
     const alreadyReloaded = sessionStorage.getItem(RECOVERY_KEY) === '1';
     if (!alreadyReloaded) {
