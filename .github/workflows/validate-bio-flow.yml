@@ -121,17 +121,8 @@ jobs:
 
       - name: Run control flow tests
         run: |
-          set -o pipefail
           cd figureloom-bio
-          python3 -m unittest discover -s tests -p 'test_control_flow.py' -v 2>&1 | tee ../control-flow-test.log
-
-      - name: Upload control flow diagnostic log
-        if: always()
-        uses: actions/upload-artifact@v6
-        with:
-          name: control-flow-test-log
-          path: control-flow-test.log
-          if-no-files-found: error
+          python3 -m unittest discover -s tests -p 'test_control_flow.py' -v
 
       - name: Run exhaustive accepted-language tests
         run: |
