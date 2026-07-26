@@ -1,0 +1,28 @@
+name: Validate live large program imports
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  large_program_live_import:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Check browser scripts
+        run: |
+          node --check ide/ide-large-program-import-pre.js
+          node --check ide/ide-large-program-import-live.js
+          node --check ide/ide-import-reload-guard.js
+          node --check scripts/validate-bio-large-program-live-import.mjs
+
+      - name: Validate no-reload large program imports
+        run: node scripts/validate-bio-large-program-live-import.mjs
