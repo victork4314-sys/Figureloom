@@ -145,20 +145,73 @@
       };
     }
 
+    function parseConditionWithBase(source, lineNumber) {
+      const probe = baseApi.parseProgram(`If ${source}:\n    Say condition check.`);
+      const node = probe.body?.[0];
+      if (!node || node.type !== 'if') throw new baseApi.LanguageError('missing_condition', 'This block needs a valid condition.', null, lineNumber);
+      return node.branches[0].condition;
+    }
+
     function parseProgram(source) {
-      try { return baseApi.parseProgram(source); }
-      catch (baseError) {
-        const lines = String(source).split(/\r?\n/);
-        if (lines.some((line) => line.trim().endsWith(':'))) throw baseError;
-        const body = [];
-        for (let index = 0; index < lines.length; index += 1) {
-          const text = lines[index].trim();
-          if (!text || text.startsWith('#')) continue;
-          if (!text.endsWith('.')) throw baseError;
-          body.push(parseSemanticInstruction(text.slice(0, -1), index + 1));
+      const root = { type:'program', body:[], recipes:{} };
+      const stack = [{ indent:-4, body:root.body }];
+      const lastIf = new Map();
+      const lines = String(source).split(/\r?\n/);
+
+      lines.forEach((raw, index) => {
+        const line = index + 1;
+        const text = raw.trim();
+        if (!text || text.startsWith('#')) return;
+        const leading = (raw.match(/^\s*/) || [''])[0];
+        if (leading.includes('\t') || leading.length % 4) throw new baseApi.LanguageError('invalid_indent', 'Indent blocks with four spaces.', null, line);
+        const indent = leading.length;
+        while (stack.length > 1 && indent <= stack.at(-1).indent) stack.pop();
+        const parent = stack.at(-1);
+        if (indent !== parent.indent + 4) throw new baseApi.LanguageError('invalid_indent', 'This line is indented farther than the block above it.', null, line);
+
+        if (text.endsWith(':')) {
+          const header = text.slice(0, -1).trim();
+          const lower = header.toLowerCase();
+          if (lower.startsWith('make a recipe called ')) {
+            const name = header.slice('Make a recipe called '.length).trim();
+            if (!name) throw new baseApi.LanguageError('missing_recipe_name', 'A recipe header needs a name.', null, line);
+            const node = { type:'recipe', name, body:[], line, line_number:line };
+            parent.body.push(node); root.recipes[name.toLowerCase()] = node; stack.push({ indent, body:node.body }); lastIf.delete(indent); return;
+          }
+          if (lower.startsWith('if ')) {
+            const branch = { condition:parseConditionWithBase(header.slice(3).trim(), line), body:[], line };
+            const node = { type:'if', branches:[branch], otherwise:[], line, line_number:line };
+            parent.body.push(node); lastIf.set(indent, node); stack.push({ indent, body:branch.body }); return;
+          }
+          if (lower.startsWith('otherwise if ') || lower.startsWith('else if ')) {
+            const prefix = lower.startsWith('otherwise if ') ? 'otherwise if ' : 'else if ';
+            const node = lastIf.get(indent);
+            if (!node) throw new baseApi.LanguageError('orphan_else_if', 'Put Else if directly after an If block.', null, line);
+            const branch = { condition:parseConditionWithBase(header.slice(prefix.length).trim(), line), body:[], line };
+            node.branches.push(branch); stack.push({ indent, body:branch.body }); return;
+          }
+          if (lower === 'otherwise' || lower === 'else') {
+            const node = lastIf.get(indent);
+            if (!node) throw new baseApi.LanguageError('orphan_else', 'Put Else directly after an If block.', null, line);
+            stack.push({ indent, body:node.otherwise }); return;
+          }
+          if (lower.startsWith('for every ')) {
+            const rest = header.slice('For every '.length);
+            const match = rest.match(/^(.*?)\s+in\s+(.+)$/i);
+            const item = (match?.[1] || rest).trim() || 'item';
+            const collection = (match?.[2] || `${item}s`).trim().toLowerCase();
+            const node = { type:'loop', item, iterator:item, collection, body:[], line, line_number:line };
+            parent.body.push(node); stack.push({ indent, body:node.body }); lastIf.delete(indent); return;
+          }
+          throw new baseApi.LanguageError('unknown_block', `I could not parse the block header “${header}”.`, null, line);
         }
-        return { type:'program', body, recipes:{} };
-      }
+
+        if (!text.endsWith('.')) throw new baseApi.LanguageError('missing_period', 'This instruction needs a period at the end.', null, line);
+        const node = parseSemanticInstruction(text.slice(0, -1), line);
+        node.line = line; node.line_number = line; node.column = 1; node.source = node.source_text || text.slice(0, -1);
+        parent.body.push(node); lastIf.delete(indent);
+      });
+      return root;
     }
 
     return Object.freeze({ ...baseApi, classifyExpansionPhrase, parseExpandedInstruction, parseSemanticInstruction, parseInstruction, parseProgram, toRuntime, expansion });
