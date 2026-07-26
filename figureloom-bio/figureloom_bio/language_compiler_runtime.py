@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import re
-
 from . import parser as parser_module
 from .language_compiler import CompiledInstruction, compile_sentence as compile_frontend
 from .language_compiler_extensions import compile_extended_sentence
@@ -27,25 +25,11 @@ _STATISTICS = {
 }
 
 _ALIAS_SPECIALS = {
+    "read_statistic": "language_alias__read_statistic",
     "grouped_box_plot": "language_alias__grouped_box_plot",
     "heat_map_columns": "language_alias__heatmap_columns",
     "show_warning": "language_alias__warn_message",
 }
-
-
-def _normalize_values(compiled: CompiledInstruction) -> CompiledInstruction:
-    if compiled.action != "change_value" or len(compiled.values) != 3:
-        return compiled
-    old_value, replacement, column = compiled.values
-    replacement = re.split(
-        r"(?i)\s+(?:under|in column|from column|by column)\s+",
-        replacement,
-        maxsplit=1,
-    )[0].strip()
-    return CompiledInstruction(
-        compiled.action,
-        (old_value, replacement, column),
-    )
 
 
 def compile_for_runtime(sentence: str) -> CompiledInstruction | None:
@@ -54,8 +38,6 @@ def compile_for_runtime(sentence: str) -> CompiledInstruction | None:
         compiled = compile_extended_sentence(sentence)
     if compiled is None:
         return None
-
-    compiled = _normalize_values(compiled)
 
     if compiled.action in _STATISTICS:
         return CompiledInstruction(
