@@ -12,11 +12,11 @@
   const count = dialog.querySelector('.addons-installed-count');
   if (!grid || !search || !themeSelect || !count) return;
 
-  const sourceUrl = '../figureloom-bio/figureloom_bio/language_vocabulary.json?v=3';
+  const sourceUrl = '../figureloom-bio/figureloom_bio/language_vocabulary.json?v=4';
   let entries = [];
 
   const GROUPS = Object.freeze([
-    { key:'individual_words', title:'Every individual word', icon:'Aa', description:'Every single word contained in the built-in vocabulary, shown separately.' },
+    { key:'individual_words', title:'Every individual word', icon:'Aa', description:'Every single lexical word contained in the built-in compositional vocabulary, shown separately.' },
     { key:'verbs', title:'Operations', icon:'▶', description:'Action words that tell FigureLoom Bio what to do.' },
     { key:'terms', title:'Biology and data terms', icon:'🧬', description:'Scientific, file, result, table, and sequence words.' },
     { key:'flow', title:'If, else, loops, and recipes', icon:'⑂', description:'Words and phrases that control which instructions run.' },
@@ -92,7 +92,7 @@
         group:'individual_words',
         groupTitle:'Every individual word',
         icon:'Aa',
-        description:'A single word used inside one or more built-in FigureLoom Bio words or phrases.',
+        description:'A lexical word interpreted with the other operation, target, relationship, and value words in an instruction.',
         name:word,
         title:word,
         form:word,
