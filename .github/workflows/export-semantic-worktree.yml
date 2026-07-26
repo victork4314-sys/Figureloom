@@ -1,9 +1,6 @@
-name: Apply and export semantic runtime
+name: Apply structured semantic takeover
 
 on:
-  push:
-    branches:
-      - agent/real-semantic-language
   pull_request:
     branches:
       - main
@@ -11,52 +8,48 @@ on:
 permissions:
   contents: write
 
-concurrency:
-  group: semantic-runtime-checkpoint
-  cancel-in-progress: false
-
 jobs:
-  apply-or-export:
+  apply:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: agent/real-semantic-language
+          ref: agent/semantic-language-takeover
           fetch-depth: 0
-      - name: Apply verified runtime checkpoint
-        id: apply
+      - name: Apply reviewable source diffs
         shell: bash
         run: |
           set -euo pipefail
-          if [ ! -f .github/runtime-checkpoint.b64 ]; then
-            echo "applied=false" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-          base64 --decode .github/runtime-checkpoint.b64 > /tmp/runtime.patch.gz
-          gzip -dc /tmp/runtime.patch.gz > /tmp/runtime.patch
-          actual_sha="$(sha256sum /tmp/runtime.patch | cut -d' ' -f1)"
-          expected_sha="5215cae1f1c33577b698db2149bc59cdf50a64e712556aa12cba5609f0da0260"
-          test "$actual_sha" = "$expected_sha" || {
-            echo "Runtime patch checksum mismatch: $actual_sha"
-            exit 1
-          }
-          git apply --check /tmp/runtime.patch
-          git apply --index /tmp/runtime.patch
-          git rm -f .github/runtime-checkpoint.b64
-          git rm -f --ignore-unmatch .github/semantic-checkpoint.part*
+          patches=(
+            .github/takeover-language.patch
+            .github/takeover-app.patch
+            .github/takeover-index.patch
+          )
+          for patch in "${patches[@]}"; do
+            test -f "$patch"
+            git apply --check "$patch"
+            git apply "$patch"
+          done
+      - name: Verify structured language implementation
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check ide/ide-semantic-language.js
+          node --check ide/ide-semantic-runtime.js
+          node --check ide/ide-semantic-run-authority.js
+          node --check ide/ide-app-v2.js
+          node scripts/validate-bio-semantic-runtime.mjs
+          PYTHONPATH=figureloom-bio python -m unittest figureloom-bio/tests/test_semantic_language.py -v
+          grep -q 'ide-semantic-runtime.js' ide/index.html
+          grep -q 'ide-semantic-run-authority.js' ide/index.html
+      - name: Commit actual source files
+        shell: bash
+        run: |
+          set -euo pipefail
+          git rm .github/takeover-language.patch .github/takeover-app.patch .github/takeover-index.patch .github/takeover-trigger.txt
+          git rm .github/workflows/apply-semantic-takeover.yml .github/workflows/export-semantic-worktree.yml
+          git add ide/ide-semantic-language.js ide/ide-semantic-runtime.js ide/ide-semantic-run-authority.js ide/ide-app-v2.js ide/index.html scripts/validate-bio-semantic-runtime.mjs
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git commit -m "Wire structured semantic runtime into the IDE"
-          git push origin HEAD:agent/real-semantic-language
-          echo "applied=true" >> "$GITHUB_OUTPUT"
-      - name: Remove checkout metadata
-        if: steps.apply.outputs.applied == 'false'
-        run: rm -rf .git
-      - name: Upload exact branch worktree
-        if: steps.apply.outputs.applied == 'false'
-        uses: actions/upload-artifact@v4
-        with:
-          name: semantic-worktree
-          path: .
-          include-hidden-files: true
-          retention-days: 1
+          git commit -m "Wire structured semantic parser into browser Run"
+          git push origin HEAD:agent/semantic-language-takeover
