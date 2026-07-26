@@ -393,6 +393,24 @@ def _compile_convert(statement: Statement) -> CompiledInstruction:
 
 
 def _compile_calculate(statement: Statement) -> CompiledInstruction:
+    read_metric = None
+    if statement.has("quality", "read quality"):
+        read_metric = "quality"
+    elif statement.has("read length", "read lengths", "length of reads", "length of the reads"):
+        read_metric = "length"
+
+    if read_metric:
+        read_statistics = (
+            ("standard_deviation", "standard deviation"),
+            ("average", "average"),
+            ("median", "median"),
+            ("minimum", "minimum"),
+            ("maximum", "maximum"),
+        )
+        for term, operation in read_statistics:
+            if statement.has_term(term):
+                return CompiledInstruction("read_statistic", (operation, read_metric))
+
     if statement.has_term("gc_content"):
         return CompiledInstruction("gc_content")
     if statement.has("sequence statistics", "statistics for sequences"):
