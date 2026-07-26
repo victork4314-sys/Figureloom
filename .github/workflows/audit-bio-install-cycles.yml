@@ -152,7 +152,12 @@ jobs:
       - name: Build candidate package
         env:
           FIGURELOOM_MAC_ARCH_LABEL: ${{ matrix.arch }}
-        run: bash figureloom-bio/macos/build-installer.sh dist
+        run: |
+          build_log="$RUNNER_TEMP/figureloom-macos-build.log"
+          if ! bash figureloom-bio/macos/build-installer.sh dist >"$build_log" 2>&1; then
+            cat "$build_log"
+            exit 1
+          fi
       - name: Exercise complete macOS install and repair cycle
         env:
           PACKAGE_FILE: FigureLoom-Bio-Installer-macOS-${{ matrix.filename }}.pkg
