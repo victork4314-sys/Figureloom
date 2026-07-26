@@ -119,7 +119,7 @@ for (const category of ['operations','targets','comparisons','roles','modifiers'
   for (const forms of Object.values(expansion[category])) {
     for (const form of forms) {
       assert.equal(form, form.toLowerCase(), `${category} phrase must stay simple and lowercase: ${form}`);
-      assert.doesNotMatch(form, /[{}[\];]/, `${category} phrase contains code punctuation: ${form}`);
+      assert.doesNotMatch(form, /[{}\[\];]/, `${category} phrase contains code punctuation: ${form}`);
     }
   }
 }
