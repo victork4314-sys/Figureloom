@@ -4,6 +4,8 @@ on:
   pull_request:
     branches:
       - main
+    types:
+      - reopened
 
 permissions:
   contents: write
@@ -57,11 +59,11 @@ jobs:
           node scripts/validate-bio-logic-compiler.mjs
           PYTHONPATH=figureloom-bio python -m unittest figureloom-bio/tests/test_semantic_language.py -v
           PYTHONPATH=figureloom-bio python -m unittest figureloom-bio/tests/test_language_compiler.py -v
-      - name: Commit actual source only
+      - name: Commit tested language source
         shell: bash
         run: |
           set -euo pipefail
-          git rm .github/semantic-stage-two.part* .github/workflows/semantic-stage-two.yml
+          git checkout -- .github/workflows/validate-bio-compiler.yml
           git add \
             ide/ide-semantic-language.js \
             ide/ide-semantic-runtime.js \
@@ -79,8 +81,7 @@ jobs:
             figureloom-bio/figureloom_bio/parser.py \
             figureloom-bio/figureloom_bio/semantic_language.py \
             figureloom-bio/tests/test_semantic_language.py \
-            figureloom-bio/tests/test_language_compiler.py \
-            .github/workflows/validate-bio-compiler.yml
+            figureloom-bio/tests/test_language_compiler.py
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git commit -m "Complete structured execution routes for semantic language"
