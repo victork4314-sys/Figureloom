@@ -44,7 +44,10 @@ jobs:
           node --check scripts/validate-bio-current-file.mjs
           node --check scripts/validate-bio-current-file-runtime.mjs
           node --check scripts/validate-bio-language-manifest.mjs
-          node --check scripts/validate-bio-language-aliases.mjs
+          node --check ide/ide-semantic-language.js
+          node --check ide/ide-semantic-runtime.js
+          node --check ide/ide-semantic-run-authority.js
+          node --check scripts/validate-bio-semantic-runtime.mjs
           node --check scripts/validate-bio-every-advertised-instruction.mjs
           node --check scripts/validate-bio-core-translation.mjs
           node --check scripts/validate-bio-statement-registry.mjs
@@ -59,8 +62,8 @@ jobs:
       - name: Validate shared language manifest
         run: node scripts/validate-bio-language-manifest.mjs
 
-      - name: Validate every accepted browser wording and execution family
-        run: node scripts/validate-bio-language-aliases.mjs
+      - name: Validate structured tokenizer AST runtime and every advertised action
+        run: node scripts/validate-bio-semantic-runtime.mjs
 
       - name: Run every advertised instruction through the browser runtime
         run: node scripts/validate-bio-every-advertised-instruction.mjs
