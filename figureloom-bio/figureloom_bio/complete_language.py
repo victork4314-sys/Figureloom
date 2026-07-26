@@ -10,53 +10,10 @@ import shutil
 from statistics import fmean, median, pstdev
 from typing import Any, Iterable
 
-from . import parser as parser_module
 from .errors import FigureLoomBioError
 from .runtime import SequenceRecord, Table
 
 
-PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
-    ("copy_file", re.compile(r"copy the file as (.+)", re.IGNORECASE)),
-    ("rename_file", re.compile(r"rename the file to (.+)", re.IGNORECASE)),
-    ("list_files", re.compile(r"list the files", re.IGNORECASE)),
-    ("find_repeated_sequences", re.compile(r"find repeated sequences", re.IGNORECASE)),
-    ("find_palindromes", re.compile(r"find palindromes", re.IGNORECASE)),
-    ("find_start_codons", re.compile(r"find start codons", re.IGNORECASE)),
-    ("find_stop_codons", re.compile(r"find stop codons", re.IGNORECASE)),
-    ("find_open_reading_frames", re.compile(r"find open reading frames", re.IGNORECASE)),
-    ("join_sequences", re.compile(r"join the sequences", re.IGNORECASE)),
-    ("compare_current_sequences", re.compile(r"compare the sequences", re.IGNORECASE)),
-    ("show_alignment", re.compile(r"show the alignment", re.IGNORECASE)),
-    ("save_alignment", re.compile(r"save the alignment as (.+)", re.IGNORECASE)),
-    ("find_variants", re.compile(r"find variants", re.IGNORECASE)),
-    ("count_variants", re.compile(r"count the variants", re.IGNORECASE)),
-    ("show_variants", re.compile(r"show the variants", re.IGNORECASE)),
-    ("save_variants", re.compile(r"save the variants as (.+)", re.IGNORECASE)),
-    ("find_genes", re.compile(r"find genes", re.IGNORECASE)),
-    ("count_genes", re.compile(r"count the genes", re.IGNORECASE)),
-    ("show_genes", re.compile(r"show the genes", re.IGNORECASE)),
-    ("save_genes", re.compile(r"save the genes as (.+)", re.IGNORECASE)),
-    ("find_signal_peptides", re.compile(r"find signal peptides", re.IGNORECASE)),
-    ("find_transmembrane_regions", re.compile(r"find transmembrane regions", re.IGNORECASE)),
-    ("find_pcr_primers", re.compile(r"find PCR primers", re.IGNORECASE)),
-    ("check_primers", re.compile(r"check the primers", re.IGNORECASE)),
-    ("show_primers", re.compile(r"show the primers", re.IGNORECASE)),
-    ("build_phylogenetic_tree", re.compile(r"build a phylogenetic tree", re.IGNORECASE)),
-    ("show_tree", re.compile(r"show the tree", re.IGNORECASE)),
-    ("save_tree", re.compile(r"save the tree as (.+)", re.IGNORECASE)),
-    ("calculate_average", re.compile(r"calculate the average under (.+)", re.IGNORECASE)),
-    ("calculate_median", re.compile(r"calculate the median under (.+)", re.IGNORECASE)),
-    ("calculate_standard_deviation", re.compile(r"calculate the standard deviation under (.+)", re.IGNORECASE)),
-    ("calculate_minimum", re.compile(r"calculate the minimum under (.+)", re.IGNORECASE)),
-    ("calculate_maximum", re.compile(r"calculate the maximum under (.+)", re.IGNORECASE)),
-    ("normalize_counts", re.compile(r"normalize the counts under (.+)", re.IGNORECASE)),
-    ("compare_groups", re.compile(r"compare (.+?) and (.+?) under (.+)", re.IGNORECASE)),
-    ("create_histogram", re.compile(r"create a histogram from (.+)", re.IGNORECASE)),
-    ("create_bar_chart", re.compile(r"create a bar chart from (.+?) and (.+)", re.IGNORECASE)),
-    ("create_scatter_plot", re.compile(r"create a scatter plot from (.+?) and (.+)", re.IGNORECASE)),
-    ("create_box_plot", re.compile(r"create a box plot from (.+)", re.IGNORECASE)),
-)
-ACTIONS = {action for action, _ in PATTERNS}
 
 
 @dataclass(frozen=True)
@@ -72,14 +29,13 @@ START_CODONS = {"ATG"}
 STOP_CODONS = {"TAA", "TAG", "TGA"}
 
 
+# Runtime actions are selected by the shared semantic parser.
+ACTIONS = {'build_phylogenetic_tree', 'calculate_average', 'calculate_maximum', 'calculate_median', 'calculate_minimum', 'calculate_standard_deviation', 'check_primers', 'compare_current_sequences', 'compare_groups', 'copy_file', 'count_genes', 'count_variants', 'create_bar_chart', 'create_box_plot', 'create_histogram', 'create_scatter_plot', 'find_genes', 'find_open_reading_frames', 'find_palindromes', 'find_pcr_primers', 'find_repeated_sequences', 'find_signal_peptides', 'find_start_codons', 'find_stop_codons', 'find_transmembrane_regions', 'find_variants', 'join_sequences', 'list_files', 'normalize_counts', 'rename_file', 'save_alignment', 'save_genes', 'save_tree', 'save_variants', 'show_alignment', 'show_genes', 'show_primers', 'show_tree', 'show_variants'}
+
 def install_complete_language(runner_class: type[Any]) -> None:
     if getattr(runner_class, "_complete_language_installed", False):
         return
 
-    existing = {action for action, _ in parser_module._PATTERNS}
-    additions = tuple(item for item in PATTERNS if item[0] not in existing)
-    if additions:
-        parser_module._PATTERNS = additions + parser_module._PATTERNS
 
     original_init = runner_class.__init__
     original_run = runner_class.run

@@ -5,7 +5,6 @@ from pathlib import Path
 import re
 from typing import Any, Callable
 
-from . import parser as parser_module
 from .parser import Instruction
 
 
@@ -225,26 +224,9 @@ _LEGACY_DECLARATION = re.compile(
     r"(?:use|load|enable|install)(?: the)? \.?([a-z0-9][a-z0-9-]*)(?: add-on| package)?",
     re.IGNORECASE,
 )
-_PATTERNS_INSTALLED = False
-
-
 def _install_patterns() -> None:
-    global _PATTERNS_INSTALLED
-    if _PATTERNS_INSTALLED:
-        return
-    existing = {action for action, _ in parser_module._PATTERNS}
-    additions: list[tuple[str, re.Pattern[str]]] = []
-    if "legacy_capability_declaration" not in existing:
-        additions.append(("legacy_capability_declaration", _LEGACY_DECLARATION))
-    for command in MICROBIOLOGY_COMMANDS:
-        if command.action in existing:
-            continue
-        additions.extend(
-            (command.action, re.compile(pattern, re.IGNORECASE))
-            for pattern in command.patterns
-        )
-    parser_module._PATTERNS = tuple(additions) + parser_module._PATTERNS
-    _PATTERNS_INSTALLED = True
+    """Legacy declaration patterns no longer participate in parsing."""
+    return
 
 
 def capability_catalog() -> tuple[CapabilityTheme, ...]:

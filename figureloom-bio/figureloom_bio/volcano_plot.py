@@ -5,7 +5,6 @@ import math
 import re
 from typing import Any
 
-from . import parser as parser_module
 from .errors import FigureLoomBioError
 
 
@@ -20,8 +19,6 @@ P_THRESHOLD = 0.05
 def install_volcano_plot(runner_class: type[Any]) -> None:
     if getattr(runner_class, "_complete_volcano_plot_installed", False):
         return
-    if not any(action == "volcano_plot_complete" for action, _pattern in parser_module._PATTERNS):
-        parser_module._PATTERNS = (("volcano_plot_complete", VOLCANO_WORDING),) + parser_module._PATTERNS
 
     original_run_instruction = runner_class._run_instruction
 
