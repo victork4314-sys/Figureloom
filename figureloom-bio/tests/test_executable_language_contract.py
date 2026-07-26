@@ -38,6 +38,7 @@ DEFAULT_SENTENCES = {
     "say": "{word} Analysis started.",
     "run": "{word} this program 2 times.",
     "stop": "{word} the program.",
+    "skip": "{word} this sample.",
     "mark": "{word} the sample for review.",
     "warn": "{word} This sample needs review.",
 }
@@ -74,7 +75,7 @@ FORM_SENTENCES = {
     ("annotate", "label"): ("Label the genome.", "Annotate the file."),
     ("continue", "continue"): ("Continue with the next sample.", "Continue with the next sample."),
     ("continue", "next"): ("Next sample.", "Continue with the next sample."),
-    ("continue", "skip"): ("Skip this sample.", "Skip this sample."),
+    ("skip", "skip"): ("Skip this sample.", "Skip this sample."),
 }
 
 
@@ -122,7 +123,3 @@ class ExecutableLanguageContractTests(unittest.TestCase):
             for sentence in rule.get("examples", []):
                 with self.subTest(rule=rule["id"], sentence=sentence):
                     self._one_instruction(sentence)
-
-
-if __name__ == "__main__":
-    unittest.main()
