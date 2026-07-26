@@ -27,23 +27,12 @@
 </head>
 <body>
   <a class="skip-link" href="#programEditor">Skip to the program</a>
-
   <header class="ide-header">
     <div class="ide-brand">
       <button id="bioAccountButton" type="button" aria-label="Sign in or open FigureLoom Bio projects">◌</button>
-      <a href="./" aria-label="FigureLoom Bio IDE home" style="text-decoration:none">
-        <span>
-          <strong>FigureLoom Bio</strong>
-          <small>Plain-language IDE</small>
-        </span>
-      </a>
+      <a href="./" aria-label="FigureLoom Bio IDE home" style="text-decoration:none"><span><strong>FigureLoom Bio</strong><small>Plain-language IDE</small></span></a>
     </div>
-
-    <div class="document-name">
-      <input id="programName" value="example.flbio" aria-label="Program name">
-      <span id="saveStatus">Saved in this browser</span>
-    </div>
-
+    <div class="document-name"><input id="programName" value="example.flbio" aria-label="Program name"><span id="saveStatus">Saved in this browser</span></div>
     <div class="header-actions">
       <button id="themeButton" class="icon-button" type="button" aria-label="Switch appearance">◐</button>
       <a class="secondary-link" href="../wiki/#FigureLoom-Bio" target="_blank" rel="noreferrer">Manual</a>
@@ -51,117 +40,32 @@
       <button id="runButton" class="primary-button" type="button">Run</button>
     </div>
   </header>
-
   <nav class="ide-toolbar" aria-label="Program tools">
-    <div class="tool-group">
-      <span class="tool-label">File</span>
-      <button id="newButton" type="button">New</button>
-      <button id="openButton" type="button">Open</button>
-      <button id="saveButton" type="button">Save</button>
-      <input id="filePicker" type="file" multiple hidden>
-    </div>
-    <div class="tool-group">
-      <span class="tool-label">Program</span>
-      <button id="exampleButton" type="button">Open examples</button>
-      <button id="builderButton" type="button">Build program</button>
-      <button id="formatButton" type="button">Tidy sentences</button>
-      <button id="clearResultsButton" type="button">Clear results</button>
-    </div>
+    <div class="tool-group"><span class="tool-label">File</span><button id="newButton" type="button">New</button><button id="openButton" type="button">Open</button><button id="saveButton" type="button">Save</button><input id="filePicker" type="file" multiple hidden></div>
+    <div class="tool-group"><span class="tool-label">Program</span><button id="exampleButton" type="button">Open examples</button><button id="builderButton" type="button">Build program</button><button id="formatButton" type="button">Tidy sentences</button><button id="clearResultsButton" type="button">Clear results</button></div>
   </nav>
-
   <main class="ide-workspace">
-    <aside class="files-panel" aria-label="Files">
-      <div class="panel-heading">
-        <div>
-          <h2>Files</h2>
-          <p>Programs, input files, and generated results appear here immediately.</p>
-        </div>
-        <button id="addFileButton" class="small-button" type="button" aria-label="Open files">+</button>
-      </div>
-      <div id="fileList" class="file-list"></div>
-    </aside>
-
+    <aside class="files-panel" aria-label="Files"><div class="panel-heading"><div><h2>Files</h2><p>Programs, input files, and generated results appear here immediately.</p></div><button id="addFileButton" class="small-button" type="button" aria-label="Open files">+</button></div><div id="fileList" class="file-list"></div></aside>
     <section class="editor-panel" aria-label="Program editor">
-      <div class="panel-topbar">
-        <div class="file-tab active">
-          <span class="file-dot"></span>
-          <span id="activeFileLabel">example.flbio</span>
-        </div>
-        <span class="language-label">FigureLoom Bio</span>
-      </div>
-      <div class="editor-wrap">
-        <pre id="lineNumbers" class="line-numbers" aria-hidden="true">1</pre>
-        <textarea id="programEditor" spellcheck="false" autocomplete="off" aria-label="FigureLoom Bio program"></textarea>
-      </div>
-      <footer class="editor-status">
-        <span id="cursorStatus">Line 1</span>
-        <span>Instructions end with a period. Block headers end with a colon.</span>
-      </footer>
+      <div class="panel-topbar"><div class="file-tab active"><span class="file-dot"></span><span id="activeFileLabel">example.flbio</span></div><span class="language-label">FigureLoom Bio</span></div>
+      <div class="editor-wrap"><pre id="lineNumbers" class="line-numbers" aria-hidden="true">1</pre><textarea id="programEditor" spellcheck="false" autocomplete="off" aria-label="FigureLoom Bio program"></textarea></div>
+      <footer class="editor-status"><span id="cursorStatus">Line 1</span><span>Instructions end with a period. Block headers end with a colon.</span></footer>
     </section>
-
-    <aside class="results-panel" aria-label="Results">
-      <div class="panel-heading results-heading">
-        <div>
-          <h2>Results</h2>
-          <p>Different results stay in separate, readable sections.</p>
-        </div>
-        <span id="runStatus" class="status-pill">Ready</span>
-      </div>
-      <div id="results" class="results-list" aria-live="polite">
-        <section class="empty-results">
-          <strong>The example is ready.</strong>
-          <span>Press Run to try it.</span>
-        </section>
-      </div>
-    </aside>
+    <aside class="results-panel" aria-label="Results"><div class="panel-heading results-heading"><div><h2>Results</h2><p>Different results stay in separate, readable sections.</p></div><span id="runStatus" class="status-pill">Ready</span></div><div id="results" class="results-list" aria-live="polite"><section class="empty-results"><strong>The example is ready.</strong><span>Press Run to try it.</span></section></div></aside>
   </main>
-
   <dialog id="programBuilder" class="builder-dialog" aria-labelledby="builderTitle">
     <div class="builder-shell">
-      <header class="builder-header">
-        <div>
-          <h2 id="builderTitle">Build a FigureLoom Bio program</h2>
-          <p>Start with a ready workflow or assemble ordinary instructions, then use or download the real `.flbio` file.</p>
-        </div>
-        <button id="builderClose" class="builder-close" type="button" aria-label="Close program builder">×</button>
-      </header>
+      <header class="builder-header"><div><h2 id="builderTitle">Build a FigureLoom Bio program</h2><p>Start with a ready workflow or assemble ordinary instructions, then use or download the real `.flbio` file.</p></div><button id="builderClose" class="builder-close" type="button" aria-label="Close program builder">×</button></header>
       <div class="builder-body">
-        <div class="builder-settings">
-          <label><span>Program filename</span><input id="builderName" value="new-program.flbio"></label>
-          <label><span>Run the program</span><input id="builderRuns" type="number" min="1" max="100" value="1"></label>
-        </div>
-        <div class="builder-preset-row">
-          <label>
-            <span>Start with</span>
-            <select id="builderPreset">
-              <option value="blank">Blank program</option>
-              <option value="fastq">FASTQ quality cleaning</option>
-              <option value="fasta">FASTA preparation</option>
-              <option value="table">Table cleaning</option>
-            </select>
-          </label>
-          <button id="builderLoadPreset" type="button">Load starter</button>
-        </div>
+        <div class="builder-settings"><label><span>Program filename</span><input id="builderName" value="new-program.flbio"></label><label><span>Run the program</span><input id="builderRuns" type="number" min="1" max="100" value="1"></label></div>
+        <div class="builder-preset-row"><label><span>Start with</span><select id="builderPreset"><option value="blank">Blank program</option><option value="fastq">FASTQ quality cleaning</option><option value="fasta">FASTA preparation</option><option value="table">Table cleaning</option></select></label><button id="builderLoadPreset" type="button">Load starter</button></div>
         <p class="builder-repeat-note">Set the run count to 10 and the downloaded program begins with “Run this program 10 times.” Saved files are numbered automatically.</p>
         <ol id="builderSteps" class="builder-steps"></ol>
-        <div class="builder-add-box">
-          <div class="builder-add-row">
-            <label><span>Instruction</span><select id="builderStepType" aria-label="Instruction type"></select></label>
-            <button id="builderAddStep" type="button">Add instruction</button>
-          </div>
-          <div id="builderFields" class="builder-fields"></div>
-        </div>
+        <div class="builder-add-box"><div class="builder-add-row"><label><span>Instruction</span><select id="builderStepType" aria-label="Instruction type"></select></label><button id="builderAddStep" type="button">Add instruction</button></div><div id="builderFields" class="builder-fields"></div></div>
       </div>
-      <footer class="builder-footer">
-        <button id="builderClear" type="button">Clear instructions</button>
-        <div class="builder-footer-actions">
-          <button id="builderDownload" type="button">Download program</button>
-          <button id="builderUse" class="primary-button" type="button">Use in IDE</button>
-        </div>
-      </footer>
+      <footer class="builder-footer"><button id="builderClear" type="button">Clear instructions</button><div class="builder-footer-actions"><button id="builderDownload" type="button">Download program</button><button id="builderUse" class="primary-button" type="button">Use in IDE</button></div></footer>
     </div>
   </dialog>
-
   <script src="../cloud-config.js?v=20260722-bio"></script>
   <script src="./ide-language-manifest.js?v=2"></script>
   <script src="./ide-language-compiler.js?v=2"></script>
@@ -175,7 +79,7 @@
   <script src="./ide-addon-runtime.js?v=5"></script>
   <script src="./ide-large-program-import-pre.js?v=1"></script>
   <script src="./ide-large-import-support.js?v=1"></script>
-  <script id="figureloomBioControlFlowRuntime" src="./ide-control-flow-runtime.js?v=12"></script>
+  <script id="figureloomBioControlFlowRuntime" src="./ide-control-flow-runtime.js?v=11-name-result"></script>
   <script src="./ide-decision-core.js?v=2"></script>
   <script src="./ide-workflow-bridge.js?v=1"></script>
   <script src="./ide-table-merge.js?v=1"></script>
@@ -201,7 +105,7 @@
   <script src="./ide-vocabulary-ui-copy.js?v=2"></script>
   <script src="./ide-language-catalog-ui.js?v=5"></script>
   <script src="./ide-language-blocks-ui.js?v=2"></script>
-  <script src="./ide-builtin-language-support.js?v=6"></script>
+  <script src="./ide-builtin-language-support.js?v=5-name-result"></script>
   <script src="./ide-language-highlighter.js?v=1"></script>
   <script src="./ide-bio-account.js?v=1"></script>
   <script src="./ide-bio-avatar-bridge.js?v=1"></script>
