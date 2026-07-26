@@ -188,3 +188,10 @@ jobs:
           fi
           /usr/local/bin/flbio doctor
           /usr/local/bin/flbio quick-test "$RUNNER_TEMP/figureloom-macos-cycle-test"
+      - name: Upload macOS self-test trace
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-self-test-trace-${{ matrix.filename }}
+          path: ${{ runner.temp }}/figureloom-native-ide-self-test.txt
+          if-no-files-found: warn
