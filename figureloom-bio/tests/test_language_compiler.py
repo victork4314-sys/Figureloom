@@ -70,6 +70,66 @@ class FigureLoomBioCompilerTests(unittest.TestCase):
                 self.assertIsNotNone(compiled)
                 self.assertEqual((compiled.action, compiled.values), expected)
 
+    def test_semantic_compiler_preserves_established_runtime_contracts(self) -> None:
+        cases = {
+            'Open the files first.fasta and second.fasta together.': (
+                'open_files_together',
+                ('first.fasta and second.fasta',),
+            ),
+            'Merge the files first.fasta and second.fasta.': (
+                'merge_files',
+                ('first.fasta and second.fasta',),
+            ),
+            'Keep sequences with names containing sample.': (
+                'keep_sequence_names_containing',
+                ('sample',),
+            ),
+            'Remove sequences with names containing failed.': (
+                'remove_sequence_names_containing',
+                ('failed',),
+            ),
+            'Cut 10 bases from the beginning of each read.': ('cut_start', ('10',)),
+            'Cut 5 bases from the end of each read.': ('cut_end', ('5',)),
+            'Create a histogram of score.': ('histogram', ('score',)),
+            'Create a scatter plot of x and y.': ('scatter_plot', ('x', 'y')),
+            'Create a box plot from count.': ('create_box_plot', ('count',)),
+            'Compare the file with reference.fasta.': ('compare_file', ('reference.fasta',)),
+            'Find genes in the file.': ('find_genes_current_file', ()),
+            'Find resistance genes in the file using card.': (
+                'find_resistance_current_file',
+                ('card',),
+            ),
+            'Find virulence genes in the file.': ('find_virulence_current_file', ()),
+            'Identify the organism in the file using bacteria-reference.': (
+                'identify_current_file',
+                ('bacteria-reference',),
+            ),
+            'Find plasmids in the file into plasmid-results.': (
+                'find_plasmids_current_file',
+                ('plasmid-results',),
+            ),
+            'Find resistance genes in assembly/contigs.fasta using card.': (
+                'builtin_microbiology_resistance',
+                ('assembly/contigs.fasta', 'card'),
+            ),
+            'Find virulence genes in assembly/contigs.fasta.': (
+                'builtin_microbiology_virulence',
+                ('assembly/contigs.fasta',),
+            ),
+            'Identify the organism in sample.fastq.gz using kraken-db.': (
+                'builtin_microbiology_classify',
+                ('sample.fastq.gz', 'kraken-db'),
+            ),
+            'Find plasmids in assembly/contigs.fasta into plasmids.': (
+                'builtin_microbiology_plasmids',
+                ('assembly/contigs.fasta', 'plasmids'),
+            ),
+        }
+        for source, expected in cases.items():
+            with self.subTest(source=source):
+                instruction = parse(source)[0]
+                self.assertEqual((instruction.action, instruction.values), expected)
+
     def test_every_advertised_verb_form_composes_in_new_sentences(self) -> None:
         templates = {
             'open': lambda verb: f'Please {verb} samples.csv.',
