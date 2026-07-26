@@ -37,7 +37,7 @@ jobs:
           node --check scripts/validate-bio-logic-compiler.mjs
           node --check scripts/validate-bio-semantic-browser.mjs
           node --check scripts/validate-bio-freeform-stress-start.mjs
-          node --check scripts/validate-bio-all-in-one-table.mjs
+          node --check scripts/validate-bio-all-in-one-table-section.mjs
 
       - name: Validate tokenizer grammar AST runtime and advertised actions
         run: node scripts/validate-bio-semantic-runtime.mjs
@@ -49,7 +49,7 @@ jobs:
         run: node scripts/validate-bio-freeform-stress-start.mjs
 
       - name: Validate the complete table mutation chain
-        run: node scripts/validate-bio-all-in-one-table.mjs
+        run: node scripts/validate-bio-all-in-one-table-section.mjs
 
       - name: Install real-browser test dependency
         run: npm install --no-audit --no-fund
