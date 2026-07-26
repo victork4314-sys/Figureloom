@@ -68,44 +68,15 @@ Otherwise:
     Say No resistance genes were found.
 ```
 
-The browser IDE at [figureloom.org/ide](https://figureloom.org/ide/) provides text editing, visual Blocks, a searchable Sentences catalog, real local execution, generated files, and translation. The same canonical catalog drives the Python runtime, browser runtime, Blocks, Sentences, terminal help, documentation, and parity tests so a sentence cannot be advertised in one place and silently rejected in another.
+The browser IDE at [figureloom.org/ide](https://figureloom.org/ide/) provides text editing, visual Blocks, searchable examples, real local execution, generated files, and translation. FigureLoom Bio uses a deterministic tokenizer, grammar parser, semantic syntax tree, validation layer, and direct runtime dispatch. The examples teach the language; they do not define a fixed sentence list.
 
 The command-line engine translates `.flbio` programs to Python, R, Bash, Snakemake, Nextflow, Julia, Ruby, Perl, and PowerShell. Direct target rules are used where exact translation is possible. More complex programs become runnable wrappers around the embedded `.flbio` source rather than placeholder code.
 
-### Install FigureLoom Bio
+### Desktop downloads
 
-Choose the installer for your computer:
+Desktop installer links are temporarily unavailable while the packages are reviewed. Use the browser IDE in the meantime. Existing local installations are not affected.
 
-- [Download FigureLoom Bio for Linux and Kasm](https://github.com/victork4314-sys/Figureloom/releases/download/figureloom-bio-installer/FigureLoom-Bio-Installer.deb)
-- [Download FigureLoom Bio for Windows](https://github.com/victork4314-sys/Figureloom/releases/download/figureloom-bio-windows-installer/FigureLoom-Bio-Installer.exe)
-- [Download FigureLoom Bio for Mac, Apple Silicon](https://github.com/victork4314-sys/Figureloom/releases/download/figureloom-bio-macos-installer/FigureLoom-Bio-Installer-macOS-Apple-Silicon.pkg)
-- [Download FigureLoom Bio for Mac, Intel](https://github.com/victork4314-sys/Figureloom/releases/download/figureloom-bio-macos-installer/FigureLoom-Bio-Installer-macOS-Intel.pkg)
-
-Open the downloaded installer and follow the normal installation window for your operating system. Each package already contains the FigureLoom Bio engine, local IDE, application launchers, icon, and test files. It does not fetch a second installer while it is being installed.
-
-The installation adds:
-
-- **Install or Update FigureLoom Bio**;
-- **FigureLoom Bio IDE** as a local standalone app window;
-- **Test FigureLoom Bio**;
-- an already-unzipped **FigureLoom Bio Test Files** folder;
-- `flbio quick-test` and `flbio test-files` in the terminal.
-
-Linux adds the launchers to the desktop and application menu. Windows adds desktop and Start Menu shortcuts. macOS installs the apps under `/Applications` and adds them to the desktop.
-
-After that, open **Install or Update FigureLoom Bio** for updates or repairs. It can run `flbio doctor`, open the IDE, open the test files, or run the real quick test.
-
-Inside Kasm, open the download page in the running workspace and install the Linux file there. FigureLoom Bio is user-installed and is not preinstalled into, baked into, or used to rebuild the Kasm Docker image.
-
-The old terminal installer remains only as a fallback for Linux desktops that cannot open `.deb` packages:
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/victork4314-sys/Figureloom/main/figureloom-bio/linux/install-linux.sh | sudo bash
-```
-
-Development and command-line-only instructions remain in [`figureloom-bio/README.md`](figureloom-bio/README.md). The short visual guide is in the [easy installer page](https://figureloom.org/wiki/#FigureLoom-Bio-Easy-Install).
-
-Run or translate a program:
+Run or translate a locally installed program:
 
 ```bash
 flbio run program.flbio
@@ -234,38 +205,26 @@ The local FigureLoom Bio IDE is at:
 http://localhost:8080/ide/
 ```
 
-Most editor and native FigureLoom Bio features work locally. Cloud authentication redirects need the local URL added to the Supabase allow list. Hosted MCP, cloud projects, live collaboration, tool-backed remote jobs, and the hosted Linux VM also require the configured backend services.
+For development-only command-line work, install the package in editable mode:
 
-## Testing
+```bash
+python3 -m pip install -e ./figureloom-bio
+```
 
-Pull requests run syntax and browser checks for the parts of the app they touch. The current test coverage includes:
+## Repository layout
 
-- JavaScript syntax and script wiring
-- Duplicate IDs and required assets
-- Offline cache behavior
-- Desktop, tablet, and phone interface regressions
-- Phone safe areas, touch targets, zoom, panels, and Help controls
-- Light and dark runtime checks for project tabs, the Help center, and the passive guide
-- Browser page errors, console errors, failed local scripts, and local HTTP failures
-- Visible FigureLoom branding
-- Account, gallery, guest-link collaboration, TeX, pathway, MCP, VM access, and export wiring
-- Wiki links, hosted page registration, and hosted wiki JavaScript syntax
-- FigureLoom Bio browser and Python runtime parity
-- Exact current-file and decision-word regressions
-- The canonical 161-command language catalog
-- Translation punctuation and all nine targets
-- Alignment, variants, genes, protein regions, PCR primers, Newick trees, statistics, and real SVG figures
-
-## Contributing
-
-Bug fixes, scientific artwork, accessibility work, import and export improvements, and very specific research-tool ideas are welcome.
-
-Please keep changes focused and readable. Preserve source and license metadata for outside artwork. Avoid turning the interface into a cockpit unless the cockpit is genuinely necessary.
+- `index.html`, `app.js`, `style.css` — the browser editor
+- `ide/` — FigureLoom Bio browser IDE
+- `figureloom-bio/` — FigureLoom Bio command-line package and native desktop code
+- `wiki/` — hosted manual
+- `supabase/` — collaboration database and Edge Functions
+- `mcp-server/` — project-access server
+- `scripts/` — validation and maintenance tools
 
 ## License
 
-FigureLoom's original code and project-authored artwork are released under the **GNU Affero General Public License v3.0 only** (`AGPL-3.0-only`).
+FigureLoom is licensed under the GNU Affero General Public License v3.0. See [LICENSE](LICENSE).
 
-[Read the full license](LICENSE).
+## Credits
 
-People may use, study, modify, and share FigureLoom. When someone operates a modified version over a network, the AGPL requires that version's corresponding source code be made available to its users.
+FigureLoom is made for Adriana M. K., who has been drafting me into unpaid lab work since I was small enough to fit under the bench.
