@@ -56,11 +56,11 @@ if (!highlighter.includes('(?:Call|Name) the result')) {
 }
 
 const html = read('ide/index.html');
-if (!html.includes('ide-control-flow-runtime.js?v=12')) {
-  fail('The repaired runtime cache version is not loaded by the IDE.');
+if (!html.includes('ide-control-flow-runtime.js?v=11-name-result')) {
+  fail('The repaired runtime cache label is not loaded by the IDE.');
 }
-if (!html.includes('ide-builtin-language-support.js?v=6')) {
-  fail('The repaired highlighter cache version is not loaded by the IDE.');
+if (!html.includes('ide-builtin-language-support.js?v=5-name-result')) {
+  fail('The repaired highlighter cache label is not loaded by the IDE.');
 }
 
 console.log('Name the result executes directly, Use the result can retrieve it, and blank lines keep their physical line numbers.');
