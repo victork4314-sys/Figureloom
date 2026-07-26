@@ -110,6 +110,7 @@ const ambiguous = new Map([
   ['Please build a relationship tree.', 'Build a phylogenetic tree.'],
   ['Please build the bacterial genome.', 'Assemble the bacterial genome.'],
   ['Please get rid of gaps from the sequences.', 'Remove gaps from the sequences.'],
+  ['List the files.', 'List the files.'],
 ]);
 for (const [source, expected] of ambiguous) assert.equal(compiler.compileLine(source), expected, source);
 
