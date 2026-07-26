@@ -59,7 +59,7 @@
   const escapeText = (value) => String(value).replace(/[&<>"']/g, (character) => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[character]));
 
   function sequenceRecords(context, helpers, line) {
-    if (!context.data || context.data.kind !== 'seq') fail(helpers, line, 'This instruction needs one open FASTA or FASTQ file.');
+    if (!context.data || !['seq','sequences'].includes(context.data.kind)) fail(helpers, line, 'This instruction needs one open FASTA or FASTQ file.');
     return context.data.records;
   }
 
@@ -168,32 +168,38 @@
     helpers.sec('Created the figure', { file:name });
   }
 
-  async function run(text, context, line, helpers) {
+  async function run(input, context, line, helpers) {
+    const structured = input && typeof input === 'object';
+    const action = structured ? input.action : null;
+    const values = structured ? [...(input.arguments?.runtime_values || [])] : [];
+    const text = structured ? '' : String(input);
     let match;
 
-    if ((match = text.match(/^Copy the file as (.+)$/i))) {
+    if (action === 'copy_file' || (match = text.match(/^Copy the file as (.+)$/i))) {
+      const outputName = action ? values[0] : match[1];
       if (!context.data || context.data.kind === 'pair') fail(helpers, line, 'Copy the file needs one current table, FASTA, or FASTQ file.');
-      context.files[match[1]] = helpers.enc(context.data, match[1]);
+      context.files[outputName] = helpers.enc(context.data, outputName);
       context.changed = 1;
-      helpers.sec('Copied the file', { file:match[1] });
+      helpers.sec('Copied the file', { file:outputName });
       return true;
     }
-    if ((match = text.match(/^Rename the file to (.+)$/i))) {
+    if (action === 'rename_file' || (match = text.match(/^Rename the file to (.+)$/i))) {
+      const outputName = action ? values[0] : match[1];
       if (!context.data || context.data.kind === 'pair') fail(helpers, line, 'Rename the file needs one current table, FASTA, or FASTQ file.');
       const old = context.data.sourceName;
-      context.files[match[1]] = helpers.enc(context.data, match[1]);
-      if (old && Object.prototype.hasOwnProperty.call(context.files, old) && old !== match[1]) delete context.files[old];
-      context.data.sourceName = match[1];
+      context.files[outputName] = helpers.enc(context.data, outputName);
+      if (old && Object.prototype.hasOwnProperty.call(context.files, old) && old !== outputName) delete context.files[old];
+      context.data.sourceName = outputName;
       context.changed = 1;
-      helpers.sec('Renamed the file', { file:match[1] });
+      helpers.sec('Renamed the file', { file:outputName });
       return true;
     }
-    if (/^List the files$/i.test(text)) {
+    if (action === 'list_files' || /^List the files$/i.test(text)) {
       const rows = Object.entries(context.files).sort(([a], [b]) => a.localeCompare(b)).map(([name, value]) => ({ name, size:String(String(value).length) }));
       helpers.sec('Files', { table:{ c:['name', 'size'], r:rows } });
       return true;
     }
-    if (/^Find repeated sequences$/i.test(text)) {
+    if (action === 'find_repeated_sequences' || /^Find repeated sequences$/i.test(text)) {
       const records = sequenceRecords(context, helpers, line), groups = new Map();
       for (const record of records) { const key = record.sequence.toUpperCase(); if (!groups.has(key)) groups.set(key, []); groups.get(key).push(record.name); }
       const rows = [...groups].filter(([, names]) => names.length > 1).map(([sequence, names]) => ({ count:String(names.length), names:names.join(', '), sequence })).sort((a, b) => Number(b.count) - Number(a.count));
@@ -201,7 +207,7 @@
       helpers.sec('Repeated sequences', { table:{ c:context.data.columns, r:rows } });
       return true;
     }
-    if (/^Find palindromes$/i.test(text)) {
+    if (action === 'find_palindromes' || /^Find palindromes$/i.test(text)) {
       const rows = [];
       for (const record of sequenceRecords(context, helpers, line)) {
         const sequence = record.sequence.toUpperCase().replaceAll('U', 'T');
@@ -216,8 +222,9 @@
       helpers.sec('Palindromes', { table:{ c:context.data.columns, r:rows } });
       return true;
     }
-    if (/^Find (start|stop) codons$/i.test(text)) {
-      const stop = /^Find stop/i.test(text), wanted = stop ? STOP : START, rows = [];
+    if (['find_start_codons','find_stop_codons'].includes(action) || /^Find (start|stop) codons$/i.test(text)) {
+      if (action) match = [null, action === 'find_stop_codons' ? 'stop' : 'start'];
+      const stop = action === 'find_stop_codons' || /^Find stop/i.test(text), wanted = stop ? STOP : START, rows = [];
       for (const record of sequenceRecords(context, helpers, line)) {
         const sequence = record.sequence.toUpperCase().replaceAll('U', 'T');
         for (let frame = 0; frame < 3; frame += 1) for (let index = frame; index <= sequence.length - 3; index += 3) {
@@ -229,20 +236,20 @@
       helpers.sec(stop ? 'Stop codons' : 'Start codons', { table:{ c:context.data.columns, r:rows } });
       return true;
     }
-    if (/^Find (?:open reading frames|genes)$/i.test(text)) {
+    if (['find_open_reading_frames','find_genes'].includes(action) || /^Find (?:open reading frames|genes)$/i.test(text)) {
       const rows = orfRows(sequenceRecords(context, helpers, line));
       setTable(context, ['gene', 'sequence', 'strand', 'start', 'end', 'length'], rows, 'genes');
-      helpers.sec(/^Find genes/i.test(text) ? 'Genes' : 'Open reading frames', { table:{ c:context.data.columns, r:rows } });
+      helpers.sec(action === 'find_genes' || /^Find genes/i.test(text) ? 'Genes' : 'Open reading frames', { table:{ c:context.data.columns, r:rows } });
       return true;
     }
-    if (/^Join the sequences$/i.test(text)) {
+    if (action === 'join_sequences' || /^Join the sequences$/i.test(text)) {
       const records = sequenceRecords(context, helpers, line), joined = records.map((record) => record.sequence).join('');
-      context.data = { kind:'seq', format:'fasta', records:[{ name:'joined-sequences', sequence:joined, quality:null }], sourceName:'joined-sequences.fasta' };
+      context.data = { kind:'sequences', format:'fasta', records:[{ name:'joined-sequences', sequence:joined, quality:null }], sourceName:'joined-sequences.fasta' };
       context.completeKind = 'sequences';
       helpers.sec('Joined the sequences', { p:[`Bases\n${joined.length}`] });
       return true;
     }
-    if (/^Compare the sequences$/i.test(text)) {
+    if (action === 'compare_current_sequences' || /^Compare the sequences$/i.test(text)) {
       const records = sequenceRecords(context, helpers, line);
       if (records.length < 2) fail(helpers, line, 'Compare the sequences needs at least two sequences in the current file.');
       const [first, second] = align(records[0].sequence, records[1].sequence, helpers, line);
@@ -251,7 +258,7 @@
       helpers.sec('Sequence comparison', { p:[records[0].name, records[1].name, `Aligned bases\n${first.length}`, `Identity\n${(first.length ? matches / first.length * 100 : 0).toFixed(2)}%`] });
       return true;
     }
-    if (/^Show the alignment$/i.test(text)) {
+    if (action === 'show_alignment' || /^Show the alignment$/i.test(text)) {
       if (!context.alignment) fail(helpers, line, 'Compare the sequences before showing the alignment.');
       const rows = [];
       for (let start = 0; start < context.alignment.first.length; start += 80) {
@@ -261,15 +268,16 @@
       helpers.sec('Alignment', { table:{ c:['position', 'first', 'matches', 'second'], r:rows } });
       return true;
     }
-    if ((match = text.match(/^Save the alignment as (.+)$/i))) {
+    if (action === 'save_alignment' || (match = text.match(/^Save the alignment as (.+)$/i))) {
+      const outputName = action ? values[0] : match[1];
       if (!context.alignment) fail(helpers, line, 'Compare the sequences before saving the alignment.');
-      if (!/\.(?:fa|fasta|fna|ffn|faa|frn)$/i.test(match[1])) fail(helpers, line, 'Save an alignment as a FASTA file.');
-      context.files[match[1]] = `>${context.alignment.firstName}\n${context.alignment.first}\n>${context.alignment.secondName}\n${context.alignment.second}\n`;
+      if (!/\.(?:fa|fasta|fna|ffn|faa|frn)$/i.test(outputName)) fail(helpers, line, 'Save an alignment as a FASTA file.');
+      context.files[outputName] = `>${context.alignment.firstName}\n${context.alignment.first}\n>${context.alignment.secondName}\n${context.alignment.second}\n`;
       context.changed = 1;
-      helpers.sec('Saved the alignment', { file:match[1] });
+      helpers.sec('Saved the alignment', { file:outputName });
       return true;
     }
-    if (/^Find variants$/i.test(text)) {
+    if (action === 'find_variants' || /^Find variants$/i.test(text)) {
       if (!context.alignment) {
         const records = sequenceRecords(context, helpers, line);
         if (records.length < 2) fail(helpers, line, 'Find variants needs at least two sequences.');
@@ -287,24 +295,26 @@
       helpers.sec('Variants', { table:{ c:context.data.columns, r:rows } });
       return true;
     }
-    if (/^Count the (variants|genes)$/i.test(text)) {
+    if (['count_variants','count_genes'].includes(action) || /^Count the (variants|genes)$/i.test(text)) {
       if (!context.data || context.data.kind !== 'table') fail(helpers, line, 'Find the result before counting it.');
-      helpers.sec(/^Count the variants/i.test(text) ? 'Variants' : 'Genes', { big:String(context.data.rows.length) });
+      helpers.sec(action === 'count_variants' || /^Count the variants/i.test(text) ? 'Variants' : 'Genes', { big:String(context.data.rows.length) });
       return true;
     }
-    if (/^Show the (variants|genes|primers)$/i.test(text)) {
+    if (['show_variants','show_genes','show_primers'].includes(action) || /^Show the (variants|genes|primers)$/i.test(text)) {
       if (!context.data || context.data.kind !== 'table') fail(helpers, line, 'Find the result before showing it.');
-      helpers.sec(/^Show the variants/i.test(text) ? 'Variants' : /^Show the genes/i.test(text) ? 'Genes' : 'PCR primers', { table:{ c:context.data.columns, r:context.data.rows } });
+      helpers.sec(action === 'show_variants' || /^Show the variants/i.test(text) ? 'Variants' : action === 'show_genes' || /^Show the genes/i.test(text) ? 'Genes' : 'PCR primers', { table:{ c:context.data.columns, r:context.data.rows } });
       return true;
     }
-    if ((match = text.match(/^Save the (variants|genes) as (.+)$/i))) {
-      if (!context.data || context.data.kind !== 'table' || context.completeKind !== match[1].toLowerCase()) fail(helpers, line, `Find ${match[1].toLowerCase()} before saving them.`);
-      context.files[match[2]] = helpers.enc(context.data, match[2]);
+    if (['save_variants','save_genes'].includes(action) || (match = text.match(/^Save the (variants|genes) as (.+)$/i))) {
+      const resultKind = action === 'save_variants' ? 'variants' : action === 'save_genes' ? 'genes' : match[1].toLowerCase();
+      const outputName = action ? values[0] : match[2];
+      if (!context.data || context.data.kind !== 'table' || context.completeKind !== resultKind) fail(helpers, line, `Find ${resultKind} before saving them.`);
+      context.files[outputName] = helpers.enc(context.data, outputName);
       context.changed = 1;
-      helpers.sec(`Saved the ${match[1].toLowerCase()}`, { file:match[2] });
+      helpers.sec(`Saved the ${resultKind}`, { file:outputName });
       return true;
     }
-    if (/^Find signal peptides$/i.test(text)) {
+    if (action === 'find_signal_peptides' || /^Find signal peptides$/i.test(text)) {
       const rows = sequenceRecords(context, helpers, line).map((record) => {
         const protein = record.sequence.toUpperCase().replaceAll('*', ''), region = protein.slice(0, 35);
         let best = 0;
@@ -315,7 +325,7 @@
       helpers.sec('Signal peptide candidates', { table:{ c:context.data.columns, r:rows } });
       return true;
     }
-    if (/^Find transmembrane regions$/i.test(text)) {
+    if (action === 'find_transmembrane_regions' || /^Find transmembrane regions$/i.test(text)) {
       const rows = [];
       for (const record of sequenceRecords(context, helpers, line)) {
         const protein = record.sequence.toUpperCase().replaceAll('*', ''), hits = [];
@@ -331,7 +341,7 @@
       helpers.sec('Transmembrane region candidates', { table:{ c:context.data.columns, r:rows } });
       return true;
     }
-    if (/^Find PCR primers$/i.test(text)) {
+    if (action === 'find_pcr_primers' || /^Find PCR primers$/i.test(text)) {
       const records = sequenceRecords(context, helpers, line);
       if (!records.length || records[0].sequence.length < 40) fail(helpers, line, 'Find PCR primers needs a DNA sequence at least 40 bases long.');
       const template = records[0].sequence.toUpperCase().replaceAll('U', 'T');
@@ -341,14 +351,14 @@
       helpers.sec('PCR primers', { table:{ c:context.data.columns, r:rows } });
       return true;
     }
-    if (/^Check the primers$/i.test(text)) {
+    if (action === 'check_primers' || /^Check the primers$/i.test(text)) {
       const sequenceName = column(context, 'sequence', helpers, line);
       const rows = context.data.rows.map((row, index) => primerRow(row.primer || `primer-${index + 1}`, row[sequenceName] || ''));
       setTable(context, ['primer', 'sequence', 'length', 'gc_percent', 'melting_temperature', 'status'], rows, 'PCR primers');
       helpers.sec('Primer check', { table:{ c:context.data.columns, r:rows } });
       return true;
     }
-    if (/^Build a phylogenetic tree$/i.test(text)) {
+    if (action === 'build_phylogenetic_tree' || /^Build a phylogenetic tree$/i.test(text)) {
       const records = sequenceRecords(context, helpers, line);
       if (records.length < 2) fail(helpers, line, 'Build a phylogenetic tree needs at least two sequences.');
       if (records.length > 50) fail(helpers, line, 'The built-in tree command supports at most 50 sequences at once.');
@@ -373,15 +383,16 @@
       helpers.sec('Phylogenetic tree', { p:[context.tree] });
       return true;
     }
-    if (/^Show the tree$/i.test(text)) {
+    if (action === 'show_tree' || /^Show the tree$/i.test(text)) {
       if (!context.tree) fail(helpers, line, 'Build a phylogenetic tree before showing the tree.');
       helpers.sec('Phylogenetic tree', { p:[context.tree] });
       return true;
     }
-    if ((match = text.match(/^Save the tree as (.+)$/i))) {
+    if (action === 'save_tree' || (match = text.match(/^Save the tree as (.+)$/i))) {
+      const outputName = action ? values[0] : match[1];
       if (!context.tree) fail(helpers, line, 'Build a phylogenetic tree before saving the tree.');
-      if (!/\.(?:nwk|newick|tree|txt)$/i.test(match[1])) fail(helpers, line, 'Save a tree as .nwk, .newick, .tree, or .txt.');
-      context.files[match[1]] = context.tree + '\n'; context.changed = 1; helpers.sec('Saved the tree', { file:match[1] }); return true;
+      if (!/\.(?:nwk|newick|tree|txt)$/i.test(outputName)) fail(helpers, line, 'Save a tree as .nwk, .newick, .tree, or .txt.');
+      context.files[outputName] = context.tree + '\n'; context.changed = 1; helpers.sec('Saved the tree', { file:outputName }); return true;
     }
     if ((match = text.match(/^Calculate the (average|median|standard deviation|minimum|maximum) under (.+)$/i))) {
       const [values, actual] = numericColumn(context, match[2], helpers, line), sorted = [...values].sort((a, b) => a - b);
@@ -438,6 +449,19 @@
     }
     return false;
   }
+
+  const structuredActions = [
+    'copy_file','rename_file','list_files','find_repeated_sequences','find_palindromes','find_start_codons','find_stop_codons',
+    'find_open_reading_frames','find_genes','join_sequences','compare_current_sequences','show_alignment','save_alignment',
+    'find_variants','count_variants','show_variants','save_variants','count_genes','show_genes','save_genes',
+    'find_signal_peptides','find_transmembrane_regions','find_pcr_primers','check_primers','show_primers',
+    'build_phylogenetic_tree','show_tree','save_tree',
+  ];
+  window.FigureLoomBioSemanticRuntime?.registerAction?.(structuredActions, ({ node, context, line, helpers }) => run(node, context, line, {
+    X:helpers.Error,
+    sec:helpers.section,
+    enc:helpers.encode,
+  }));
 
   function registerHighlights() {
     const api = window.FigureLoomApprovedBio;

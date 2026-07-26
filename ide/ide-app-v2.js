@@ -1033,6 +1033,24 @@ rows: details.table.rows || details.table.r || [],
 file: details.file ? (typeof details.file === 'string' ? { name:details.file, description:'Saved in Files' } : details.file) : undefined,
 kind: details.kind,
 }),
+listFiles: () => visibleNames(),
+save: (requested, value = state.data, title = 'Saved the result') => {
+if (!value) throw new PlainError('There is no result to save yet.', lineNumber);
+const outputName = numberedName(String(requested), runNumber, totalRuns);
+const output = value.kind === 'table'
+? encodeDelimited({ ...value, delimiter:outputName.toLowerCase().endsWith('.tsv') ? '\t' : ',' })
+: encodeSequences(value, outputName);
+files[outputName] = output;
+deleted.delete(outputName.toLowerCase());
+persistWorkspace();
+renderFileList();
+addSection(target, title, { file:{ name:outputName, description:'Saved in Files' } });
+return outputName;
+},
+execute: async (nestedAction, nestedValues = []) => {
+await runSingle([{ action:nestedAction, values:nestedValues, lineNumber }], runNumber, totalRuns, target, state);
+return state.data;
+},
 },
 });
 data = state.data;

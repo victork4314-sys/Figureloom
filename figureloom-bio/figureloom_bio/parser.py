@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from .errors import FigureLoomBioError
-from .semantic_language import InstructionNode, LanguageError, parse_instruction
+from .semantic_language import GRAMMAR, InstructionNode, LanguageError, parse_instruction
 
 
 @dataclass(frozen=True)
@@ -54,16 +54,40 @@ def parse(source: str) -> list[Instruction]:
     return instructions
 
 
+def _known_command_words() -> set[str]:
+    words: set[str] = set()
+    for category in ("operations", "targets", "comparisons", "roles", "modifiers", "units", "booleans"):
+        for forms in GRAMMAR.get(category, {}).values():
+            for form in forms:
+                words.update(part.casefold() for part in str(form).split() if part)
+    words.update(str(value).casefold() for value in GRAMMAR.get("articles", ()))
+    words.update(str(value).casefold() for value in GRAMMAR.get("fillers", ()))
+    words.update(str(value).casefold() for value in GRAMMAR.get("file_extensions", ()))
+    return words
+
+
 def _render_error(sentence: str, error: LanguageError) -> str:
+    if error.code == "missing_operation":
+        return (
+            "I could not find an operation word in this instruction.\n\n"
+            f"I read\n{sentence}.\n\n"
+            "Use an operation such as Open, Keep, Remove, Show, Save, Calculate, or Find."
+        )
     labels = {
-        "missing_operation": "The instruction is missing an operation.",
         "missing_period": "The instruction is missing its ending period.",
+        "missing_condition": "The instruction is missing its condition.",
         "missing_condition_comparison": "The condition is missing a comparison.",
         "incompatible_operation_target": "The operation and target are not compatible.",
         "ambiguous_instruction": "The instruction has more than one grammatical meaning.",
     }
     heading = labels.get(error.code, "The instruction is not valid for the language grammar.")
-    return f"{heading}\n\n{error}\n\nI read\n{sentence}."
+    return (
+        "This instruction could not be compiled by the language grammar.\n\n"
+        f"{heading}\n\n{error}\n\n"
+        f"I read\n{sentence}.\n\n"
+        "A complete instruction needs an operation and every target or value required by that operation. "
+        "The wording and order do not have to copy an example."
+    )
 
 
-__all__ = ["Instruction", "parse"]
+__all__ = ["Instruction", "_known_command_words", "parse"]

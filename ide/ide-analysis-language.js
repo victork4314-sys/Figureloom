@@ -295,6 +295,155 @@
     return false;
   }
 
+
+  async function structuredHandler({ node, context, line, helpers }) {
+    const action = node.action;
+    const values = [...(node.arguments?.runtime_values || [])];
+    const statisticActions = {
+      calculate_average:'average',
+      calculate_median:'median',
+      calculate_standard_deviation:'standard deviation',
+      calculate_minimum:'minimum',
+      calculate_maximum:'maximum',
+    };
+
+    if (action === 'summary_statistic' || statisticActions[action]) {
+      const operation = statisticActions[action] || String(values[0] || '').toLowerCase();
+      const requested = statisticActions[action] ? values[0] : values[1];
+      const table = requireTable(context, line, helpers.Error);
+      const { column, values:numbers } = numericValues(table, requested, line, helpers.Error);
+      const average = mean(numbers);
+      const deviation = standardDeviation(numbers);
+      if (operation === 'average') helpers.section(`Average of ${column}`, { big:average.toFixed(6), p:[`Values used\n${numbers.length}`] });
+      else if (operation === 'median') helpers.section(`Median of ${column}`, { big:median(numbers).toFixed(6), p:[`Values used\n${numbers.length}`] });
+      else if (operation === 'standard deviation') helpers.section(`Standard deviation of ${column}`, { big:deviation.toFixed(6), p:['Sample standard deviation', `Values used\n${numbers.length}`] });
+      else if (operation === 'minimum') helpers.section(`Minimum of ${column}`, { big:String(Math.min(...numbers)) });
+      else if (operation === 'maximum') helpers.section(`Maximum of ${column}`, { big:String(Math.max(...numbers)) });
+      else if (operation === 'confidence interval') {
+        const margin = 1.96 * deviation / Math.sqrt(numbers.length);
+        helpers.section(`95% confidence interval of ${column}`, { big:`${(average - margin).toFixed(6)} to ${(average + margin).toFixed(6)}`, p:['Normal approximation around the mean', `Values used\n${numbers.length}`] });
+      } else throw new helpers.Error(`The statistic “${operation}” is not implemented.`, line);
+      return true;
+    }
+
+    if (action === 'normalize_counts') {
+      const table = requireTable(context, line, helpers.Error);
+      const { column, values:numbers } = numericValues(table, values[0], line, helpers.Error);
+      const total = numbers.reduce((sum, value) => sum + value, 0);
+      const output = `${column}_normalized`;
+      if (!table.columns.includes(output)) table.columns.push(output);
+      for (const row of table.rows) {
+        const raw = String(row[column] ?? '').trim();
+        const number = Number(raw);
+        row[output] = raw && Number.isFinite(number) ? ((number / total * 1000000) || 0).toFixed(6) : '';
+      }
+      helpers.section('Normalized counts', { p:[column, 'Counts per million', output] });
+      return true;
+    }
+
+    if (action === 'compare_groups') {
+      const table = requireTable(context, line, helpers.Error);
+      const first = String(values[0]), second = String(values[1]);
+      const group = columnName(table, values[2], line, helpers.Error);
+      const firstRows = table.rows.filter((row) => String(row[group] ?? '').toLowerCase() === first.toLowerCase());
+      const secondRows = table.rows.filter((row) => String(row[group] ?? '').toLowerCase() === second.toLowerCase());
+      if (!firstRows.length || !secondRows.length) throw new helpers.Error(`I could not find both ${first} and ${second} under ${group}.`, line);
+      const rows = [];
+      for (const name of table.columns) {
+        if (name === group) continue;
+        const left = firstRows.map((row) => Number(row[name])).filter(Number.isFinite);
+        const right = secondRows.map((row) => Number(row[name])).filter(Number.isFinite);
+        if (!left.length || !right.length) continue;
+        const leftAverage = mean(left), rightAverage = mean(right), fold = rightAverage ? leftAverage / rightAverage : Infinity;
+        rows.push({ column:name, [`${first}_average`]:String(Number(leftAverage.toPrecision(6))), [`${second}_average`]:String(Number(rightAverage.toPrecision(6))), difference:String(Number((leftAverage-rightAverage).toPrecision(6))), fold_change:Number.isFinite(fold) ? String(Number(fold.toPrecision(6))) : 'infinite' });
+      }
+      if (!rows.length) throw new helpers.Error('I could not find numeric columns to compare.', line);
+      context.data = { kind:'table', columns:Object.keys(rows[0]), rows, delimiter:'\t' };
+      helpers.section(`Compared ${first} and ${second}`, { table:{ columns:context.data.columns, rows } });
+      return true;
+    }
+
+    if (action === 'permutation_p_value') {
+      const table = requireTable(context, line, helpers.Error);
+      const valueColumn = columnName(table, values[0], line, helpers.Error);
+      const groupColumn = columnName(table, values[3], line, helpers.Error);
+      const left = table.rows.filter((row) => String(row[groupColumn]) === String(values[1])).map((row) => Number(row[valueColumn])).filter(Number.isFinite);
+      const right = table.rows.filter((row) => String(row[groupColumn]) === String(values[2])).map((row) => Number(row[valueColumn])).filter(Number.isFinite);
+      if (!left.length || !right.length) throw new helpers.Error('Both named groups need numeric values.', line);
+      const pValue = permutationPValue(left, right);
+      helpers.section(`P value for ${valueColumn}`, { big:pValue.toPrecision(6), p:[`Permutation comparison: ${values[1]} versus ${values[2]}`, `${values[1]} values\n${left.length}`, `${values[2]} values\n${right.length}`] });
+      return true;
+    }
+
+    if (['histogram','create_histogram'].includes(action)) {
+      const table = requireTable(context, line, helpers.Error);
+      const { column, values:numbers } = numericValues(table, values[0], line, helpers.Error);
+      saveFigure(context, helpers, 'histogram.svg', `Histogram of ${column}`, histogram(numbers, `Histogram of ${column}`), `Values plotted\n${numbers.length}`);
+      return true;
+    }
+    if (action === 'bar_chart') {
+      const table = requireTable(context, line, helpers.Error);
+      const column = columnName(table, values[0], line, helpers.Error);
+      const categories = table.rows.map((row) => String(row[column] ?? '')).filter(Boolean);
+      if (!categories.length) throw new helpers.Error(`${column} contains no values.`, line);
+      saveFigure(context, helpers, 'bar-chart.svg', `Bar chart of ${column}`, barChart(categories, `Bar chart of ${column}`), `Categories plotted\n${new Set(categories).size}`);
+      return true;
+    }
+    if (action === 'create_bar_chart') {
+      const table = requireTable(context, line, helpers.Error);
+      const label = columnName(table, values[0], line, helpers.Error);
+      const value = columnName(table, values[1], line, helpers.Error);
+      const points = table.rows.slice(0, 40).map((row) => [String(row[label] ?? ''), Number(row[value])]).filter(([, number]) => Number.isFinite(number));
+      if (!points.length) throw new helpers.Error(`There are no numeric values under ${value}.`, line);
+      const maximum = Math.max(...points.map(([, number]) => Math.abs(number))) || 1;
+      const body = points.map(([name, number], index) => { const y = 45 + index * Math.min(28, 380/points.length), width = 570*Math.abs(number)/maximum; return `<text x="10" y="${(y+14).toFixed(2)}" font-family="system-ui,sans-serif" font-size="12" fill="#315b52">${escapeXml(name.slice(0,24))}</text><rect x="180" y="${y.toFixed(2)}" width="${width.toFixed(2)}" height="18" rx="2" fill="#70a99d"/>`; }).join('');
+      saveFigure(context, helpers, 'bar-chart.svg', `${value} by ${label}`, svgShell(`${value} by ${label}`, body), `Rows plotted\n${points.length}`);
+      return true;
+    }
+    if (['scatter_plot','create_scatter_plot'].includes(action)) {
+      const table = requireTable(context, line, helpers.Error);
+      const xColumn = columnName(table, values[0], line, helpers.Error);
+      const yColumn = columnName(table, values[1], line, helpers.Error);
+      const pairs = table.rows.map((row) => [Number(row[xColumn]), Number(row[yColumn])]).filter((pair) => pair.every(Number.isFinite));
+      if (!pairs.length) throw new helpers.Error('The two columns do not contain matching numeric values.', line);
+      saveFigure(context, helpers, 'scatter-plot.svg', `${xColumn} and ${yColumn}`, scatterPlot(pairs.map((pair) => pair[0]), pairs.map((pair) => pair[1]), `${xColumn} and ${yColumn}`, xColumn, yColumn), `Points plotted\n${pairs.length}`);
+      return true;
+    }
+    if (['box_plot','create_box_plot','grouped_box_plot'].includes(action)) {
+      const table = requireTable(context, line, helpers.Error);
+      const { column, values:numbers } = numericValues(table, values[0], line, helpers.Error);
+      saveFigure(context, helpers, 'box-plot.svg', `Box plot of ${column}`, boxPlot(numbers, `Box plot of ${column}`), `Values plotted\n${numbers.length}`);
+      return true;
+    }
+    if (['heat_map','heat_map_columns'].includes(action)) {
+      const table = requireTable(context, line, helpers.Error);
+      saveFigure(context, helpers, 'heat-map.svg', 'Heat map', heatMap(table, line, helpers.Error), `Rows plotted\n${Math.min(table.rows.length, 50)}`);
+      return true;
+    }
+    if (action === 'pca_plot') {
+      const table = requireTable(context, line, helpers.Error);
+      saveFigure(context, helpers, 'pca-plot.svg', 'PCA plot', pcaPlot(table, line, helpers.Error), `Rows plotted\n${table.rows.length}`);
+      return true;
+    }
+    if (action === 'volcano_plot') {
+      const table = requireTable(context, line, helpers.Error);
+      const effectColumn = columnName(table, values[0], line, helpers.Error);
+      const pColumn = columnName(table, values[1], line, helpers.Error);
+      const pairs = table.rows.map((row) => [Number(row[effectColumn]), Number(row[pColumn])]).filter(([effect, p]) => Number.isFinite(effect) && Number.isFinite(p) && p > 0);
+      if (!pairs.length) throw new helpers.Error('The effect and p-value columns do not contain plottable values.', line);
+      saveFigure(context, helpers, 'volcano-plot.svg', 'Volcano plot', scatterPlot(pairs.map((pair) => pair[0]), pairs.map((pair) => -Math.log10(pair[1])), 'Volcano plot', effectColumn, `-log10(${pColumn})`), `Points plotted\n${pairs.length}`);
+      return true;
+    }
+    return false;
+  }
+
+  const structuredActions = [
+    'summary_statistic','calculate_average','calculate_median','calculate_standard_deviation','calculate_minimum','calculate_maximum',
+    'normalize_counts','compare_groups','permutation_p_value','histogram','create_histogram','bar_chart','create_bar_chart',
+    'scatter_plot','create_scatter_plot','box_plot','create_box_plot','grouped_box_plot','heat_map','heat_map_columns','pca_plot','volcano_plot',
+  ];
+  window.FigureLoomBioSemanticRuntime?.registerAction?.(structuredActions, structuredHandler);
+
   window.FigureLoomBioStatementHandlers = window.FigureLoomBioStatementHandlers || [];
   window.FigureLoomBioStatementRecognizers = window.FigureLoomBioStatementRecognizers || [];
   window.FigureLoomBioStatementHandlers.push(handler);

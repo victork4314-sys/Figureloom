@@ -18,7 +18,7 @@
 
   const clearsGeneratedFile = (sentence) => /^(?:Open|Keep|Remove|Trim|Cut|Convert|Translate|Join|Merge|Combine|Change|Replace|Select|Sort|Align|Compare|Build|Assemble|Annotate|Normalize|Find|Detect|Call|Design|Validate)\b/i.test(String(sentence));
 
-  ready.then((aliases) => {
+  ready.then(() => {
     // The alias handler is registered immediately before this promise resolves.
     // Put that specific, vocabulary-driven handler before broad legacy handlers
     // so an older table rule cannot swallow a newer read or figure sentence.
@@ -47,66 +47,7 @@
     }
 
     const previous = window.FigureLoomBioCurrentFile;
-    if (!previous?.normalizeSource) throw new Error('The current-file language did not load before generated-file support.');
-
-    function expandGeneratedFiles(source) {
-      const output = [];
-      let generated = null;
-      for (const raw of String(source).split(/\r?\n/)) {
-        const indent = raw.match(/^\s*/)?.[0] || '';
-        const text = raw.trim();
-        if (!text || text.startsWith('#') || text.endsWith(':')) {
-          output.push(raw);
-          continue;
-        }
-        const canonical = aliases.canonicalizeSentence(text);
-        const created = figureName(canonical);
-        if (created) {
-          output.push(`${indent}${canonical}`);
-          output.push(`${indent}Use the generated file ${created}.`);
-          generated = created;
-          continue;
-        }
-        let match;
-        if (generated && /^(?:Show|Display) (?:the )?(?:current )?file\.?$/i.test(canonical)) {
-          output.push(`${indent}Show the generated file ${generated}.`);
-          continue;
-        }
-        if (generated && /^Check (?:the )?(?:current )?file\.?$/i.test(canonical)) {
-          output.push(`${indent}Check the generated file ${generated}.`);
-          continue;
-        }
-        if (generated && /^Count (?:the )?(?:current )?file\.?$/i.test(canonical)) {
-          output.push(`${indent}Count the generated file ${generated}.`);
-          continue;
-        }
-        match = generated ? canonical.match(/^Save (?:the )?(?:current )?file as (.+)\.$/i) : null;
-        if (match) {
-          output.push(`${indent}FigureLoom internal copy generated file ${generated} to ${match[1]}.`);
-          generated = match[1];
-          continue;
-        }
-        match = generated ? canonical.match(/^Copy (?:the )?(?:current )?file as (.+)\.$/i) : null;
-        if (match) {
-          output.push(`${indent}FigureLoom internal copy generated file ${generated} to ${match[1]}.`);
-          continue;
-        }
-        match = generated ? canonical.match(/^Rename (?:the )?(?:current )?file to (.+)\.$/i) : null;
-        if (match) {
-          output.push(`${indent}Rename the generated file ${generated} to ${match[1]}.`);
-          generated = match[1];
-          continue;
-        }
-        if (clearsGeneratedFile(canonical)) generated = null;
-        output.push(`${indent}${canonical}`);
-      }
-      return output.join('\n');
-    }
-
-    window.FigureLoomBioCurrentFile = Object.freeze({
-      ...previous,
-      normalizeSource:(source) => previous.normalizeSource(expandGeneratedFiles(source)),
-    });
+    if (!previous) return;
 
     const copyGenerated = (context, helpers, line, source, target, verb = 'Saved') => {
       const content = context.files[source];
@@ -199,6 +140,6 @@
     window.FigureLoomBioStatementRecognizers = window.FigureLoomBioStatementRecognizers || [];
     window.FigureLoomBioStatementHandlers.unshift(handler);
     window.FigureLoomBioStatementRecognizers.unshift(recognizer);
-    window.FigureLoomBioGeneratedFiles = Object.freeze({ figureName, expandSource:expandGeneratedFiles });
+    window.FigureLoomBioGeneratedFiles = Object.freeze({ figureName });
   });
 })();

@@ -1,6 +1,10 @@
 (() => {
   'use strict';
 
+  class FlowSignal extends Error {
+    constructor(kind) { super(kind); this.name='FigureLoomBioFlowSignal'; this.kind=kind; }
+  }
+
   class SemanticRuntimeError extends Error {
     constructor(message, lineNumber = null, code = 'semantic_runtime_error') {
       super(message);
@@ -190,6 +194,7 @@
       flags: values.flags instanceof Map ? values.flags : new Map(),
       runNumber: values.runNumber ?? 1,
       totalRuns: values.totalRuns ?? 1,
+      flowSignal: values.flowSignal ?? null,
     };
   }
 
@@ -228,6 +233,7 @@
 
     async function executeNodes(nodes, context) {
       for (const original of nodes || []) {
+        if (context.flowSignal) return context;
         const type = original?.type || (original?.action ? 'instruction' : null);
         const node = type === 'instruction' ? substitute(original, context.variables) : original;
         if (type === 'recipe') {
@@ -241,6 +247,7 @@
             if (evaluateCondition(branch.condition, context)) { selected = branch.body; break; }
           }
           await executeNodes(selected || node.otherwise || [], context);
+          if (context.flowSignal) return context;
           continue;
         }
         if (type === 'loop') {
@@ -249,10 +256,18 @@
           for (const value of values) {
             context.variables.set(iterator, value);
             context.currentRow = value && typeof value === 'object' && !Array.isArray(value) ? value : null;
+            if (String(iterator).toLowerCase() === 'sample') context.currentSample = { name:String(value?.name ?? value) };
             await executeNodes(node.body || [], context);
+            if (context.flowSignal === 'stop') break;
+            if (context.flowSignal === 'continue' || context.flowSignal === 'skip') {
+              context.flowSignal = null;
+              continue;
+            }
           }
           context.variables.delete(iterator);
           context.currentRow = null;
+          if (String(iterator).toLowerCase() === 'sample') context.currentSample = null;
+          if (context.flowSignal === 'stop') return context;
           continue;
         }
         if (type !== 'instruction') throw new SemanticRuntimeError(`The program node “${type}” is not executable.`, node.lineNumber || node.line_number || node.line || null, 'unsupported_node');
@@ -260,6 +275,30 @@
         const semanticAction = node.semantic?.action || node.semanticAction || node.action;
         const values = node.values || node.arguments?.runtime_values || node.semantic?.arguments?.runtime_values || [];
         const roles = node.roles || node.semantic?.roles || {};
+        if (semanticAction === 'make_sure') {
+          const condition = node.arguments?.condition_ast || node.semantic?.arguments?.condition_ast || node.condition;
+          if (!evaluateCondition(condition, context)) throw new SemanticRuntimeError('This requirement was not met.', node.lineNumber || node.line_number || null, 'requirement_failed');
+          continue;
+        }
+        if (semanticAction === 'legacy_capability_declaration') {
+          // Old declaration lines remain valid, but capabilities are built in and need no runtime expansion.
+          continue;
+        }
+        if (semanticAction === 'use_reference') {
+          const name = String(values[0] || roles.name || '').trim();
+          const key = name.toLowerCase();
+          const saved = context.named.get(key);
+          if (saved !== undefined) {
+            context.data = cloneValue(saved);
+            continue;
+          }
+          const recipe = context.recipes.get(key);
+          if (recipe) {
+            await executeNodes(recipe.body || [], context);
+            continue;
+          }
+          throw new SemanticRuntimeError(`I could not find a named result or recipe called ${name}.`, node.lineNumber || node.line_number || null, 'unknown_reference');
+        }
         if (semanticAction === 'use_recipe' || node.action === 'useRecipe') {
           const name = String(values[0] || roles.name || '').toLowerCase();
           const recipe = context.recipes.get(name);
@@ -267,7 +306,7 @@
           await executeNodes(recipe.body || [], context);
           continue;
         }
-        if (semanticAction === 'name_result' || node.action === 'nameResult') {
+        if (semanticAction === 'name_result' || semanticAction === 'call_result' || node.action === 'nameResult' || node.action === 'callResult') {
           const name = String(values[0] || roles.name || '').trim();
           if (!name) throw new SemanticRuntimeError('Name the result with a non-empty name.', node.lineNumber || node.line_number || null, 'missing_result_name');
           context.named.set(name.toLowerCase(), cloneValue(context.data));
@@ -290,6 +329,10 @@
       const context = createContext(values);
       for (const node of tree?.body || []) if (node.type === 'recipe') context.recipes.set(String(node.name).toLowerCase(), node);
       await executeNodes((tree?.body || []).filter((node) => node.type !== 'recipe'), context);
+      if (context.flowSignal === 'continue' || context.flowSignal === 'skip') {
+        throw new SemanticRuntimeError('Continue and Skip can only be used inside a loop.', null, 'flow_outside_loop');
+      }
+      context.flowSignal = null;
       return context;
     }
 
@@ -298,6 +341,7 @@
 
   window.FigureLoomBioSemanticRuntime = Object.freeze({
     SemanticRuntimeError,
+    FlowSignal,
     createExecutor,
     createContext,
     evaluateCondition,

@@ -14,38 +14,65 @@
     Object.entries(group || {}).forEach(([kind, forms]) => forms.forEach((form) => entries.push({ kind, form:normalize(form), words:normalize(form).split(' ') })));
     return entries.sort((a,b) => b.words.length - a.words.length || b.form.length - a.form.length);
   }
-  function tokenize(source, grammar, lineNumber = 1) {
-    const raw = String(source).trim().replace(/[.:]$/, '');
-    const pieces = raw.match(/[^\s,]+|,/g) || [];
-    const basic = pieces.map((text, index) => {
-      const cleaned = text.replace(/^['"]|['"]$/g, '');
-      const norm = normalize(cleaned);
-      let type = 'word';
-      if (text === ',') type = 'comma';
-      else if (/^\d+(?:\.\d+)?$/.test(cleaned)) type = 'number';
-      else if (filenamePattern.test(cleaned)) type = 'filename';
-      else if ((grammar.articles || []).includes(norm)) type = 'article';
-      else if ((grammar.fillers || []).includes(norm)) type = 'filler';
-      else if (['true','false'].includes(norm)) type = 'boolean';
-      else if (['and','or','not'].includes(norm)) type = 'boolean_operator';
-      return { type, text:cleaned, normalized:norm, index, lineNumber, semantics:[] };
-    });
-    const phraseGroups = [
-      ['operation', phraseEntries(grammar.operations)], ['target', phraseEntries(grammar.targets)],
-      ['comparison', phraseEntries(grammar.comparisons)], ['role', phraseEntries(grammar.roles)],
-      ['modifier', phraseEntries(grammar.modifiers)], ['unit', phraseEntries(grammar.units)], ['boolean', phraseEntries(grammar.booleans)]
-    ];
-    for (const [type, entries] of phraseGroups) {
-      for (let i=0;i<basic.length;i++) {
-        for (const entry of entries) {
-          const segment = basic.slice(i, i + entry.words.length);
-          if (segment.length === entry.words.length && segment.every((token,j) => token.normalized === entry.words[j])) {
-            basic[i].semantics.push({ type, kind:entry.kind, form:entry.form, length:entry.words.length });
-          }
+  function phraseMap(grammar) {
+    const map = new Map();
+    for (const category of ['operations','targets','comparisons','roles','modifiers','units','booleans']) {
+      const type = category.endsWith('s') ? category.slice(0,-1) : category;
+      for (const [kind, forms] of Object.entries(grammar[category] || {})) {
+        for (const form of forms) {
+          const key = normalize(form);
+          const list = map.get(key) || [];
+          list.push({ type, kind, form:key });
+          map.set(key, list);
         }
       }
     }
-    return basic;
+    return map;
+  }
+  function isFilename(text, grammar) {
+    let leaf=String(text).replace(/^['"]|['"]$/g,'').split(/[\\/]/).at(-1) || '';
+    if (leaf.toLowerCase().endsWith('.gz')) leaf=leaf.slice(0,-3);
+    if (!leaf.includes('.')) return false;
+    return (grammar.file_extensions || []).map((value)=>String(value).toLowerCase()).includes(leaf.split('.').at(-1).toLowerCase());
+  }
+  function tokenize(source, grammar, lineNumber = 1) {
+    const raw=[];
+    const matcher=/"[^"\n]*"|'[^'\n]*'|[A-Za-z0-9_./\\:+-]+|[,()]/g;
+    for (const match of String(source).matchAll(matcher)) {
+      const text=match[0];
+      if (text.endsWith(':') && text.length>1 && !/^[A-Za-z]:$/.test(text)) {
+        raw.push({text:text.slice(0,-1)}); raw.push({text:':'});
+      } else raw.push({text});
+    }
+    const phrases=phraseMap(grammar);
+    const maxWords=Math.max(1,...[...phrases.keys()].map((key)=>key.split(' ').length));
+    const primaryOrder={operation:0,comparison:1,role:2,target:3,modifier:4,unit:5,boolean:6};
+    const output=[];
+    for (let cursor=0; cursor<raw.length;) {
+      const original=raw[cursor].text;
+      const cleaned=original.replace(/^['"]|['"]$/g,'');
+      const norm=normalize(cleaned);
+      const index=output.length;
+      if ([',','(',')',':'].includes(original)) { output.push({type:'punctuation',text:original,normalized:norm,index,lineNumber,semantics:[]}); cursor++; continue; }
+      if (/^\d+(?:\.\d+)?$/.test(cleaned)) { output.push({type:'number',text:cleaned,normalized:norm,index,lineNumber,semantics:[]}); cursor++; continue; }
+      if (isFilename(cleaned,grammar)) { output.push({type:'filename',text:cleaned,normalized:norm,index,lineNumber,semantics:[]}); cursor++; continue; }
+      let match=null;
+      for (let size=Math.min(maxWords,raw.length-cursor); size>=1; size--) {
+        const words=raw.slice(cursor,cursor+size).map((item)=>normalize(item.text.replace(/^['"]|['"]$/g,'')));
+        const key=words.join(' '), tags=phrases.get(key);
+        if (tags) { match={size,key,tags}; break; }
+      }
+      if (match) {
+        const text=raw.slice(cursor,cursor+match.size).map((item)=>item.text.replace(/^['"]|['"]$/g,'')).join(' ');
+        const primary=[...match.tags].sort((a,b)=>(primaryOrder[a.type]??99)-(primaryOrder[b.type]??99))[0];
+        output.push({type:primary.type,text,normalized:normalize(text),index,lineNumber,semantics:match.tags.map((tag)=>({...tag,length:1}))});
+        cursor+=match.size; continue;
+      }
+      let type=(grammar.articles||[]).includes(norm)?'article':(grammar.fillers||[]).includes(norm)?'filler':'identifier';
+      if (['and','or','not'].includes(norm)) type='boolean_operator';
+      output.push({type,text:cleaned,normalized:norm,index,lineNumber,semantics:[]}); cursor++;
+    }
+    return output;
   }
   function semanticTokens(tokens, type) {
     return tokens.flatMap((token) => token.semantics.filter((semantic) => semantic.type === type).map((semantic) => ({ ...semantic, token })));
@@ -84,96 +111,219 @@
     const leftText = wordsBetween(work,0,cmpIndex);
     const rightStart = cmpIndex + comparison.length;
     const rightText = wordsBetween(work,rightStart,work.length);
+    const numberToken = work.find((token)=>token.type==='number');
+    const metricTarget = targets.find((target)=>['read','sequence','row','base','assembly'].includes(target));
+    if (metricTarget && numberToken) {
+      const numericValue=Number(numberToken.text);
+      return {type:'condition',kind:'comparison',left:{kind:'metric',target:metricTarget,metric:targets.includes('quality')?'average_quality':targets.includes('gc_content')?'gc_content':'count'},operator:comparison.kind,right:numericValue,source};
+    }
     if (!leftText) throw new LanguageError('missing_left_operand','The condition is missing what should be compared.',work[cmpIndex],lineNumber);
     if (!rightText) throw new LanguageError('missing_right_operand',`The comparison “${comparison.form}” is missing a value.`,work[cmpIndex],lineNumber);
     const numericRight = /^\d+(?:\.\d+)?$/.test(rightText) ? Number(rightText) : null;
     let left = { kind:'value', value:leftText.replace(/^(?:the\s+)?/i,'') };
-    const metricTarget = targets.find((target)=>['read','sequence','row','base','assembly'].includes(target));
-    if (metricTarget && numericRight !== null) {
-      left = { kind:'metric', target:metricTarget, metric:targets.includes('quality')?'average_quality':targets.includes('gc_content')?'gc_content':'count' };
-    } else if (targets.includes('column')) {
-      left = { kind:'column', name:leftText.replace(/^(?:the\s+)?(?:column\s+)?/i,'') };
-    }
+    if (targets.includes('column')) left = { kind:'column', name:leftText.replace(/^(?:the\s+)?(?:column\s+)?/i,'') };
     return { type:'condition', kind:'comparison', left, operator:comparison.kind, right:numericRight !== null ? numericRight : rightText, source };
   }
   function unique(values) { return [...new Set(values.filter((value) => value !== null && value !== undefined && value !== ''))]; }
+  function hasTag(token,type,kind=null){
+    return !!token && token.semantics.some((semantic)=>semantic.type===type&&(kind===null||semantic.kind===kind));
+  }
+  function tagValues(tokens,type){
+    return unique(tokens.flatMap((token)=>token.semantics.filter((semantic)=>semantic.type===type).map((semantic)=>semantic.kind)));
+  }
+  function targetValues(tokens){
+    const output=[];
+    for(const token of tokens){
+      const tagged=token.semantics.filter((semantic)=>semantic.type==='target').map((semantic)=>semantic.kind);
+      for(const value of tagged) if(!output.includes(value)) output.push(value);
+      for(const value of ['sequence','read','name']) if(tagged.includes(value)&&!output.includes(value)) output.push(value);
+    }
+    return output;
+  }
+  function meaningful(tokens,{keepTargets=false}={}){
+    return tokens.filter((token)=>{
+      if(['article','filler','punctuation'].includes(token.type))return false;
+      if(!keepTargets&&token.semantics.some((semantic)=>['target','modifier','unit','operation'].includes(semantic.type)))return false;
+      return true;
+    });
+  }
+  function textOf(tokens,{keepTargets=false}={}){return meaningful(tokens,{keepTargets}).map((token)=>token.text).join(' ').trim().replace(/^[ ,]+|[ ,]+$/g,'');}
+  function valueText(tokens){return tokens.filter((token)=>!['article','filler','punctuation'].includes(token.type)).map((token)=>token.text).join(' ').trim().replace(/^[ ,]+|[ ,]+$/g,'');}
+  function stripRoleTarget(value,target){return String(value).replace(new RegExp(`\\b${esc(target)}s?\\b`,'ig'),'').replace(/\s+/g,' ').trim().replace(/^[ ,]+|[ ,]+$/g,'');}
+  function parseRowCondition(tokens,roles,lineNumber){
+    const whereIndex=tokens.findIndex((token)=>hasTag(token,'role','where'));
+    if(whereIndex>=0){
+      const body=tokens.slice(whereIndex+1);
+      const comparisonIndex=body.findIndex((token)=>hasTag(token,'comparison','equals')||hasTag(token,'comparison','not_equals'));
+      if(comparisonIndex<0)throw new LanguageError('missing_condition_comparison','The condition after where is missing a comparison such as is, equals, or is not.',tokens[0]||null,lineNumber);
+      const column=textOf(body.slice(0,comparisonIndex));
+      const value=textOf(body.slice(comparisonIndex+1));
+      const comparator=body[comparisonIndex].semantics.find((semantic)=>semantic.type==='comparison')?.kind;
+      if(!column||!value)throw new LanguageError('incomplete_row_condition','A row condition needs both a column and a value.',tokens[0]||null,lineNumber);
+      return {column,comparison:comparator,value};
+    }
+    const column=roles.column;
+    const markedIndex=tokens.findIndex((token)=>token.normalized==='marked');
+    if(column&&markedIndex>=0){
+      let value=textOf(tokens.slice(markedIndex+1));
+      if(value.toLowerCase().includes(String(column).toLowerCase()))value=value.split(/\b(?:under|in)\b/i,1)[0].trim();
+      return {column:String(column),comparison:'equals',value};
+    }
+    if(column&&roles.comparison)return {column:String(column),comparison:'equals',value:String(roles.comparison)};
+    return null;
+  }
   function extractFrame(tokens, grammar, lineNumber) {
-    const operations = semanticTokens(tokens,'operation').sort((a,b)=>b.length-a.length || a.token.index-b.token.index);
-    if (!operations.length) throw new LanguageError('missing_operation','This instruction is missing an operation such as Open, Keep, Remove, Show, Save, or Calculate.',tokens[0]||null,lineNumber);
-    const operationSemantic = operations[0], operationToken = operationSemantic.token, operation = operationSemantic.kind;
-    const numbers = tokens.filter((token)=>token.type==='number').map((token)=>token.text);
-    const files = tokens.filter((token)=>token.type==='filename').map((token)=>token.text);
-    const tailStart = operationToken.index + operationSemantic.length;
-    const targetSemantics = semanticTokens(tokens,'target').filter((entry)=>{
-      if (entry.token.index < tailStart) return false;
-      const isUnit = entry.token.semantics.some((semantic)=>semantic.type==='unit');
-      const previous = tokens[entry.token.index - 1];
-      return !(isUnit && previous?.type === 'number');
-    }).sort((a,b)=>a.token.index-b.token.index || b.length-a.length);
-    let targets = unique(targetSemantics.map((entry)=>entry.kind));
-    const modifiers = unique(semanticTokens(tokens,'modifier').filter((entry)=>entry.token.index>=tailStart).map((entry)=>entry.kind));
-    const comparisonSemantic = semanticTokens(tokens,'comparison').sort((a,b)=>b.length-a.length || a.token.index-b.token.index)[0] || null;
-    const roleSemantics = semanticTokens(tokens,'role').sort((a,b)=>a.token.index-b.token.index || b.length-a.length);
-    const roleIndex = (kind) => firstIndex(tokens,(token)=>token.semantics.some((semantic)=>semantic.type==='role'&&semantic.kind===kind));
-    const roleAt = (index,kind) => tokens[index]?.semantics.filter((semantic)=>semantic.type==='role'&&semantic.kind===kind).sort((a,b)=>b.length-a.length)[0] || null;
-    const roleEnd = (startIndex) => {
-      const later = roleSemantics.map((entry)=>entry.token.index).filter((index)=>index>startIndex);
-      return later.length ? Math.min(...later) : tokens.length;
+    const operationIndex=tokens.findIndex((token)=>hasTag(token,'operation'));
+    if(operationIndex<0)throw new LanguageError('missing_operation','This instruction is missing an operation such as Open, Keep, Remove, Show, Save, or Calculate.',tokens[0]||null,lineNumber);
+    const operationToken=tokens[operationIndex];
+    const operation=operationToken.semantics.find((semantic)=>semantic.type==='operation').kind;
+    const tail=tokens.slice(operationIndex+1);
+    const sourceText=tokens.map((token)=>token.text).join(' ');
+    const numbers=tail.filter((token)=>token.type==='number').map((token)=>token.text);
+    const units=tagValues(tail,'unit');
+    const files=unique(tail.filter((token)=>token.type==='filename').map((token)=>token.text));
+    const modifiers=tagValues(tail,'modifier');
+    const lowerSource=sourceText.toLowerCase();
+    if(lowerSource.split(/\s+/).some((word)=>['all','every','each'].includes(word))&&!modifiers.includes('all'))modifiers.push('all');
+    if((lowerSource.includes('as a pair')||lowerSource.includes('read pair'))&&!modifiers.includes('pair'))modifiers.push('pair');
+    if(operation==='show'&&operationToken.normalized==='list'&&targetValues(tail).includes('file')&&!modifiers.includes('all'))modifiers.push('all');
+
+    const structural=(token,index)=>{
+      const role=token.semantics.find((semantic)=>semantic.type==='role')?.kind||null;
+      const comparisonTag=token.semantics.find((semantic)=>semantic.type==='comparison')?.kind||null;
+      const following=tail.slice(index+1).find((item)=>!['article','filler','punctuation'].includes(item.type));
+      if(token.normalized==='under'&&comparisonTag==='less')return following?.type==='number'?['comparison','less']:['role','column'];
+      if(token.normalized==='to'&&targetValues(tail).includes('base')&&numbers.length>=2)return null;
+      if(role){if(role==='in'&&following&&hasTag(following,'operation','sort'))return null;return ['role',role];}
+      if(comparisonTag)return ['comparison',comparisonTag];
+      return null;
     };
-    const roles = {};
-    for (const entry of roleSemantics) {
-      const start = entry.token.index + entry.length;
-      const end = roleEnd(entry.token.index);
-      const value = wordsBetween(tokens,start,end).replace(/^(?:the|a|an)\s+/i,'').replace(/\s+column$/i,'').trim();
-      if (value && roles[entry.kind] === undefined) roles[entry.kind] = value;
+    let firstStructure=tail.findIndex((token,index)=>structural(token,index));
+    if(firstStructure<0)firstStructure=tail.length;
+    let head=tail.slice(0,firstStructure);
+    const namedTarget=['result','recipe','sequence'].find((target)=>targetValues(head).includes(target))||null;
+    let nameTokens=[];
+    if(['use','rename'].includes(operation)&&namedTarget){
+      const targetIndex=head.findIndex((token)=>hasTag(token,'target',namedTarget));
+      if(targetIndex>=0){nameTokens=head.slice(targetIndex+1);head=head.slice(0,targetIndex+1);}
     }
-    if (files.length) {
-      const sourceRole = roleIndex('source'), inRole = roleIndex('in'), destinationRole = roleIndex('destination');
-      if (sourceRole>=0 || inRole>=0 || ['open','find','compare','assemble','annotate','check'].includes(operation)) roles.source = files[0];
-      if (destinationRole>=0 || operation==='save' || operation==='copy' || operation==='rename') roles.destination = files.at(-1);
+    let targets=targetValues(head);
+    const headValueTokens=head.filter((token)=>!['article','filler','punctuation'].includes(token.type)&&!token.semantics.some((semantic)=>['target','modifier','operation'].includes(semantic.type)));
+    if(targets.includes('quality_report')&&!targets.includes('quality'))targets.push('quality');
+    if(targets.includes('duplicate')&&!modifiers.includes('duplicate'))modifiers.push('duplicate');
+    if(targets.includes('minimum')&&['sort','find'].includes(operation)&&!modifiers.includes('smallest'))modifiers.push('smallest');
+    if(targets.includes('maximum')&&['sort','find'].includes(operation)&&!modifiers.includes('largest'))modifiers.push('largest');
+
+    const roleSegments={};
+    const bareTokens=[...nameTokens,...headValueTokens];
+    let active=null;
+    for(let index=firstStructure;index<tail.length;index++){
+      const token=tail[index], marker=structural(token,index);
+      if(marker){active=marker;const key=marker[0]==='role'?marker[1]:'comparison';(roleSegments[key]??=[]).push([]);continue;}
+      if(token.type==='operation'&&token.normalized==='order'&&operation==='sort')continue;
+      if(active){const key=active[0]==='role'?active[1]:'comparison';roleSegments[key].at(-1).push(token);}
+      else if(!head.includes(token))bareTokens.push(token);
     }
-    let condition = null;
-    const whereIndex = roleIndex('where');
-    if (whereIndex>=0) condition=parseCondition(tokens.slice(whereIndex+roleAt(whereIndex,'where').length),grammar,lineNumber);
-    const columnIndex = roleIndex('column');
-    if (columnIndex>=0) roles.column=wordsBetween(tokens,columnIndex+roleAt(columnIndex,'column').length,tokens.length).replace(/^(?:the\s+)?/i,'').replace(/\s+column$/i,'').trim();
-    const withIndex=roleIndex('with'), destinationIndex=roleIndex('destination');
-    if ((operation==='replace'||operation==='rename') && !roles.column) {
-      const inIndex=roleIndex('in');
-      if(inIndex>=0 && targets.includes('column')) roles.column=wordsBetween(tokens,inIndex+roleAt(inIndex,'in').length,tokens.length).replace(/^(?:the\s+)?/i,'').replace(/\s+column$/i,'').trim();
+    const roles={};
+    for(const [role,segments] of Object.entries(roleSegments)){
+      const texts=segments.map((segment)=>valueText(segment)).filter(Boolean);
+      if(texts.length)roles[role]=role==='destination'?texts.at(-1):(texts.length===1?texts[0]:texts);
     }
-    if (operation==='replace' || operation==='rename') {
-      const split=withIndex>=0?withIndex:destinationIndex;
-      const operationEnd=operationToken.index+operationSemantic.length;
-      if (split>=0) {
-        roles.source_value=wordsBetween(tokens,operationEnd,split).replace(/^(?:the\s+)?(?:column\s+)?/i,'').trim();
-        const inIndex=roleIndex('in');
-        const effectiveColumnIndex=columnIndex>=0?columnIndex:((inIndex>=0)?inIndex:tokens.length);
-        const end=effectiveColumnIndex;
-        const splitRole=withIndex>=0?'with':'destination';
-        roles.destination_value=wordsBetween(tokens,split+roleAt(split,splitRole).length,end).replace(/^(?:the\s+)?/i,'').trim();
+    let comparison=null, comparisonValue=null;
+    for(let index=0;index<tail.length;index++){const marker=structural(tail[index],index);if(marker?.[0]==='comparison'){comparison=marker[1];break;}}
+    if(roleSegments.comparison?.length){comparisonValue=valueText(roleSegments.comparison[0])||null;if(comparisonValue&&numbers.length&&comparisonValue===numbers[0])comparisonValue=null;}
+
+    for(const token of tail){
+      if(nameTokens.includes(token))continue;
+      const tagged=token.semantics.filter((semantic)=>semantic.type==='target').map((semantic)=>semantic.kind);
+      for(const target of ['name','sequence','read'])if(tagged.includes(target)&&!targets.includes(target))targets.push(target);
+      if(token.normalized.includes('names')&&!targets.includes('name'))targets.push('name');
+      for(const descriptor of ['ambiguous','quality','gap','adapter'])if(tagged.includes(descriptor)&&!targets.includes(descriptor))targets.push(descriptor);
+    }
+    if(operation==='convert'){
+      const sourceTarget=targetValues(head).find((target)=>['dna','rna','sequence'].includes(target));
+      const destinationTokens=roleSegments.destination?.[0]||[];
+      const destinationTarget=targetValues(destinationTokens).find((target)=>['dna','rna','protein'].includes(target));
+      if(sourceTarget)roles.source_target=sourceTarget;
+      if(destinationTarget)roles.destination_target=destinationTarget;
+      for(const target of [sourceTarget,destinationTarget])if(target&&!targets.includes(target))targets.push(target);
+    }
+    const bareText=valueText(bareTokens);
+    let bareValues=splitValues(bareText);
+    const statisticTargets=new Set(['average','median','standard_deviation','minimum','maximum','confidence_interval']);
+    if(['calculate','find','show'].includes(operation)&&targets.some((target)=>statisticTargets.has(target))&&!roles.of){
+      const statisticValue=bareText.replace(/^(?:how\s+)?(?:out\s+)?/i,'').replace(/\s+is$/i,'').trim();
+      if(statisticValue)roles.of=statisticValue;
+      if(comparison==='equals'&&!comparisonValue)comparison=null;
+    }
+    if(['calculate','find','show'].includes(operation)&&targets.some((target)=>statisticTargets.has(target))&&roles.of){
+      const subject=String(roles.of).toLowerCase();
+      if(subject.includes('quality')&&!targets.includes('quality'))targets.push('quality');
+      if(subject.includes('length')&&!targets.includes('length'))targets.push('length');
+    }
+    if(targets.includes('p_value')&&comparison==='between'){const values=splitValues(comparisonValue||'');if(values.length)bareValues=values;}
+
+    if(roles.in!==undefined){const value=String(roles.in);delete roles.in;if(isFilename(value,grammar)||['find','open','compare','assemble','annotate','check'].includes(operation))roles.source??=value;else roles.column??=value;}
+    if(roles.with!==undefined&&operation==='combine'&&files.length)roles.source??=files[0];
+    if(roles.using!==undefined&&['sort','remove','combine','normalize','compare','calculate'].includes(operation))roles.column??=String(roles.using);
+    if(roles.using!==undefined&&operation==='create')roles.source??=String(roles.using);
+    if(roles.column!==undefined)roles.column=stripRoleTarget(String(roles.column),'column');
+    if(roles.source!==undefined){const original=String(roles.source),cleaned=stripRoleTarget(original,'file');if(cleaned)roles.source=cleaned;else{delete roles.source;if(/\bfile\b/i.test(original)&&!targets.includes('file'))targets.push('file');}}
+    if(roles.destination!==undefined){const cleaned=stripRoleTarget(String(roles.destination),'file');if(cleaned)roles.destination=cleaned;}
+
+    if(['replace','rename'].includes(operation)){
+      let firstRole=tail.findIndex((token)=>token.semantics.some((semantic)=>semantic.type==='role'));if(firstRole<0)firstRole=tail.length;
+      let literalSource=textOf(tail.slice(0,firstRole),{keepTargets:true}).replace(/^(?:the\s+)?(?:column\s+)?/i,'').trim();
+      if(namedTarget)literalSource=stripRoleTarget(literalSource,namedTarget);
+      if(literalSource)roles.source_value??=literalSource;
+      const destinationValue=roles.destination??roles.with;if(destinationValue)roles.destination_value=String(destinationValue);
+    }
+    if(['use','rename'].includes(operation)&&namedTarget){const name=valueText(nameTokens)||String(roles.named||'');if(name)roles.name=name;}
+    if(operation==='use'&&!roles.name){const reference=valueText(tail);if(reference)roles.name=reference;}
+    if(operation==='normalize'&&!roles.column){const candidate=valueText(tail).replace(/^(?:the\s+)?counts?\s+(?:in|of|under)\s+/i,'').trim();if(candidate)roles.column=candidate;}
+    if(operation==='sort'){if(roles.using)roles.column=String(roles.using);else if(bareValues.length)roles.column=bareValues[0];}
+    if(operation==='remove'&&modifiers.includes('duplicate')&&roles.using)roles.column=String(roles.using);
+    if(operation==='keep'&&targets.includes('base')&&numbers.length>=2)roles.range=numbers.slice(0,2);
+    if(['continue','skip'].includes(operation)&&tail.some((token)=>hasTag(token,'target','sample'))&&!targets.includes('sample'))targets.push('sample');
+    if(operation==='mark'&&tail.some((token)=>hasTag(token,'target','review'))&&!targets.includes('review'))targets.push('review');
+    if(operation==='save'&&targets.some((target)=>['result','read','sequence'].includes(target))&&tail.some((token)=>hasTag(token,'target','sample'))&&!targets.includes('sample'))targets.push('sample');
+    if(operation==='combine'&&modifiers.some((value)=>['start','end'].includes(value))){for(const target of ['sequence','name'])if(tail.some((token)=>hasTag(token,'target',target))&&!targets.includes(target))targets.push(target);}
+    if(operation==='assemble'){
+      const destinationTokens=roleSegments.destination?.[0]||[];
+      if(destinationTokens.some((token)=>hasTag(token,'target','assembly'))&&!targets.includes('assembly'))targets.push('assembly');
+      if(files.length>=2&&!modifiers.includes('pair'))modifiers.push('pair');
+    }
+    if(comparison==='contains'&&comparisonValue===null){comparisonValue=valueText(roleSegments.comparison?.[0]||[])||null;}
+    if(targets.includes('row')){const rowCondition=parseRowCondition(tail,roles,lineNumber);if(rowCondition)roles.condition=rowCondition;}
+    if(operation==='open'&&modifiers.includes('all')){
+      const extensions=new Set((grammar.file_extensions||[]).map((value)=>String(value).toLowerCase()));
+      const fileType=tail.find((token)=>extensions.has(token.normalized))?.text.toUpperCase();if(fileType)roles.file_type=fileType;
+      const name=valueText(roleSegments.destination?.[0]||[]);if(name)roles.name=name;
+    }
+    if(operation==='run'&&targets.includes('tool')){
+      const toolIndex=head.findIndex((token)=>hasTag(token,'target','tool'));if(toolIndex>=0){const name=valueText(head.slice(toolIndex+1));if(name)roles.name=name;}
+      if(roles.with)roles.using=roles.with;
+    }
+    if(files.length){
+      if(operation==='open'&&!targets.includes('file'))targets.push('file');
+      if(['save','copy','rename'].includes(operation))roles.destination??=files.at(-1);
+      if(['open','find','compare','combine','assemble','annotate','check'].includes(operation))roles.source??=files[0];
+    }
+    if(operation==='assert'){
+      const conditionSource=valueText(tail);roles.condition_source=conditionSource;roles.condition_ast=parseCondition(tokenize(conditionSource,grammar,lineNumber),grammar,lineNumber);
+    }
+    let payload=null;
+    if(['say','warn'].includes(operation)||(operation==='show'&&targets.includes('warning'))){
+      const words=[];let started=['say','warn'].includes(operation);
+      for(const token of tail){
+        if(!started&&(hasTag(token,'target','warning')||token.type==='article'))continue;
+        if(token.normalized==='saying'){started=true;continue;}
+        if(!started&&hasTag(token,'target','warning')){started=true;continue;}
+        started=true;if(token.type!=='punctuation')words.push(token.text);
       }
+      payload=words.join(' ').trim();
     }
-    if (condition?.kind==='comparison' && condition.left?.kind==='value' && targets.includes('row')) {
-      condition.left={kind:'column',name:condition.left.value};
-      roles.condition={column:condition.left.name,comparison:condition.operator,value:condition.right};
-    }
-    if (!condition && ['keep','remove'].includes(operation) && targets.includes('row')) {
-      const marked=firstIndex(tokens,(token)=>['marked'].includes(token.normalized));
-      if (marked>=0 && roles.column) {
-        const value=wordsBetween(tokens,marked+1,columnIndex>=0?columnIndex:tokens.length);
-        condition={type:'condition',kind:'comparison',operator:'equal',left:{kind:'column',name:roles.column},right:value,source:wordsBetween(tokens,marked,tokens.length)};
-        roles.condition={column:roles.column,comparison:'equal',value};
-      }
-    }
-    if (comparisonSemantic?.kind==='less' && numbers.length && roles.column && !targets.includes('row')) delete roles.column;
-    if ((operation==='replace'||operation==='rename') && roles.column) targets=targets.filter((target)=>target!=='column');
-    const comparison = comparisonSemantic && !(comparisonSemantic.kind==='less' && roles.column && !numbers.length) ? comparisonSemantic.kind : null;
-    const comparisonValue = comparisonSemantic ? wordsBetween(tokens,comparisonSemantic.token.index+comparisonSemantic.length,tokens.length) : null;
-    const payload = operation==='say' || operation==='warn' ? wordsBetween(tokens,operationToken.index+operationSemantic.length,tokens.length) : null;
-    const bareValues=tokens.filter((token)=>token.index>operationToken.index && !['article','filler','comma','number','filename'].includes(token.type) && !token.semantics.some((semantic)=>['operation','target','comparison','role','modifier','unit','boolean'].includes(semantic.type))).map((token)=>token.text);
-    if(operation==='use'&&!roles.name&&bareValues.length)roles.name=bareValues.join(' ');
-    return {type:'instruction',operation,targets,modifiers,files,numbers,roles,condition,comparison,comparison_value:comparisonValue,payload,bare_values:bareValues,tokens,line_number:lineNumber,source_text:tokens.map((token)=>token.text).join(' ')};
+    return {type:'instruction',operation,targets:unique(targets),modifiers:unique(modifiers),files,numbers,units,roles,condition:roles.condition_ast||null,comparison,comparison_value:comparisonValue,payload,bare_values:bareValues,tokens,line_number:lineNumber,source_text:sourceText};
   }
   function semanticRoleSet(frame) {
     const roles=new Set(Object.keys(frame.roles));
@@ -237,7 +387,18 @@
       else if(binding==='metric')value=frame.targets.find((target)=>['quality','length'].includes(target));
       else if(binding==='file_type')value=frame.roles.file_type;
       else if(['source_list','of_list','using_list'].includes(binding))value=splitValues(frame.roles[binding.replace('_list','')]);
-      else if(binding==='list')value=splitValues(frame.roles.of||frame.bare_values.join(' '));
+      else if(binding==='list'){
+        const start=Math.max(1,frame.tokens.findIndex((token)=>hasTag(token,'target','column'))+1);
+        const pieces=[];
+        for(const token of frame.tokens.slice(start)){
+          if(['article','filler'].includes(token.type))continue;
+          if(token.text===',')pieces.push(',');
+          else if(hasTag(token,'boolean','and')||token.normalized==='and')pieces.push('and');
+          else if(!token.semantics.some((semantic)=>['operation','modifier','unit'].includes(semantic.type))||hasTag(token,'target'))pieces.push(token.text);
+        }
+        value=splitValues(pieces.join(' ').replace(/ ,/g,','));
+        if(value.length)value=value.join(', ');
+      }
       else value=frame.roles[binding];
       if(value===null||value===undefined||value===''||(Array.isArray(value)&&!value.length))throw new LanguageError(`missing_${binding}`,`${frame.operation[0].toUpperCase()+frame.operation.slice(1)} is missing the required ${binding.replaceAll('_',' ')}.`,null,frame.line_number);
       args[binding]=value;if(binding!=='condition_ast'){if(Array.isArray(value))values.push(...value.map(String));else values.push(String(value));}

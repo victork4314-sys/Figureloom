@@ -11,6 +11,9 @@ from figureloom_bio.runtime import Runner
 from figureloom_bio.semantic_language import parse_instruction
 
 
+REPO_ROOT = Path(__file__).resolve().parents[2]
+
+
 class SemanticLanguageTests(unittest.TestCase):
     def test_required_structured_examples(self) -> None:
         cases = {
@@ -87,6 +90,7 @@ process.stdout.write(JSON.stringify(output));
             text=True,
             capture_output=True,
             check=True,
+            cwd=REPO_ROOT,
         )
         browser_nodes = json.loads(completed.stdout)
         for source, browser in zip(sources, browser_nodes, strict=True):
@@ -98,6 +102,43 @@ process.stdout.write(JSON.stringify(output));
                 self.assertEqual(browser["arguments"]["runtime_values"], python["arguments"]["runtime_values"])
                 for role in {"source", "destination", "column", "source_value", "destination_value"}:
                     self.assertEqual(browser["roles"].get(role), python["roles"].get(role))
+
+
+    def test_browser_and_python_agree_for_every_published_instruction(self) -> None:
+        manifest_path = Path(__file__).resolve().parents[1] / "figureloom_bio" / "language_manifest.json"
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        commands = [item for item in manifest["commands"] if item.get("kind") == "instruction"]
+        sources = [item["example"] for item in commands]
+        node_source = r"""
+import fs from 'node:fs';
+import vm from 'node:vm';
+const grammar=JSON.parse(fs.readFileSync('figureloom-bio/figureloom_bio/language_grammar.json','utf8'));
+const code=fs.readFileSync('ide/ide-semantic-language.js','utf8');
+const sandbox={window:{dispatchEvent(){}},CustomEvent:class{},fetch:async()=>({ok:true,json:async()=>grammar}),console};
+vm.createContext(sandbox);vm.runInContext(code,sandbox);const api=await sandbox.window.FigureLoomBioSemanticLanguageReady;
+const sources=JSON.parse(fs.readFileSync(0,'utf8'));
+const output=sources.map((source)=>api.parseSemanticInstruction(source.replace(/\.$/,''),1));
+process.stdout.write(JSON.stringify(output));
+"""
+        completed = subprocess.run(
+            ["node", "--input-type=module", "-e", node_source],
+            input=json.dumps(sources),
+            text=True,
+            capture_output=True,
+            check=True,
+            cwd=REPO_ROOT,
+        )
+        browser_nodes = json.loads(completed.stdout)
+        self.assertEqual(len(browser_nodes), len(commands))
+        for command, source, browser in zip(commands, sources, browser_nodes, strict=True):
+            with self.subTest(command=command["id"], source=source):
+                python = parse_instruction(source).to_dict()
+                self.assertEqual(browser["operation"], python["operation"])
+                self.assertEqual(browser["action"], python["action"])
+                self.assertEqual(browser["targets"], python["targets"])
+                self.assertEqual(browser["modifiers"], python["modifiers"])
+                self.assertEqual(browser["roles"], python["roles"])
+                self.assertEqual(browser["arguments"]["runtime_values"], python["arguments"]["runtime_values"])
 
     def test_direct_runtime_dispatch_without_rewriting(self) -> None:
         with tempfile.TemporaryDirectory() as folder_name:

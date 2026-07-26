@@ -698,6 +698,8 @@ def _frame(tokens: tuple[Token, ...], source: str, line: int, *, operation_overr
         first_role_index = next((index for index, token in enumerate(tail) if any(kind == "role" for kind, _ in token.tags)), len(tail))
         literal_source = _text(tail[:first_role_index], keep_targets=True)
         literal_source = re.sub(r"(?i)^(?:the\s+)?(?:column\s+)?", "", literal_source).strip()
+        if named_target:
+            literal_source = _strip_role_target(literal_source, named_target)
         if literal_source:
             roles.setdefault("source_value", literal_source)
         destination_value = roles.get("destination") or roles.get("with")

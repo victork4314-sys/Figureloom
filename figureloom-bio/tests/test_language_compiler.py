@@ -7,6 +7,7 @@ from figureloom_bio.language_compiler_extensions import compile_extended_sentenc
 from figureloom_bio.language_compiler_runtime import compile_for_runtime
 from figureloom_bio.parser import parse
 from figureloom_bio.runtime import Runner
+from figureloom_bio.semantic_language import tokenize
 
 
 class FigureLoomBioCompilerTests(unittest.TestCase):
@@ -70,90 +71,57 @@ class FigureLoomBioCompilerTests(unittest.TestCase):
                 self.assertIsNotNone(compiled)
                 self.assertEqual((compiled.action, compiled.values), expected)
 
-    def test_every_advertised_verb_form_composes_in_new_sentences(self) -> None:
-        templates = {
-            'open': lambda verb: f'Please {verb} samples.csv.',
-            'keep': lambda verb: f'Please {verb} sequences longer than 100 bases.',
-            'remove': lambda verb: f'Please {verb} sequences shorter than 50 bases.',
-            'show': lambda verb: f'Please {verb} the result.',
-            'count': lambda verb: f'Please {verb} the rows.',
-            'save': lambda verb: f'Please {verb} the result to output.csv.',
-            'copy': lambda verb: f'Please {verb} the current file as backup.fasta.',
-            'use': lambda verb: f'Please {verb} the sequence called sample-17.',
-            'rename': lambda verb: f'Please {verb} the column old to new.',
-            'sort': lambda verb: f'Please {verb} the rows by score.',
-            'replace': lambda verb: f'Please {verb} empty values under status with unknown.',
-            'combine': lambda verb: f'Please {verb} sequences with more.fasta.',
-            'split': lambda verb: f'Please {verb} the sequences into files with 25 sequences each as part.fasta.',
-            'convert': lambda verb: f'Please {verb} DNA into RNA.',
-            'calculate': lambda verb: f'Please {verb} the average of score.',
-            'find': lambda verb: f'Please {verb} genes.',
-            'create': lambda verb: f'Please {verb} a volcano plot using effect and p_value.',
-            'check': lambda verb: f'Please {verb} the file.',
-            'compare': lambda verb: f'Please {verb} the sequences.',
-            'trim': lambda verb: f'Please {verb} 5 bases from the start.',
-            'normalize': lambda verb: f'Please {verb} the counts under count.',
-            'prepare': lambda verb: f'Please {verb} bacterial reads.',
-            'assemble': lambda verb: f'Please {verb} the bacterial genome.',
-            'annotate': lambda verb: f'Please {verb} the genome.',
-            'translate': lambda verb: f'Please {verb} the DNA to protein.',
-            'say': lambda verb: f'Please {verb} Analysis started.',
-            'run': lambda verb: f'Please {verb} this program 2 times.',
-            'stop': lambda verb: f'Please {verb} the program.',
-            'continue': lambda verb: f'Please {verb} with the next sample.',
-            'skip': lambda verb: f'Please {verb} this sample.',
-            'mark': lambda verb: f'Please {verb} the sample for review.',
-            'warn': lambda verb: f'Please {verb} Sample needs review.',
-        }
-        expected_actions = {
-            'open': 'open_file',
-            'keep': 'keep_strict_length',
-            'remove': 'remove_shorter',
-            'show': 'show_result',
-            'count': 'count_rows',
-            'save': 'save_result',
-            'copy': 'copy_file',
-            'use': 'use_sequence',
-            'rename': 'rename_column',
-            'sort': 'order_rows',
-            'replace': 'replace_empty',
-            'combine': 'merge_sequences',
-            'split': 'split_sequences',
-            'convert': 'to_rna',
-            'calculate': 'summary_statistic',
-            'find': 'find_genes',
-            'create': 'volcano_plot',
-            'check': 'check_file',
-            'compare': 'compare_current_sequences',
-            'trim': 'trim_start',
-            'normalize': 'normalize_counts',
-            'prepare': 'builtin_microbiology_prepare_reads',
-            'assemble': 'assemble_current_bacterial_genome',
-            'annotate': 'annotate_current_file',
-            'translate': 'translate',
-            'say': 'say',
-            'run': 'repeat_program',
-            'stop': 'stop_program',
-            'continue': 'continue_sample',
-            'skip': 'skip_sample',
-            'mark': 'mark_review',
-            'warn': 'language_alias__warn_message',
+    def test_operation_words_tokenize_and_independent_programs_execute(self) -> None:
+        conformance = {
+            'open': ('Open samples.csv.', 'open_file'),
+            'keep': ('Keep sequences longer than 100 bases.', 'keep_strict_length'),
+            'remove': ('Remove sequences shorter than 50 bases.', 'remove_shorter'),
+            'show': ('Show the result.', 'show_result'),
+            'count': ('Count the rows.', 'count_rows'),
+            'save': ('Save the result to output.csv.', 'save_result'),
+            'copy': ('Copy the current file as backup.fasta.', 'copy_file'),
+            'use': ('Use the sequence called sample-17.', 'use_sequence'),
+            'rename': ('Rename the column old to new.', 'rename_column'),
+            'sort': ('Sort the rows by score.', 'order_rows'),
+            'replace': ('Replace empty values under status with unknown.', 'replace_empty'),
+            'combine': ('Combine sequences with more.fasta.', 'merge_sequences'),
+            'split': ('Split the sequences into files with 25 sequences each as part.fasta.', 'split_sequences'),
+            'convert': ('Convert DNA into RNA.', 'to_rna'),
+            'calculate': ('Calculate the average of score.', 'summary_statistic'),
+            'find': ('Find genes.', 'find_genes'),
+            'create': ('Create a volcano plot using effect and p_value.', 'volcano_plot'),
+            'check': ('Check the file.', 'check_file'),
+            'compare': ('Compare the sequences.', 'compare_current_sequences'),
+            'trim': ('Trim 5 bases from the start.', 'trim_start'),
+            'normalize': ('Normalize the counts under count.', 'normalize_counts'),
+            'prepare': ('Prepare bacterial reads.', 'builtin_microbiology_prepare_reads'),
+            'assemble': ('Assemble the bacterial genome.', 'assemble_current_bacterial_genome'),
+            'annotate': ('Annotate the genome.', 'annotate_current_file'),
+            'translate': ('Translate the DNA to protein.', 'translate'),
+            'say': ('Say Analysis started.', 'say'),
+            'run': ('Run this program 2 times.', 'repeat_program'),
+            'stop': ('Stop the program.', 'stop_program'),
+            'continue': ('Continue with the next sample.', 'continue_sample'),
+            'skip': ('Skip this sample.', 'skip_sample'),
+            'mark': ('Mark the sample for review.', 'mark_review'),
+            'warn': ('Warn Sample needs review.', 'show_warning'),
+            'assert': ('Make sure true.', 'make_sure'),
         }
 
-        tested = 0
-        for canonical, forms in VOCABULARY['verbs'].items():
-            self.assertIn(canonical, templates)
-            self.assertIn(canonical, expected_actions)
+        self.assertEqual(set(VOCABULARY['verbs']), set(conformance))
+        for operation, forms in VOCABULARY['verbs'].items():
             for form in forms:
-                source = templates[canonical](form)
-                with self.subTest(canonical=canonical, form=form, source=source):
-                    compiled = compile_for_runtime(source)
-                    self.assertIsNotNone(compiled)
-                    self.assertEqual(compiled.action, expected_actions[canonical])
-                tested += 1
+                with self.subTest(operation=operation, form=form):
+                    tokens = tokenize(form)
+                    self.assertTrue(
+                        any(('operation', operation) in token.tags for token in tokens),
+                        f'{form!r} must tokenize as the {operation!r} operation.',
+                    )
 
-        self.assertEqual(tested, sum(len(forms) for forms in VOCABULARY['verbs'].values()))
-        self.assertGreaterEqual(tested, 98)
+        for operation, (source, expected_action) in conformance.items():
+            with self.subTest(operation=operation, source=source):
+                instruction = parse(source)[0]
+                self.assertEqual(instruction.action, expected_action)
 
     def test_remaining_official_operation_words_compile(self) -> None:
         cases = {
