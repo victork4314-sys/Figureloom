@@ -16,7 +16,7 @@
     [/^(Open all )(FASTQ|FASTA|CSV|TSV)( files in )(.+?)( as )([\w-]+)(\.)$/i, ['c','v','c','f','w','v','p']],
     [/^(Open all )(FASTQ|FASTA|CSV|TSV)( files as )([\w-]+)(\.)$/i, ['c','v','c','v','p']],
     [/^(Open the sample)(\.)$/i, ['c','p']],
-    [/^(Call the result )(.+)(\.)$/i, ['c','v','p']],
+    [/^((?:Call|Name) the result )(.+)(\.)$/i, ['c','v','p']],
     [/^(Use the recipe )(.+)(\.)$/i, ['c','v','p']],
     [/^(Use the result )(.+)(\.)$/i, ['c','v','p']],
     [/^(Make sure )(.+)(\.)$/i, ['c','v','p']],
@@ -54,9 +54,6 @@
     matches
   });
 
-  // The original highlighter renders before several language modules register
-  // their sentences. Repaint once now so an already-open program immediately
-  // loses every stale red underline, including paired-read save lines.
   queueMicrotask(() => {
     editor?.dispatchEvent(new Event('input', { bubbles:true }));
   });
