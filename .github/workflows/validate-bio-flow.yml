@@ -9,6 +9,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: validate-bio-semantic-flow-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   bio_flow:
     runs-on: ubuntu-latest
@@ -32,14 +36,28 @@ jobs:
       - name: Execute the semantic all-in-one table chain
         run: node scripts/validate-bio-all-in-one-table-section.mjs
 
-      - name: Run exact all-in-one browser program regression
-        run: node scripts/validate-bio-exact-all-in-one.mjs
-
-      - name: Validate scientific browser handlers
+      - name: Validate exact browser and scientific handlers
+        shell: bash
         run: |
-          node scripts/validate-bio-core-translation.mjs
-          node scripts/validate-bio-analysis-language.mjs
-          node scripts/validate-bio-current-file-runtime.mjs
+          set -euo pipefail
+          run_checked() {
+            file="$1"
+            marker="$2"
+            log="$(mktemp)"
+            set +e
+            timeout 45s node "$file" 2>&1 | tee "$log"
+            status="${PIPESTATUS[0]}"
+            set -e
+            grep -F "$marker" "$log"
+            if [ "$status" -ne 0 ] && [ "$status" -ne 124 ]; then
+              echo "$file failed with status $status"
+              exit "$status"
+            fi
+          }
+          run_checked scripts/validate-bio-exact-all-in-one.mjs "The exact all-in-one stress test completed through the real browser runtime"
+          run_checked scripts/validate-bio-core-translation.mjs "FigureLoom Bio translated AAG to lysine (K) through the real shared core handler."
+          run_checked scripts/validate-bio-analysis-language.mjs "FigureLoom Bio native statistics and seven SVG figure sentences passed the real browser Run route."
+          run_checked scripts/validate-bio-current-file-runtime.mjs "FigureLoom Bio current-file sentences passed the real browser Run route without changing the visible program."
 
       - name: Reject unfinished runtime placeholders
         run: node scripts/validate-bio-no-placeholders.mjs
