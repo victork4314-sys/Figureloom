@@ -61,8 +61,8 @@
 
   function tokenClass(token, previousWord, wordIndex) {
     const lower = token.toLowerCase();
-    if (wordIndex === 0 || COMMAND_WORDS.has(lower)) return 'syntax-command';
     if (CONTROL_WORDS.has(lower)) return 'syntax-field';
+    if (wordIndex === 0 || COMMAND_WORDS.has(lower)) return 'syntax-command';
     if (FILE_PATTERN.test(token) || /\.(?:csv|tsv|fastq|fq|fasta|fa|fna|bam|sam|vcf|gff3?|svg)$/i.test(token)) return 'syntax-file';
     if (/^-?\d+(?:\.\d+)?$/.test(token) || /^(?:true|false|yes|no)$/i.test(token)) return 'syntax-value';
     if (FIELD_PREPOSITIONS.has(previousWord)) return 'syntax-field';
