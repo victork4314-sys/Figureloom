@@ -34,7 +34,8 @@ _BASE_COMMAND_WORDS = {
 
 # Proven core productions from the working baseline. They preserve established
 # action names and captured values. Extension modules append more productions
-# and aliases during package installation.
+# and aliases during package installation. They are fallback-only behind the
+# compositional compiler and do not define which new sentences are legal.
 _PATTERNS: tuple[tuple[str, Pattern[str]], ...] = (
     ("repeat_program", re.compile(r"run this program ([1-9][0-9]*) times?", re.IGNORECASE)),
     ("open_pair", re.compile(r"open the files (.+?) and (.+?) as a pair", re.IGNORECASE)),
@@ -87,7 +88,6 @@ _PATTERNS: tuple[tuple[str, Pattern[str]], ...] = (
 )
 
 _ALIAS_PREFIX = "language_alias__"
-_PRIORITY_ALIAS_NAMES: frozenset[str] = frozenset()
 
 
 def _known_command_words() -> set[str]:
@@ -164,16 +164,6 @@ def _match_pattern(action: str, pattern: Pattern[str], sentence: str) -> tuple[s
     return action, values
 
 
-def _priority_alias_match(sentence: str) -> tuple[str, tuple[str, ...]] | None:
-    for action, pattern in _PATTERNS:
-        if action not in _PRIORITY_ALIAS_NAMES:
-            continue
-        matched = _match_pattern(action, pattern, sentence)
-        if matched is not None:
-            return matched
-    return None
-
-
 def _compatibility_match(sentence: str, *, alias_only: bool) -> tuple[str, tuple[str, ...]] | None:
     for action, pattern in _PATTERNS:
         is_alias = action.startswith(_ALIAS_PREFIX)
@@ -188,22 +178,6 @@ def _compatibility_match(sentence: str, *, alias_only: bool) -> tuple[str, tuple
 def parse(source: str) -> list[Instruction]:
     instructions: list[Instruction] = []
     for line_number, sentence in _split_sentences(source):
-        # These declared specialized alias families have runtime semantics that
-        # cannot be recovered from their surface words alone.
-        priority_match = _priority_alias_match(sentence)
-        if priority_match is not None:
-            action, values = priority_match
-            instructions.append(Instruction(action, line_number, values))
-            continue
-
-        # Preserve exact core/current-file production semantics. These rules have
-        # proven runtime action/value shapes and are not the definition of legality.
-        core_match = _compatibility_match(sentence, alias_only=False)
-        if core_match is not None:
-            action, values = core_match
-            instructions.append(Instruction(action, line_number, values))
-            continue
-
         compile_error: CompileError | None = None
         compiled = None
         try:
@@ -215,8 +189,16 @@ def parse(source: str) -> list[Instruction]:
             instructions.append(Instruction(compiled.action, line_number, compiled.values))
             continue
 
-        # Broad old aliases are accepted only if the compositional compiler could
-        # not resolve the sentence. They cannot steal normal user-written wording.
+        # Exact working-baseline productions remain available only when the
+        # compositional compiler does not resolve the instruction.
+        core_match = _compatibility_match(sentence, alias_only=False)
+        if core_match is not None:
+            action, values = core_match
+            instructions.append(Instruction(action, line_number, values))
+            continue
+
+        # Broad old aliases are the final compatibility fallback. They cannot
+        # pre-empt a valid newly composed instruction.
         alias_match = _compatibility_match(sentence, alias_only=True)
         if alias_match is not None:
             action, values = alias_match
