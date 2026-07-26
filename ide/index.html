@@ -42,7 +42,7 @@
   </header>
   <nav class="ide-toolbar" aria-label="Program tools">
     <div class="tool-group"><span class="tool-label">File</span><button id="newButton" type="button">New</button><button id="openButton" type="button">Open</button><button id="saveButton" type="button">Save</button><input id="filePicker" type="file" multiple hidden></div>
-    <div class="tool-group"><span class="tool-label">Program</span><button id="exampleButton" type="button">Open examples</button><button id="builderButton" type="button">Build program</button><button id="formatButton" type="button">Tidy sentences</button><button id="clearResultsButton" type="button">Clear results</button></div>
+    <div class="tool-group"><span class="tool-label">Program</span><button id="exampleButton" type="button">Grammar tests</button><button id="allroundTestButton" type="button">Composition proof</button><button id="builderButton" type="button">Build program</button><button id="formatButton" type="button">Tidy sentences</button><button id="clearResultsButton" type="button">Clear results</button></div>
   </nav>
   <main class="ide-workspace">
     <aside class="files-panel" aria-label="Files"><div class="panel-heading"><div><h2>Files</h2><p>Programs, input files, and generated results appear here immediately.</p></div><button id="addFileButton" class="small-button" type="button" aria-label="Open files">+</button></div><div id="fileList" class="file-list"></div></aside>
@@ -88,10 +88,9 @@
   <script src="./ide-table-merge.js?v=1"></script>
   <script src="./ide-large-fasta-worker-route.js?v=1"></script>
   <script src="./ide-large-file-vault-v2.js?v=1"></script>
+  <script src="./ide-compositional-test-controls.js?v=20260727-240-cases"></script>
   <script src="./ide-bio-examples.js?v=4"></script>
   <script src="./ide-bio-example-run-guard.js?v=1"></script>
-  <script src="./ide-allround-test.js?v=20260726-open-fix-2"></script>
-  <script src="./ide-composition-proof.js?v=20260727-generated-proof"></script>
   <script src="./ide-app-v2.js?v=20260726-production"></script>
   <script src="./ide-large-program-import-live.js?v=1"></script>
   <script src="./ide-import-reload-guard.js?v=2"></script>
