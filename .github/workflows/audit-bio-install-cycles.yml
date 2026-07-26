@@ -203,6 +203,6 @@ jobs:
           test "$(find /Applications -maxdepth 1 -name 'Test FigureLoom Bio.app' | wc -l | tr -d ' ')" -eq 1
           test "$(find /Applications -maxdepth 1 -name 'Install or Update FigureLoom Bio.app' | wc -l | tr -d ' ')" -eq 1
           pkgutil --pkg-info org.figureloom.bio
-          QT_QPA_PLATFORM=offscreen '/Applications/FigureLoom Bio IDE.app/Contents/MacOS/FigureLoom Bio IDE' --self-test
+          '/Applications/FigureLoom Bio IDE.app/Contents/MacOS/FigureLoom Bio IDE' --self-test
           /usr/local/bin/flbio doctor
           /usr/local/bin/flbio quick-test "$RUNNER_TEMP/figureloom-macos-cycle-test"
