@@ -3,100 +3,24 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 
 const read = (file) => fs.readFileSync(file, 'utf8');
-const vocabulary = JSON.parse(read('figureloom-bio/figureloom_bio/language_vocabulary.json'));
-
-const windowListeners = {};
-const documentListeners = {};
-
-class FakeElement {
-  constructor(id = '') {
-    this.id = id;
-    this.value = '';
-    this.selectionStart = 0;
-    this.selectionEnd = 0;
-  }
-  addEventListener(type, listener) {
-    (this.listeners ||= {})[type] ||= [];
-    this.listeners[type].push(listener);
-  }
-  closest(selector) {
-    return selector === `#${this.id}` ? this : null;
-  }
-  setSelectionRange(start, end) {
-    this.selectionStart = start;
-    this.selectionEnd = end;
-  }
-  dispatchEvent() {}
-  click() {
-    const event = {
-      target:this,
-      defaultPrevented:false,
-      stopped:false,
-      preventDefault() { this.defaultPrevented = true; },
-      stopImmediatePropagation() { this.stopped = true; },
-    };
-    for (const listener of windowListeners.click || []) {
-      listener(event);
-      if (event.stopped) break;
-    }
-    for (const listener of this.listeners?.click || []) {
-      listener(event);
-      if (event.stopped) break;
-    }
-  }
-}
-
-const editor = new FakeElement('programEditor');
-const runButton = new FakeElement('runButton');
-const elements = { programEditor:editor, runButton };
-
-const windowObject = {
-  addEventListener(type, listener) {
-    (windowListeners[type] ||= []).push(listener);
-  },
-  dispatchEvent() {},
-  FigureLoomBioStatementRecognizers:[() => true],
-  FigureLoomBioCompleteLanguage:{ uses:() => true },
-  FigureLoomBioCurrentFile:{ normalizeSource:(source) => `${source}\n` },
-  FigureLoomBioLanguage:{ commands:[{ example:'anything.' }] },
-};
-
-const documentObject = {
-  getElementById(id) { return elements[id] || null; },
-  addEventListener(type, listener) {
-    (documentListeners[type] ||= []).push(listener);
-  },
-};
-
-const context = vm.createContext({
+const grammar = JSON.parse(read('figureloom-bio/figureloom_bio/language_grammar.json'));
+const sandbox = {
+  window: { dispatchEvent() {} },
+  CustomEvent: class {},
+  fetch: async () => ({ ok: true, json: async () => grammar }),
   console,
-  window:windowObject,
-  document:documentObject,
-  Element:FakeElement,
-  Event:class Event { constructor(type, options = {}) { this.type = type; this.bubbles = Boolean(options.bubbles); } },
-  CustomEvent:class CustomEvent { constructor(type, options = {}) { this.type = type; this.detail = options.detail; } },
-  fetch:async () => ({ ok:true, status:200, json:async () => vocabulary }),
-  queueMicrotask,
-  Promise,
+  structuredClone,
   Map,
   Set,
-  Object,
-  String,
-  Number,
-  RegExp,
-});
-windowObject.window = windowObject;
-windowObject.document = documentObject;
-
-new vm.Script(read('ide/ide-language-compiler.js'), { filename:'ide-language-compiler.js' }).runInContext(context);
-await windowObject.FigureLoomBioCompilerReady;
-
-windowObject.FigureLoomBioLanguageAliases = {
-  recognizes:() => true,
-  normalizeSource:(source) => String(source),
 };
+vm.createContext(sandbox);
+vm.runInContext(read('ide/ide-semantic-language.js'), sandbox, { filename: 'ide-semantic-language.js' });
+vm.runInContext(read('ide/ide-semantic-runtime.js'), sandbox, { filename: 'ide-semantic-runtime.js' });
+vm.runInContext(read('ide/ide-semantic-table-runtime.js'), sandbox, { filename: 'ide-semantic-table-runtime.js' });
 
-new vm.Script(read('ide/ide-logic-compiler.js'), { filename:'ide-logic-compiler.js' }).runInContext(context);
+const language = await sandbox.window.FigureLoomBioSemanticLanguageReady;
+const semanticRuntime = sandbox.window.FigureLoomBioSemanticRuntime;
+const tableRuntime = sandbox.window.FigureLoomBioSemanticTableRuntime;
 
 const source = [
   'Read the file example-samples.csv.',
@@ -106,36 +30,68 @@ const source = [
   'Display the output.',
 ].join('\n');
 
-const expected = [
-  'Open the file example-samples.csv.',
-  'Keep only rows marked treated under condition.',
-  'Remove rows marked failed under status.',
-  'Count the rows.',
-  'Show the result.',
-].join('\n');
-
-assert.equal(
-  windowObject.FigureLoomBioLogicCompiler.normalizeSource(source),
-  expected,
-  'Every red sentence from the screenshot must compile before broad runtime recognition.',
+const program = language.parseProgram(source);
+assert.deepEqual(
+  Array.from(program.body, (node) => node.action),
+  ['open_file', 'keep_rows', 'remove_rows', 'count_rows', 'show_result'],
+  'The five instructions did not parse into their semantic actions.',
+);
+assert.deepEqual(
+  Array.from(program.body, (node) => `${node.source_text}.`),
+  source.split('\n'),
+  'The semantic AST must retain the exact source text instead of generating replacement sentences.',
 );
 
-const freeformRecognizer = windowObject.FigureLoomBioStatementRecognizers.at(-1);
-assert.equal(typeof freeformRecognizer, 'function');
-assert.equal(freeformRecognizer(source), true, 'The syntax layer must recognize the free-form program as valid.');
+const files = new Map([
+  ['example-samples.csv', {
+    kind: 'table',
+    columns: ['sample', 'condition', 'status'],
+    rows: [
+      { sample: 'sample-01', condition: 'treated', status: 'passed' },
+      { sample: 'sample-02', condition: 'control', status: 'passed' },
+      { sample: 'sample-03', condition: 'treated', status: 'failed' },
+      { sample: 'sample-04', condition: 'treated', status: 'passed' },
+    ],
+    delimiter: ',',
+    sourceName: 'example-samples.csv',
+  }],
+]);
 
-let runtimeSaw = null;
-windowListeners.click.push(() => { runtimeSaw = editor.value; });
-editor.value = source;
-editor.selectionStart = source.length;
-editor.selectionEnd = source.length;
-runButton.click();
-
-assert.equal(runtimeSaw, expected, 'The later production runtime must receive canonical instructions.');
-await Promise.resolve();
-assert.equal(editor.value, source, 'The editor must keep the exact wording the user wrote.');
+const executor = semanticRuntime.createExecutor({
+  executeInstruction: async (node, context) => {
+    if (node.action === 'open_file') {
+      const file = node.arguments?.files?.[0];
+      assert.ok(files.has(file), `The test file ${file} does not exist.`);
+      context.data = structuredClone(files.get(file));
+      return context.data;
+    }
+    if (tableRuntime.supports(node.action)) {
+      await tableRuntime.executeInstruction(node, context);
+      return context.data;
+    }
+    if (node.action === 'count_rows') {
+      assert.equal(context.data?.kind, 'table');
+      context.lastResult = context.data.rows.length;
+      return context.data;
+    }
+    if (node.action === 'show_result') {
+      context.shownResult = context.lastResult;
+      return context.data;
+    }
+    throw new Error(`No direct test dispatcher exists for ${node.action}.`);
+  },
+});
+const context = await executor.executeProgram(program, {});
+assert.equal(context.data.rows.length, 2, 'The semantic filters did not leave the two treated, non-failed rows.');
+assert.equal(context.lastResult, 2, 'The count action did not count the filtered rows.');
+assert.equal(context.shownResult, 2, 'The show action did not display the structured result.');
 
 const html = read('ide/index.html');
-assert.match(html, /ide-logic-compiler\.js\?v=4/);
+assert.match(html, /ide-semantic-language\.js\?v=1/);
+assert.match(html, /ide-semantic-runtime\.js\?v=1/);
+assert.match(html, /ide-semantic-table-runtime\.js\?v=1/);
+assert.match(html, /ide-semantic-run-authority\.js\?v=1/);
+assert.doesNotMatch(html, /ide-language-compiler\.js/);
+assert.doesNotMatch(html, /ide-logic-compiler\.js/);
 
-console.log('The exact red stress-test lines compile before runtime recognition, appear valid to the highlighter, execute canonically, and remain unchanged in the editor.');
+console.log('The five stress-start instructions parse and execute from semantic AST nodes while preserving the exact source text.');

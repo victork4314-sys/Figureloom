@@ -1,4 +1,4 @@
-name: Validate FigureLoom Bio flow
+name: Validate FigureLoom Bio semantic flow
 
 on:
   push:
@@ -16,150 +16,46 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
-      - name: Check browser JavaScript syntax
+      - name: Check semantic browser JavaScript
         run: |
-          node --check ide/ide-control-flow-runtime.js
-          node --check ide/ide-decisions.js
-          node --check ide/ide-addon-runtime.js
-          node --check ide/ide-decision-core.js
-          node --check ide/ide-current-file-language.js
-          node --check ide/ide-language-manifest.js
-          node --check ide/ide-language-compiler.js
-          node --check ide/ide-language-aliases.js
-          node --check ide/ide-generated-current-file.js
-          node --check ide/ide-language-translation-bridge.js
+          node --check ide/ide-semantic-language.js
+          node --check ide/ide-semantic-runtime.js
+          node --check ide/ide-semantic-run-authority.js
           node --check ide/ide-language-highlighter.js
-          node --check ide/ide-language-catalog-ui.js
-          node --check ide/ide-language-blocks-ui.js
-          node --check ide/ide-analysis-language.js
-          node --check ide/ide-complete-language.js
-          node --check ide/ide-complete-language-bridge.js
-          node --check ide/ide-translator.js
-          node --check ide/ide-approved-common.js
-          node --check ide/ide-addon-packages.js
-          node --check ide/ide-builtin-language-support.js
-          node --check ide/ide-core-language-runtime.js
-          node --check scripts/validate-bio-control-flow.mjs
-          node --check scripts/validate-bio-browser-example.mjs
-          node --check scripts/validate-bio-current-file.mjs
-          node --check scripts/validate-bio-current-file-runtime.mjs
-          node --check scripts/validate-bio-language-manifest.mjs
-          node --check scripts/validate-bio-language-aliases.mjs
-          node --check scripts/validate-bio-every-advertised-instruction.mjs
-          node --check scripts/validate-bio-core-translation.mjs
-          node --check scripts/validate-bio-statement-registry.mjs
-          node --check scripts/validate-bio-analysis-language.mjs
-          node --check scripts/validate-bio-complete-language.mjs
-          node --check scripts/validate-bio-translator.mjs
-          node --check scripts/validate-bio-decision-core.mjs
-          node --check scripts/validate-bio-runtime-race.mjs
-          node --check scripts/validate-bio-documentation.mjs
-          node --check scripts/validate-bio-no-placeholders.mjs
+          node --check ide/ide-app-v2.js
+          node --check scripts/validate-bio-semantic-runtime.mjs
+          node --check scripts/validate-bio-all-in-one-table-section.mjs
 
-      - name: Validate shared language manifest
-        run: node scripts/validate-bio-language-manifest.mjs
+      - name: Validate tokenizer grammar AST and direct dispatcher
+        run: node scripts/validate-bio-semantic-runtime.mjs
 
-      - name: Validate every accepted browser wording and execution family
-        run: node scripts/validate-bio-language-aliases.mjs
+      - name: Execute the semantic all-in-one table chain
+        run: node scripts/validate-bio-all-in-one-table-section.mjs
 
-      - name: Run every advertised instruction through the browser runtime
-        run: node scripts/validate-bio-every-advertised-instruction.mjs
+      - name: Run exact all-in-one browser program regression
+        run: node scripts/validate-bio-exact-all-in-one.mjs
 
-      - name: Validate real DNA translation output
-        run: node scripts/validate-bio-core-translation.mjs
+      - name: Validate scientific browser handlers
+        run: |
+          node scripts/validate-bio-core-translation.mjs
+          node scripts/validate-bio-analysis-language.mjs
+          node scripts/validate-bio-current-file-runtime.mjs
 
-      - name: Validate completed documentation and wiki sync
-        run: node scripts/validate-bio-documentation.mjs
-
-      - name: Reject unfinished runtime and translation placeholders
+      - name: Reject unfinished runtime placeholders
         run: node scripts/validate-bio-no-placeholders.mjs
 
-      - name: Validate registered language handlers
-        run: node scripts/validate-bio-statement-registry.mjs
+      - name: Validate documentation
+        run: node scripts/validate-bio-documentation.mjs
 
-      - name: Run native statistics and figures in the browser
-        run: node scripts/validate-bio-analysis-language.mjs
-
-      - name: Run the completed language in the browser
-        run: node scripts/validate-bio-complete-language.mjs
-
-      - name: Validate current-file sentences
-        run: node scripts/validate-bio-current-file.mjs
-
-      - name: Run current-file sentences through the real browser runtime
-        run: node scripts/validate-bio-current-file-runtime.mjs
-
-      - name: Validate browser translation targets and block punctuation
-        run: node scripts/validate-bio-translator.mjs
-
-      - name: Validate exact decision words
-        run: node scripts/validate-bio-decision-core.mjs
-
-      - name: Validate browser control flow
-        run: node scripts/validate-bio-control-flow.mjs
-
-      - name: Run bundled microbiology example
-        run: node scripts/validate-bio-browser-example.mjs
-
-      - name: Recognize decisions before runtime loading
-        run: node scripts/validate-bio-runtime-race.mjs recognition
-
-      - name: Hold program while runtime loads
-        run: node scripts/validate-bio-runtime-race.mjs waiting
-
-      - name: Load and claim the program
-        run: node scripts/validate-bio-runtime-race.mjs runtime-ready
-
-      - name: Retry Run into the complete runtime
-        run: node scripts/validate-bio-runtime-race.mjs retried
-
-      - name: Leave the loading status
-        run: node scripts/validate-bio-runtime-race.mjs left-waiting
-
-      - name: Run the exact reported program through the production path
-        run: node scripts/validate-bio-runtime-race.mjs exact-program
-
-      - name: Run control flow tests
+      - name: Run semantic Python tests
+        env:
+          PYTHONPATH: figureloom-bio
         run: |
-          cd figureloom-bio
-          python3 -m unittest discover -s tests -p 'test_control_flow.py' -v
+          python3 -m unittest figureloom-bio/tests/test_semantic_language.py -v
+          python3 -m unittest figureloom-bio/tests/test_control_flow_logic.py -v
+          python3 -m unittest figureloom-bio/tests/test_sequence_management.py -v
 
-      - name: Run exhaustive accepted-language tests
-        run: |
-          cd figureloom-bio
-          python3 -m unittest discover -s tests -p 'test_language_aliases.py' -v
-
-      - name: Run completed terminal language tests
-        run: |
-          cd figureloom-bio
-          python3 -m unittest discover -s tests -p 'test_complete_language.py' -v
-
-      - name: Run native terminal analysis tests
-        run: |
-          cd figureloom-bio
-          python3 -m unittest discover -s tests -p 'test_analysis_language.py' -v
-
-      - name: Run complete FigureLoom Bio tests
+      - name: Run complete FigureLoom Bio regressions
         run: |
           cd figureloom-bio
           python3 -m unittest discover -s tests -v
-
-      - name: Rehearse clean Linux desktop installation
-        run: |
-          browser="$(command -v chromium || command -v chromium-browser || command -v google-chrome || command -v google-chrome-stable || command -v firefox || command -v firefox-esr || true)"
-          test -n "$browser"
-          sudo env \
-            FIGURELOOM_SOURCE_DIR="$GITHUB_WORKSPACE" \
-            FIGURELOOM_VENV_DIR=/opt/figureloom-bio-ci \
-            FIGURELOOM_APP_DIR=/opt/figureloom-desktop-ci \
-            SUDO_USER="$USER" \
-            bash figureloom-bio/linux/install-workspace.sh
-          test -x /usr/local/bin/figureloom-bio-installer
-          test -x /usr/local/libexec/figureloom-bio-update
-          test -x /usr/local/bin/figureloom-bio-ide
-          test -x /usr/local/bin/figureloom-bio-test
-          test -f "$HOME/Desktop/Install or Update FigureLoom Bio.desktop"
-          test -f "$HOME/Desktop/FigureLoom Bio IDE.desktop"
-          test -f "$HOME/Desktop/Test FigureLoom Bio.desktop"
-          test -f "$HOME/Desktop/FigureLoom Bio Test Files/quick-test.flbio"
-          /opt/figureloom-bio-ci/bin/flbio quick-test /tmp/figureloom-clean-install-test

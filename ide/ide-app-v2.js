@@ -447,39 +447,15 @@ function valid(parts) {
 return `<span class="syntax-valid">${parts.join('')}</span>`;
 }
 function highlightSentence(sentence) {
-const rules = [
-[/^(Run this program )([1-9][0-9]*)( times?)(\.)$/i, ['command', 'value', 'command', 'punctuation']],
-[/^(Open the file )(.+)(\.)$/i, ['command', 'file', 'punctuation']],
-[/^(Keep only rows marked )(.+?)( under )([^.,]+)(\.)$/i, ['command', 'value', 'word', 'field', 'punctuation']],
-[/^(Remove rows marked )(.+?)( under )([^.,]+)(\.)$/i, ['command', 'value', 'word', 'field', 'punctuation']],
-[/^(Keep only the columns )(.+)(\.)$/i, ['command', 'field', 'punctuation']],
-[/^(Rename the column )(.+?)( to )(.+)(\.)$/i, ['command', 'field', 'word', 'field', 'punctuation']],
-[/^(Put the rows in order by )(.+)(\.)$/i, ['command', 'field', 'punctuation']],
-[/^(Put the (?:largest|smallest) )(.+?)( first)(\.)$/i, ['command', 'field', 'command', 'punctuation']],
-[/^(Remove duplicate rows using )(.+)(\.)$/i, ['command', 'field', 'punctuation']],
-[/^(Replace empty values under )(.+?)( with )(.+)(\.)$/i, ['command', 'field', 'word', 'value', 'punctuation']],
-[/^(Combine it with )(.+)( using )([^.,]+)(\.)$/i, ['command', 'file', 'word', 'field', 'punctuation']],
-[/^(Change )(.+?)( to )(.+?)( under )([^.,]+)(\.)$/i, ['command', 'value', 'word', 'value', 'word', 'field', 'punctuation']],
-[/^(Count the (?:rows|sequences|reads|bases))(\.)$/i, ['command', 'punctuation']],
-[/^(Show the (?:result|file|sequences|reads|sequence names))(\.)$/i, ['command', 'punctuation']],
-[/^(Keep (?:sequences|reads) at least )([1-9][0-9]*)( bases long)(\.)$/i, ['command', 'value', 'command', 'punctuation']],
-[/^(Remove (?:sequences|reads) shorter than )([1-9][0-9]*)( bases)(\.)$/i, ['command', 'value', 'command', 'punctuation']],
-[/^(Keep reads with average quality at least )([0-9]+(?:\.[0-9]+)?)(\.)$/i, ['command', 'value', 'punctuation']],
-[/^(Remove reads with average quality below )([0-9]+(?:\.[0-9]+)?)(\.)$/i, ['command', 'value', 'punctuation']],
-[/^(Trim )([1-9][0-9]*)( bases from the (?:start|end))(\.)$/i, ['command', 'value', 'command', 'punctuation']],
-[/^(Keep sequences containing )(.+)(\.)$/i, ['command', 'value', 'punctuation']],
-[/^(Remove sequences containing )(.+)(\.)$/i, ['command', 'value', 'punctuation']],
-[/^((?:Convert the sequences to (?:RNA|DNA)|Find the reverse complement|Translate the sequences|Calculate the GC content))(\.)$/i, ['command', 'punctuation']],
-[/^(Compare (?:the sequences|it) with )(.+)(\.)$/i, ['command', 'file', 'punctuation']],
-[/^(Save the (?:result|sequences|reads) as )(.+)(\.)$/i, ['command', 'file', 'punctuation']],
-[/^(Say )(.+)(\.)$/i, ['command', 'value', 'punctuation']]
-];
-for (const [pattern, classes] of rules) {
-const match = sentence.match(pattern);
-if (!match) continue;
-return valid(match.slice(1).map((part, index) => token(`syntax-${classes[index]}`, part)));
-}
-return token('syntax-invalid', sentence);
+try {
+const api = window.FigureLoomBioSemanticLanguage;
+if (!api) return token('syntax-invalid', sentence);
+const ending = sentence.endsWith(':') ? ':' : '.';
+const body = sentence.endsWith(ending) ? sentence.slice(0, -1) : sentence;
+if (ending === ':') api.parseProgram(`${body}:\n    Say valid.`);
+else api.parseInstruction(body, 1);
+return valid([token('syntax-command', body), token('syntax-punctuation', ending)]);
+} catch { return token('syntax-invalid', sentence); }
 }
 function looksLikeData(name, source) {
 if (isTableName(name) || isFastaName(name) || isFastqName(name)) return true;
@@ -513,66 +489,25 @@ updateCursorStatus();
 renderHighlight();
 syncScroll();
 }
-const instructionPatterns = [
-['repeat', /^Run this program ([1-9][0-9]*) times?$/i],
-['open', /^Open the file (.+)$/i],
-['keep', /^Keep only rows marked (.+) under ([^.,]+)$/i],
-['remove', /^Remove rows marked (.+) under ([^.,]+)$/i],
-['keepColumns', /^Keep only the columns (.+)$/i],
-['renameColumn', /^Rename the column (.+?) to (.+)$/i],
-['orderRows', /^Put the rows in order by (.+)$/i],
-['largestFirst', /^Put the largest (.+) first$/i],
-['smallestFirst', /^Put the smallest (.+) first$/i],
-['removeDuplicates', /^Remove duplicate rows using (.+)$/i],
-['replaceEmpty', /^Replace empty values under (.+?) with (.+)$/i],
-['combine', /^Combine it with (.+) using ([^.,]+)$/i],
-['changeValue', /^Change (.+?) to (.+?) under ([^.,]+)$/i],
-['countRows', /^Count the rows$/i],
-['countSequences', /^Count the (?:sequences|reads)$/i],
-['countBases', /^Count the bases$/i],
-['showNames', /^Show the sequence names$/i],
-['showSequences', /^Show the (?:sequences|reads)$/i],
-['keepMinLength', /^Keep (?:sequences|reads) at least ([1-9][0-9]*) bases long$/i],
-['removeShorter', /^Remove (?:sequences|reads) shorter than ([1-9][0-9]*) bases$/i],
-['keepQuality', /^Keep reads with average quality at least ([0-9]+(?:\.[0-9]+)?)$/i],
-['removeQuality', /^Remove reads with average quality below ([0-9]+(?:\.[0-9]+)?)$/i],
-['trimStart', /^Trim ([1-9][0-9]*) bases from the start$/i],
-['trimEnd', /^Trim ([1-9][0-9]*) bases from the end$/i],
-['keepMotif', /^Keep sequences containing (.+)$/i],
-['removeMotif', /^Remove sequences containing (.+)$/i],
-['toRna', /^Convert the sequences to RNA$/i],
-['toDna', /^Convert the sequences to DNA$/i],
-['reverseComplement', /^Find the reverse complement$/i],
-['translate', /^Translate the sequences$/i],
-['gcContent', /^Calculate the GC content$/i],
-['compare', /^Compare (?:the sequences|it) with (.+)$/i],
-['show', /^Show the (?:result|file)$/i],
-['saveSequences', /^Save the (?:sequences|reads) as (.+)$/i],
-['save', /^Save the result as (.+)$/i],
-['say', /^Say (.+)$/i]
-];
 function splitInstructions(source) {
-const instructions = [];
-source.split(/\r?\n/).forEach((rawLine, index) => {
-const lineNumber = index + 1;
-const text = rawLine.trim();
-if (!text || text.startsWith('#')) return;
-if (!text.endsWith('.')) {
-throw new PlainError(`This instruction needs a period at the end.\n\nI read: ${text}`, lineNumber);
+const api = window.FigureLoomBioSemanticLanguage;
+if (!api) throw new PlainError('The FigureLoom Bio language parser has not loaded yet.');
+try {
+const tree = api.parseProgram(source);
+if (tree.body.some((node) => !node.action)) {
+throw new PlainError('This browser runtime cannot execute blocks in the simple runner. Use the control-flow runner for If, loops, and recipes.');
 }
-instructions.push(parseInstruction({ sentence: text.slice(0, -1).trim(), lineNumber }));
-});
-return instructions;
+return tree.body;
+} catch (error) {
+if (error?.name === 'FigureLoomBioLanguageError') throw new PlainError(error.message, error.lineNumber);
+throw error;
+}
 }
 function parseInstruction(item) {
-for (const [action, pattern] of instructionPatterns) {
-const match = item.sentence.match(pattern);
-if (match) return { action, values: match.slice(1).map((value) => value.trim()), lineNumber: item.lineNumber };
-}
-throw new PlainError(
-`I do not understand this instruction yet.\n\nI read: ${item.sentence}.\n\nTry writing it as one plain instruction, such as:\nOpen the file reads.fastq.`,
-item.lineNumber
-);
+const api = window.FigureLoomBioSemanticLanguage;
+if (!api) throw new PlainError('The FigureLoom Bio language parser has not loaded yet.', item.lineNumber);
+try { return api.parseInstruction(item.sentence, item.lineNumber); }
+catch (error) { if (error?.name === 'FigureLoomBioLanguageError') throw new PlainError(error.message, error.lineNumber); throw error; }
 }
 function parseDelimited(text, delimiter) {
 const records = [];
@@ -855,8 +790,9 @@ const rna = { ...dna, A:'U' };
 const map = isRna ? rna : dna;
 return Array.from(sequence.toUpperCase()).reverse().map((base) => map[base] || base).join('');
 }
-async function runSingle(instructions, runNumber, totalRuns, target) {
-let data = null;
+async function runSingle(instructions, runNumber, totalRuns, target, runtimeState = null) {
+const state = runtimeState || { data: null };
+let data = state.data ?? null;
 for (const instruction of instructions) {
 const { action, values, lineNumber } = instruction;
 if (action === 'say') {
@@ -1070,8 +1006,12 @@ persistWorkspace();
 renderFileList();
 addSection(target, data.kind === 'table' ? 'Saved the result' : 'Saved the sequences', { file: { name: outputName, description: 'Saved in Files' } });
 }
+else {
+throw new PlainError(`The structured action “${instruction.semantic?.action || action}” does not have a browser runtime handler yet.`, lineNumber);
 }
-return data;
+}
+state.data = data;
+return state;
 }
 function sequenceTable(data) {
 const includeQuality = data.records.some((record) => record.quality !== null);
@@ -1108,16 +1048,20 @@ elements.runButton.disabled = true;
 elements.results.replaceChildren();
 setRunStatus('Running', 'running');
 try {
-const instructions = splitInstructions(elements.editor.value);
+const api = await window.FigureLoomBioSemanticLanguageReady;
+const semanticRuntime = window.FigureLoomBioSemanticRuntime;
+if (!semanticRuntime) throw new PlainError('The structured FigureLoom Bio runtime has not loaded yet.');
+const program = api.parseProgram(elements.editor.value);
+const repeatNodes = program.body.filter((node) => node.type === 'instruction' && node.action === 'repeat_program');
+if (repeatNodes.length > 1) throw new PlainError('Use only one instruction that says how many times to run the program.', repeatNodes[1].line_number);
 let repeatCount = 1;
-let body = instructions;
-const repeats = instructions.filter((instruction) => instruction.action === 'repeat');
-if (repeats.length > 1) throw new PlainError('Use only one instruction that says how many times to run the program.', repeats[1].lineNumber);
-if (repeats.length) {
-if (instructions[0] !== repeats[0]) throw new PlainError('Put the repeat instruction at the beginning of the program.', repeats[0].lineNumber);
-repeatCount = Number(repeats[0].values[0]);
-if (repeatCount > MAX_BROWSER_RUNS) throw new PlainError(`The browser IDE can run a program at most ${MAX_BROWSER_RUNS} times at once.`, repeats[0].lineNumber);
-body = instructions.slice(1);
+let body = program.body;
+if (repeatNodes.length) {
+if (program.body[0] !== repeatNodes[0]) throw new PlainError('Put the repeat instruction at the beginning of the program.', repeatNodes[0].line_number);
+repeatCount = Number(repeatNodes[0].arguments?.runtime_values?.[0]);
+if (!Number.isInteger(repeatCount) || repeatCount < 1) throw new PlainError('The repeat count must be a whole number greater than zero.', repeatNodes[0].line_number);
+if (repeatCount > MAX_BROWSER_RUNS) throw new PlainError(`The browser IDE can run a program at most ${MAX_BROWSER_RUNS} times at once.`, repeatNodes[0].line_number);
+body = program.body.slice(1);
 }
 if (!body.length) throw new PlainError('Add at least one instruction to the program.');
 for (let runNumber = 1; runNumber <= repeatCount; runNumber += 1) {
@@ -1132,12 +1076,30 @@ target.className = 'repeat-run-results';
 group.append(heading, target);
 elements.results.append(group);
 }
-await runSingle(body, runNumber, repeatCount, target);
+const executor = semanticRuntime.createExecutor({
+executeInstruction: async (node, currentState) => {
+const tableRuntime = window.FigureLoomBioSemanticTableRuntime;
+if (tableRuntime?.supports(node.action)) {
+await tableRuntime.executeInstruction(node, currentState);
+return currentState.data;
+}
+const runtimeInstruction = api.toRuntime(node);
+await runSingle([runtimeInstruction], runNumber, repeatCount, target, currentState);
+return currentState.data;
+}
+});
+await executor.executeProgram({ ...program, body }, {
+data: null,
+files,
+currentFile: activeFile,
+runNumber,
+totalRuns: repeatCount
+});
 if (repeatCount > 1) await new Promise((resolve) => requestAnimationFrame(resolve));
 }
 setRunStatus(repeatCount > 1 ? `Finished ${repeatCount} runs` : 'Finished');
 } catch (error) {
-if (error instanceof PlainError) showError(error.message, error.lineNumber);
+if (error instanceof PlainError || error?.name === 'FigureLoomBioLanguageError' || error?.name === 'FigureLoomBioSemanticRuntimeError') showError(error.message, error.lineNumber);
 else {
 console.error(error);
 showError('Something unexpected stopped the program.\n\nTry the instruction again or open the manual.');
@@ -1405,6 +1367,7 @@ elements.saveButton?.addEventListener('click', downloadActiveFile);
 elements.formatButton?.addEventListener('click', tidySentences);
 elements.clearResultsButton?.addEventListener('click', clearResults);
 elements.runButton.addEventListener('click', runProgram);
+window.addEventListener('figureloom-bio-semantic-run-requested', () => { void runProgram(); });
 elements.themeButton?.addEventListener('click', toggleTheme);
 elements.exampleButton?.addEventListener('click', loadExamples);
 elements.builderButton?.addEventListener('click', openBuilder);

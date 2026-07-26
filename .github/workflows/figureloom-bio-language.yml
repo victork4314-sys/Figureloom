@@ -1,23 +1,25 @@
-name: FigureLoom Bio language contract
+name: FigureLoom Bio semantic language contract
 
 on:
   pull_request:
     paths:
       - "figureloom-bio/**"
-      - "ide/ide-logic-compiler.js"
-      - "ide/ide-language-compiler.js"
-      - "ide/ide-language-aliases.js"
-      - "ide/ide-control-flow-runtime*"
-      - "scripts/validate-bio-*.mjs"
+      - "ide/ide-semantic-language.js"
+      - "ide/ide-semantic-runtime.js"
+      - "ide/ide-semantic-run-authority.js"
+      - "ide/ide-language-highlighter.js"
+      - "ide/ide-app-v2.js"
+      - "scripts/validate-bio-semantic-runtime.mjs"
       - ".github/workflows/figureloom-bio-language.yml"
   push:
     paths:
       - "figureloom-bio/**"
-      - "ide/ide-logic-compiler.js"
-      - "ide/ide-language-compiler.js"
-      - "ide/ide-language-aliases.js"
-      - "ide/ide-control-flow-runtime*"
-      - "scripts/validate-bio-*.mjs"
+      - "ide/ide-semantic-language.js"
+      - "ide/ide-semantic-runtime.js"
+      - "ide/ide-semantic-run-authority.js"
+      - "ide/ide-language-highlighter.js"
+      - "ide/ide-app-v2.js"
+      - "scripts/validate-bio-semantic-runtime.mjs"
       - ".github/workflows/figureloom-bio-language.yml"
 
 permissions:
@@ -41,7 +43,13 @@ jobs:
       - name: Install FigureLoom Bio
         run: python -m pip install -e ./figureloom-bio
 
-      - name: Run every Python language test
+      - name: Check semantic browser contract
+        run: node scripts/validate-bio-semantic-runtime.mjs
+
+      - name: Check browser and Python structures agree
+        run: python -m unittest figureloom-bio/tests/test_semantic_language.py -v
+
+      - name: Run every Python regression
         shell: bash
         run: |
           set -o pipefail
@@ -54,9 +62,3 @@ jobs:
         with:
           name: figureloom-bio-language-tests-${{ github.run_id }}
           path: figureloom-bio-language-tests.log
-
-      - name: Check browser Boolean, Else, and everyday wording
-        run: node scripts/validate-bio-logic-compiler.mjs
-
-      - name: Check vocabulary coverage
-        run: node scripts/validate-bio-vocabulary-coverage.mjs

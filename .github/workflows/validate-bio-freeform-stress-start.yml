@@ -22,10 +22,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
-      - name: Check changed JavaScript
+      - name: Check semantic JavaScript
         run: |
-          node --check ide/ide-logic-compiler.js
+          node --check ide/ide-semantic-language.js
+          node --check ide/ide-semantic-runtime.js
+          node --check ide/ide-semantic-table-runtime.js
           node --check scripts/validate-bio-freeform-stress-start.mjs
 
-      - name: Run the exact five red instructions through the production compiler order
+      - name: Run the five instructions through semantic grammar and direct dispatch
         run: node scripts/validate-bio-freeform-stress-start.mjs

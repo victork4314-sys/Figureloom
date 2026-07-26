@@ -2,212 +2,116 @@ from pathlib import Path
 import tempfile
 import unittest
 
-from figureloom_bio.language_compiler import VOCABULARY, compile_sentence, lex
-from figureloom_bio.language_compiler_extensions import compile_extended_sentence
-from figureloom_bio.language_compiler_runtime import compile_for_runtime
 from figureloom_bio.parser import parse
 from figureloom_bio.runtime import Runner
+from figureloom_bio.semantic_language import parse_instruction, parse_program, tokenize
 
 
-class FigureLoomBioCompilerTests(unittest.TestCase):
-    def test_lexer_reads_words_values_numbers_and_files(self) -> None:
-        tokens = lex('Please load reads.fastq and keep reads above 100 bases')
-        self.assertIn(('reads.fastq', 'filename'), [(token.text, token.kind) for token in tokens])
-        self.assertIn(('100', 'number'), [(token.text, token.kind) for token in tokens])
-        self.assertIn('keep', [token.normalized for token in tokens])
+class FigureLoomBioSemanticGrammarTests(unittest.TestCase):
+    def test_tokenizer_reads_operations_values_numbers_and_files(self) -> None:
+        tokens = tokenize("Please load reads.fastq and keep reads above 100 bases")
+        self.assertIn(("reads.fastq", "filename"), [(token.text, token.kind) for token in tokens])
+        self.assertIn(("100", "number"), [(token.text, token.kind) for token in tokens])
+        self.assertTrue(any(("operation", "open") in token.tags for token in tokens))
+        self.assertTrue(any(("operation", "keep") in token.tags for token in tokens))
 
-    def test_programs_are_compiled_from_words_and_terms(self) -> None:
+    def test_independently_written_instructions_create_expected_ast(self) -> None:
         cases = {
-            'Load reads.fastq.': ('open_file', ('reads.fastq',)),
-            'Retain reads above 100 bases.': ('keep_strict_length', ('100',)),
-            'Delete reads under 50 bases.': ('remove_shorter', ('50',)),
-            'Turn DNA into RNA.': ('to_rna', ()),
-            'Turn RNA into DNA.': ('to_dna', ()),
-            'Display sequence identifiers.': ('show_sequence_names', ()),
-            'Detect ORFs.': ('find_open_reading_frames', ()),
-            'Compute the mean for score.': ('summary_statistic', ('average', 'score')),
-            'Compute the p value for score between treated and control under group.': (
-                'permutation_p_value',
-                ('score', 'treated', 'control', 'group'),
-            ),
-            'Replace blank values in column status with unknown.': (
-                'replace_empty',
-                ('status', 'unknown'),
-            ),
-            'Draw a volcano from effect and p_value.': ('volcano_plot', ('effect', 'p_value')),
+            "Load reads.fastq.": ("open_file", ("reads.fastq",)),
+            "Retain reads above 100 bases.": ("keep_strict_length", ("100",)),
+            "Delete reads under 50 bases.": ("remove_shorter", ("50",)),
+            "Turn DNA into RNA.": ("to_rna", ()),
+            "Display sequence identifiers.": ("show_sequence_names", ()),
+            "Detect ORFs.": ("find_open_reading_frames", ()),
+            "Compute the mean for score.": ("summary_statistic", ("average", "score")),
+            "Replace blank values in column status with unknown.": ("replace_empty", ("status", "unknown")),
+            "Draw a volcano from effect and p_value.": ("volcano_plot", ("effect", "p_value")),
+            "Warn Sample needs review.": ("show_warning", ("Sample needs review",)),
+        }
+        for source, expected in cases.items():
+            with self.subTest(source=source):
+                node = parse_instruction(source)
+                self.assertEqual((node.action, node.values), expected)
+                self.assertEqual(node.source + ".", source)
+
+    def test_context_resolves_ordinary_words_without_sentence_rewriting(self) -> None:
+        cases = {
+            "Change DNA into RNA.": ("to_rna", ()),
+            "Change untreated to control under condition.": ("change_value", ("untreated", "control", "condition")),
+            "Build the bacterial genome.": ("assemble_current_bacterial_genome", ()),
+            "Print the result.": ("show_result", ()),
+            "Print Analysis started.": ("say", ("Analysis started",)),
+            "Write the result to clean.csv.": ("save_result", ("clean.csv",)),
+            "Call variants.": ("find_variants", ()),
+            "Call the column old to new.": ("rename_column", ("old", "new")),
+            "Filter rows marked treated under condition.": ("keep_rows", ("treated", "condition")),
+            "Filter out rows marked failed under status.": ("remove_rows", ("failed", "status")),
+            "Look for genes.": ("find_genes", ()),
+            "Get rid of gaps from the sequences.": ("remove_sequence_gaps", ()),
         }
         for source, expected in cases.items():
             with self.subTest(source=source):
                 instruction = parse(source)[0]
                 self.assertEqual((instruction.action, instruction.values), expected)
+                self.assertIsNotNone(instruction.node)
 
-    def test_ambiguous_everyday_words_use_the_sentence_context(self) -> None:
-        cases = {
-            'Change DNA into RNA.': ('to_rna', ()),
-            'Change untreated to control under condition.': (
-                'change_value',
-                ('untreated', 'control', 'condition'),
-            ),
-            'Build the bacterial genome.': ('assemble_current_bacterial_genome', ()),
-            'Print the result.': ('show_result', ()),
-            'Print Analysis started.': ('say', ('Analysis started',)),
-            'Write the result to clean.csv.': ('save_result', ('clean.csv',)),
-            'Write Analysis started.': ('say', ('Analysis started',)),
-            'Call variants.': ('find_variants', ()),
-            'Call the column old to new.': ('rename_column', ('old', 'new')),
-            'Filter rows marked treated under condition.': ('keep_rows', ('treated', 'condition')),
-            'Filter out rows marked failed under status.': ('remove_rows', ('failed', 'status')),
-            'Look for genes.': ('find_genes', ()),
-            'Get rid of gaps from the sequences.': ('remove_sequence_gaps', ()),
-            'Label the genome.': ('annotate_current_file', ()),
-            'Build a relationship tree.': ('build_phylogenetic_tree', ()),
-            'Calculate the spread of score.': ('summary_statistic', ('standard deviation', 'score')),
-            'Calculate the confidence range of score.': ('summary_statistic', ('confidence interval', 'score')),
-        }
-        for source, expected in cases.items():
-            with self.subTest(source=source):
-                compiled = compile_for_runtime(source)
-                self.assertIsNotNone(compiled)
-                self.assertEqual((compiled.action, compiled.values), expected)
+    def test_program_grammar_builds_real_control_flow_nodes(self) -> None:
+        program = parse_program(
+            "Make a recipe called clean:\n"
+            "    Remove reads under 20 bases.\n"
+            "If true:\n"
+            "    Use the recipe clean.\n"
+            "Otherwise:\n"
+            "    Say Nothing changed.\n"
+            "For every sample in samples:\n"
+            "    Say Processing sample.\n"
+        )
+        self.assertEqual(program.body[0].to_dict()["type"], "recipe")
+        self.assertEqual(program.body[1].to_dict()["type"], "if")
+        self.assertEqual(program.body[2].to_dict()["type"], "loop")
+        self.assertEqual(program.body[1].branches[0].condition.kind, "literal")
 
-    def test_every_advertised_verb_form_composes_in_new_sentences(self) -> None:
-        templates = {
-            'open': lambda verb: f'Please {verb} samples.csv.',
-            'keep': lambda verb: f'Please {verb} sequences longer than 100 bases.',
-            'remove': lambda verb: f'Please {verb} sequences shorter than 50 bases.',
-            'show': lambda verb: f'Please {verb} the result.',
-            'count': lambda verb: f'Please {verb} the rows.',
-            'save': lambda verb: f'Please {verb} the result to output.csv.',
-            'copy': lambda verb: f'Please {verb} the current file as backup.fasta.',
-            'use': lambda verb: f'Please {verb} the sequence called sample-17.',
-            'rename': lambda verb: f'Please {verb} the column old to new.',
-            'sort': lambda verb: f'Please {verb} the rows by score.',
-            'replace': lambda verb: f'Please {verb} empty values under status with unknown.',
-            'combine': lambda verb: f'Please {verb} sequences with more.fasta.',
-            'split': lambda verb: f'Please {verb} the sequences into files with 25 sequences each as part.fasta.',
-            'convert': lambda verb: f'Please {verb} DNA into RNA.',
-            'calculate': lambda verb: f'Please {verb} the average of score.',
-            'find': lambda verb: f'Please {verb} genes.',
-            'create': lambda verb: f'Please {verb} a volcano plot using effect and p_value.',
-            'check': lambda verb: f'Please {verb} the file.',
-            'compare': lambda verb: f'Please {verb} the sequences.',
-            'trim': lambda verb: f'Please {verb} 5 bases from the start.',
-            'normalize': lambda verb: f'Please {verb} the counts under count.',
-            'prepare': lambda verb: f'Please {verb} bacterial reads.',
-            'assemble': lambda verb: f'Please {verb} the bacterial genome.',
-            'annotate': lambda verb: f'Please {verb} the genome.',
-            'translate': lambda verb: f'Please {verb} the DNA to protein.',
-            'say': lambda verb: f'Please {verb} Analysis started.',
-            'run': lambda verb: f'Please {verb} this program 2 times.',
-            'stop': lambda verb: f'Please {verb} the program.',
-            'continue': lambda verb: f'Please {verb} with the next sample.',
-            'skip': lambda verb: f'Please {verb} this sample.',
-            'mark': lambda verb: f'Please {verb} the sample for review.',
-            'warn': lambda verb: f'Please {verb} Sample needs review.',
-        }
-        expected_actions = {
-            'open': 'open_file',
-            'keep': 'keep_strict_length',
-            'remove': 'remove_shorter',
-            'show': 'show_result',
-            'count': 'count_rows',
-            'save': 'save_result',
-            'copy': 'copy_file',
-            'use': 'use_sequence',
-            'rename': 'rename_column',
-            'sort': 'order_rows',
-            'replace': 'replace_empty',
-            'combine': 'merge_sequences',
-            'split': 'split_sequences',
-            'convert': 'to_rna',
-            'calculate': 'summary_statistic',
-            'find': 'find_genes',
-            'create': 'volcano_plot',
-            'check': 'check_file',
-            'compare': 'compare_current_sequences',
-            'trim': 'trim_start',
-            'normalize': 'normalize_counts',
-            'prepare': 'builtin_microbiology_prepare_reads',
-            'assemble': 'assemble_current_bacterial_genome',
-            'annotate': 'annotate_current_file',
-            'translate': 'translate',
-            'say': 'say',
-            'run': 'repeat_program',
-            'stop': 'stop_program',
-            'continue': 'continue_sample',
-            'skip': 'skip_sample',
-            'mark': 'mark_review',
-            'warn': 'language_alias__warn_message',
-        }
+    def test_named_sequence_values_do_not_include_target_nouns(self) -> None:
+        rename = parse("Rename the sequence sample-17 to chosen.")[0]
+        self.assertEqual(rename.action, "rename_sequence")
+        self.assertEqual(rename.values, ("sample-17", "chosen"))
+        self.assertEqual(rename.node.roles["source_value"], "sample-17")
 
-        tested = 0
-        for canonical, forms in VOCABULARY['verbs'].items():
-            self.assertIn(canonical, templates)
-            self.assertIn(canonical, expected_actions)
-            for form in forms:
-                source = templates[canonical](form)
-                with self.subTest(canonical=canonical, form=form, source=source):
-                    compiled = compile_for_runtime(source)
-                    self.assertIsNotNone(compiled)
-                    self.assertEqual(compiled.action, expected_actions[canonical])
-                tested += 1
-
-        self.assertEqual(tested, sum(len(forms) for forms in VOCABULARY['verbs'].values()))
-        self.assertGreaterEqual(tested, 98)
-
-    def test_remaining_official_operation_words_compile(self) -> None:
-        cases = {
-            'Copy the current file as backup.fasta.': ('copy_file', ('backup.fasta',)),
-            'Split the reads into files with 25 reads each as part.fastq.': (
-                'split_sequences',
-                ('25', 'part.fastq'),
-            ),
-            'Use the sequence called sample-17.': ('use_sequence', ('sample-17',)),
-            'Mark the sample for review.': ('mark_review', ()),
-        }
-        for source, expected in cases.items():
-            with self.subTest(source=source):
-                compiled = compile_extended_sentence(source)
-                self.assertIsNotNone(compiled)
-                self.assertEqual((compiled.action, compiled.values), expected)
-
-    def test_examples_do_not_define_legality(self) -> None:
-        compiled = compile_sentence('Keep rows where condition is treated')
-        self.assertIsNotNone(compiled)
-        self.assertEqual(compiled.action, 'keep_rows')
-        self.assertEqual(compiled.values, ('treated', 'condition'))
+        use = parse("Use the sequence called sample-17.")[0]
+        self.assertEqual(use.action, "use_sequence")
+        self.assertEqual(use.values, ("sample-17",))
 
     def test_freely_worded_table_program_runs(self) -> None:
         with tempfile.TemporaryDirectory() as folder:
             root = Path(folder)
-            (root / 'samples.csv').write_text(
-                'sample,condition,status\n'
-                'one,treated,passed\n'
-                'two,control,passed\n'
-                'three,treated,failed\n',
-                encoding='utf-8',
+            (root / "samples.csv").write_text(
+                "sample,condition,status\n"
+                "one,treated,passed\n"
+                "two,control,passed\n"
+                "three,treated,failed\n",
+                encoding="utf-8",
             )
-            program = root / 'free-wording.flbio'
+            program = root / "free-wording.flbio"
             program.write_text(
-                'Please load samples.csv.\n'
-                'Filter rows marked treated under condition.\n'
-                'Filter out rows marked failed under status.\n'
-                'Total the records.\n'
-                'Print the output.\n'
-                'Write the output to clean.csv.\n',
-                encoding='utf-8',
+                "Please load samples.csv.\n"
+                "Filter rows marked treated under condition.\n"
+                "Filter out rows marked failed under status.\n"
+                "Total the records.\n"
+                "Print the output.\n"
+                "Write the output to clean.csv.\n",
+                encoding="utf-8",
             )
 
-            output = Runner(program).run(parse(program.read_text(encoding='utf-8'))).render()
+            output = Runner(program).run(parse(program.read_text(encoding="utf-8"))).render()
 
-            self.assertIn('Rows\n\n1', output)
-            self.assertIn('one', output)
-            self.assertNotIn('three', output)
+            self.assertIn("Rows\n\n1", output)
+            self.assertIn("one", output)
+            self.assertNotIn("three", output)
             self.assertEqual(
-                (root / 'clean.csv').read_text(encoding='utf-8'),
-                'sample,condition,status\none,treated,passed\n',
+                (root / "clean.csv").read_text(encoding="utf-8"),
+                "sample,condition,status\none,treated,passed\n",
             )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

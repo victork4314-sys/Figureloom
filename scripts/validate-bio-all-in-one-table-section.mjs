@@ -3,105 +3,91 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 
 const read = (file) => fs.readFileSync(file, 'utf8');
-const handlers = [];
-const recognizers = [];
-const windowObject = {
-  FigureLoomBioStatementHandlers:handlers,
-  FigureLoomBioStatementRecognizers:recognizers,
-};
-const context = vm.createContext({
+const grammar = JSON.parse(read('figureloom-bio/figureloom_bio/language_grammar.json'));
+const sandbox = {
+  window: { dispatchEvent() {} },
+  CustomEvent: class {},
+  fetch: async () => ({ ok: true, json: async () => grammar }),
   console,
-  window:windowObject,
   structuredClone,
-  Set,
   Map,
-  Object,
-  String,
-  Number,
-  Math,
-  RegExp,
-});
-windowObject.window = windowObject;
-new vm.Script(read('ide/ide-core-language-runtime.js'), { filename:'ide-core-language-runtime.js' }).runInContext(context);
-
-const runtime = windowObject.FigureLoomBioCoreLanguageRuntime;
-assert.ok(runtime, 'The shared core language runtime must start.');
-assert.equal(typeof runtime.handler, 'function');
-assert.equal(runtime.recognizesLine('Put the rows in order by sample.'), true);
-
-class LanguageError extends Error {
-  constructor(message, line) {
-    super(message);
-    this.lineNumber = line;
-  }
-}
-
-const sections = [];
-const helpers = {
-  Error:LanguageError,
-  section(title, payload = {}) { sections.push({ title, payload }); },
-  open() { throw new Error('This focused table test does not open another file.'); },
+  Set,
 };
+vm.createContext(sandbox);
+vm.runInContext(read('ide/ide-semantic-language.js'), sandbox, { filename: 'ide-semantic-language.js' });
+vm.runInContext(read('ide/ide-semantic-runtime.js'), sandbox, { filename: 'ide-semantic-runtime.js' });
+vm.runInContext(read('ide/ide-semantic-table-runtime.js'), sandbox, { filename: 'ide-semantic-table-runtime.js' });
 
-const programContext = {
-  data:{
-    kind:'table',
-    columns:['sample', 'condition', 'status'],
-    rows:[
-      { sample:'sample-c', condition:'treated', status:'' },
-      { sample:'sample-a', condition:'treated', status:'passed' },
-      { sample:'sample-b', condition:'control', status:'passed' },
-      { sample:'sample-a', condition:'treated', status:'passed' },
-      { sample:'sample-d', condition:'treated', status:'failed' },
-    ],
-    delimiter:',',
-    sourceName:'example-samples.csv',
-  },
-  files:{},
-  named:new Map(),
-};
+const language = await sandbox.window.FigureLoomBioSemanticLanguageReady;
+const semanticRuntime = sandbox.window.FigureLoomBioSemanticRuntime;
+const tableRuntime = sandbox.window.FigureLoomBioSemanticTableRuntime;
+assert.ok(language, 'The semantic language parser must start.');
+assert.ok(semanticRuntime, 'The semantic AST runtime must start.');
+assert.ok(tableRuntime, 'The semantic table dispatcher must start.');
 
-const instructions = [
-  'Keep only rows marked treated under condition',
-  'Remove rows marked failed under status',
-  'Keep only the columns sample, condition, and status',
-  'Rename the column condition to group',
-  'Replace empty values under status with unknown',
-  'Put the rows in order by sample',
-  'Remove duplicate rows using sample',
-];
-
-for (let index = 0; index < instructions.length; index += 1) {
-  const text = instructions[index];
-  assert.equal(runtime.recognizesLine(`${text}.`), true, `The core recognizer rejected: ${text}.`);
-  const handled = await runtime.handler({ text, context:programContext, line:index + 11, helpers });
-  assert.equal(handled, true, `The core runtime rejected: ${text}.`);
-}
+const program = language.parseProgram(`
+Keep only rows marked treated under condition.
+Remove rows marked failed under status.
+Keep only the columns sample, condition, and status.
+Rename the column condition to group.
+Replace empty values under status with unknown.
+Put the rows in order by sample.
+Remove duplicate rows using sample.
+`);
 
 assert.deepEqual(
-  Array.from(programContext.data.columns),
-  ['sample', 'group', 'status'],
-  'The table columns were not transformed correctly.',
+  Array.from(program.body, (node) => node.action),
+  ['keep_rows', 'remove_rows', 'keep_columns', 'rename_column', 'replace_empty', 'order_rows', 'remove_duplicates'],
+  'The table program did not parse into the expected semantic actions.',
 );
-assert.deepEqual(
-  Array.from(programContext.data.rows, (row) => ({ ...row })),
-  [
-    { sample:'sample-a', group:'treated', status:'passed' },
-    { sample:'sample-c', group:'treated', status:'unknown' },
+
+const initialTable = {
+  kind: 'table',
+  columns: ['sample', 'condition', 'status'],
+  rows: [
+    { sample: 'sample-c', condition: 'treated', status: '' },
+    { sample: 'sample-a', condition: 'treated', status: 'passed' },
+    { sample: 'sample-b', condition: 'control', status: 'passed' },
+    { sample: 'sample-a', condition: 'treated', status: 'passed' },
+    { sample: 'sample-d', condition: 'treated', status: 'failed' },
   ],
-  'The table rows were not filtered, sorted, filled, and deduplicated correctly.',
+  delimiter: ',',
+  sourceName: 'example-samples.csv',
+};
+
+const executor = semanticRuntime.createExecutor({
+  executeInstruction: async (node, context) => {
+    const handled = await tableRuntime.executeInstruction(node, context);
+    assert.equal(handled, true, `The semantic table dispatcher rejected ${node.action}.`);
+    return context.data;
+  },
+});
+const context = await executor.executeProgram(program, { data: initialTable });
+
+assert.deepEqual(
+  Array.from(context.data.columns),
+  ['sample', 'group', 'status'],
+  'The semantic table dispatcher did not transform the columns correctly.',
+);
+assert.deepEqual(
+  Array.from(context.data.rows, (row) => ({ ...row })),
+  [
+    { sample: 'sample-a', group: 'treated', status: 'passed' },
+    { sample: 'sample-c', group: 'treated', status: 'unknown' },
+  ],
+  'The semantic table dispatcher did not filter, sort, fill, and deduplicate the rows correctly.',
 );
 
-const part04 = read('ide/ide-control-flow-runtime.part04');
-assert.match(part04, /ide-core-language-runtime\.js\?v=2/);
-assert.match(part04, /FigureLoomBioLogicCompiler\?\.normalizeSource/);
-const loader = read('ide/ide-control-flow-runtime.js');
-assert.match(loader, /runtime\.part\$\{String\(number\).*\?v=8/);
-assert.match(loader, /FigureLoomBioLargeImport\?\.openStatement/);
 const html = read('ide/index.html');
-assert.match(html, /ide-logic-compiler\.js\?v=4/);
-assert.match(html, /ide-complete-language-bridge\.js\?v=2/);
-assert.match(html, /ide-large-import-support\.js\?v=1/);
-assert.match(html, /ide-control-flow-runtime\.js\?v=11/);
+assert.match(html, /ide-semantic-language\.js\?v=1/);
+assert.match(html, /ide-semantic-runtime\.js\?v=1/);
+assert.match(html, /ide-semantic-table-runtime\.js\?v=1/);
+assert.match(html, /ide-semantic-run-authority\.js\?v=1/);
+assert.doesNotMatch(html, /ide-logic-compiler\.js/);
 
-console.log('The exact all-in-one table mutation chain executes correctly and every browser runtime cache layer is refreshed.');
+const app = read('ide/ide-app-v2.js');
+assert.match(app, /FigureLoomBioSemanticTableRuntime/);
+assert.match(app, /tableRuntime\?\.supports\(node\.action\)/);
+assert.match(app, /tableRuntime\.executeInstruction\(node, currentState\)/);
+
+console.log('The all-in-one table chain parses to semantic AST actions and executes through the shared direct table dispatcher.');

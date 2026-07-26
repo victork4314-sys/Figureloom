@@ -4,55 +4,19 @@ import re
 from pathlib import Path
 from typing import Any
 
-from . import parser as parser_module
 from .errors import FigureLoomBioError
 
 
-EXTRA_PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
-    ("merge_sequences", re.compile(r"merge (?:the sequences|it) with (.+)", re.IGNORECASE)),
-    ("sequence_statistics", re.compile(r"calculate sequence statistics", re.IGNORECASE)),
-    ("remove_sequence_gaps", re.compile(r"remove gaps from the sequences", re.IGNORECASE)),
-    (
-        "keep_sequence_names_containing",
-        re.compile(r"keep sequences with names containing (.+)", re.IGNORECASE),
-    ),
-    (
-        "remove_sequence_names_containing",
-        re.compile(r"remove sequences with names containing (.+)", re.IGNORECASE),
-    ),
-    (
-        "make_sequence_names_unique",
-        re.compile(r"make duplicate sequence names unique", re.IGNORECASE),
-    ),
-    (
-        "remove_ambiguous_sequences",
-        re.compile(r"remove sequences containing ambiguous bases", re.IGNORECASE),
-    ),
-    (
-        "keep_max_ambiguous",
-        re.compile(r"keep sequences with at most ([0-9]+) ambiguous bases", re.IGNORECASE),
-    ),
-    ("validate_sequences", re.compile(r"validate the sequences", re.IGNORECASE)),
-    (
-        "split_sequences",
-        re.compile(
-            r"split the sequences into files with ([1-9][0-9]*) sequences each as (.+)",
-            re.IGNORECASE,
-        ),
-    ),
-)
-EXTRA_ACTIONS = {action for action, _ in EXTRA_PATTERNS}
 
+
+# Runtime actions are selected by the shared semantic parser.
+EXTRA_ACTIONS = {'keep_max_ambiguous', 'keep_sequence_names_containing', 'make_sequence_names_unique', 'merge_sequences', 'remove_ambiguous_sequences', 'remove_sequence_gaps', 'remove_sequence_names_containing', 'sequence_statistics', 'split_sequences', 'validate_sequences'}
 
 def install_genomics_core(runner_class: type[Any]) -> None:
     """Add sequence merging, validation, statistics, and splitting commands."""
     if getattr(runner_class, "_genomics_core_installed", False):
         return
 
-    existing = {action for action, _ in parser_module._PATTERNS}
-    additions = tuple(item for item in EXTRA_PATTERNS if item[0] not in existing)
-    if additions:
-        parser_module._PATTERNS = additions + parser_module._PATTERNS
 
     original_run_instruction = runner_class._run_instruction
 
