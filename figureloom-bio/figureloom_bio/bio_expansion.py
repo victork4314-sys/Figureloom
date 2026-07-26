@@ -31,6 +31,13 @@ TARGETS = _entries("targets")
 COMPARISONS = _entries("comparisons")
 ROLES = _entries("roles")
 MODIFIERS = _entries("modifiers")
+_CATEGORY_ENTRIES = {
+    "operations": OPERATIONS,
+    "targets": TARGETS,
+    "comparisons": COMPARISONS,
+    "roles": ROLES,
+    "modifiers": MODIFIERS,
+}
 
 
 def _tokens(source: str) -> list[str]:
@@ -45,6 +52,17 @@ def _find_phrase(words: list[str], entries: list[tuple[tuple[str, ...], str]], *
             if tuple(lowered[index:index + len(phrase)]) == phrase:
                 return canonical, index, index + len(phrase)
     return None
+
+
+def classify_expansion_phrase(category: str, phrase: str) -> str | None:
+    entries = _CATEGORY_ENTRIES.get(category)
+    if entries is None:
+        raise KeyError(category)
+    words = _tokens(phrase)
+    match = _find_phrase(words, entries, start_only=True)
+    if not match or match[1] != 0 or match[2] != len(words):
+        return None
+    return match[0]
 
 
 def parse_expanded_instruction(source: str, *, line: int = 1) -> InstructionNode:
@@ -156,4 +174,4 @@ def expansion_words() -> set[str]:
     return words
 
 
-__all__ = ["EXPANSION", "expansion_words", "parse_expanded_instruction"]
+__all__ = ["EXPANSION", "classify_expansion_phrase", "expansion_words", "parse_expanded_instruction"]
