@@ -16,12 +16,27 @@ jobs:
         with:
           ref: agent/semantic-language-takeover
           fetch-depth: 0
-      - name: Decode and verify exact patch
+      - name: Reconstruct and verify exact patch
         shell: bash
         run: |
           set -euo pipefail
-          test -f .github/semantic-stage-two.patch.gz.b64
-          base64 --decode .github/semantic-stage-two.patch.gz.b64 | gzip -dc > /tmp/semantic-stage-two.patch
+          parts=(
+            .github/semantic-stage-two.part00
+            .github/semantic-stage-two.part01
+            .github/semantic-stage-two.part02
+            .github/semantic-stage-two.part03
+            .github/semantic-stage-two.part04
+            .github/semantic-stage-two.part05
+            .github/semantic-stage-two.part06
+            .github/semantic-stage-two.part07
+            .github/semantic-stage-two.part08
+          )
+          for part in "${parts[@]}"; do
+            test -f "$part" || { echo "Missing required stage-two part: $part"; exit 1; }
+          done
+          cat "${parts[@]}" > /tmp/semantic-stage-two.patch.gz.b64
+          echo "7a1869405ae970a840720b18d8442d1d6274c3db58ce451dc558a36ae0973209  /tmp/semantic-stage-two.patch.gz.b64" | sha256sum --check
+          base64 --decode /tmp/semantic-stage-two.patch.gz.b64 | gzip -dc > /tmp/semantic-stage-two.patch
           echo "1d6e510691e62af914f69c0b15b9a64a2edeb415851f106cffef227db8480e24  /tmp/semantic-stage-two.patch" | sha256sum --check
           git apply --check /tmp/semantic-stage-two.patch
           git apply /tmp/semantic-stage-two.patch
@@ -46,7 +61,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          git rm .github/semantic-stage-two.patch.gz.b64 .github/workflows/semantic-stage-two.yml
+          git rm .github/semantic-stage-two.part* .github/workflows/semantic-stage-two.yml
           git add \
             ide/ide-semantic-language.js \
             ide/ide-semantic-runtime.js \
