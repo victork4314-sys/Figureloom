@@ -23,6 +23,12 @@ jobs:
           parts=(
             .github/verified-semantic.part00
             .github/verified-semantic.part01
+            .github/verified-semantic.part02
+            .github/verified-semantic.part03
+            .github/verified-semantic.part04
+            .github/verified-semantic.part05
+            .github/verified-semantic.part06
+            .github/verified-semantic.part07
           )
           for part in "${parts[@]}"; do
             if [ ! -f "$part" ]; then
