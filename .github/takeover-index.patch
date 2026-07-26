@@ -1,0 +1,11 @@
+--- a/ide/index.html
++++ b/ide/index.html
+@@ -69,6 +69,8 @@
+   <script src="../cloud-config.js?v=20260722-bio"></script>
+   <script src="./ide-language-manifest.js?v=2"></script>
+   <script src="./ide-semantic-language.js?v=1"></script>
++  <script src="./ide-semantic-runtime.js?v=1"></script>
++  <script src="./ide-semantic-run-authority.js?v=1"></script>
+   <script src="./ide-current-file-language.js?v=2"></script>
+   <script src="./ide-language-aliases.js?v=1"></script>
+   <script src="./ide-generated-current-file.js?v=1"></script>
