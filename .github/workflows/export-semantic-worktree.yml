@@ -4,9 +4,6 @@ on:
   push:
     branches:
       - agent/real-semantic-language
-  pull_request:
-    branches:
-      - main
 
 permissions:
   contents: write
@@ -27,8 +24,30 @@ jobs:
         id: apply
         shell: bash
         run: |
-          set -euo pipefail
+          set -Eeuo pipefail
+          diagnose() {
+            status=$?
+            set +e
+            git reset --mixed HEAD >/dev/null 2>&1
+            {
+              echo "status=$status"
+              echo "head=$(git rev-parse HEAD)"
+              echo "checkpoint_present=$(test -f .github/runtime-checkpoint.b64 && echo yes || echo no)"
+              echo "checkpoint_bytes=$(test -f .github/runtime-checkpoint.b64 && wc -c < .github/runtime-checkpoint.b64 || echo 0)"
+              echo "patch_sha256=$(test -f /tmp/runtime.patch && sha256sum /tmp/runtime.patch | cut -d' ' -f1 || echo unavailable)"
+              echo "--- apply check ---"
+              test -f /tmp/apply-check.err && cat /tmp/apply-check.err
+            } > .github/runtime-apply-error.txt
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add .github/runtime-apply-error.txt
+            git commit -m "Record semantic runtime apply failure"
+            git push origin HEAD:agent/real-semantic-language
+            exit "$status"
+          }
+          trap diagnose ERR
           if [ ! -f .github/runtime-checkpoint.b64 ]; then
+            rm -f .github/runtime-apply-error.txt
             echo "applied=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
@@ -36,18 +55,17 @@ jobs:
           gzip -dc /tmp/runtime.patch.gz > /tmp/runtime.patch
           actual_sha="$(sha256sum /tmp/runtime.patch | cut -d' ' -f1)"
           expected_sha="5215cae1f1c33577b698db2149bc59cdf50a64e712556aa12cba5609f0da0260"
-          test "$actual_sha" = "$expected_sha" || {
-            echo "Runtime patch checksum mismatch: $actual_sha"
-            exit 1
-          }
-          git apply --check /tmp/runtime.patch
+          test "$actual_sha" = "$expected_sha"
+          git apply --check /tmp/runtime.patch 2>/tmp/apply-check.err
           git apply --index /tmp/runtime.patch
           git rm -f .github/runtime-checkpoint.b64
           git rm -f --ignore-unmatch .github/semantic-checkpoint.part*
+          git rm -f --ignore-unmatch .github/runtime-apply-error.txt
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git commit -m "Wire structured semantic runtime into the IDE"
           git push origin HEAD:agent/real-semantic-language
+          trap - ERR
           echo "applied=true" >> "$GITHUB_OUTPUT"
       - name: Remove checkout metadata
         if: steps.apply.outputs.applied == 'false'
