@@ -5,6 +5,7 @@ const vocabulary = JSON.parse(fs.readFileSync('figureloom-bio/figureloom_bio/lan
 const manifest = JSON.parse(fs.readFileSync('figureloom-bio/figureloom_bio/language_manifest.json', 'utf8'));
 const aliases = JSON.parse(fs.readFileSync('figureloom-bio/figureloom_bio/language_aliases.json', 'utf8'));
 const catalogSource = fs.readFileSync('ide/ide-language-catalog-ui.js', 'utf8');
+const compilerTestSource = fs.readFileSync('scripts/validate-bio-language-compiler.mjs', 'utf8');
 
 const groups = ['verbs', 'terms', 'flow', 'logic', 'booleans', 'conditions', 'roles', 'comparators', 'file_types', 'fillers'];
 const forms = groups.flatMap((group) => {
@@ -54,11 +55,13 @@ for (const form of forms) {
 
 assert.match(catalogSource, /Every individual word/);
 assert.match(catalogSource, /function individualWords\(payload\)/);
-assert.match(catalogSource, /language_vocabulary\.json\?v=3/);
+assert.match(catalogSource, /language_vocabulary\.json\?v=4/);
 assert.match(catalogSource, /group:'individual_words'/);
+assert.match(compilerTestSource, /Object\.entries\(vocabulary\.verbs\)/);
+assert.match(compilerTestSource, /testedForms/);
 
-assert.equal(vocabulary.version, 3);
-assert.ok(forms.length > 350, `Expected a complete vocabulary, found only ${forms.length} forms.`);
+assert.equal(vocabulary.version, 4);
+assert.ok(forms.length > 350, `Expected a complete lexical inventory, found only ${forms.length} forms.`);
 assert.ok(individualWords.size > 180, `Expected every individual vocabulary word, found only ${individualWords.size}.`);
 
-console.log(`Vocabulary coverage passed: ${forms.length} phrases/forms and ${individualWords.size} individual words; every official command and alias starts with a listed word.`);
+console.log(`Lexical inventory passed: ${forms.length} phrases/forms and ${individualWords.size} individual words are exposed. Execution is verified separately by generated compositional compiler tests.`);
