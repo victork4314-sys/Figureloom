@@ -790,8 +790,9 @@ const rna = { ...dna, A:'U' };
 const map = isRna ? rna : dna;
 return Array.from(sequence.toUpperCase()).reverse().map((base) => map[base] || base).join('');
 }
-async function runSingle(instructions, runNumber, totalRuns, target) {
-let data = null;
+async function runSingle(instructions, runNumber, totalRuns, target, runtimeState = null) {
+const state = runtimeState || { data: null };
+let data = state.data ?? null;
 for (const instruction of instructions) {
 const { action, values, lineNumber } = instruction;
 if (action === 'say') {
@@ -1005,8 +1006,43 @@ persistWorkspace();
 renderFileList();
 addSection(target, data.kind === 'table' ? 'Saved the result' : 'Saved the sequences', { file: { name: outputName, description: 'Saved in Files' } });
 }
+else {
+const semanticAction = instruction.semantic?.action || instruction.semanticAction || action;
+const structuredHandler = window.FigureLoomBioSemanticRuntime?.getActionHandler?.(semanticAction);
+if (structuredHandler) {
+state.data = data;
+const handled = await structuredHandler({
+node: instruction.semantic || instruction,
+instruction,
+context: state,
+target,
+line: lineNumber,
+helpers: {
+Error: PlainError,
+open: (name) => openWorkspaceFile(name, lineNumber),
+encode: (value, name) => value?.kind === 'table'
+? encodeDelimited({ ...value, delimiter: String(name).toLowerCase().endsWith('.tsv') ? '\t' : ',' })
+: encodeSequences(value, name),
+section: (title, details = {}) => addSection(target, title, {
+paragraphs: details.paragraphs || details.p || [],
+bigValue: details.bigValue ?? details.big,
+table: details.table ? {
+columns: details.table.columns || details.table.c || [],
+rows: details.table.rows || details.table.r || [],
+} : undefined,
+file: details.file ? (typeof details.file === 'string' ? { name:details.file, description:'Saved in Files' } : details.file) : undefined,
+kind: details.kind,
+}),
+},
+});
+data = state.data;
+if (handled !== false) continue;
 }
-return data;
+throw new PlainError(`The structured action “${semanticAction}” does not have a browser runtime handler yet.`, lineNumber);
+}
+}
+state.data = data;
+return state;
 }
 function sequenceTable(data) {
 const includeQuality = data.records.some((record) => record.quality !== null);
@@ -1043,17 +1079,20 @@ elements.runButton.disabled = true;
 elements.results.replaceChildren();
 setRunStatus('Running', 'running');
 try {
-await window.FigureLoomBioSemanticLanguageReady;
-const instructions = splitInstructions(elements.editor.value);
+const api = await window.FigureLoomBioSemanticLanguageReady;
+const semanticRuntime = window.FigureLoomBioSemanticRuntime;
+if (!semanticRuntime) throw new PlainError('The structured FigureLoom Bio runtime has not loaded yet.');
+const program = api.parseProgram(elements.editor.value);
+const repeatNodes = program.body.filter((node) => node.type === 'instruction' && node.action === 'repeat_program');
+if (repeatNodes.length > 1) throw new PlainError('Use only one instruction that says how many times to run the program.', repeatNodes[1].line_number);
 let repeatCount = 1;
-let body = instructions;
-const repeats = instructions.filter((instruction) => instruction.action === 'repeat');
-if (repeats.length > 1) throw new PlainError('Use only one instruction that says how many times to run the program.', repeats[1].lineNumber);
-if (repeats.length) {
-if (instructions[0] !== repeats[0]) throw new PlainError('Put the repeat instruction at the beginning of the program.', repeats[0].lineNumber);
-repeatCount = Number(repeats[0].values[0]);
-if (repeatCount > MAX_BROWSER_RUNS) throw new PlainError(`The browser IDE can run a program at most ${MAX_BROWSER_RUNS} times at once.`, repeats[0].lineNumber);
-body = instructions.slice(1);
+let body = program.body;
+if (repeatNodes.length) {
+if (program.body[0] !== repeatNodes[0]) throw new PlainError('Put the repeat instruction at the beginning of the program.', repeatNodes[0].line_number);
+repeatCount = Number(repeatNodes[0].arguments?.runtime_values?.[0]);
+if (!Number.isInteger(repeatCount) || repeatCount < 1) throw new PlainError('The repeat count must be a whole number greater than zero.', repeatNodes[0].line_number);
+if (repeatCount > MAX_BROWSER_RUNS) throw new PlainError(`The browser IDE can run a program at most ${MAX_BROWSER_RUNS} times at once.`, repeatNodes[0].line_number);
+body = program.body.slice(1);
 }
 if (!body.length) throw new PlainError('Add at least one instruction to the program.');
 for (let runNumber = 1; runNumber <= repeatCount; runNumber += 1) {
@@ -1068,12 +1107,25 @@ target.className = 'repeat-run-results';
 group.append(heading, target);
 elements.results.append(group);
 }
-await runSingle(body, runNumber, repeatCount, target);
+const executor = semanticRuntime.createExecutor({
+executeInstruction: async (node, currentState) => {
+const runtimeInstruction = api.toRuntime(node);
+await runSingle([runtimeInstruction], runNumber, repeatCount, target, currentState);
+return currentState.data;
+}
+});
+await executor.executeProgram({ ...program, body }, {
+data: null,
+files,
+currentFile: activeFile,
+runNumber,
+totalRuns: repeatCount
+});
 if (repeatCount > 1) await new Promise((resolve) => requestAnimationFrame(resolve));
 }
 setRunStatus(repeatCount > 1 ? `Finished ${repeatCount} runs` : 'Finished');
 } catch (error) {
-if (error instanceof PlainError) showError(error.message, error.lineNumber);
+if (error instanceof PlainError || error?.name === 'FigureLoomBioLanguageError' || error?.name === 'FigureLoomBioSemanticRuntimeError') showError(error.message, error.lineNumber);
 else {
 console.error(error);
 showError('Something unexpected stopped the program.\n\nTry the instruction again or open the manual.');
@@ -1341,6 +1393,7 @@ elements.saveButton?.addEventListener('click', downloadActiveFile);
 elements.formatButton?.addEventListener('click', tidySentences);
 elements.clearResultsButton?.addEventListener('click', clearResults);
 elements.runButton.addEventListener('click', runProgram);
+window.addEventListener('figureloom-bio-semantic-run-requested', () => { void runProgram(); });
 elements.themeButton?.addEventListener('click', toggleTheme);
 elements.exampleButton?.addEventListener('click', loadExamples);
 elements.builderButton?.addEventListener('click', openBuilder);
