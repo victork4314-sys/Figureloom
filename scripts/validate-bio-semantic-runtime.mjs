@@ -1,3 +1,4 @@
+// Post-application verification anchor: this file exercises the pushed semantic parser and AST runtime.
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
