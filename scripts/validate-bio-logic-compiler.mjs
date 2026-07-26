@@ -183,7 +183,7 @@ await Promise.resolve();
 assert.equal(editor.value, reportedProgram, 'The editor must keep the wording the user wrote.');
 
 const vocabulary = JSON.parse(fs.readFileSync('figureloom-bio/figureloom_bio/language_vocabulary.json', 'utf8'));
-assert.equal(vocabulary.version, 3);
+assert.equal(vocabulary.version, 4);
 assert.deepEqual(vocabulary.logic.and, ['and']);
 assert.deepEqual(vocabulary.logic.or, ['or']);
 assert.deepEqual(vocabulary.logic.not, ['not']);
@@ -206,7 +206,7 @@ for (const group of ['flow', 'logic', 'booleans', 'conditions', 'file_types', 'f
 }
 
 const index = fs.readFileSync('ide/index.html', 'utf8');
-assert.match(index, /ide-language-compiler\.js\?v=2/);
+assert.match(index, /ide-language-compiler\.js\?v=4/);
 assert.match(index, /ide-logic-compiler\.js\?v=4/);
 assert.match(index, /ide-complete-language-bridge\.js\?v=2/);
 assert.match(index, /ide-large-import-support\.js\?v=1/);
@@ -216,7 +216,7 @@ assert.match(index, /ide-large-file-vault-v2\.js\?v=1/);
 assert.match(index, /ide-app-v2\.js\?v=3/);
 assert.match(index, /ide-approved-common\.js\?v=5/);
 assert.match(index, /ide-vocabulary-ui-copy\.js\?v=2/);
-assert.match(index, /ide-language-catalog-ui\.js\?v=5/);
+assert.match(index, /ide-language-catalog-ui\.js\?v=6/);
 assert.match(index, /ide-builtin-language-support\.js\?v=5/);
 
 console.log('Boolean logic, exact messages, stable sequence-name filters, aliases, Warning, End, large imports, and browser asset versions are validated.');
