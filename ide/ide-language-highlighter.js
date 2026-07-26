@@ -88,8 +88,7 @@
       if (/^[:.,()[\]]$/.test(token)) return `<span class="syntax-punctuation">${escapeHtml(token)}</span>`;
       if (!/^[A-Za-z0-9_.\\/-]+$/.test(token)) return escapeHtml(token);
       const className = tokenClass(token, previousWord, wordIndex);
-      const lower = token.toLowerCase();
-      previousWord = lower;
+      previousWord = token.toLowerCase();
       wordIndex += 1;
       return `<span class="${className}">${escapeHtml(token)}</span>`;
     }).join('');
@@ -113,6 +112,15 @@
     requestAnimationFrame(repaint);
   }
 
+  function loadAllroundTest() {
+    if (document.getElementById('figureloomBioAllroundTestScript')) return;
+    const script = document.createElement('script');
+    script.id = 'figureloomBioAllroundTestScript';
+    script.src = './ide-allround-test.js?v=20260726-1';
+    script.defer = true;
+    document.body.append(script);
+  }
+
   editor.addEventListener('input', schedule);
   editor.addEventListener('scroll', schedule);
   window.addEventListener('figureloom-bio-semantic-language-ready', schedule);
@@ -125,5 +133,6 @@
     acceptsProgram:acceptedProgram,
     repaint:schedule,
   });
+  loadAllroundTest();
   schedule();
 })();
