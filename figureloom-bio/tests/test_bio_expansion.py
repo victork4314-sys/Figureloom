@@ -71,7 +71,7 @@ class BioExpansionTests(unittest.TestCase):
                 "Find open reading frames.\n"
             )
             output = Runner(program).run(instructions)
-            self.assertIn("Open reading frames", str(output))
+            self.assertIn("Open reading frames", output.render())
 
     def test_variant_table_expansion_executes(self) -> None:
         with tempfile.TemporaryDirectory() as folder_name:
@@ -94,7 +94,7 @@ class BioExpansionTests(unittest.TestCase):
             runner = Runner(program)
             output = runner.run(instructions)
             self.assertEqual(len(runner.table.rows), 2)
-            self.assertIn("Variant summary", str(output))
+            self.assertIn("Variant summary", output.render())
 
 
 if __name__ == "__main__":
