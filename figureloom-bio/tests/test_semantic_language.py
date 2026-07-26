@@ -52,7 +52,6 @@ class SemanticLanguageTests(unittest.TestCase):
         self.assertEqual(source_file.roles["source"], "sample.fasta")
         self.assertNotIn("destination", source_file.roles)
 
-
     def test_browser_and_python_structures_agree_for_required_examples(self) -> None:
         sources = [
             "Keep sequences over 500 bases.",
@@ -81,12 +80,14 @@ const sources=JSON.parse(fs.readFileSync(0,'utf8'));
 const output=sources.map((source)=>api.parseSemanticInstruction(source.slice(0,-1),1));
 process.stdout.write(JSON.stringify(output));
 """
+        repository_root = Path(__file__).resolve().parents[2]
         completed = subprocess.run(
             ["node", "--input-type=module", "-e", node_source],
             input=json.dumps(sources),
             text=True,
             capture_output=True,
             check=True,
+            cwd=repository_root,
         )
         browser_nodes = json.loads(completed.stdout)
         for source, browser in zip(sources, browser_nodes, strict=True):
