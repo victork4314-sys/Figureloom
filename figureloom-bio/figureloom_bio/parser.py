@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from .bio_expansion import expansion_words, parse_expanded_instruction
 from .errors import FigureLoomBioError
 from .semantic_language import GRAMMAR, InstructionNode, LanguageError, parse_instruction
 
@@ -26,6 +27,16 @@ class Instruction:
         return self.node.arguments if self.node else {}
 
 
+def _parse_node(text: str, line_number: int) -> InstructionNode:
+    try:
+        return parse_instruction(text, line=line_number)
+    except LanguageError as base_error:
+        try:
+            return parse_expanded_instruction(text, line=line_number)
+        except LanguageError:
+            raise base_error
+
+
 def parse(source: str) -> list[Instruction]:
     instructions: list[Instruction] = []
     for line_number, raw_line in enumerate(str(source).splitlines(), start=1):
@@ -44,7 +55,7 @@ def parse(source: str) -> list[Instruction]:
                 line_number=line_number,
             )
         try:
-            node = parse_instruction(text[:-1], line=line_number)
+            node = _parse_node(text[:-1], line_number)
         except LanguageError as error:
             raise FigureLoomBioError(
                 _render_error(text[:-1], error),
@@ -55,7 +66,7 @@ def parse(source: str) -> list[Instruction]:
 
 
 def _known_command_words() -> set[str]:
-    words: set[str] = set()
+    words: set[str] = set(expansion_words())
     for category in ("operations", "targets", "comparisons", "roles", "modifiers", "units", "booleans"):
         for forms in GRAMMAR.get(category, {}).values():
             for form in forms:
@@ -71,7 +82,7 @@ def _render_error(sentence: str, error: LanguageError) -> str:
         return (
             "I could not find an operation word in this instruction.\n\n"
             f"I read\n{sentence}.\n\n"
-            "Use an operation such as Open, Keep, Remove, Show, Save, Calculate, or Find."
+            "Use a simple bioinformatics operation such as Open, Keep, Remove, Show, Save, Count, Find, Check, Annotate, or Summarize."
         )
     labels = {
         "missing_period": "The instruction is missing its ending period.",
