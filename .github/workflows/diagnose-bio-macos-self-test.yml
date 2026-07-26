@@ -1,0 +1,68 @@
+name: Diagnose FigureLoom Bio macOS self-test
+
+on:
+  pull_request:
+    paths:
+      - 'figureloom-bio/**'
+      - '.github/workflows/diagnose-bio-macos-self-test.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: diagnose-bio-macos-self-test-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  macos_self_test:
+    name: macOS ${{ matrix.label }} native self-test trace
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: macos-15
+            arch: arm64
+            label: Apple Silicon
+            filename: Apple-Silicon
+          - runner: macos-15-intel
+            arch: x86_64
+            label: Intel
+            filename: Intel
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: Build candidate package quietly
+        env:
+          FIGURELOOM_MAC_ARCH_LABEL: ${{ matrix.arch }}
+        run: |
+          build_log="$RUNNER_TEMP/figureloom-macos-build.log"
+          if ! bash figureloom-bio/macos/build-installer.sh dist >"$build_log" 2>&1; then
+            cat "$build_log"
+            exit 1
+          fi
+      - name: Install and run native self-test
+        env:
+          PACKAGE_FILE: FigureLoom-Bio-Installer-macOS-${{ matrix.filename }}.pkg
+          FIGURELOOM_SELF_TEST_TRACE: ${{ runner.temp }}/figureloom-native-ide-self-test.txt
+        run: |
+          set -euo pipefail
+          candidate="$GITHUB_WORKSPACE/dist/$PACKAGE_FILE"
+          printf '%s\n' "$USER" | sudo tee /var/tmp/figureloom-bio-target-user >/dev/null
+          sudo installer -pkg "$candidate" -target /
+          if ! '/Applications/FigureLoom Bio IDE.app/Contents/MacOS/FigureLoom Bio IDE' --self-test; then
+            cat "$FIGURELOOM_SELF_TEST_TRACE" || true
+            exit 1
+          fi
+      - name: Upload native self-test trace
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-self-test-trace-${{ matrix.filename }}
+          path: ${{ runner.temp }}/figureloom-native-ide-self-test.txt
+          if-no-files-found: warn
