@@ -32,11 +32,26 @@
   }
 
   function parser(expansion, baseApi) {
-    const operationEntries = entries(expansion, 'operations');
-    const targetEntries = entries(expansion, 'targets');
-    const comparisonEntries = entries(expansion, 'comparisons');
-    const roleEntries = entries(expansion, 'roles');
-    const modifierEntries = entries(expansion, 'modifiers');
+    const groups = {
+      operations:entries(expansion, 'operations'),
+      targets:entries(expansion, 'targets'),
+      comparisons:entries(expansion, 'comparisons'),
+      roles:entries(expansion, 'roles'),
+      modifiers:entries(expansion, 'modifiers'),
+    };
+    const operationEntries = groups.operations;
+    const targetEntries = groups.targets;
+    const comparisonEntries = groups.comparisons;
+    const roleEntries = groups.roles;
+    const modifierEntries = groups.modifiers;
+
+    function classifyExpansionPhrase(category, phrase) {
+      const list = groups[category];
+      if (!list) throw new Error(`Unknown expansion category: ${category}`);
+      const words = wordsOf(phrase);
+      const match = findPhrase(words, list, true);
+      return match && match.start === 0 && match.end === words.length ? match.canonical : null;
+    }
 
     function parseExpandedInstruction(source, lineNumber = 1) {
       const words = wordsOf(source);
@@ -105,10 +120,10 @@
     }
 
     function parseSemanticInstruction(source, lineNumber = 1) {
-      try { return baseApi.parseSemanticInstruction(source, lineNumber); }
-      catch (baseError) {
-        try { return parseExpandedInstruction(source, lineNumber); }
-        catch { throw baseError; }
+      try { return parseExpandedInstruction(source, lineNumber); }
+      catch (expansionError) {
+        try { return baseApi.parseSemanticInstruction(source, lineNumber); }
+        catch { throw expansionError; }
       }
     }
 
@@ -146,7 +161,7 @@
       }
     }
 
-    return Object.freeze({ ...baseApi, parseExpandedInstruction, parseSemanticInstruction, parseInstruction, parseProgram, toRuntime, expansion });
+    return Object.freeze({ ...baseApi, classifyExpansionPhrase, parseExpandedInstruction, parseSemanticInstruction, parseInstruction, parseProgram, toRuntime, expansion });
   }
 
   const ready = Promise.all([
