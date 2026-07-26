@@ -17,6 +17,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          ref: agent/real-semantic-language
           fetch-depth: 0
       - name: Apply semantic checkpoint when complete
         id: apply
