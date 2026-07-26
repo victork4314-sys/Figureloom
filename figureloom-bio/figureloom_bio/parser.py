@@ -87,6 +87,7 @@ _PATTERNS: tuple[tuple[str, Pattern[str]], ...] = (
 )
 
 _ALIAS_PREFIX = "language_alias__"
+_PRIORITY_ALIAS_NAMES: frozenset[str] = frozenset()
 
 
 def _known_command_words() -> set[str]:
@@ -164,11 +165,9 @@ def _match_pattern(action: str, pattern: Pattern[str], sentence: str) -> tuple[s
 
 
 def _priority_alias_match(sentence: str) -> tuple[str, tuple[str, ...]] | None:
-    # language_alias_precedence moves only the declared specialized aliases to
-    # the leading edge of _PATTERNS. Stop at the first non-alias core production.
     for action, pattern in _PATTERNS:
-        if not action.startswith(_ALIAS_PREFIX):
-            break
+        if action not in _PRIORITY_ALIAS_NAMES:
+            continue
         matched = _match_pattern(action, pattern, sentence)
         if matched is not None:
             return matched
@@ -189,9 +188,8 @@ def _compatibility_match(sentence: str, *, alias_only: bool) -> tuple[str, tuple
 def parse(source: str) -> list[Instruction]:
     instructions: list[Instruction] = []
     for line_number, sentence in _split_sentences(source):
-        # Three specialized alias families have distinct runtime semantics that
-        # cannot be recovered from their surface words alone. The existing
-        # precedence installer identifies and moves only those aliases first.
+        # These declared specialized alias families have runtime semantics that
+        # cannot be recovered from their surface words alone.
         priority_match = _priority_alias_match(sentence)
         if priority_match is not None:
             action, values = priority_match
