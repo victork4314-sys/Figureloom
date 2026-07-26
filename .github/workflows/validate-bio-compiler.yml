@@ -19,6 +19,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
+      - name: Upload exact PR worktree for verification
+        uses: actions/upload-artifact@v6
+        with:
+          name: pr260-current-worktree-${{ github.run_id }}
+          path: .
+          include-hidden-files: true
+          retention-days: 1
+
       - name: Check semantic browser source
         run: |
           node --check ide/ide-semantic-language.js
