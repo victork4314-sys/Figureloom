@@ -4,7 +4,18 @@ from dataclasses import dataclass
 
 from .bio_expansion import expansion_words, parse_expanded_instruction
 from .errors import FigureLoomBioError
-from .semantic_language import GRAMMAR, InstructionNode, LanguageError, parse_instruction
+from .semantic_language import (
+    GRAMMAR,
+    BranchNode,
+    IfNode,
+    InstructionNode,
+    LanguageError,
+    LoopNode,
+    ProgramNodeRoot,
+    RecipeNode,
+    parse_condition,
+    parse_instruction,
+)
 
 
 @dataclass(frozen=True)
@@ -65,6 +76,87 @@ def parse(source: str) -> list[Instruction]:
     return instructions
 
 
+def parse_program(source: str) -> ProgramNodeRoot:
+    root: list = []
+    recipes: dict[str, RecipeNode] = {}
+    stack: list[tuple[int, list]] = [(-4, root)]
+    last_if: dict[int, IfNode] = {}
+
+    for line_number, raw in enumerate(str(source).splitlines(), start=1):
+        text = raw.strip()
+        if not text or text.startswith("#"):
+            continue
+        leading = raw[: len(raw) - len(raw.lstrip(" \t"))]
+        if "\t" in leading or len(leading) % 4:
+            raise LanguageError("Indent blocks with four spaces.", line=line_number, code="invalid_indentation")
+        indent = len(leading)
+        while len(stack) > 1 and indent <= stack[-1][0]:
+            stack.pop()
+        parent_indent, body = stack[-1]
+        if indent != parent_indent + 4:
+            raise LanguageError("This line is indented farther than the block above it.", line=line_number, code="invalid_indentation")
+
+        if text.endswith(":"):
+            header = text[:-1].strip()
+            lower = header.casefold()
+            if lower.startswith("make a recipe called "):
+                name = header[len("Make a recipe called "):].strip()
+                if not name:
+                    raise LanguageError("A recipe header needs a name.", line=line_number, code="missing_recipe_name")
+                node = RecipeNode(name, [], line_number)
+                body.append(node)
+                recipes[name.casefold()] = node
+                stack.append((indent, node.body))
+                last_if.pop(indent, None)
+                continue
+            if lower.startswith("if "):
+                branch = BranchNode(parse_condition(header[3:].strip(), line=line_number), [], line_number)
+                node = IfNode([branch], [], line_number)
+                body.append(node)
+                last_if[indent] = node
+                stack.append((indent, branch.body))
+                continue
+            if lower.startswith("otherwise if ") or lower.startswith("else if "):
+                prefix = "otherwise if " if lower.startswith("otherwise if ") else "else if "
+                node = last_if.get(indent)
+                if node is None:
+                    raise LanguageError("Put Else if directly after an If block.", line=line_number, code="orphan_else_if")
+                branch = BranchNode(parse_condition(header[len(prefix):].strip(), line=line_number), [], line_number)
+                node.branches.append(branch)
+                stack.append((indent, branch.body))
+                continue
+            if lower in {"otherwise", "else"}:
+                node = last_if.get(indent)
+                if node is None:
+                    raise LanguageError("Put Else directly after an If block.", line=line_number, code="orphan_else")
+                stack.append((indent, node.otherwise))
+                continue
+            if lower.startswith("for every "):
+                rest = header[len("For every "):].strip()
+                if " in " in rest.casefold():
+                    split_index = rest.casefold().index(" in ")
+                    item = rest[:split_index].strip()
+                    collection = rest[split_index + 4:].strip()
+                else:
+                    item = rest or "item"
+                    collection = f"{item}s"
+                if not item or not collection:
+                    raise LanguageError("A loop needs both an item and a collection.", line=line_number, code="incomplete_loop")
+                node = LoopNode(item, collection.casefold(), [], line_number)
+                body.append(node)
+                stack.append((indent, node.body))
+                last_if.pop(indent, None)
+                continue
+            raise LanguageError(f"I could not parse the block header “{header}”.", line=line_number, code="unknown_block")
+
+        if not text.endswith("."):
+            raise LanguageError("This instruction needs a period at the end.", line=line_number, code="missing_period")
+        body.append(_parse_node(text[:-1], line_number))
+        last_if.pop(indent, None)
+
+    return ProgramNodeRoot(root, recipes)
+
+
 def _known_command_words() -> set[str]:
     words: set[str] = set(expansion_words())
     for category in ("operations", "targets", "comparisons", "roles", "modifiers", "units", "booleans"):
@@ -101,4 +193,4 @@ def _render_error(sentence: str, error: LanguageError) -> str:
     )
 
 
-__all__ = ["Instruction", "_known_command_words", "parse"]
+__all__ = ["Instruction", "_known_command_words", "parse", "parse_program"]
