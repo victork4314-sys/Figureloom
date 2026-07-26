@@ -728,6 +728,15 @@ def _frame(tokens: tuple[Token, ...], source: str, line: int, *, operation_overr
     if operation == "remove" and "duplicate" in modifiers and roles.get("using"):
         roles["column"] = str(roles["using"])
 
+    if operation == "keep" and "column" in targets:
+        column_index = next(
+            (index for index, token in enumerate(tail) if _has_tag(token, "target", "column")),
+            None,
+        )
+        if column_index is not None:
+            listed_targets = set(_target_values(tail[column_index + 1 :]))
+            targets = [target for target in targets if target == "column" or target not in listed_targets]
+
     if operation == "keep" and "base" in targets and len(numbers) >= 2:
         roles["range"] = numbers[:2]
     if operation in {"continue", "skip"} and any(_has_tag(token, "target", "sample") for token in tail):
@@ -1000,7 +1009,7 @@ def _bind(rule: dict[str, Any], frame: _Frame, line: int) -> dict[str, Any]:
                 elif any(kind == "target" for kind, _ in token.tags):
                     pieces.append(token.text)
             raw = " ".join(pieces).replace(" ,", ",")
-            value = ", ".join(_split_values(raw))
+            value = _split_values(raw)
         elif binding == "name":
             value = frame.roles.get("name") or frame.roles.get("named")
         elif binding == "source_value":
@@ -1038,7 +1047,9 @@ def _bind(rule: dict[str, Any], frame: _Frame, line: int) -> dict[str, Any]:
         args[binding] = value
         if binding == "condition_ast":
             continue
-        if isinstance(value, list):
+        if binding == "list" and isinstance(value, list):
+            values.append(", ".join(str(item) for item in value))
+        elif isinstance(value, list):
             values.extend(str(item) for item in value)
         else:
             values.append(str(value))

@@ -132,27 +132,48 @@
       if (sourceRole>=0 || inRole>=0 || ['open','find','compare','assemble','annotate','check'].includes(operation)) roles.source = files[0];
       if (destinationRole>=0 || operation==='save' || operation==='copy' || operation==='rename') roles.destination = files.at(-1);
     }
+    if (operation==='keep' && targets.includes('column')) {
+      const columnTarget=targetSemantics.find((entry)=>entry.kind==='column');
+      if(columnTarget){
+        const listTokens=tokens.slice(columnTarget.token.index+columnTarget.length);
+        let listText='';
+        for(const token of listTokens){
+          if(token.type==='article'||token.type==='filler')continue;
+          if(token.type==='comma'){listText=listText.trimEnd()+', ';continue;}
+          listText+=token.text+' ';
+        }
+        roles.list=listText.trim();
+        const listedTargetKinds=new Set(targetSemantics.filter((entry)=>entry.token.index>columnTarget.token.index).map((entry)=>entry.kind));
+        targets=targets.filter((target)=>target==='column'||!listedTargetKinds.has(target));
+      }
+    }
     let condition = null;
     const whereIndex = roleIndex('where');
     if (whereIndex>=0) condition=parseCondition(tokens.slice(whereIndex+roleAt(whereIndex,'where').length),grammar,lineNumber);
     const columnIndex = roleIndex('column');
-    if (columnIndex>=0) roles.column=wordsBetween(tokens,columnIndex+roleAt(columnIndex,'column').length,tokens.length).replace(/^(?:the\s+)?/i,'').replace(/\s+column$/i,'').trim();
+    if (columnIndex>=0) {
+      const columnEnd=roleEnd(columnIndex);
+      roles.column=wordsBetween(tokens,columnIndex+roleAt(columnIndex,'column').length,columnEnd).replace(/^(?:the\s+)?/i,'').replace(/\s+column$/i,'').trim();
+    }
     const withIndex=roleIndex('with'), destinationIndex=roleIndex('destination');
     if ((operation==='replace'||operation==='rename') && !roles.column) {
       const inIndex=roleIndex('in');
       if(inIndex>=0 && targets.includes('column')) roles.column=wordsBetween(tokens,inIndex+roleAt(inIndex,'in').length,tokens.length).replace(/^(?:the\s+)?/i,'').replace(/\s+column$/i,'').trim();
     }
     if (operation==='replace' || operation==='rename') {
-      const split=withIndex>=0?withIndex:destinationIndex;
       const operationEnd=operationToken.index+operationSemantic.length;
-      if (split>=0) {
-        roles.source_value=wordsBetween(tokens,operationEnd,split).replace(/^(?:the\s+)?(?:column\s+)?/i,'').trim();
-        const inIndex=roleIndex('in');
-        const effectiveColumnIndex=columnIndex>=0?columnIndex:((inIndex>=0)?inIndex:tokens.length);
-        const end=effectiveColumnIndex;
-        const splitRole=withIndex>=0?'with':'destination';
-        roles.destination_value=wordsBetween(tokens,split+roleAt(split,splitRole).length,end).replace(/^(?:the\s+)?/i,'').trim();
-      }
+      const firstRoleIndex=roleSemantics.length?Math.min(...roleSemantics.map((entry)=>entry.token.index)):tokens.length;
+      const literalSource=wordsBetween(tokens,operationEnd,firstRoleIndex).replace(/^(?:the\s+)?(?:column\s+)?/i,'').trim();
+      if(literalSource)roles.source_value=literalSource;
+      const destinationValue=roles.destination||roles.with;
+      if(destinationValue)roles.destination_value=String(destinationValue).replace(/^(?:the\s+)?/i,'').trim();
+    }
+    if (roles.using && ['sort','remove','combine','normalize','compare','calculate'].includes(operation)) {
+      roles.column=String(roles.using).replace(/^(?:the\s+)?(?:column\s+)?/i,'').trim();
+      const usingIndex=roleIndex('using');
+      const principalTargets=new Set(targetSemantics.filter((entry)=>entry.token.index<usingIndex).map((entry)=>entry.kind));
+      const roleValueTargets=new Set(targetSemantics.filter((entry)=>entry.token.index>usingIndex).map((entry)=>entry.kind));
+      targets=targets.filter((target)=>principalTargets.has(target)||!roleValueTargets.has(target));
     }
     if (condition?.kind==='comparison' && condition.left?.kind==='value' && targets.includes('row')) {
       condition.left={kind:'column',name:condition.left.value};
@@ -230,10 +251,14 @@
       else if(binding==='using')value=frame.roles.using;
       else if(binding==='of')value=frame.roles.of;
       else if(['source_list','of_list','using_list'].includes(binding))value=splitValues(frame.roles[binding.replace('_list','')]);
-      else if(binding==='list')value=splitValues(frame.roles.of||frame.bare_values.join(' '));
+      else if(binding==='list')value=splitValues(frame.roles.list||frame.roles.of||frame.bare_values.join(' '));
       else value=frame.roles[binding];
       if(value===null||value===undefined||value===''||(Array.isArray(value)&&!value.length))throw new LanguageError(`missing_${binding}`,`${frame.operation[0].toUpperCase()+frame.operation.slice(1)} is missing the required ${binding.replaceAll('_',' ')}.`,null,frame.line_number);
-      args[binding]=value;if(binding!=='condition_ast'){if(Array.isArray(value))values.push(...value.map(String));else values.push(String(value));}
+      args[binding]=value;if(binding!=='condition_ast'){
+        if(binding==='list'&&Array.isArray(value))values.push(value.map(String).join(', '));
+        else if(Array.isArray(value))values.push(...value.map(String));
+        else values.push(String(value));
+      }
     }
     args.runtime_values=values;return args;
   }
