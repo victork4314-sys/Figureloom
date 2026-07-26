@@ -58,3 +58,30 @@ assert.equal(browserShape.body[2].item, 'sample');
 assert.equal(browserShape.body[2].collection, 'samples');
 
 console.log('Semantic tokenizer, grammar AST, Boolean branch, recipe, loop, and direct dispatcher passed.');
+
+const indexSource = fs.readFileSync('ide/index.html', 'utf8');
+const semanticLanguageIndex = indexSource.indexOf('ide-semantic-language.js');
+const semanticRuntimeIndex = indexSource.indexOf('ide-semantic-runtime.js');
+const semanticAuthorityIndex = indexSource.indexOf('ide-semantic-run-authority.js');
+const firstCompatibilityIndex = indexSource.indexOf('ide-current-file-language.js');
+assert.ok(semanticLanguageIndex >= 0 && semanticRuntimeIndex > semanticLanguageIndex);
+assert.ok(semanticAuthorityIndex > semanticRuntimeIndex && semanticAuthorityIndex < firstCompatibilityIndex);
+assert.equal(indexSource.includes('ide-language-compiler.js'), false);
+
+const appSource = fs.readFileSync('ide/ide-app-v2.js', 'utf8');
+const runStart = appSource.indexOf('async function runProgram()');
+const runEnd = appSource.indexOf('const builderTemplates', runStart);
+const runSource = appSource.slice(runStart, runEnd);
+assert.match(runSource, /api\.parseProgram\(elements\.editor\.value\)/);
+assert.match(runSource, /semanticRuntime\.createExecutor/);
+assert.equal(runSource.includes('compileLine'), false);
+assert.equal(runSource.includes('normalizeSource'), false);
+assert.equal(runSource.includes('splitInstructions(elements.editor.value)'), false);
+
+const highlighterSource = fs.readFileSync('ide/ide-language-highlighter.js', 'utf8');
+assert.match(highlighterSource, /FigureLoomBioSemanticLanguage/);
+assert.match(highlighterSource, /parseProgram/);
+assert.equal(highlighterSource.includes('canonicalizeSentence'), false);
+assert.equal(highlighterSource.includes('FigureLoomBioLanguageAliases'), false);
+
+console.log('Run authority and syntax validation use the semantic parser without canonical sentence rewriting.');
