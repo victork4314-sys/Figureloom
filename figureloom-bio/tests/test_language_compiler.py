@@ -2,7 +2,7 @@ from pathlib import Path
 import tempfile
 import unittest
 
-from figureloom_bio.language_compiler import compile_sentence, lex
+from figureloom_bio.language_compiler import VOCABULARY, compile_sentence, lex
 from figureloom_bio.language_compiler_extensions import compile_extended_sentence
 from figureloom_bio.language_compiler_runtime import compile_for_runtime
 from figureloom_bio.parser import parse
@@ -44,6 +44,10 @@ class FigureLoomBioCompilerTests(unittest.TestCase):
     def test_ambiguous_everyday_words_use_the_sentence_context(self) -> None:
         cases = {
             'Change DNA into RNA.': ('to_rna', ()),
+            'Change untreated to control under condition.': (
+                'change_value',
+                ('untreated', 'control', 'condition'),
+            ),
             'Build the bacterial genome.': ('assemble_current_bacterial_genome', ()),
             'Print the result.': ('show_result', ()),
             'Print Analysis started.': ('say', ('Analysis started',)),
@@ -65,6 +69,91 @@ class FigureLoomBioCompilerTests(unittest.TestCase):
                 compiled = compile_for_runtime(source)
                 self.assertIsNotNone(compiled)
                 self.assertEqual((compiled.action, compiled.values), expected)
+
+    def test_every_advertised_verb_form_composes_in_new_sentences(self) -> None:
+        templates = {
+            'open': lambda verb: f'Please {verb} samples.csv.',
+            'keep': lambda verb: f'Please {verb} sequences longer than 100 bases.',
+            'remove': lambda verb: f'Please {verb} sequences shorter than 50 bases.',
+            'show': lambda verb: f'Please {verb} the result.',
+            'count': lambda verb: f'Please {verb} the rows.',
+            'save': lambda verb: f'Please {verb} the result to output.csv.',
+            'copy': lambda verb: f'Please {verb} the current file as backup.fasta.',
+            'use': lambda verb: f'Please {verb} the sequence called sample-17.',
+            'rename': lambda verb: f'Please {verb} the column old to new.',
+            'sort': lambda verb: f'Please {verb} the rows by score.',
+            'replace': lambda verb: f'Please {verb} empty values under status with unknown.',
+            'combine': lambda verb: f'Please {verb} sequences with more.fasta.',
+            'split': lambda verb: f'Please {verb} the sequences into files with 25 sequences each as part.fasta.',
+            'convert': lambda verb: f'Please {verb} DNA into RNA.',
+            'calculate': lambda verb: f'Please {verb} the average of score.',
+            'find': lambda verb: f'Please {verb} genes.',
+            'create': lambda verb: f'Please {verb} a volcano plot using effect and p_value.',
+            'check': lambda verb: f'Please {verb} the file.',
+            'compare': lambda verb: f'Please {verb} the sequences.',
+            'trim': lambda verb: f'Please {verb} 5 bases from the start.',
+            'normalize': lambda verb: f'Please {verb} the counts under count.',
+            'prepare': lambda verb: f'Please {verb} bacterial reads.',
+            'assemble': lambda verb: f'Please {verb} the bacterial genome.',
+            'annotate': lambda verb: f'Please {verb} the genome.',
+            'translate': lambda verb: f'Please {verb} the DNA to protein.',
+            'say': lambda verb: f'Please {verb} Analysis started.',
+            'run': lambda verb: f'Please {verb} this program 2 times.',
+            'stop': lambda verb: f'Please {verb} the program.',
+            'continue': lambda verb: f'Please {verb} with the next sample.',
+            'skip': lambda verb: f'Please {verb} this sample.',
+            'mark': lambda verb: f'Please {verb} the sample for review.',
+            'warn': lambda verb: f'Please {verb} Sample needs review.',
+        }
+        expected_actions = {
+            'open': 'open_file',
+            'keep': 'keep_strict_length',
+            'remove': 'remove_shorter',
+            'show': 'show_result',
+            'count': 'count_rows',
+            'save': 'save_result',
+            'copy': 'copy_file',
+            'use': 'use_sequence',
+            'rename': 'rename_column',
+            'sort': 'order_rows',
+            'replace': 'replace_empty',
+            'combine': 'merge_sequences',
+            'split': 'split_sequences',
+            'convert': 'to_rna',
+            'calculate': 'summary_statistic',
+            'find': 'find_genes',
+            'create': 'volcano_plot',
+            'check': 'check_file',
+            'compare': 'compare_current_sequences',
+            'trim': 'trim_start',
+            'normalize': 'normalize_counts',
+            'prepare': 'builtin_microbiology_prepare_reads',
+            'assemble': 'assemble_current_bacterial_genome',
+            'annotate': 'annotate_current_file',
+            'translate': 'translate',
+            'say': 'say',
+            'run': 'repeat_program',
+            'stop': 'stop_program',
+            'continue': 'continue_sample',
+            'skip': 'skip_sample',
+            'mark': 'mark_review',
+            'warn': 'language_alias__warn_message',
+        }
+
+        tested = 0
+        for canonical, forms in VOCABULARY['verbs'].items():
+            self.assertIn(canonical, templates)
+            self.assertIn(canonical, expected_actions)
+            for form in forms:
+                source = templates[canonical](form)
+                with self.subTest(canonical=canonical, form=form, source=source):
+                    compiled = compile_for_runtime(source)
+                    self.assertIsNotNone(compiled)
+                    self.assertEqual(compiled.action, expected_actions[canonical])
+                tested += 1
+
+        self.assertEqual(tested, sum(len(forms) for forms in VOCABULARY['verbs'].values()))
+        self.assertGreaterEqual(tested, 98)
 
     def test_remaining_official_operation_words_compile(self) -> None:
         cases = {
