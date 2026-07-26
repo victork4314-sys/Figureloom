@@ -29,12 +29,12 @@ class Instruction:
 
 def _parse_node(text: str, line_number: int) -> InstructionNode:
     try:
-        return parse_instruction(text, line=line_number)
-    except LanguageError as base_error:
+        return parse_expanded_instruction(text, line=line_number)
+    except LanguageError as expansion_error:
         try:
-            return parse_expanded_instruction(text, line=line_number)
+            return parse_instruction(text, line=line_number)
         except LanguageError:
-            raise base_error
+            raise expansion_error
 
 
 def parse(source: str) -> list[Instruction]:
