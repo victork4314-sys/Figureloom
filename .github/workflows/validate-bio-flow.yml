@@ -32,15 +32,20 @@ jobs:
           node --check ide/ide-analysis-language.js
           node --check ide/ide-complete-language.js
           node --check ide/ide-language-highlighter.js
+          node --check ide/ide-compositional-test-controls.js
           node --check ide/ide-app-v2.js
           node --check scripts/validate-bio-semantic-runtime.mjs
           node --check scripts/validate-bio-logic-compiler.mjs
           node --check scripts/validate-bio-semantic-browser.mjs
           node --check scripts/validate-bio-freeform-stress-start.mjs
           node --check scripts/validate-bio-all-in-one-table-section.mjs
+          node --check scripts/validate-bio-240-compositional-tests.mjs
 
       - name: Validate tokenizer grammar AST runtime and advertised actions
         run: node scripts/validate-bio-semantic-runtime.mjs
+
+      - name: Validate 240 focused grammar cases and mixed composition proof
+        run: node scripts/validate-bio-240-compositional-tests.mjs
 
       - name: Validate Boolean logic recipes loops and named results
         run: node scripts/validate-bio-logic-compiler.mjs
