@@ -32,7 +32,7 @@
       <button id="bioAccountButton" type="button" aria-label="Sign in or open FigureLoom Bio projects">◌</button>
       <a href="./" aria-label="FigureLoom Bio IDE home" style="text-decoration:none"><span><strong>FigureLoom Bio</strong><small>Plain-language IDE</small></span></a>
     </div>
-    <div class="document-name"><input id="programName" value="example.flbio" aria-label="Program name"><span id="saveStatus">Saved in this browser</span></div>
+    <div class="document-name"><input id="programName" value="new-program.flbio" aria-label="Program name"><span id="saveStatus">Saved in this browser</span></div>
     <div class="header-actions">
       <button id="themeButton" class="icon-button" type="button" aria-label="Switch appearance">◐</button>
       <a class="secondary-link" href="../wiki/#FigureLoom-Bio" target="_blank" rel="noreferrer">Manual</a>
@@ -41,17 +41,17 @@
     </div>
   </header>
   <nav class="ide-toolbar" aria-label="Program tools">
-    <div class="tool-group"><span class="tool-label">File</span><button id="newButton" type="button">New</button><button id="openButton" type="button">Open</button><button id="saveButton" type="button">Save</button><input id="filePicker" type="file" multiple hidden></div>
+    <div class="tool-group"><span class="tool-label">File</span><button id="newButton" type="button">New</button><button id="openButton" type="button">Open</button><button id="saveButton" type="button">Save</button><button id="clearAllFilesButton" type="button">Clear all files</button><input id="filePicker" type="file" multiple hidden></div>
     <div class="tool-group"><span class="tool-label">Program</span><button id="exampleButton" type="button">Grammar tests</button><button id="allroundTestButton" type="button">Composition proof</button><button id="builderButton" type="button">Build program</button><button id="formatButton" type="button">Tidy sentences</button><button id="clearResultsButton" type="button">Clear results</button></div>
   </nav>
   <main class="ide-workspace">
     <aside class="files-panel" aria-label="Files"><div class="panel-heading"><div><h2>Files</h2><p>Programs, input files, and generated results appear here immediately.</p></div><button id="addFileButton" class="small-button" type="button" aria-label="Open files">+</button></div><div id="fileList" class="file-list"></div></aside>
     <section class="editor-panel" aria-label="Program editor">
-      <div class="panel-topbar"><div class="file-tab active"><span class="file-dot"></span><span id="activeFileLabel">example.flbio</span></div><span class="language-label">FigureLoom Bio</span></div>
+      <div class="panel-topbar"><div class="file-tab active"><span class="file-dot"></span><span id="activeFileLabel">new-program.flbio</span></div><span class="language-label">FigureLoom Bio</span></div>
       <div class="editor-wrap"><pre id="lineNumbers" class="line-numbers" aria-hidden="true">1</pre><textarea id="programEditor" spellcheck="false" autocomplete="off" aria-label="FigureLoom Bio program"></textarea></div>
       <footer class="editor-status"><span id="cursorStatus">Line 1</span><span>Instructions end with a period. Block headers end with a colon.</span></footer>
     </section>
-    <aside class="results-panel" aria-label="Results"><div class="panel-heading results-heading"><div><h2>Results</h2><p>Different results stay in separate, readable sections.</p></div><span id="runStatus" class="status-pill">Ready</span></div><div id="results" class="results-list" aria-live="polite"><section class="empty-results"><strong>The example is ready.</strong><span>Press Run to try it.</span></section></div></aside>
+    <aside class="results-panel" aria-label="Results"><div class="panel-heading results-heading"><div><h2>Results</h2><p>Different results stay in separate, readable sections.</p></div><span id="runStatus" class="status-pill">Ready</span></div><div id="results" class="results-list" aria-live="polite"><section class="empty-results"><strong>The program is ready.</strong><span>Write an instruction or run a generated test.</span></section></div></aside>
   </main>
   <dialog id="programBuilder" class="builder-dialog" aria-labelledby="builderTitle">
     <div class="builder-shell">
@@ -88,9 +88,7 @@
   <script src="./ide-table-merge.js?v=1"></script>
   <script src="./ide-large-fasta-worker-route.js?v=1"></script>
   <script src="./ide-large-file-vault-v2.js?v=1"></script>
-  <script src="./ide-compositional-test-controls.js?v=20260727-240-cases"></script>
-  <script src="./ide-bio-examples.js?v=4"></script>
-  <script src="./ide-bio-example-run-guard.js?v=1"></script>
+  <script src="./ide-compositional-test-controls.js?v=20260727-clear-workspace"></script>
   <script src="./ide-app-v2.js?v=20260726-production"></script>
   <script src="./ide-large-program-import-live.js?v=1"></script>
   <script src="./ide-import-reload-guard.js?v=2"></script>
