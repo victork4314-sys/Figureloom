@@ -39,6 +39,7 @@ jobs:
           node --check ide/ide-app-v2.js
           node --check scripts/validate-bio-semantic-runtime.mjs
           node --check scripts/validate-bio-expansion.mjs
+          node --check scripts/validate-bio-expansion-control-flow.mjs
           node --check scripts/validate-bio-logic-compiler.mjs
           node --check scripts/validate-bio-semantic-browser.mjs
           node --check scripts/validate-bio-freeform-stress-start.mjs
@@ -51,6 +52,9 @@ jobs:
 
       - name: Validate simple bioinformatics expansion in browser and Python
         run: node scripts/validate-bio-expansion.mjs
+
+      - name: Validate expanded bioinformatics actions inside control flow
+        run: node scripts/validate-bio-expansion-control-flow.mjs
 
       - name: Validate every declared word and 200 differently ordered programs
         run: node scripts/validate-bio-240-compositional-tests.mjs
