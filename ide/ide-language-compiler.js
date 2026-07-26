@@ -5,12 +5,12 @@
   const runButton = document.getElementById('runButton');
   if (!editor || !runButton) return;
 
-  const vocabularyUrl = '../figureloom-bio/figureloom_bio/language_vocabulary.json?v=1';
+  const vocabularyUrl = '../figureloom-bio/figureloom_bio/language_vocabulary.json?v=4';
   const FILE = /(?:^|\s)([^\s,]+\.(?:csv|tsv|txt|fa|fasta|fna|ffn|faa|frn|fq|fastq|nwk|svg))(?:\s|$)/ig;
   let ready = false;
   let replaying = false;
   let vocabulary = null;
-  let verbAliases = new Map();
+  let verbAliases = [];
 
   const clean = (value) => String(value ?? '').trim().replace(/^['"]|['"]$/g, '').replace(/^(?:the|a|an|current)\s+/i, '').trim();
   const phrase = (source) => String(source).trim().replace(/[.:]$/, '').replace(/\s+/g, ' ');
@@ -47,17 +47,52 @@
   const numbers = (source) => [...source.matchAll(/\b\d+(?:\.\d+)?\b/g)].map((match) => match[0]);
   const list = (value) => clean(value).replace(/,\s+and\s+/i, ', ').replace(/\s+and\s+/i, ', ').split(',').map(clean).filter(Boolean);
   const term = (lower, name) => (vocabulary?.terms?.[name] || []).some((value) => has(lower, value));
+  const escapeRegExp = (value) => String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const afterOperation = (source) => {
+    const withoutFillers = phrase(source).replace(/^(?:(?:please|then|now|can|could|would|you|kindly|just|my|these|those)\s+)*/i, '');
+    for (const entry of verbAliases) {
+      const match = new RegExp(`^${escapeRegExp(entry.form)}(?:\\s+|$)`, 'i').exec(withoutFillers);
+      if (match) return clean(withoutFillers.slice(match[0].length));
+    }
+    return clean(withoutFillers.replace(/^\S+\s*/i, ''));
+  };
 
   function operation(source) {
-    const words = phrase(source).toLowerCase().split(/\s+/).filter(Boolean);
-    for (const word of words) {
-      if (verbAliases.has(word)) return verbAliases.get(word);
+    const lower = phrase(source).toLowerCase();
+    const names = files(source);
+
+    if (has(lower, 'get rid of', 'filter out')) return 'remove';
+    if (has(lower, 'look for')) return 'find';
+    if (has(lower, 'put together')) return has(lower, 'genome', 'bacterial genome', 'assembly') ? 'assemble' : 'combine';
+
+    if (has(lower, 'change', 'turn')) {
+      if (has(lower, 'dna', 'rna') && has(lower, 'to', 'into', 'as')) return 'convert';
+      return 'replace';
     }
-    if (words.includes('prepare') || words.includes('clean')) return 'prepare';
-    if (words.includes('assemble')) return 'assemble';
-    if (words.includes('annotate')) return 'annotate';
-    if (words.includes('warn')) return 'warn';
-    if (words.includes('reverse-complement')) return 'reverse_complement';
+    if (has(lower, 'build')) return has(lower, 'genome', 'bacterial genome', 'assembly') ? 'assemble' : 'create';
+    if (has(lower, 'print')) {
+      return has(lower, 'result', 'output', 'file', 'sequence', 'read', 'row', 'alignment', 'variant', 'gene', 'primer', 'tree', 'quality report') ? 'show' : 'say';
+    }
+    if (has(lower, 'write')) {
+      return names.length || has(lower, 'result', 'output', 'file', 'sequence', 'read', 'alignment', 'variant', 'gene', 'tree') ? 'save' : 'say';
+    }
+    if (has(lower, 'call')) {
+      if (has(lower, 'column', 'sequence', 'file') && has(lower, 'to', 'as')) return 'rename';
+      return 'find';
+    }
+    if (has(lower, 'filter')) return 'keep';
+    if (has(lower, 'label')) return 'annotate';
+    if (has(lower, 'classify', 'reconstruct', 'design', 'detect', 'identify', 'locate')) return 'find';
+    if (has(lower, 'align')) return 'compare';
+    if (has(lower, 'validate', 'inspect', 'test')) return 'check';
+    if (has(lower, 'cut', 'clip')) return 'trim';
+    if (has(lower, 'scale')) return 'normalize';
+    if (has(lower, 'next')) return 'continue';
+    if (has(lower, 'skip')) return 'skip';
+
+    for (const entry of verbAliases) {
+      if (has(lower, entry.form)) return entry.canonical;
+    }
     return '';
   }
 
@@ -76,39 +111,11 @@
     return { column, value };
   }
 
-  function establishedGrammarAccepts(text) {
-    const core = phrase(text);
-    const aliases = window.FigureLoomBioLanguageAliases;
-    try {
-      if (aliases?.recognizes?.(core)) return true;
-    } catch {}
-
-    try {
-      if (window.FigureLoomBioCompleteLanguage?.uses?.(text)) return true;
-    } catch {}
-
-    try {
-      const current = window.FigureLoomBioCurrentFile;
-      if (current?.normalizeSource && current.normalizeSource(text) !== text) return true;
-    } catch {}
-
-    for (const recognizer of window.FigureLoomBioStatementRecognizers || []) {
-      try {
-        if (recognizer(text) || recognizer(core)) return true;
-      } catch {}
-    }
-
-    const manifest = window.FigureLoomBioLanguage;
-    if (manifest?.commands?.some((command) => String(command.example).toLowerCase() === text.toLowerCase())) return true;
-    return false;
-  }
-
   function compileLine(raw) {
     const original = String(raw);
     const indent = original.match(/^\s*/)?.[0] || '';
     const text = original.trim();
     if (!text || text.startsWith('#') || text.endsWith(':') || !text.endsWith('.')) return original;
-    if (establishedGrammarAccepts(text)) return original;
 
     const source = phrase(text);
     const lower = source.toLowerCase();
@@ -180,6 +187,7 @@
       else if (term(lower, 'length') && term(lower, 'sequence')) output = 'Show the sequence lengths.';
       else if (nums[0] && has(lower, 'first') && term(lower, 'sequence')) output = `Show the first ${nums[0]} sequences.`;
       else if (term(lower, 'sequence')) output = 'Show the sequences.';
+      else if (has(lower, 'list') && has(lower, 'files')) output = 'List the files.';
       else if (term(lower, 'file')) output = 'Show the file.';
       else if (term(lower, 'result') || has(lower, 'output')) output = 'Show the result.';
     }
@@ -205,6 +213,18 @@
       else if (requested) output = `Save the result as ${requested}.`;
     }
 
+    if (op === 'copy') {
+      const requested = names.at(-1) || after(source, 'as', 'to', 'into');
+      if (requested) output = `Copy the file as ${requested}.`;
+    }
+
+    if (op === 'use') {
+      const named = after(source, 'named', 'called');
+      if (term(lower, 'sequence') && named) output = `Use the sequence named ${named}.`;
+      else if (term(lower, 'result') && after(source, 'result')) output = `Use the result ${after(source, 'result')}.`;
+      else if (term(lower, 'recipe') && after(source, 'recipe')) output = `Use the recipe ${after(source, 'recipe')}.`;
+    }
+
     if (op === 'rename') {
       const oldValue = between(source, ['column', 'sequence', 'file'], ['to', 'as']);
       const newValue = after(source, 'to', 'as');
@@ -225,13 +245,14 @@
     }
 
     if (op === 'replace') {
-      const replacement = after(source, 'with', 'to');
+      let replacement = after(source, 'with', 'to');
       const column = has(lower, 'empty', 'missing', 'blank')
         ? between(source, ['under', 'in column'], ['with', 'to'])
         : after(source, 'under', 'in column');
       if (column && replacement && has(lower, 'empty', 'missing', 'blank')) output = `Replace empty values under ${column} with ${replacement}.`;
       else {
         const oldValue = between(source, ['change', 'replace'], ['to', 'with']);
+        replacement = replacement.split(/\s+(?:under|in column)\s+/i)[0];
         if (oldValue && replacement && column) output = `Change ${oldValue} to ${replacement} under ${column}.`;
       }
     }
@@ -247,6 +268,8 @@
         if (column) output = `Combine it with ${names[0]} using ${column}.`;
       }
     }
+
+    if (op === 'split' && nums[0] && names[0]) output = `Split the sequences into files with ${nums[0]} sequences each as ${names.at(-1)}.`;
 
     if (op === 'convert') {
       const target = after(source, 'to', 'into', 'as').toLowerCase();
@@ -353,10 +376,13 @@
     if (op === 'annotate') output = names[0] ? `Annotate the bacterial genome ${names[0]} into ${after(source, 'into', 'as') || 'annotation'}.` : 'Annotate the file.';
     if (op === 'translate') output = 'Translate the sequences.';
     if (op === 'reverse_complement') output = 'Find the reverse complement.';
-    if (op === 'say') output = `Say ${clean(source.replace(/^\S+\s*/i, ''))}.`;
-    if (op === 'warn') output = `Warn ${clean(source.replace(/^\S+\s*/i, ''))}.`;
+    if (op === 'say') output = `Say ${afterOperation(source)}.`;
+    if (op === 'warn') output = `Warn ${afterOperation(source)}.`;
     if (op === 'run' && nums[0]) output = `Run this program ${nums[0]} times.`;
     if (op === 'stop') output = 'Stop the program.';
+    if (op === 'continue') output = 'Continue with the next sample.';
+    if (op === 'skip') output = 'Skip this sample.';
+    if (op === 'mark' && term(lower, 'sample') && term(lower, 'review')) output = 'Mark the sample for review.';
 
     return output ? `${indent}${output}` : original;
   }
@@ -372,9 +398,13 @@
     })
     .then((loaded) => {
       vocabulary = loaded;
-      verbAliases = new Map();
+      verbAliases = [];
       Object.entries(vocabulary.verbs || {}).forEach(([canonical, aliases]) => {
-        aliases.forEach((alias) => { const key = String(alias).toLowerCase(); if (!verbAliases.has(key)) verbAliases.set(key, canonical); });
+        aliases.forEach((alias) => verbAliases.push({ form:String(alias).toLowerCase(), canonical }));
+      });
+      verbAliases.sort((left, right) => {
+        const wordDifference = right.form.split(/\s+/).length - left.form.split(/\s+/).length;
+        return wordDifference || right.form.length - left.form.length;
       });
       ready = true;
       const api = Object.freeze({ version: loaded.version, compileLine, compileSource });

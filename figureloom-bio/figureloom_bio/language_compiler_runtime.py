@@ -25,6 +25,7 @@ _STATISTICS = {
 }
 
 _ALIAS_SPECIALS = {
+    "read_statistic": "language_alias__read_statistic",
     "grouped_box_plot": "language_alias__grouped_box_plot",
     "heat_map_columns": "language_alias__heatmap_columns",
     "show_warning": "language_alias__warn_message",

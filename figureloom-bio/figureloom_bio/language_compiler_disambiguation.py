@@ -1,127 +1,131 @@
 from __future__ import annotations
 
-from collections import defaultdict
 import re
 
 from . import language_compiler
 
 
-_EXTRA_TERMS = {
-    "standard_deviation": ("spread",),
-    "confidence_interval": ("confidence range",),
-    "tree": ("relationship tree",),
-}
+_WORD = re.compile(r"[A-Za-z0-9_]+(?:-[A-Za-z0-9_]+)*")
 
 
-def _contains(statement, *phrases: str) -> bool:
-    padded = f" {statement.lower} "
+def _words(value: str) -> tuple[str, ...]:
+    return tuple(match.group(0).casefold() for match in _WORD.finditer(str(value)))
+
+
+def _contains(statement: object, *phrases: str) -> bool:
+    padded = f" {getattr(statement, 'lower', '')} "
     return any(f" {phrase.casefold()} " in padded for phrase in phrases)
 
 
-def _contextual_verb(statement) -> tuple[int, str | None]:
-    aliases: dict[str, list[str]] = defaultdict(list)
-    for canonical, forms in language_compiler.VOCABULARY["verbs"].items():
+def _subsequence_index(words: tuple[str, ...], wanted: tuple[str, ...]) -> int | None:
+    if not wanted or len(wanted) > len(words):
+        return None
+    limit = len(words) - len(wanted) + 1
+    for index in range(limit):
+        if words[index:index + len(wanted)] == wanted:
+            return index
+    return None
+
+
+def _verb_matches(statement: object) -> list[tuple[int, int, str, str]]:
+    matches: list[tuple[int, int, str, str]] = []
+    words = tuple(getattr(statement, "words", ()))
+    for canonical, forms in language_compiler.VOCABULARY.get("verbs", {}).items():
         for form in forms:
-            aliases[str(form).casefold()].append(canonical)
+            form_words = _words(str(form))
+            index = _subsequence_index(words, form_words)
+            if index is not None:
+                matches.append((index, -len(form_words), str(form).casefold(), str(canonical)))
+    matches.sort()
+    return matches
 
-    words = statement.words
-    for index, word in enumerate(words):
-        if word == "get" and index + 2 < len(words) and words[index + 1:index + 3] == ("rid", "of"):
-            return index, "remove"
-        if word == "look" and index + 1 < len(words) and words[index + 1] == "for":
-            return index, "find"
-        if word == "put" and index + 1 < len(words) and words[index + 1] == "together":
-            return index, "assemble" if _contains(statement, "bacterial genome", "genome") else "combine"
-        if word == "label" and _contains(statement, "genome", "file", "genes"):
-            return index, "annotate"
 
-        candidates = aliases.get(word)
-        if not candidates:
-            continue
+def _contextual_verb(statement: object) -> tuple[int, str | None]:
+    matches = _verb_matches(statement)
+    if not matches:
+        return -1, None
 
-        if word in {"change", "turn"}:
-            if _contains(statement, "dna", "rna") and _contains(statement, "to", "into", "as"):
-                return index, "convert"
-            return index, "replace"
+    words = tuple(getattr(statement, "words", ()))
 
-        if word == "build" and _contains(statement, "bacterial genome", "genome"):
-            return index, "assemble"
+    if _contains(statement, "get rid of", "filter out"):
+        form = "get rid of" if _contains(statement, "get rid of") else "filter out"
+        found = _subsequence_index(words, _words(form))
+        return (0 if found is None else found), "remove"
+    if _contains(statement, "look for"):
+        found = _subsequence_index(words, ("look", "for"))
+        return (0 if found is None else found), "find"
+    if _contains(statement, "put together"):
+        found = _subsequence_index(words, ("put", "together"))
+        return (
+            0 if found is None else found,
+            "assemble" if _contains(statement, "genome", "bacterial genome", "assembly") else "combine",
+        )
 
-        if word == "print":
-            visible_targets = (
-                "result", "output", "file", "sequence", "read", "row", "alignment",
-                "variant", "gene", "primer", "tree", "quality report",
-            )
-            return index, "show" if _contains(statement, *visible_targets) else "say"
+    index, _, form, canonical = matches[0]
 
-        if word == "write":
-            saved_targets = (
-                "result", "output", "file", "sequence", "read", "alignment",
-                "variant", "gene", "tree",
-            )
-            return index, "save" if statement.filenames() or _contains(statement, *saved_targets) else "say"
+    if form in {"change", "turn"}:
+        if _contains(statement, "dna", "rna") and _contains(statement, "to", "into", "as"):
+            return index, "convert"
+        return index, "replace"
 
-        if word == "call":
-            if _contains(statement, "column", "sequence", "file") and _contains(statement, "to", "as"):
-                return index, "rename"
-            return index, "find"
+    if form == "build":
+        return index, "assemble" if _contains(statement, "genome", "bacterial genome", "assembly") else "create"
 
-        if word == "filter":
-            return index, "remove" if _contains(statement, "filter out", "exclude") else "keep"
+    if form == "print":
+        visible_targets = (
+            "result", "output", "file", "sequence", "read", "row", "alignment",
+            "variant", "gene", "primer", "tree", "quality report",
+        )
+        return index, "show" if _contains(statement, *visible_targets) else "say"
 
-        if word in {"classify", "reconstruct", "design", "detect", "identify", "locate"}:
-            return index, "find"
-        if word == "align":
-            return index, "compare"
-        if word in {"validate", "inspect", "test"}:
-            return index, "check"
-        if word in {"cut", "clip"}:
-            return index, "trim"
-        if word == "scale":
-            return index, "normalize"
-        if word in {"next", "skip"}:
-            return index, "continue"
+    if form == "write":
+        saved_targets = (
+            "result", "output", "file", "sequence", "read", "alignment",
+            "variant", "gene", "tree",
+        )
+        has_filename = bool(getattr(statement, "filenames")())
+        return index, "save" if has_filename or _contains(statement, *saved_targets) else "say"
 
-        return index, candidates[0]
+    if form == "call":
+        if _contains(statement, "call the result"):
+            return -1, None
+        if _contains(statement, "column", "sequence", "file") and _contains(statement, "to", "as"):
+            return index, "rename"
+        return index, "find"
 
-    return -1, None
+    if form == "filter":
+        return index, "keep"
+    if form == "label":
+        return index, "annotate"
+    if form in {"classify", "reconstruct", "design", "detect", "identify", "locate"}:
+        return index, "find"
+    if form == "align":
+        return index, "compare"
+    if form in {"validate", "inspect", "test"}:
+        return index, "check"
+    if form in {"cut", "clip"}:
+        return index, "trim"
+    if form == "scale":
+        return index, "normalize"
+    if form == "next":
+        return index, "continue"
+    if form == "skip":
+        # The core compiler uses one branch for both continue and skip. Keeping the
+        # canonical value as "continue" makes "Skip this sample" resolve to skip_sample.
+        return index, "continue"
+
+    return index, canonical
 
 
 def install_language_compiler_disambiguation() -> None:
-    """Resolve ordinary ambiguous words by the meaning of the whole sentence."""
+    """Resolve vocabulary phrases and ambiguous everyday words from sentence context."""
 
     statement_class = language_compiler.Statement
     if getattr(statement_class, "_figureloom_disambiguation_installed", False):
         return
 
-    original_has_term = statement_class.has_term
-
-    def has_term(self, name: str) -> bool:
-        extras = _EXTRA_TERMS.get(name, ())
-        return original_has_term(self, name) or bool(extras and self.has(*extras))
-
     statement_class._find_verb = _contextual_verb
-    statement_class.has_term = has_term
     statement_class._figureloom_disambiguation_installed = True
-
-    # This exact form must beat the broad "Write a message" alias.
-    from . import parser as parser_module
-
-    write_output = (
-        "save_result",
-        re.compile(r"write (?:the )?(?:result|output) (?:to|as) (.+)", re.IGNORECASE),
-    )
-    parser_module._PATTERNS = (
-        write_output,
-        *(
-            item
-            for item in parser_module._PATTERNS
-            if not (
-                item[0] == write_output[0]
-                and item[1].pattern == write_output[1].pattern
-            )
-        ),
-    )
 
 
 __all__ = ["install_language_compiler_disambiguation"]

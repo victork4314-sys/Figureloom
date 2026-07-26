@@ -1,7 +1,7 @@
 {
-  "version": 3,
-  "description": "Every defined FigureLoom Bio compiler, control-flow, Boolean, connector, comparison, scientific, file, and workflow term. These are words and phrases that can be combined; they are not a list of allowed sentences.",
-  "fillers": ["please", "then", "now", "the", "a", "an", "current", "only", "all", "it", "this"],
+  "version": 4,
+  "description": "Composable FigureLoom Bio vocabulary. Words and phrases are lexical building blocks interpreted by grammar and semantic roles; examples do not define which sentences are legal.",
+  "fillers": ["please", "then", "now", "the", "a", "an", "current", "only", "all", "it", "this", "can", "could", "would", "you", "kindly", "just", "my", "these", "those"],
   "verbs": {
     "open": ["open", "load", "read", "import"],
     "keep": ["keep", "retain", "select", "filter"],
@@ -14,7 +14,7 @@
     "rename": ["rename", "name", "call"],
     "sort": ["sort", "order", "arrange", "put"],
     "replace": ["replace", "fill", "change"],
-    "combine": ["combine", "merge", "join", "append", "add"],
+    "combine": ["combine", "merge", "join", "append", "add", "put together"],
     "split": ["split"],
     "convert": ["convert", "change", "turn"],
     "calculate": ["calculate", "compute", "measure", "get"],
@@ -25,13 +25,14 @@
     "trim": ["trim", "cut", "clip"],
     "normalize": ["normalize", "scale"],
     "prepare": ["prepare", "clean"],
-    "assemble": ["assemble", "put together"],
+    "assemble": ["assemble", "put together", "build"],
     "annotate": ["annotate", "label"],
     "translate": ["translate"],
     "say": ["say", "print", "write"],
     "run": ["run", "repeat"],
     "stop": ["stop", "end", "quit"],
-    "continue": ["continue", "next", "skip"],
+    "continue": ["continue", "next"],
+    "skip": ["skip"],
     "mark": ["mark"],
     "warn": ["warn", "warning"]
   },
@@ -93,16 +94,17 @@
     "stop_codon": ["stop codon", "stop codons"],
     "palindrome": ["palindrome", "palindromes", "palindromic"],
     "duplicate": ["duplicate", "duplicates", "repeated", "identical"],
+    "unique": ["unique", "different"],
     "ambiguous": ["ambiguous", "unknown", "n bases", "ambiguous base", "ambiguous bases"],
     "gap": ["gap", "gaps"],
     "length": ["length", "long", "longer", "short", "shorter", "read length", "sequence length", "sequence lengths"],
     "warning": ["warning", "warn"]
   },
   "roles": {
-    "under": ["under", "in", "from", "using", "by"],
+    "under": ["under", "in", "from", "using", "by", "in column", "from column", "under column"],
     "with": ["with", "as", "to", "into"],
     "where": ["where", "marked", "whose"],
-    "containing": ["containing", "contains", "with"],
+    "containing": ["containing", "contains", "with", "that contain", "which contain"],
     "between": ["between"],
     "from": ["from"],
     "to": ["to", "into", "as", "through"],
@@ -145,15 +147,8 @@
     "open_all": ["open all"],
     "open_sample": ["open the sample"]
   },
-  "logic": {
-    "and": ["and"],
-    "or": ["or"],
-    "not": ["not"]
-  },
-  "booleans": {
-    "true": ["true"],
-    "false": ["false"]
-  },
+  "logic": {"and": ["and"], "or": ["or"], "not": ["not"]},
+  "booleans": {"true": ["true"], "false": ["false"]},
   "conditions": {
     "count": ["count"],
     "remain": ["remain", "remains"],

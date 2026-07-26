@@ -359,6 +359,8 @@ def _compile_replace(statement: Statement) -> CompiledInstruction:
     )
     if statement.has("empty", "missing", "blank"):
         return CompiledInstruction("replace_empty", (_need(column, "Replacing empty values needs a column name."), _need(replacement, "Replacing empty values needs a replacement value.")))
+    if replacement:
+        replacement = re.split(r"(?i)\s+(?:under|in column)\s+", replacement, maxsplit=1)[0]
     old = statement.between(("change", "replace"), ("to", "with"))
     return CompiledInstruction("change_value", (_need(old, "Changing a value needs the old value."), _need(replacement, "Changing a value needs the new value."), _need(column, "Changing a value needs a column name.")))
 
