@@ -123,7 +123,7 @@ def _render_error(sentence: str, error: LanguageError) -> str:
         "missing_operation": "The instruction is missing an operation.",
         "missing_period": "The instruction is missing its ending period.",
         "missing_condition_comparison": "The condition is missing a comparison.",
-        "incompatible_operation_target": "The operation and target are not compatible.",
+        "incompatible_operation_target": "The language grammar does not allow this operation and target together.",
         "ambiguous_instruction": "The instruction has more than one grammatical meaning.",
     }
     heading = labels.get(error.code, "The instruction is not valid for the language grammar.")
