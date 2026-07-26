@@ -66,3 +66,20 @@ jobs:
           name: macos-self-test-trace-${{ matrix.filename }}
           path: ${{ runner.temp }}/figureloom-native-ide-self-test.txt
           if-no-files-found: warn
+
+  report_traces:
+    name: Print macOS native self-test traces
+    if: always()
+    needs: macos_self_test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download both traces
+        uses: actions/download-artifact@v4
+        with:
+          pattern: macos-self-test-trace-*
+          path: traces
+          merge-multiple: true
+      - name: Print exact native failures
+        run: |
+          set -euo pipefail
+          find traces -type f -maxdepth 2 -print -exec cat {} \;
