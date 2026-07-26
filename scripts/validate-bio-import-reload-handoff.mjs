@@ -78,7 +78,7 @@ assert.equal(localStorage.getItem(ACTIVE_KEY), 'example.flbio', 'An already-visi
 
 const html = read('ide/index.html');
 const appIndex = html.indexOf('ide-app-v2.js?v=3');
-const guardIndex = html.indexOf('ide-import-reload-guard.js?v=1');
+const guardIndex = html.indexOf('ide-import-reload-guard.js?v=2');
 assert.ok(appIndex >= 0 && guardIndex > appIndex, 'The reload guard must load after the original IDE so its exit listeners run last.');
 
-console.log('The exact large imported program survives the stale page-exit overwrite and remains visible after reload.');
+console.log('The exact large imported program survives stale page-exit overwrites, while the new live importer avoids reloading during the initial import.');
