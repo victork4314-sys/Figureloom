@@ -5,7 +5,7 @@
 FigureLoom Bio is a programming language with a lexer, grammar parser, compiled instructions, validation, and a runtime. It is not a whitelist of complete sentences.
 
 **Grammar families:** 10
-**Vocabulary forms:** 396
+**Vocabulary forms:** 412
 **Learning examples:** 161
 
 Examples are examples, not a whitelist. You can write your own instruction by combining operations, targets, values, role words, comparisons, and Boolean logic in a form the grammar can resolve unambiguously.
@@ -27,7 +27,7 @@ Normal instructions end with a period. Block headers end with a colon. The curre
 | rename | `rename`, `name`, `call` |
 | sort | `sort`, `order`, `arrange`, `put` |
 | replace | `replace`, `fill`, `change` |
-| combine | `combine`, `merge`, `join`, `append`, `add` |
+| combine | `combine`, `merge`, `join`, `append`, `add`, `put together` |
 | split | `split` |
 | convert | `convert`, `change`, `turn` |
 | calculate | `calculate`, `compute`, `measure`, `get` |
@@ -38,13 +38,14 @@ Normal instructions end with a period. Block headers end with a colon. The curre
 | trim | `trim`, `cut`, `clip` |
 | normalize | `normalize`, `scale` |
 | prepare | `prepare`, `clean` |
-| assemble | `assemble`, `put together` |
+| assemble | `assemble`, `put together`, `build` |
 | annotate | `annotate`, `label` |
 | translate | `translate` |
 | say | `say`, `print`, `write` |
 | run | `run`, `repeat` |
 | stop | `stop`, `end`, `quit` |
-| continue | `continue`, `next`, `skip` |
+| continue | `continue`, `next` |
+| skip | `skip` |
 | mark | `mark` |
 | warn | `warn`, `warning` |
 
@@ -109,6 +110,7 @@ Normal instructions end with a period. Block headers end with a colon. The curre
 | stop codon | `stop codon`, `stop codons` |
 | palindrome | `palindrome`, `palindromes`, `palindromic` |
 | duplicate | `duplicate`, `duplicates`, `repeated`, `identical` |
+| unique | `unique`, `different` |
 | ambiguous | `ambiguous`, `unknown`, `n bases`, `ambiguous base`, `ambiguous bases` |
 | gap | `gap`, `gaps` |
 | length | `length`, `long`, `longer`, `short`, `shorter`, `read length`, `sequence length`, `sequence lengths` |
@@ -169,10 +171,10 @@ Normal instructions end with a period. Block headers end with a colon. The curre
 
 | Concept | Words and terms |
 | --- | --- |
-| under | `under`, `in`, `from`, `using`, `by` |
+| under | `under`, `in`, `from`, `using`, `by`, `in column`, `from column`, `under column` |
 | with | `with`, `as`, `to`, `into` |
 | where | `where`, `marked`, `whose` |
-| containing | `containing`, `contains`, `with` |
+| containing | `containing`, `contains`, `with`, `that contain`, `which contain` |
 | between | `between` |
 | from | `from` |
 | to | `to`, `into`, `as`, `through` |
@@ -227,6 +229,15 @@ Normal instructions end with a period. Block headers end with a colon. The curre
 | all | `all` |
 | it | `it` |
 | this | `this` |
+| can | `can` |
+| could | `could` |
+| would | `would` |
+| you | `you` |
+| kindly | `kindly` |
+| just | `just` |
+| my | `my` |
+| these | `these` |
+| those | `those` |
 
 ## Learning examples
 
