@@ -4,9 +4,16 @@ on:
   push:
     branches:
       - agent/max-real-semantic-language
+  pull_request:
+    branches:
+      - main
 
 permissions:
   contents: write
+
+concurrency:
+  group: isolated-grammar-diagnostic
+  cancel-in-progress: false
 
 jobs:
   fix:
@@ -20,17 +27,27 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          python - <<'PY'
+          changed="$(python - <<'PY'
           from pathlib import Path
           path = Path('figureloom-bio/figureloom_bio/parser.py')
           text = path.read_text(encoding='utf-8')
           old = 'message = f"{detail} {operation.title()} needs a target."'
-          new = 'message = f"FigureLoom Bio’s grammar parsed the operation, but {detail.casefold()} {operation.title()} needs a target."'
-          if text.count(old) != 1:
-              raise SystemExit(f'Expected one parser diagnostic target, found {text.count(old)}')
-          path.write_text(text.replace(old, new), encoding='utf-8')
+          new = 'message = f"FigureLoom Bio grammar parsed the operation, but {detail.casefold()} {operation.title()} needs a target."'
+          if old in text:
+              if text.count(old) != 1:
+                  raise SystemExit(f'Expected one parser diagnostic target, found {text.count(old)}')
+              path.write_text(text.replace(old, new), encoding='utf-8')
+              print('yes')
+          elif new in text:
+              print('no')
+          else:
+              raise SystemExit('Neither the old nor corrected parser diagnostic exists')
           PY
+          )"
           PYTHONPATH=figureloom-bio python -m unittest figureloom-bio/tests/test_parser_explanations.py -v
+          if [ "$changed" = "no" ]; then
+            exit 0
+          fi
           git add figureloom-bio/figureloom_bio/parser.py
           git rm .github/workflows/fix-incomplete-grammar-message.yml
           git config user.name "github-actions[bot]"
