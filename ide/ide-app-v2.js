@@ -1078,6 +1078,11 @@ elements.results.append(group);
 }
 const executor = semanticRuntime.createExecutor({
 executeInstruction: async (node, currentState) => {
+const tableRuntime = window.FigureLoomBioSemanticTableRuntime;
+if (tableRuntime?.supports(node.action)) {
+await tableRuntime.executeInstruction(node, currentState);
+return currentState.data;
+}
 const runtimeInstruction = api.toRuntime(node);
 await runSingle([runtimeInstruction], runNumber, repeatCount, target, currentState);
 return currentState.data;
