@@ -101,13 +101,15 @@ def _compatibility_match(sentence: str) -> tuple[str, tuple[str, ...]] | None:
 def parse(source: str) -> list[Instruction]:
     instructions: list[Instruction] = []
     for line_number, sentence in _split_sentences(source):
+        compile_error: CompileError | None = None
+        compiled = None
         try:
             compiled = compile_sentence(sentence)
         except CompileError as error:
-            raise FigureLoomBioError(
-                _compile_error_message(sentence, error),
-                line_number=line_number,
-            ) from error
+            # A known operation with missing semantic roles must not hide an older,
+            # explicitly supported command. Compatibility grammar is tried only
+            # after the compositional compiler has had first refusal.
+            compile_error = error
 
         if compiled is not None:
             instructions.append(Instruction(compiled.action, line_number, compiled.values))
@@ -118,6 +120,12 @@ def parse(source: str) -> list[Instruction]:
             action, values = fallback
             instructions.append(Instruction(action, line_number, values))
             continue
+
+        if compile_error is not None:
+            raise FigureLoomBioError(
+                _compile_error_message(sentence, compile_error),
+                line_number=line_number,
+            ) from compile_error
 
         raise FigureLoomBioError(
             _unknown_instruction_message(sentence),
