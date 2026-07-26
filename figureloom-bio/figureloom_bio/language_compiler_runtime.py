@@ -42,7 +42,10 @@ def _match(sentence: str, pattern: str) -> tuple[str, ...] | None:
     matched = re.fullmatch(pattern, _core(sentence), re.IGNORECASE)
     if not matched:
         return None
-    return tuple(str(value).strip() for value in matched.groups())
+    return tuple(
+        str(value).strip() if value is not None else ""
+        for value in matched.groups()
+    )
 
 
 def _semantic_contract(
@@ -137,6 +140,21 @@ def _semantic_contract(
         r"create a box plot from .+", core, re.IGNORECASE
     ):
         return CompiledInstruction("create_box_plot", values)
+
+    if action == "calculate_average_of" and re.fullmatch(
+        r"calculate the average under .+", core, re.IGNORECASE
+    ):
+        return CompiledInstruction("calculate_average", values)
+
+    if action == "calculate_median_of" and re.fullmatch(
+        r"calculate the median under .+", core, re.IGNORECASE
+    ):
+        return CompiledInstruction("calculate_median", values)
+
+    if action == "calculate_standard_deviation_of" and re.fullmatch(
+        r"calculate the standard deviation under .+", core, re.IGNORECASE
+    ):
+        return CompiledInstruction("calculate_standard_deviation", values)
 
     return compiled
 
