@@ -1,16 +1,16 @@
 name: Apply readable semantic role patch
 
 on:
-  push:
+  pull_request:
     branches:
-      - agent/real-semantic-language
+      - main
 
 permissions:
   contents: write
 
 concurrency:
   group: apply-readable-semantic-role-patch
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   apply:
@@ -26,8 +26,11 @@ jobs:
         run: |
           set -euo pipefail
           patch=.github/semantic-role-boundaries.patch
+          if [ ! -f "$patch" ]; then
+            echo "The tested patch was already applied and removed."
+            exit 0
+          fi
           expected=9e0e45640c69f242aac366c62c38f191280dc214428c9a787086a800cfa15004
-          test -f "$patch"
           actual="$(sha256sum "$patch" | cut -d' ' -f1)"
           test "$actual" = "$expected" || {
             echo "Patch checksum mismatch: $actual"
@@ -65,6 +68,10 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          if [ ! -f .github/semantic-role-boundaries.patch ]; then
+            echo "The tested parser changes are already committed."
+            exit 0
+          fi
           git rm .github/semantic-role-boundaries.patch
           git rm .github/workflows/apply-readable-semantic-role-patch.yml
           git config user.name "github-actions[bot]"
