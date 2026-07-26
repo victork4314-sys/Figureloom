@@ -6,7 +6,7 @@
   const DELETED_KEY = 'figureloom-bio-ide-deleted-files-v1';
   const RESULTS_KEY = 'figureloom-bio-ide-results-v1';
   const RUN_STATUS_KEY = 'figureloom-bio-ide-run-status-v1';
-  const PENDING_KEY = 'figureloom-bio-compositional-tests-pending-v2';
+  const PENDING_KEY = 'figureloom-bio-compositional-tests-pending-v3';
 
   const makeId = () => {
     const values = globalThis.crypto?.getRandomValues
@@ -22,9 +22,6 @@
     let pending;
     try { pending = JSON.parse(raw); } catch { return; }
     if (!pending?.files || !pending?.active) return;
-
-    // Tests and clearing intentionally replace the whole browser workspace.
-    // This prevents bundled examples and previous test files from surviving.
     localStorage.setItem(FILES_KEY, JSON.stringify(pending.files));
     localStorage.setItem(DELETED_KEY, '[]');
     localStorage.setItem(ACTIVE_KEY, pending.active);
@@ -34,6 +31,8 @@
   applyPendingBeforeIde();
 
   const slot = (prefix, id, index) => `${prefix}_${id}_${String(index + 1).padStart(3, '0')}`;
+  const choose = (items, index) => items[index % items.length];
+
   const grammarFamilies = [
     (id, i) => `Change ${slot('old', id, i)} to ${slot('new', id, i)} in the ${slot('phenotype', id, i)} column.`,
     (id, i) => `Keep only rows marked ${slot('treated', id, i)} under ${slot('cohort', id, i)}.`,
@@ -75,18 +74,16 @@
     open: ['Open', 'Load', 'Read', 'Import'],
     keep: ['Keep', 'Retain', 'Select', 'Filter'],
     remove: ['Remove', 'Delete', 'Discard', 'Exclude'],
-    show: ['Show', 'Display', 'View', 'Print'],
     save: ['Save', 'Write', 'Export'],
     calculate: ['Calculate', 'Compute', 'Measure'],
     find: ['Find', 'Detect', 'Locate'],
     create: ['Create', 'Make', 'Plot'],
     trim: ['Trim', 'Cut', 'Clip'],
   };
-  const choose = (items, index) => items[index % items.length];
 
   function makeCompositionCandidates(id) {
     const candidates = [];
-    for (let i = 0; i < 30; i += 1) {
+    for (let i = 0; i < 40; i += 1) {
       const n = i + 1;
       const column = slot('column', id, i);
       const value = slot('value', id, i);
@@ -115,26 +112,10 @@
         `${choose(operations.keep, i + 2)} reads with average quality at least ${20 + n}.`,
         `${choose(operations.remove, i + 2)} reads shorter than ${30 + n} bases.`,
         `${choose(operations.save, i)} the result to ${slot('output', id, i)}.csv.`,
-        `${choose(operations.save, i + 1)} the cleaned reads into ${fastq}.`,
+        `${choose(operations.save, i + 1)} the cleaned reads into ${fastq}.`
       );
     }
     return candidates;
-  }
-
-  function reportFile(title, id, cases, passed, failures) {
-    const lines = [
-      title,
-      `Generation id: ${id}`,
-      `Generated cases: ${cases.length}`,
-      `Parsed successfully: ${passed.length}`,
-      `Failed: ${failures.length}`,
-      '',
-      'This report was generated after the page loaded. The full instructions below were not selected from a stored sentence list.',
-      '',
-      ...passed.map((item, index) => `${String(index + 1).padStart(3, '0')} | ${item.action} | ${item.source}`),
-    ];
-    if (failures.length) lines.push('', 'FAILURES', ...failures.map((item) => `${item.source}\n    ${item.error}`));
-    return lines.join('\n');
   }
 
   async function parseCases(sources) {
@@ -150,6 +131,147 @@
       }
     }
     return { passed, failures };
+  }
+
+  function reportFile(title, id, cases, passed, failures, runnablePrograms = []) {
+    const actions = new Set(passed.map((item) => item.action));
+    const operationsSeen = new Set(passed.map((item) => item.operation));
+    const lines = [
+      title,
+      `Generation id: ${id}`,
+      `Generated complete instructions: ${cases.length}`,
+      `Parsed successfully: ${passed.length}`,
+      `Failed: ${failures.length}`,
+      `Distinct semantic actions: ${actions.size}`,
+      `Distinct operations: ${operationsSeen.size}`,
+      `Runnable programs supplied: ${runnablePrograms.length}`,
+      '',
+      'Every identifier, filename, column, value, threshold, motif, output, and program name below was generated after this page loaded.',
+      'The exact complete instructions therefore could not have been selected from a stored sentence catalog.',
+      'The fixed parts are grammar vocabulary and semantic rules, as in a normal programming language.',
+      '',
+      ...passed.map((item, index) => `${String(index + 1).padStart(3, '0')} | ${item.operation} -> ${item.action} | ${item.source}`),
+    ];
+    if (runnablePrograms.length) {
+      lines.push('', 'RUNNABLE PROGRAMS', ...runnablePrograms.map((name) => `- ${name}`));
+    }
+    if (failures.length) {
+      lines.push('', 'FAILURES', ...failures.map((item) => `${item.source}\n    ${item.error}`));
+    }
+    return lines.join('\n');
+  }
+
+  function tableCsv(id, index) {
+    const status = slot('status', id, index);
+    const group = slot('group', id, index);
+    const score = slot('score', id, index);
+    return {
+      status,
+      group,
+      score,
+      text: `sample,${status},${group},${score}\nalpha,failed_${id},treated_${id},31\nbeta,passed_${id},control_${id},22\ngamma,failed_${id},treated_${id},47\ndelta,,treated_${id},35\n`,
+    };
+  }
+
+  function fastaText(id, index) {
+    return `>${slot('seqA', id, index)}\nATGACGTACGTACGT\n>${slot('seqB', id, index)}\nATGNNNNNNNNNNN\n>${slot('seqC', id, index)}\nCCCATGAAATTTGGG\n`;
+  }
+
+  function fastqText(id, index) {
+    return `@${slot('readA', id, index)}\nACGTACGTACGT\n+\nIIIIIIIIIIII\n@${slot('readB', id, index)}\nACGTNN\n+\n!!!!!!\n@${slot('readC', id, index)}\nTTGCAACGTTAA\n+\nHHHHHHHHHHHH\n`;
+  }
+
+  function buildRunnableWorkspace(id) {
+    const files = {};
+    const programs = [];
+
+    for (let i = 0; i < 4; i += 1) {
+      const data = tableCsv(id, i);
+      const csv = `table-data-${id}-${i + 1}.csv`;
+      const program = `table-proof-${id}-${i + 1}.flbio`;
+      const output = `table-output-${id}-${i + 1}.csv`;
+      files[csv] = data.text;
+      files[program] = [
+        `# Generated table composition proof ${i + 1}`,
+        `Open the file ${csv}.`,
+        `Change failed_${id} to rejected_${id}_${i + 1} in the ${data.status} column.`,
+        `Replace empty values under ${data.status} with unknown_${id}_${i + 1}.`,
+        `Keep only rows marked treated_${id} under ${data.group}.`,
+        `Put the rows in order by ${data.score}.`,
+        'Count the rows.',
+        'Show the result.',
+        `Save the result to ${output}.`,
+        '',
+      ].join('\n');
+      programs.push(program);
+    }
+
+    for (let i = 0; i < 3; i += 1) {
+      const fasta = `sequence-data-${id}-${i + 1}.fasta`;
+      const program = `fasta-proof-${id}-${i + 1}.flbio`;
+      const output = `sequence-output-${id}-${i + 1}.fasta`;
+      files[fasta] = fastaText(id, i);
+      files[program] = [
+        `# Generated FASTA composition proof ${i + 1}`,
+        `Open the file ${fasta}.`,
+        `Keep sequences over ${9 + i} bases.`,
+        'Remove sequences containing N.',
+        'Keep sequences containing ATG.',
+        'Count the sequences.',
+        'Count the bases.',
+        'Calculate the GC content.',
+        'Find the reverse complement.',
+        'Translate the sequences.',
+        'Show the result.',
+        `Save the sequences as ${output}.`,
+        '',
+      ].join('\n');
+      programs.push(program);
+    }
+
+    for (let i = 0; i < 3; i += 1) {
+      const fastq = `read-data-${id}-${i + 1}.fastq`;
+      const program = `fastq-proof-${id}-${i + 1}.flbio`;
+      const output = `read-output-${id}-${i + 1}.fastq`;
+      files[fastq] = fastqText(id, i);
+      files[program] = [
+        `# Generated FASTQ composition proof ${i + 1}`,
+        `Open the file ${fastq}.`,
+        `Keep reads with average quality at least ${18 + i}.`,
+        `Remove reads shorter than ${7 + i} bases.`,
+        `Trim ${1 + i} bases from the start.`,
+        'Count the reads.',
+        'Calculate the GC content.',
+        'Show the result.',
+        `Save the reads as ${output}.`,
+        '',
+      ].join('\n');
+      programs.push(program);
+    }
+
+    for (let i = 0; i < 2; i += 1) {
+      const data = tableCsv(id, 10 + i);
+      const csv = `control-data-${id}-${i + 1}.csv`;
+      const program = `control-proof-${id}-${i + 1}.flbio`;
+      const recipe = `Inspect ${slot('batch', id, i)}`;
+      files[csv] = data.text;
+      files[program] = [
+        `# Generated control-flow composition proof ${i + 1}`,
+        `Make a recipe called ${recipe}:`,
+        '    Count the rows.',
+        '    Show the result.',
+        '',
+        `Open the file ${csv}.`,
+        'If the result is not empty:',
+        `    Use the recipe ${recipe}.`,
+        'Otherwise:',
+        `    Show a warning saying No rows remain for ${slot('batch', id, i)}.`,
+        '',
+      ].join('\n');
+      programs.push(program);
+    }
+
+    return { files, programs };
   }
 
   function replaceWorkspace(files, active) {
@@ -170,10 +292,12 @@
       grouped.push('');
     }
     const files = {
-      [indexName]: `# 240 generated grammar cases\n# Open ${reportName} to see the parsed AST action for every case.\n\n${grouped.join('\n')}`,
+      [indexName]: `# 240 generated slot-level grammar cases\n# Open ${reportName} for each parsed AST action.\n\n${grouped.join('\n')}`,
       [reportName]: reportFile('FigureLoom Bio grammar tests', id, cases, passed, failures),
     };
-    if (passed.length < 200) files[indexName] = `# TEST FAILED\n# Only ${passed.length} of ${cases.length} generated grammar cases parsed.\n# Open ${reportName} for exact failures.\n` + files[indexName];
+    if (passed.length !== cases.length) {
+      files[indexName] = `# TEST FAILED\n# ${passed.length} of ${cases.length} cases parsed.\n# Open ${reportName} for exact failures.\n\n${files[indexName]}`;
+    }
     replaceWorkspace(files, indexName);
   }
 
@@ -181,23 +305,35 @@
     const id = makeId();
     const candidates = makeCompositionCandidates(id);
     const { passed, failures } = await parseCases(candidates);
+    const workspace = buildRunnableWorkspace(id);
     const reportName = `composition-proof-${id}.txt`;
-    const proofName = `composition-proof-${id}.flbio`;
-    const dataName = `composition-data-${id}.csv`;
-    const outputName = `composition-result-${id}.csv`;
-    const column = `phenotype_${id}`;
-    const group = `cohort_${id}`;
-    const oldValue = `copper_${id}`;
-    const newValue = `violet_${id}`;
-    const keepValue = `treated_${id}`;
-    const runnable = `# Fresh runnable composition proof ${id}\nOpen the file ${dataName}.\nChange ${oldValue} to ${newValue} in the ${column} column.\nKeep only rows marked ${keepValue} under ${group}.\nCount the rows.\nShow the result.\nSave the result to ${outputName}.\n`;
-    const files = {
-      [proofName]: runnable,
-      [dataName]: `sample,${column},${group}\nalpha,${oldValue},${keepValue}\nbeta,other_${id},control_${id}\ngamma,${oldValue},${keepValue}\n`,
-      [reportName]: reportFile('FigureLoom Bio composition proof', id, candidates, passed, failures),
-    };
-    if (passed.length < 200) files[proofName] = `# COMPOSITION PROOF FAILED\n# Only ${passed.length} of ${candidates.length} generated combinations parsed.\n# Open ${reportName} for exact failures.\n\n${runnable}`;
-    replaceWorkspace(files, proofName);
+    workspace.files[reportName] = reportFile(
+      'FigureLoom Bio composition proof',
+      id,
+      candidates,
+      passed,
+      failures,
+      workspace.programs
+    );
+    const indexName = `composition-index-${id}.txt`;
+    workspace.files[indexName] = [
+      'FigureLoom Bio composition proof workspace',
+      '',
+      `Generated complete instructions: ${candidates.length}`,
+      `Parsed successfully: ${passed.length}`,
+      `Runnable programs: ${workspace.programs.length}`,
+      '',
+      'Open and run every .flbio file. Each has a matching generated CSV, FASTA, or FASTQ input where needed.',
+      '',
+      ...workspace.programs.map((name) => `- ${name}`),
+      '',
+      `Full parser report: ${reportName}`,
+    ].join('\n');
+    const active = workspace.programs[0];
+    if (passed.length < 200) {
+      workspace.files[active] = `# COMPOSITION PROOF FAILED\n# Only ${passed.length} of ${candidates.length} generated instructions parsed.\n# Open ${reportName} for exact failures.\n\n${workspace.files[active]}`;
+    }
+    replaceWorkspace(workspace.files, active);
   }
 
   function clearAllFiles() {
@@ -210,22 +346,25 @@
     const compositionButton = document.getElementById('allroundTestButton');
     const clearButton = document.getElementById('clearAllFilesButton');
     if (!grammarButton || !compositionButton || !clearButton) return;
+
     grammarButton.textContent = 'Grammar tests';
-    grammarButton.title = 'Replace the workspace with 240 focused generated grammar cases';
+    grammarButton.title = 'Replace the workspace with 240 generated slot-level grammar cases';
     compositionButton.textContent = 'Composition proof';
-    compositionButton.title = 'Replace the workspace with hundreds of fresh generated combinations';
-    clearButton.title = 'Delete every program, input, generated result, and test file from this browser';
+    compositionButton.title = 'Generate 800 complete instructions plus 12 runnable table, FASTA, FASTQ, and control-flow programs';
+    clearButton.title = 'Delete every program, input, output, result, and test file from this browser';
 
     grammarButton.addEventListener('click', (event) => {
       event.preventDefault();
       event.stopImmediatePropagation();
       void runGrammarTests();
     }, { capture: true });
+
     compositionButton.addEventListener('click', (event) => {
       event.preventDefault();
       event.stopImmediatePropagation();
       void runCompositionProof();
     }, { capture: true });
+
     clearButton.addEventListener('click', (event) => {
       event.preventDefault();
       event.stopImmediatePropagation();
@@ -236,5 +375,9 @@
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', bindControls, { once: true });
   else bindControls();
 
-  window.FigureLoomBioCompositionalTests = Object.freeze({ makeGrammarCases, makeCompositionCandidates });
+  window.FigureLoomBioCompositionalTests = Object.freeze({
+    makeGrammarCases,
+    makeCompositionCandidates,
+    buildRunnableWorkspace,
+  });
 })();
