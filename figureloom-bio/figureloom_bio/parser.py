@@ -15,23 +15,195 @@ class Instruction:
     values: tuple[str, ...] = ()
 
 
-# Existing production and compatibility modules append their proven sentence
-# forms here. Core productions preserve their established action/value shape.
-# Broad language aliases remain fallback-only behind the compositional compiler.
-_PATTERNS: tuple[tuple[str, Pattern[str]], ...] = ()
-_ALIAS_PREFIX = "language_alias__"
-
 _BASE_COMMAND_WORDS = {
-    "align", "annotate", "assemble", "build", "calculate", "call", "change",
-    "check", "clean", "combine", "compare", "convert", "copy", "count",
-    "create", "cut", "delete", "detect", "discard", "display", "draw", "drop",
-    "exclude", "export", "filter", "find", "get", "identify", "import", "inspect",
-    "join", "keep", "label", "list", "load", "locate", "make", "measure", "merge",
-    "name", "normalize", "open", "plot", "prepare", "print", "put", "read",
-    "remove", "rename", "repeat", "replace", "retain", "run", "save", "say",
-    "scale", "select", "show", "sort", "split", "stop", "test", "total",
-    "translate", "trim", "turn", "use", "validate", "view", "warn", "write",
+    "align", "annotate", "assemble", "ask", "build", "calculate", "call",
+    "change", "check", "clean", "clear", "close", "combine", "compare",
+    "convert", "copy", "correct", "count", "create", "cut", "delete",
+    "detect", "discard", "display", "download", "draw", "drop", "end",
+    "exclude", "export", "filter", "find", "for", "get", "group",
+    "identify", "if", "import", "include", "inspect", "join", "keep",
+    "list", "load", "locate", "make", "map", "measure", "merge", "move",
+    "name", "normalize", "open", "otherwise", "plot", "prepare", "print",
+    "put", "read", "record", "remove", "rename", "repeat", "replace",
+    "restore", "retain", "reverse-complement", "run", "save", "say",
+    "scale", "select", "show", "sort", "split", "stop", "summarize",
+    "test", "total", "translate", "trim", "turn", "use", "validate",
+    "view", "warn", "write",
 }
+
+
+# These are the proven core productions from the working baseline. They preserve
+# established action names and captured values. Extension modules append more
+# productions and broad aliases to this tuple during package installation.
+_PATTERNS: tuple[tuple[str, Pattern[str]], ...] = (
+    (
+        "repeat_program",
+        re.compile(r"run this program ([1-9][0-9]*) times?", re.IGNORECASE),
+    ),
+    (
+        "open_pair",
+        re.compile(r"open the files (.+?) and (.+?) as a pair", re.IGNORECASE),
+    ),
+    ("open_file", re.compile(r"open the file (.+)", re.IGNORECASE)),
+    (
+        "keep_rows",
+        re.compile(r"keep only rows marked (.+) under ([^.,]+)", re.IGNORECASE),
+    ),
+    (
+        "remove_rows",
+        re.compile(r"remove rows marked (.+) under ([^.,]+)", re.IGNORECASE),
+    ),
+    (
+        "keep_columns",
+        re.compile(r"keep only the columns (.+)", re.IGNORECASE),
+    ),
+    (
+        "rename_column",
+        re.compile(r"rename the column (.+?) to (.+)", re.IGNORECASE),
+    ),
+    (
+        "order_rows",
+        re.compile(r"put the rows in order by (.+)", re.IGNORECASE),
+    ),
+    (
+        "largest_first",
+        re.compile(r"put the largest (.+) first", re.IGNORECASE),
+    ),
+    (
+        "smallest_first",
+        re.compile(r"put the smallest (.+) first", re.IGNORECASE),
+    ),
+    (
+        "remove_duplicates",
+        re.compile(r"remove duplicate rows using (.+)", re.IGNORECASE),
+    ),
+    (
+        "replace_empty",
+        re.compile(r"replace empty values under (.+?) with (.+)", re.IGNORECASE),
+    ),
+    (
+        "combine_file",
+        re.compile(r"combine it with (.+) using ([^.,]+)", re.IGNORECASE),
+    ),
+    (
+        "change_value",
+        re.compile(r"change (.+?) to (.+?) under ([^.,]+)", re.IGNORECASE),
+    ),
+    ("count_rows", re.compile(r"count the rows", re.IGNORECASE)),
+    ("count_sequences", re.compile(r"count the (?:sequences|reads)", re.IGNORECASE)),
+    ("count_bases", re.compile(r"count the bases", re.IGNORECASE)),
+    ("show_sequence_names", re.compile(r"show the sequence names", re.IGNORECASE)),
+    (
+        "show_first_sequences",
+        re.compile(r"show the first ([1-9][0-9]*) sequences?", re.IGNORECASE),
+    ),
+    ("show_sequences", re.compile(r"show the (?:sequences|reads)", re.IGNORECASE)),
+    (
+        "keep_strict_length",
+        re.compile(
+            r"keep only sequences longer than ([1-9][0-9]*) bases?",
+            re.IGNORECASE,
+        ),
+    ),
+    (
+        "keep_min_length",
+        re.compile(
+            r"keep (?:sequences|reads) at least ([1-9][0-9]*) bases long",
+            re.IGNORECASE,
+        ),
+    ),
+    (
+        "remove_shorter",
+        re.compile(
+            r"remove (?:sequences|reads) shorter than ([1-9][0-9]*) bases?",
+            re.IGNORECASE,
+        ),
+    ),
+    (
+        "keep_min_quality",
+        re.compile(
+            r"keep reads with average quality at least ([0-9]+(?:\.[0-9]+)?)",
+            re.IGNORECASE,
+        ),
+    ),
+    (
+        "remove_low_quality_default",
+        re.compile(r"remove reads with low quality", re.IGNORECASE),
+    ),
+    (
+        "remove_low_quality",
+        re.compile(
+            r"remove reads with average quality below ([0-9]+(?:\.[0-9]+)?)",
+            re.IGNORECASE,
+        ),
+    ),
+    ("check_quality", re.compile(r"check the quality(?: again)?", re.IGNORECASE)),
+    ("show_quality_report", re.compile(r"show the quality report", re.IGNORECASE)),
+    ("remove_adapters", re.compile(r"remove adapter sequences", re.IGNORECASE)),
+    (
+        "cut_start",
+        re.compile(
+            r"cut ([1-9][0-9]*) bases? from the beginning of each read",
+            re.IGNORECASE,
+        ),
+    ),
+    (
+        "cut_end",
+        re.compile(
+            r"cut ([1-9][0-9]*) bases? from the end of each read",
+            re.IGNORECASE,
+        ),
+    ),
+    (
+        "trim_start",
+        re.compile(r"trim ([1-9][0-9]*) bases from the start", re.IGNORECASE),
+    ),
+    (
+        "trim_end",
+        re.compile(r"trim ([1-9][0-9]*) bases from the end", re.IGNORECASE),
+    ),
+    (
+        "keep_motif",
+        re.compile(r"keep (?:only )?sequences containing (.+)", re.IGNORECASE),
+    ),
+    (
+        "remove_motif",
+        re.compile(r"remove sequences containing (.+)", re.IGNORECASE),
+    ),
+    ("use_sequence", re.compile(r"use the sequence named (.+)", re.IGNORECASE)),
+    (
+        "to_rna",
+        re.compile(r"convert (?:the DNA|the sequences) to RNA", re.IGNORECASE),
+    ),
+    (
+        "to_dna",
+        re.compile(r"convert (?:the RNA|the sequences) to DNA", re.IGNORECASE),
+    ),
+    (
+        "reverse_complement",
+        re.compile(r"find the reverse complement", re.IGNORECASE),
+    ),
+    (
+        "translate",
+        re.compile(r"translate (?:the DNA into protein|the sequences)", re.IGNORECASE),
+    ),
+    ("gc_content", re.compile(r"calculate the GC content", re.IGNORECASE)),
+    (
+        "compare_sequences",
+        re.compile(r"compare (?:the sequences|it) with (.+)", re.IGNORECASE),
+    ),
+    ("show_result", re.compile(r"show the result", re.IGNORECASE)),
+    ("show_file", re.compile(r"show the file", re.IGNORECASE)),
+    (
+        "save_pair",
+        re.compile(r"save the pair as (.+?) and (.+)", re.IGNORECASE),
+    ),
+    ("save_sequences", re.compile(r"save the (?:sequences|reads) as (.+)", re.IGNORECASE)),
+    ("save_result", re.compile(r"save the result as (.+)", re.IGNORECASE)),
+    ("say", re.compile(r"say (.+)", re.IGNORECASE)),
+)
+
+_ALIAS_PREFIX = "language_alias__"
 
 
 def _known_command_words() -> set[str]:
