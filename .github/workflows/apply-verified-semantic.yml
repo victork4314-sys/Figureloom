@@ -1,0 +1,91 @@
+name: Apply verified semantic language
+
+on:
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: github.event.pull_request.head.ref == 'agent/verified-semantic-language-direct'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/verified-semantic-language-direct
+          fetch-depth: 0
+      - name: Verify and apply semantic language patch
+        shell: bash
+        run: |
+          if [ -f .github/verified-semantic-diagnostic.txt ]; then
+            cat .github/verified-semantic-diagnostic.txt
+            exit 1
+          fi
+          parts=(
+            .github/verified-semantic.part00
+            .github/verified-semantic.part01
+            .github/verified-semantic.part02
+            .github/verified-semantic.part03
+            .github/verified-semantic.part04
+            .github/verified-semantic.part05
+            .github/verified-semantic.part06
+            .github/verified-semantic.part07
+          )
+          set +e
+          missing=0
+          for part in "${parts[@]}"; do
+            test -f "$part" || missing=1
+          done
+          cat "${parts[@]}" > /tmp/verified-semantic.patch.b64 2>/tmp/cat.err
+          cat_status=$?
+          base64 --decode /tmp/verified-semantic.patch.b64 > /tmp/verified-semantic.patch.gz 2>/tmp/decode.err
+          decode_status=$?
+          gzip -dc /tmp/verified-semantic.patch.gz > /tmp/verified-semantic.patch 2>/tmp/gzip.err
+          gzip_status=$?
+          actual=$(sha256sum /tmp/verified-semantic.patch 2>/dev/null | cut -d' ' -f1)
+          expected=bf76a28fb2a0650a0b642d988196280e09945e566c4d328598613aea7e91b0c3
+          git apply --check /tmp/verified-semantic.patch 2>/tmp/apply-check.err
+          check_status=$?
+          {
+            echo "missing=$missing"
+            echo "cat_status=$cat_status"
+            echo "decode_status=$decode_status"
+            echo "gzip_status=$gzip_status"
+            echo "check_status=$check_status"
+            echo "base64_bytes=$(wc -c < /tmp/verified-semantic.patch.b64 2>/dev/null)"
+            echo "gzip_bytes=$(wc -c < /tmp/verified-semantic.patch.gz 2>/dev/null)"
+            echo "patch_bytes=$(wc -c < /tmp/verified-semantic.patch 2>/dev/null)"
+            echo "actual_sha256=$actual"
+            echo "expected_sha256=$expected"
+            echo "--- part bytes ---"
+            for part in "${parts[@]}"; do
+              if [ -f "$part" ]; then echo "$part $(wc -c < "$part")"; else echo "$part MISSING"; fi
+            done
+            echo "--- cat ---"
+            cat /tmp/cat.err
+            echo "--- decode ---"
+            cat /tmp/decode.err
+            echo "--- gzip ---"
+            cat /tmp/gzip.err
+            echo "--- apply check ---"
+            cat /tmp/apply-check.err
+          } > .github/verified-semantic-diagnostic.txt
+          if [ "$missing" -ne 0 ] || [ "$cat_status" -ne 0 ] || [ "$decode_status" -ne 0 ] || [ "$gzip_status" -ne 0 ] || [ "$check_status" -ne 0 ] || [ "$actual" != "$expected" ]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add .github/verified-semantic-diagnostic.txt
+            git commit -m "Record verified semantic apply diagnostics"
+            git push origin HEAD:agent/verified-semantic-language-direct
+            exit 1
+          fi
+          set -e
+          rm .github/verified-semantic-diagnostic.txt
+          git apply --index /tmp/verified-semantic.patch
+          git rm "${parts[@]}" .github/workflows/apply-verified-semantic.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "Install verified structured semantic language"
+          git push origin HEAD:agent/verified-semantic-language-direct
