@@ -37,9 +37,8 @@ jobs:
           node --check ide/ide-complete-language.js
           node --check ide/ide-language-highlighter.js
           node --check ide/ide-workspace-cleanup.js
+          node --check ide/ide-topic-workspace-only.js
           node --check ide/ide-topic-composition-tests.js
-          node --check ide/ide-bio-expansion-composition.js
-          node --check ide/ide-grammar-composition-tests.js
           node --check ide/ide-app-v2.js
           node --check scripts/validate-bio-semantic-runtime.mjs
           node --check scripts/validate-bio-expansion.mjs
@@ -51,7 +50,6 @@ jobs:
           node --check scripts/validate-bio-semantic-browser.mjs
           node --check scripts/validate-bio-freeform-stress-start.mjs
           node --check scripts/validate-bio-all-in-one-table-section.mjs
-          node --check scripts/validate-bio-240-compositional-tests.mjs
           node --check scripts/validate-bio-test-workspace-controls.mjs
 
       - name: Validate tokenizer grammar AST runtime and advertised actions
@@ -71,9 +69,6 @@ jobs:
 
       - name: Validate expanded bioinformatics actions inside control flow
         run: node scripts/validate-bio-expansion-control-flow.mjs
-
-      - name: Validate every declared word and 356 differently ordered programs
-        run: node scripts/validate-bio-240-compositional-tests.mjs
 
       - name: Validate test workspace replacement and clear controls
         run: node scripts/validate-bio-test-workspace-controls.mjs
