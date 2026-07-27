@@ -54,6 +54,24 @@ def _find_phrase(words: list[str], entries: list[tuple[tuple[str, ...], str]], *
     return None
 
 
+def _target_matches(words: list[str]) -> list[tuple[str, int, int]]:
+    lowered = [word.casefold() for word in words]
+    matches: list[tuple[str, int, int]] = []
+    for phrase, canonical in TARGETS:
+        for index in range(len(words) - len(phrase) + 1):
+            if tuple(lowered[index:index + len(phrase)]) == phrase:
+                matches.append((canonical, index, index + len(phrase)))
+    matches.sort(key=lambda item: (-(item[2] - item[1]), item[1], item[0]))
+    selected: list[tuple[str, int, int]] = []
+    for candidate in matches:
+        _canonical, start, end = candidate
+        if any(other_start <= start and end <= other_end for _other, other_start, other_end in selected):
+            continue
+        selected.append(candidate)
+    selected.sort(key=lambda item: (item[1], -(item[2] - item[1])))
+    return selected
+
+
 def classify_expansion_phrase(category: str, phrase: str) -> str | None:
     entries = _CATEGORY_ENTRIES.get(category)
     if entries is None:
@@ -72,14 +90,9 @@ def parse_expanded_instruction(source: str, *, line: int = 1) -> InstructionNode
         raise LanguageError("I could not find a supported bioinformatics operation.", line=line, code="missing_operation")
     operation = operation_match[0]
 
-    target_matches: list[tuple[str, int, int]] = []
-    for phrase, canonical in TARGETS:
-        lowered = [word.casefold() for word in words]
-        for index in range(len(words) - len(phrase) + 1):
-            if tuple(lowered[index:index + len(phrase)]) == phrase:
-                target_matches.append((canonical, index, index + len(phrase)))
-                break
-    targets = list(dict.fromkeys(item[0] for item in sorted(target_matches, key=lambda item: item[1])))
+    target_matches = _target_matches(words)
+    targets = list(dict.fromkeys(item[0] for item in target_matches))
+    target_lengths = {canonical: max(end - start, 1) for canonical, start, end in target_matches}
     if not targets:
         raise LanguageError("This bioinformatics instruction needs a target.", line=line, code="missing_target")
 
@@ -109,7 +122,8 @@ def parse_expanded_instruction(source: str, *, line: int = 1) -> InstructionNode
     target_set = set(targets)
     modifier_set = set(modifiers)
     for rule in EXPANSION.get("capabilities", []):
-        if rule.get("operation") != operation or rule.get("target") not in target_set:
+        target = str(rule.get("target"))
+        if rule.get("operation") != operation or target not in target_set:
             continue
         required_modifier = rule.get("modifier")
         if required_modifier and required_modifier not in modifier_set:
@@ -118,7 +132,10 @@ def parse_expanded_instruction(source: str, *, line: int = 1) -> InstructionNode
             continue
         if rule.get("needs_file") and not filenames:
             continue
-        score = 10 + (4 if required_modifier else 0) + (2 if rule.get("needs_number") else 0) + (2 if rule.get("needs_file") else 0)
+        score = 10 + target_lengths.get(target, 1) * 3
+        score += 4 if required_modifier else 0
+        score += 2 if rule.get("needs_number") else 0
+        score += 2 if rule.get("needs_file") else 0
         candidates.append((score, rule))
     if not candidates:
         raise LanguageError(
