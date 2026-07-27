@@ -2,57 +2,51 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 
 const index = fs.readFileSync('ide/index.html', 'utf8');
-const controls = fs.readFileSync('ide/ide-grammar-composition-tests.js', 'utf8');
-const scientific = fs.readFileSync('ide/ide-bio-expansion-composition.js', 'utf8');
+const topics = fs.readFileSync('ide/ide-topic-composition-tests.js', 'utf8');
+const topicOnly = fs.readFileSync('ide/ide-topic-workspace-only.js', 'utf8');
 const cleanup = fs.readFileSync('ide/ide-workspace-cleanup.js', 'utf8');
 
 assert.doesNotMatch(index, /ide-bio-examples\.js/, 'The old example installer must not load.');
 assert.doesNotMatch(index, /ide-bio-example-run-guard\.js/, 'The old example run guard must not load.');
-assert.doesNotMatch(index, /ide-compositional-test-controls\.js/, 'The weaker old composition controller must not load.');
-assert.match(index, /id="exampleButton"[^>]*>Grammar tests</, 'Grammar tests must replace the old Examples control.');
-assert.match(index, /id="allroundTestButton"[^>]*>Composition proof</, 'Composition proof must replace the old all-round control.');
+assert.doesNotMatch(index, /ide-compositional-test-controls\.js/, 'The weak old composition controller must not load.');
+assert.doesNotMatch(index, /ide-bio-expansion-composition\.js/, 'The older scientific proof controller must not load.');
+assert.doesNotMatch(index, /ide-grammar-composition-tests\.js/, 'The older 200-program controller must not load.');
+assert.match(index, /id="exampleButton"[^>]*>Grammar tests</, 'Grammar tests must remain the first test control.');
+assert.match(index, /id="allroundTestButton"[^>]*>Composition proof</, 'Composition proof must remain the second test control.');
 assert.match(index, /id="clearAllFilesButton"[^>]*>Clear all files</, 'The File toolbar must include Clear all files.');
 
 const cleanupPosition = index.indexOf('ide-workspace-cleanup.js');
-const scientificPosition = index.indexOf('ide-bio-expansion-composition.js');
-const controlsPosition = index.indexOf('ide-grammar-composition-tests.js');
+const topicOnlyPosition = index.indexOf('ide-topic-workspace-only.js');
+const topicsPosition = index.indexOf('ide-topic-composition-tests.js');
 const appPosition = index.indexOf('ide-app-v2.js');
 assert.ok(
-  cleanupPosition >= 0 && cleanupPosition < scientificPosition && scientificPosition < controlsPosition && controlsPosition < appPosition,
-  'Cleanup, scientific proof ownership, and the base structural generator must run before the IDE reads its workspace.',
+  cleanupPosition >= 0 && cleanupPosition < topicOnlyPosition && topicOnlyPosition < topicsPosition && topicsPosition < appPosition,
+  'Cleanup, topic-only filtering, and the nine-topic generator must run before the IDE reads its workspace.',
 );
 
-assert.match(controls, /localStorage\.setItem\(FILES_KEY, JSON\.stringify\(pending\.files\)\)/,
-  'Generated tests must replace the complete workspace.');
-assert.match(controls, /Programs generated: \$\{programs\.length\}/,
-  'The structural report must state how many separate programs were generated.');
-assert.match(controls, /api\.parseProgram\(sources\[index\]\)/,
-  'Every base generated program must be parsed into an AST.');
-assert.match(controls, /api\.tokenize\(form, 1\)/,
-  'Every base grammar word or phrase must be checked by the tokenizer.');
-assert.match(scientific, /Array\.from\(\{ length:48 \}/,
-  'The proof must retain 48 programs for the earlier scientific actions.');
-assert.match(scientific, /Array\.from\(\{ length:108 \}/,
-  'The proof must add 108 programs for the broad scientific informatics actions.');
-assert.match(scientific, /broadRules\.length !== 54/,
-  'The proof must require all 54 broad scientific actions.');
-assert.match(scientific, /workspace\.passed\.length !== 356/,
-  'The visible proof must require all 356 programs to parse.');
-assert.match(scientific, /api\.classifyExpansionPhrase\?\.\(category, form\) === canonical/,
-  'Every scientific phrase must map to its declared semantic meaning.');
-assert.match(scientific, /event\.stopImmediatePropagation\(\)/,
-  'The scientific proof must own the two test buttons before the older handler can intercept them.');
-assert.match(scientific, /SCIENTIFIC INFORMATICS EXPANSION/i,
-  'The report must include a distinct scientific informatics section.');
-assert.match(scientific, /356 independently assembled programs were generated/,
-  'The visible index must state the complete 356-program count.');
-assert.match(controls, /replaceWorkspace\(\{ 'new-program\.flbio': '' \}, 'new-program\.flbio'\)/,
+assert.match(topics, /GROUPS_PER_TOPIC = 36/, 'Each topic must contain 36 generated three-line runs.');
+assert.match(topics, /LINES_PER_GROUP = 3/, 'Each generated run must contain three executable instructions.');
+assert.match(topics, /REQUIRED_LINES = GROUPS_PER_TOPIC \* LINES_PER_GROUP/, 'Each topic must require 108 instructions.');
+assert.match(topics, /duplicateLines === 0/, 'Each topic must reject repeated complete instructions.');
+assert.match(topics, /api\.parseProgram\(built\.source\)/, 'Every complete topic program must be parsed into an AST.');
+assert.match(topics, /missingActions\.length === 0/, 'Every scientific action assigned to a topic must appear in its AST.');
+assert.match(topics, /localStorage\.setItem\(PENDING_KEY, JSON\.stringify\(\{ files, active \}\)\)/,
+  'The topic generator must replace the complete workspace instead of merging files.');
+
+assert.match(topicOnly, /topic-test-report-\$\{id\}\.txt/, 'The topic-only filter must retain the single topic report.');
+assert.match(topicOnly, /name\.startsWith\(`\$\{topic\}-input-\$\{id\}-`\)/,
+  'The topic-only filter must retain matching topic input files.');
+assert.match(topicOnly, /name\.startsWith\(`\$\{topic\}-compare-\$\{id\}-`\)/,
+  'The topic-only filter must retain matching comparison files.');
+assert.match(topicOnly, /localStorage\.setItem\(FILES_KEY, JSON\.stringify\(kept\)\)/,
+  'The topic-only filter must delete every unrelated workspace file.');
+assert.match(topicOnly, /JSON\.stringify\(\{ 'new-program\.flbio': '' \}\)/,
   'Clear all files must leave one empty program and nothing else.');
-assert.match(controls, /window\.confirm\('Clear every file and result/,
+assert.match(topicOnly, /window\.confirm\('Clear every file and result/,
   'Clearing the complete browser workspace must require confirmation.');
 
 for (const oldName of ['example.flbio', 'example-samples.csv', 'fastq-example.flbio', 'example-reads.fastq']) {
   assert.ok(cleanup.includes(oldName), `Cleanup must remove ${oldName}.`);
 }
 
-console.log('Old examples are absent; the scientific proof owns both test controls; all 356 programs are required; Clear all files remains protected.');
+console.log('Only the nine long scientific-topic tests, their support files, and one report remain; older test controllers are absent; Clear all files is protected.');
