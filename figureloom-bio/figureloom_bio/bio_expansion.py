@@ -174,9 +174,4 @@ def expansion_words() -> set[str]:
     return words
 
 
-from .bio_expansion_program import install_expanded_program_parser  # noqa: E402
-
-install_expanded_program_parser()
-
-
 __all__ = ["EXPANSION", "classify_expansion_phrase", "expansion_words", "parse_expanded_instruction"]
