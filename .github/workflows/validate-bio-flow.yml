@@ -37,6 +37,7 @@ jobs:
           node --check ide/ide-complete-language.js
           node --check ide/ide-language-highlighter.js
           node --check ide/ide-workspace-cleanup.js
+          node --check ide/ide-topic-composition-tests.js
           node --check ide/ide-bio-expansion-composition.js
           node --check ide/ide-grammar-composition-tests.js
           node --check ide/ide-app-v2.js
@@ -44,6 +45,7 @@ jobs:
           node --check scripts/validate-bio-expansion.mjs
           node --check scripts/validate-bio-expansion-2.mjs
           node --check scripts/validate-scientific-informatics-expansion.mjs
+          node --check scripts/validate-bio-topic-composition-tests.mjs
           node --check scripts/validate-bio-expansion-control-flow.mjs
           node --check scripts/validate-bio-logic-compiler.mjs
           node --check scripts/validate-bio-semantic-browser.mjs
@@ -64,10 +66,13 @@ jobs:
       - name: Validate 54 broad scientific informatics actions
         run: node scripts/validate-scientific-informatics-expansion.mjs
 
+      - name: Validate nine topic tests with 108 unique lines each
+        run: node scripts/validate-bio-topic-composition-tests.mjs
+
       - name: Validate expanded bioinformatics actions inside control flow
         run: node scripts/validate-bio-expansion-control-flow.mjs
 
-      - name: Validate every declared word and 248 differently ordered programs
+      - name: Validate every declared word and 356 differently ordered programs
         run: node scripts/validate-bio-240-compositional-tests.mjs
 
       - name: Validate test workspace replacement and clear controls
