@@ -1,7 +1,7 @@
 (() => {
   'use strict';
 
-  const EXPANSION_URL = '../figureloom-bio/figureloom_bio/bio_expansion_grammar.json?v=1';
+  const EXPANSION_URL = '../figureloom-bio/figureloom_bio/bio_expansion_grammar.json?v=20260727-scientific-3';
   const WORD_RE = /"[^"\n]*"|'[^'\n]*'|[A-Za-z0-9_./\\:+-]+/g;
   const NUMBER_RE = /^[0-9]+(?:\.[0-9]+)?$/;
   const FILE_RE = /[^\s]+\.(?:csv|tsv|txt|fa|fasta|fna|ffn|faa|frn|fq|fastq|vcf|gff|gff3|gtf|bed|nwk|svg)$/i;
@@ -12,7 +12,7 @@
   function entries(grammar, category) {
     const output = [];
     for (const [canonical, forms] of Object.entries(grammar[category] || {})) {
-      for (const form of forms) output.push({ canonical, words: normalize(form).split(' ') });
+      for (const form of forms) output.push({ canonical, words:normalize(form).split(' ') });
     }
     output.sort((left, right) => right.words.length - left.words.length);
     return output;
@@ -24,11 +24,31 @@
       const limit = startOnly ? 1 : lowered.length - entry.words.length + 1;
       for (let index = 0; index < Math.max(0, limit); index += 1) {
         if (entry.words.every((word, offset) => lowered[index + offset] === word)) {
-          return { canonical: entry.canonical, start: index, end: index + entry.words.length };
+          return { canonical:entry.canonical, start:index, end:index + entry.words.length };
         }
       }
     }
     return null;
+  }
+
+  function allTargetMatches(words, list) {
+    const lowered = words.map(normalize);
+    const matches = [];
+    for (const entry of list) {
+      for (let index = 0; index <= lowered.length - entry.words.length; index += 1) {
+        if (entry.words.every((word, offset) => lowered[index + offset] === word)) {
+          matches.push({ canonical:entry.canonical, start:index, end:index + entry.words.length });
+        }
+      }
+    }
+    matches.sort((left, right) => (right.end - right.start) - (left.end - left.start) || left.start - right.start || left.canonical.localeCompare(right.canonical));
+    const selected = [];
+    for (const candidate of matches) {
+      if (selected.some((other) => other.start <= candidate.start && candidate.end <= other.end)) continue;
+      selected.push(candidate);
+    }
+    selected.sort((left, right) => left.start - right.start || (right.end - right.start) - (left.end - left.start));
+    return selected;
   }
 
   function parser(expansion, baseApi) {
@@ -44,6 +64,7 @@
     const comparisonEntries = groups.comparisons;
     const roleEntries = groups.roles;
     const modifierEntries = groups.modifiers;
+    const expansionActions = new Set((expansion.capabilities || []).map((rule) => rule.action));
 
     function classifyExpansionPhrase(category, phrase) {
       const list = groups[category];
@@ -59,11 +80,9 @@
       if (!operationMatch) throw new baseApi.LanguageError('missing_operation', 'I could not find a supported bioinformatics operation.', null, lineNumber);
       const operation = operationMatch.canonical;
 
-      const targets = [];
-      for (const entry of targetEntries) {
-        const match = findPhrase(words, [entry]);
-        if (match && !targets.includes(entry.canonical)) targets.push(entry.canonical);
-      }
+      const targetMatches = allTargetMatches(words, targetEntries);
+      const targets = [...new Set(targetMatches.map((match) => match.canonical))];
+      const targetLengths = new Map(targetMatches.map((match) => [match.canonical, Math.max(1, match.end - match.start)]));
       if (!targets.length) throw new baseApi.LanguageError('missing_target', 'This bioinformatics instruction needs a target.', null, lineNumber);
 
       const modifiers = [];
@@ -78,7 +97,7 @@
       const roleMatches = [];
       for (const entry of roleEntries) {
         const match = findPhrase(words, [entry]);
-        if (match) roleMatches.push({ role: entry.canonical, ...match });
+        if (match) roleMatches.push({ role:entry.canonical, ...match });
       }
       roleMatches.sort((left, right) => left.start - right.start);
       const roles = {};
@@ -94,7 +113,10 @@
         if (rule.modifier && !modifiers.includes(rule.modifier)) continue;
         if (rule.needs_number && !numbers.length) continue;
         if (rule.needs_file && !files.length) continue;
-        const score = 10 + (rule.modifier ? 4 : 0) + (rule.needs_number ? 2 : 0) + (rule.needs_file ? 2 : 0);
+        let score = 10 + (targetLengths.get(rule.target) || 1) * 3;
+        if (rule.modifier) score += 4;
+        if (rule.needs_number) score += 2;
+        if (rule.needs_file) score += 2;
         candidates.push({ score, rule });
       }
       if (!candidates.length) {
@@ -132,11 +154,7 @@
     }
 
     function toRuntime(node) {
-      if (!node || !String(node.action || '').startsWith('count_') && ![
-        'find_orfs','find_snps','find_indels','find_primers','check_contamination','check_duplicate_names','check_read_pairs',
-        'keep_variant_quality','keep_pass_variants','remove_low_quality_variants','annotate_variants','annotate_genes',
-        'summarize_variants','summarize_expression','summarize_alignment','extract_features','create_heatmap','create_pca_plot','create_ma_plot','create_box_plot'
-      ].includes(node.action)) return baseApi.toRuntime(node);
+      if (!node || !expansionActions.has(node.action)) return baseApi.toRuntime(node);
       return {
         type:'instruction', operation:node.operation, targets:[...(node.targets || [])], action:node.action,
         semanticAction:node.action, arguments:node.arguments || {}, modifiers:[...(node.modifiers || [])],
