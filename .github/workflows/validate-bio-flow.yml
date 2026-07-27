@@ -27,6 +27,7 @@ jobs:
           node --check ide/ide-semantic-runtime.js
           node --check ide/ide-bio-expansion-runtime.js
           node --check ide/ide-bio-expansion-runtime-2.js
+          node --check ide/ide-scientific-informatics-runtime.js
           node --check ide/ide-core-language-runtime.js
           node --check ide/ide-semantic-microbiology-runtime.js
           node --check ide/ide-semantic-run-authority.js
@@ -42,6 +43,7 @@ jobs:
           node --check scripts/validate-bio-semantic-runtime.mjs
           node --check scripts/validate-bio-expansion.mjs
           node --check scripts/validate-bio-expansion-2.mjs
+          node --check scripts/validate-scientific-informatics-expansion.mjs
           node --check scripts/validate-bio-expansion-control-flow.mjs
           node --check scripts/validate-bio-logic-compiler.mjs
           node --check scripts/validate-bio-semantic-browser.mjs
@@ -58,6 +60,9 @@ jobs:
 
       - name: Validate generated scientific bioinformatics expansion
         run: node scripts/validate-bio-expansion-2.mjs
+
+      - name: Validate 54 broad scientific informatics actions
+        run: node scripts/validate-scientific-informatics-expansion.mjs
 
       - name: Validate expanded bioinformatics actions inside control flow
         run: node scripts/validate-bio-expansion-control-flow.mjs
