@@ -30,16 +30,22 @@ assert.match(controls, /api\.parseProgram\(sources\[index\]\)/,
   'Every base generated program must be parsed into an AST.');
 assert.match(controls, /api\.tokenize\(form, 1\)/,
   'Every base grammar word or phrase must be checked by the tokenizer.');
-assert.match(scientific, /for \(let index = 0; index < 48; index \+= 1\)/,
-  'The scientific proof must generate 48 additional programs.');
-assert.match(scientific, /workspace\.passed\.length !== 248/,
-  'The visible proof must require all 248 programs to parse.');
+assert.match(scientific, /Array\.from\(\{ length:48 \}/,
+  'The proof must retain 48 programs for the earlier scientific actions.');
+assert.match(scientific, /Array\.from\(\{ length:108 \}/,
+  'The proof must add 108 programs for the broad scientific informatics actions.');
+assert.match(scientific, /broadRules\.length !== 54/,
+  'The proof must require all 54 broad scientific actions.');
+assert.match(scientific, /workspace\.passed\.length !== 356/,
+  'The visible proof must require all 356 programs to parse.');
 assert.match(scientific, /api\.classifyExpansionPhrase\?\.\(category, form\) === canonical/,
   'Every scientific phrase must map to its declared semantic meaning.');
 assert.match(scientific, /event\.stopImmediatePropagation\(\)/,
   'The scientific proof must own the two test buttons before the older handler can intercept them.');
-assert.match(scientific, /SCIENCE|SCIENTIFIC BIOINFORMATICS EXPANSION/i,
-  'The report must include a distinct scientific bioinformatics section.');
+assert.match(scientific, /SCIENTIFIC INFORMATICS EXPANSION/i,
+  'The report must include a distinct scientific informatics section.');
+assert.match(scientific, /356 independently assembled programs were generated/,
+  'The visible index must state the complete 356-program count.');
 assert.match(controls, /replaceWorkspace\(\{ 'new-program\.flbio': '' \}, 'new-program\.flbio'\)/,
   'Clear all files must leave one empty program and nothing else.');
 assert.match(controls, /window\.confirm\('Clear every file and result/,
@@ -49,4 +55,4 @@ for (const oldName of ['example.flbio', 'example-samples.csv', 'fastq-example.fl
   assert.ok(cleanup.includes(oldName), `Cleanup must remove ${oldName}.`);
 }
 
-console.log('Old examples are absent; the scientific proof owns both test controls; all 248 programs are required; Clear all files remains protected.');
+console.log('Old examples are absent; the scientific proof owns both test controls; all 356 programs are required; Clear all files remains protected.');
