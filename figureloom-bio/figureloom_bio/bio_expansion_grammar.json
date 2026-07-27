@@ -1,6 +1,6 @@
 {
-  "version": 1,
-  "description": "Simple bioinformatics-only grammar expansion shared by browser and Python.",
+  "version": 2,
+  "description": "Simple bioinformatics-only grammar expansion shared by browser and Python. Complete sentences are not grammar entries.",
   "operations": {
     "count": ["count", "total"],
     "find": ["find", "look for", "detect"],
@@ -31,7 +31,19 @@
     "heatmap": ["heatmap", "heat map"],
     "pca_plot": ["pca plot", "pca chart"],
     "ma_plot": ["ma plot", "ma chart"],
-    "box_plot": ["box plot", "box chart"]
+    "box_plot": ["box plot", "box chart"],
+    "start_codon": ["start codons", "start codon"],
+    "stop_codon": ["stop codons", "stop codon"],
+    "gap": ["gaps", "gap bases"],
+    "unclear_base": ["unclear bases", "unknown bases"],
+    "sequence_length": ["sequence lengths", "sequence length"],
+    "read_quality": ["read quality", "quality scores"],
+    "coverage": ["coverage", "read depth"],
+    "shared_variant": ["shared variants", "common variants"],
+    "unique_variant": ["unique variants", "sample-only variants"],
+    "length_plot": ["length plot", "length chart"],
+    "gc_plot": ["gc plot", "gc chart"],
+    "quality_plot": ["quality plot", "quality chart"]
   },
   "comparisons": {
     "at_least": ["at least", "no less than"],
@@ -73,6 +85,18 @@
     {"operation":"create","target":"heatmap","action":"create_heatmap"},
     {"operation":"create","target":"pca_plot","action":"create_pca_plot"},
     {"operation":"create","target":"ma_plot","action":"create_ma_plot"},
-    {"operation":"create","target":"box_plot","action":"create_box_plot"}
+    {"operation":"create","target":"box_plot","action":"create_box_plot"},
+    {"operation":"find","target":"start_codon","action":"find_start_codons"},
+    {"operation":"find","target":"stop_codon","action":"find_stop_codons"},
+    {"operation":"check","target":"gap","action":"check_gaps"},
+    {"operation":"check","target":"unclear_base","action":"check_unclear_bases"},
+    {"operation":"summarize","target":"sequence_length","action":"summarize_lengths"},
+    {"operation":"summarize","target":"read_quality","action":"summarize_read_quality"},
+    {"operation":"summarize","target":"coverage","action":"summarize_coverage"},
+    {"operation":"find","target":"shared_variant","action":"find_shared_variants","needs_file":true},
+    {"operation":"find","target":"unique_variant","action":"find_unique_variants","needs_file":true},
+    {"operation":"create","target":"length_plot","action":"create_length_plot"},
+    {"operation":"create","target":"gc_plot","action":"create_gc_plot"},
+    {"operation":"create","target":"quality_plot","action":"create_quality_plot"}
   ]
 }
