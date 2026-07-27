@@ -21,6 +21,7 @@ from .paired_length_parity import install_paired_length_parity
 from .language_label_parity import install_language_label_parity
 from .volcano_plot import install_volcano_plot
 from .bio_expansion_runtime import install_bio_expansion_runtime
+from .bio_expansion_runtime_2 import install_bio_expansion_runtime_2
 from .control_flow_expansion import install_control_flow_expansion
 
 install_runtime_extensions(Runner)
@@ -43,8 +44,9 @@ install_paired_length_parity(Runner)
 install_language_label_parity()
 install_volcano_plot(Runner)
 install_bio_expansion_runtime(Runner)
+install_bio_expansion_runtime_2(Runner)
 install_control_flow_expansion()
 
-__version__ = "0.9.0"
+__version__ = "0.10.0"
 
 __all__ = ["Runner", "__version__"]
