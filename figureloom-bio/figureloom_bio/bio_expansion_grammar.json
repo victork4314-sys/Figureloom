@@ -1,6 +1,6 @@
 {
-  "version": 2,
-  "description": "Simple bioinformatics-only grammar expansion shared by browser and Python. Complete sentences are not grammar entries.",
+  "version": 3,
+  "description": "Built-in scientific informatics grammar shared by browser and Python. Complete sentences are not grammar entries.",
   "operations": {
     "count": ["count", "total"],
     "find": ["find", "look for", "detect"],
@@ -10,7 +10,10 @@
     "annotate": ["annotate", "label"],
     "summarize": ["summarize", "describe"],
     "create": ["create", "make", "plot"],
-    "extract": ["extract", "take out"]
+    "extract": ["extract", "take out"],
+    "calculate": ["calculate", "measure"],
+    "normalize": ["normalize", "scale"],
+    "compare": ["compare", "match"]
   },
   "targets": {
     "kmer": ["dna words", "k-mers", "kmers"],
@@ -43,11 +46,74 @@
     "unique_variant": ["unique variants", "sample-only variants"],
     "length_plot": ["length plot", "length chart"],
     "gc_plot": ["gc plot", "gc chart"],
-    "quality_plot": ["quality plot", "quality chart"]
+    "quality_plot": ["quality plot", "quality chart"],
+
+    "codon_use": ["codon use", "codon usage"],
+    "gc_skew": ["gc skew"],
+    "repeat": ["sequence repeats", "repeated sequence"],
+    "telomere": ["telomeres", "telomere repeats"],
+    "copy_number": ["copy number", "copy numbers"],
+    "structural_variant": ["structural variants", "large variants"],
+
+    "differential_expression": ["differential expression", "expression changes"],
+    "marker_gene": ["marker genes", "marker gene"],
+    "splicing": ["splicing", "splice events"],
+    "isoform": ["isoforms", "transcript isoforms"],
+    "gene_correlation": ["gene correlation", "expression correlation"],
+
+    "protein_weight": ["protein weight", "molecular weight"],
+    "peptide": ["peptides", "peptide"],
+    "protein_coverage": ["protein coverage", "peptide coverage"],
+    "protein_domain": ["protein domains", "domains"],
+    "missed_cleavage": ["missed cleavages", "missed cleavage"],
+    "peptide_length_plot": ["peptide length plot", "peptide length chart"],
+
+    "taxon": ["taxa", "taxon counts"],
+    "richness": ["species richness", "taxon richness"],
+    "shannon_diversity": ["shannon diversity", "diversity index"],
+    "resistance_gene": ["resistance genes", "antimicrobial resistance genes"],
+    "abundance": ["abundance", "taxon abundance"],
+    "unclassified_read": ["unclassified reads", "unassigned reads"],
+
+    "tree_tip": ["tree tips", "tips"],
+    "branch_length": ["branch lengths", "branch length"],
+    "long_branch": ["long branches", "long branch"],
+    "distance_matrix": ["distance matrix", "sequence distances"],
+    "phylogenetic_tree": ["phylogenetic tree", "phylogeny"],
+
+    "methylation": ["methylation", "methylation levels"],
+    "methylated_site": ["methylated sites", "methylated positions"],
+    "peak": ["peaks", "genomic peaks"],
+    "promoter_peak": ["promoter peaks", "promoter regions"],
+    "peak_width": ["peak widths", "peak width"],
+    "chromatin_accessibility": ["chromatin accessibility", "accessible chromatin"],
+
+    "cell": ["cells", "single cells"],
+    "umi": ["umis", "unique molecular identifiers"],
+    "cell_cluster": ["cell clusters", "clusters"],
+    "doublet": ["doublets", "doublet cells"],
+    "mitochondrial_read": ["mitochondrial reads", "mitochondrial counts"],
+    "single_cell_count": ["single-cell counts", "cell counts"],
+
+    "allele_frequency": ["allele frequency", "allele frequencies"],
+    "heterozygosity": ["heterozygosity", "heterozygous calls"],
+    "haplotype": ["haplotypes", "haplotype"],
+    "population": ["populations", "population groups"],
+    "rare_variant": ["rare variants", "low-frequency variants"],
+    "genotype": ["genotypes", "genotype counts"],
+
+    "residue": ["residues", "amino acid residues"],
+    "chain": ["protein chains", "chains"],
+    "residue_contact": ["residue contacts", "atomic contacts"],
+    "secondary_structure": ["secondary structure", "helices and sheets"],
+    "surface_residue": ["surface residues", "exposed residues"],
+    "coordinate": ["coordinates", "atomic coordinates"]
   },
   "comparisons": {
     "at_least": ["at least", "no less than"],
     "greater": ["over", "more than"],
+    "at_most": ["at most", "no more than"],
+    "less": ["under", "less than"],
     "equals": ["equals", "is"]
   },
   "roles": {
@@ -97,6 +163,69 @@
     {"operation":"find","target":"unique_variant","action":"find_unique_variants","needs_file":true},
     {"operation":"create","target":"length_plot","action":"create_length_plot"},
     {"operation":"create","target":"gc_plot","action":"create_gc_plot"},
-    {"operation":"create","target":"quality_plot","action":"create_quality_plot"}
+    {"operation":"create","target":"quality_plot","action":"create_quality_plot"},
+
+    {"operation":"calculate","target":"codon_use","action":"calculate_codon_use"},
+    {"operation":"calculate","target":"gc_skew","action":"calculate_gc_skew"},
+    {"operation":"find","target":"repeat","action":"find_sequence_repeats"},
+    {"operation":"find","target":"telomere","action":"find_telomeres"},
+    {"operation":"summarize","target":"copy_number","action":"summarize_copy_number"},
+    {"operation":"find","target":"structural_variant","action":"find_structural_variants"},
+
+    {"operation":"normalize","target":"expression","action":"normalize_expression"},
+    {"operation":"summarize","target":"differential_expression","action":"summarize_differential_expression"},
+    {"operation":"find","target":"marker_gene","action":"find_marker_genes"},
+    {"operation":"summarize","target":"splicing","action":"summarize_splicing"},
+    {"operation":"count","target":"isoform","action":"count_isoforms"},
+    {"operation":"calculate","target":"gene_correlation","action":"calculate_gene_correlation"},
+
+    {"operation":"calculate","target":"protein_weight","action":"calculate_protein_weight"},
+    {"operation":"count","target":"peptide","action":"count_peptides"},
+    {"operation":"summarize","target":"protein_coverage","action":"summarize_protein_coverage"},
+    {"operation":"find","target":"protein_domain","action":"find_protein_domains"},
+    {"operation":"find","target":"missed_cleavage","action":"find_missed_cleavages"},
+    {"operation":"create","target":"peptide_length_plot","action":"create_peptide_length_plot"},
+
+    {"operation":"summarize","target":"taxon","action":"summarize_taxa"},
+    {"operation":"calculate","target":"richness","action":"calculate_richness"},
+    {"operation":"calculate","target":"shannon_diversity","action":"calculate_shannon_diversity"},
+    {"operation":"find","target":"resistance_gene","action":"find_resistance_genes"},
+    {"operation":"summarize","target":"abundance","action":"summarize_abundance"},
+    {"operation":"find","target":"unclassified_read","action":"find_unclassified_reads"},
+
+    {"operation":"count","target":"tree_tip","action":"count_tree_tips"},
+    {"operation":"summarize","target":"branch_length","action":"summarize_branch_lengths"},
+    {"operation":"find","target":"long_branch","action":"find_long_branches","needs_number":true},
+    {"operation":"create","target":"distance_matrix","action":"create_distance_matrix"},
+    {"operation":"summarize","target":"phylogenetic_tree","action":"summarize_phylogenetic_tree"},
+    {"operation":"compare","target":"phylogenetic_tree","action":"compare_phylogenetic_trees","needs_file":true},
+
+    {"operation":"summarize","target":"methylation","action":"summarize_methylation"},
+    {"operation":"find","target":"methylated_site","action":"find_methylated_sites","needs_number":true},
+    {"operation":"summarize","target":"peak","action":"summarize_peaks"},
+    {"operation":"find","target":"promoter_peak","action":"find_promoter_peaks"},
+    {"operation":"calculate","target":"peak_width","action":"calculate_peak_widths"},
+    {"operation":"summarize","target":"chromatin_accessibility","action":"summarize_chromatin_accessibility"},
+
+    {"operation":"summarize","target":"cell","action":"summarize_cells"},
+    {"operation":"count","target":"umi","action":"count_umis"},
+    {"operation":"summarize","target":"cell_cluster","action":"summarize_cell_clusters"},
+    {"operation":"find","target":"doublet","action":"find_doublets","needs_number":true},
+    {"operation":"summarize","target":"mitochondrial_read","action":"summarize_mitochondrial_reads"},
+    {"operation":"normalize","target":"single_cell_count","action":"normalize_single_cell_counts"},
+
+    {"operation":"calculate","target":"allele_frequency","action":"calculate_allele_frequency"},
+    {"operation":"calculate","target":"heterozygosity","action":"calculate_heterozygosity"},
+    {"operation":"count","target":"haplotype","action":"count_haplotypes"},
+    {"operation":"summarize","target":"population","action":"summarize_populations"},
+    {"operation":"find","target":"rare_variant","action":"find_rare_variants","needs_number":true},
+    {"operation":"summarize","target":"genotype","action":"summarize_genotypes"},
+
+    {"operation":"count","target":"residue","action":"count_residues"},
+    {"operation":"count","target":"chain","action":"count_protein_chains"},
+    {"operation":"find","target":"residue_contact","action":"find_residue_contacts","needs_number":true},
+    {"operation":"summarize","target":"secondary_structure","action":"summarize_secondary_structure"},
+    {"operation":"find","target":"surface_residue","action":"find_surface_residues","needs_number":true},
+    {"operation":"summarize","target":"coordinate","action":"summarize_coordinates"}
   ]
 }
