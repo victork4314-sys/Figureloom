@@ -10,52 +10,27 @@
   const BASE_GRAMMAR_URL = '../figureloom-bio/figureloom_bio/language_grammar.json?v=1';
   const EXPANSION_URL = '../figureloom-bio/figureloom_bio/bio_expansion_grammar.json?v=4';
   const GROUPS_PER_TOPIC = 36;
-  const LINES_PER_GROUP = 3;
-  const REQUIRED_LINES = GROUPS_PER_TOPIC * LINES_PER_GROUP;
+  const REQUIRED_LINES = 108;
 
   const TOPICS = Object.freeze({
-    genomics: [
-      'calculate_codon_use', 'calculate_gc_skew', 'find_sequence_repeats',
-      'find_telomeres', 'summarize_copy_number', 'find_structural_variants',
-    ],
-    transcriptomics: [
-      'normalize_expression', 'summarize_differential_expression', 'find_marker_genes',
-      'summarize_splicing', 'count_isoforms', 'calculate_gene_correlation',
-    ],
-    proteomics: [
-      'calculate_protein_weight', 'count_peptides', 'summarize_protein_coverage',
-      'find_protein_domains', 'find_missed_cleavages', 'create_peptide_length_plot',
-    ],
-    metagenomics: [
-      'summarize_taxa', 'calculate_richness', 'calculate_shannon_diversity',
-      'find_resistance_genes', 'summarize_abundance', 'find_unclassified_reads',
-    ],
-    phylogenetics: [
-      'count_tree_tips', 'summarize_branch_lengths', 'find_long_branches',
-      'create_distance_matrix', 'summarize_phylogenetic_tree', 'compare_phylogenetic_trees',
-    ],
-    epigenomics: [
-      'summarize_methylation', 'find_methylated_sites', 'summarize_peaks',
-      'find_promoter_peaks', 'calculate_peak_widths', 'summarize_chromatin_accessibility',
-    ],
-    single_cell: [
-      'summarize_cells', 'count_umis', 'summarize_cell_clusters',
-      'find_doublets', 'summarize_mitochondrial_reads', 'normalize_single_cell_counts',
-    ],
-    population_genetics: [
-      'calculate_allele_frequency', 'calculate_heterozygosity', 'count_haplotypes',
-      'summarize_populations', 'find_rare_variants', 'summarize_genotypes',
-    ],
-    structural_bioinformatics: [
-      'count_residues', 'count_protein_chains', 'find_residue_contacts',
-      'summarize_secondary_structure', 'find_surface_residues', 'summarize_coordinates',
-    ],
+    genomics: ['calculate_codon_use','calculate_gc_skew','find_sequence_repeats','find_telomeres','summarize_copy_number','find_structural_variants'],
+    transcriptomics: ['normalize_expression','summarize_differential_expression','find_marker_genes','summarize_splicing','count_isoforms','calculate_gene_correlation'],
+    proteomics: ['calculate_protein_weight','count_peptides','summarize_protein_coverage','find_protein_domains','find_missed_cleavages','create_peptide_length_plot'],
+    metagenomics: ['summarize_taxa','calculate_richness','calculate_shannon_diversity','find_resistance_genes','summarize_abundance','find_unclassified_reads'],
+    phylogenetics: ['count_tree_tips','summarize_branch_lengths','find_long_branches','create_distance_matrix','summarize_phylogenetic_tree','compare_phylogenetic_trees'],
+    epigenomics: ['summarize_methylation','find_methylated_sites','summarize_peaks','find_promoter_peaks','calculate_peak_widths','summarize_chromatin_accessibility'],
+    single_cell: ['summarize_cells','count_umis','summarize_cell_clusters','find_doublets','summarize_mitochondrial_reads','normalize_single_cell_counts'],
+    population_genetics: ['calculate_allele_frequency','calculate_heterozygosity','count_haplotypes','summarize_populations','find_rare_variants','summarize_genotypes'],
+    structural_bioinformatics: ['count_residues','count_protein_chains','find_residue_contacts','summarize_secondary_structure','find_surface_residues','summarize_coordinates'],
   });
 
-  const SEQUENCE_ACTIONS = new Set([
-    'calculate_codon_use', 'calculate_gc_skew', 'find_sequence_repeats', 'find_telomeres',
-    'calculate_protein_weight', 'find_protein_domains', 'find_missed_cleavages',
-    'create_peptide_length_plot', 'count_residues',
+  const DNA_ACTIONS = new Set([
+    'calculate_codon_use','calculate_gc_skew','find_sequence_repeats','find_telomeres',
+    'create_distance_matrix','count_haplotypes',
+  ]);
+  const PROTEIN_ACTIONS = new Set([
+    'calculate_protein_weight','count_peptides','find_missed_cleavages',
+    'create_peptide_length_plot','count_residues',
   ]);
 
   const clean = (value) => String(value).replace(/\s+/g, ' ').trim();
@@ -67,6 +42,7 @@
       : [Date.now() >>> 0, Math.floor(Math.random() * 0xffffffff)];
     return `${values[0].toString(36)}${values[1].toString(36)}`;
   };
+  const csv = (columns, rows) => `${columns.join(',')}\n${rows.map((row) => row.join(',')).join('\n')}\n`;
 
   function applyPendingBeforeIde() {
     const raw = localStorage.getItem(PENDING_KEY);
@@ -85,114 +61,108 @@
 
   function dnaFasta(topic, id, index) {
     return [
-      `>${topic}_${id}_${index}_a`, 'ATGCGCGCTTAGGGTTAGGGATGAAATAG',
-      `>${topic}_${id}_${index}_b`, 'ATGATGATGCCCCGGGTTTAAATGA',
-      `>${topic}_${id}_${index}_c`, 'CCCTAACCCTAAGCGCGCATGCCCTAA',
+      `>${topic}_${id}_${index}_a`, 'ATGATGATGTTAGGGTTAGGGCCCTAA',
+      `>${topic}_${id}_${index}_b`, 'ATGCCCGGGAAATAGTAA',
+      `>${topic}_${id}_${index}_c`, 'ACGTACGTACGTACGT',
       '',
     ].join('\n');
   }
 
   function proteinFasta(topic, id, index) {
     return [
-      `>${topic}_${id}_${index}_a`, 'MKWVTFISLLFLFSSAYSRGVFRRDTHKSEIAHRFKDLGE',
-      `>${topic}_${id}_${index}_b`, 'MPEPTIDERKPEPTIDEKAAAGGGVVVLLLFFF',
-      `>${topic}_${id}_${index}_c`, 'MSTNPKPQRKTKRNTNRRPQDVKFPGGGQIVGGVYLL',
+      `>${topic}_${id}_${index}_a`, 'MKWVTFISLLFLFSSAYSR',
+      `>${topic}_${id}_${index}_b`, 'MKRPTKRRKPEPTIDERK',
+      `>${topic}_${id}_${index}_c`, 'MPEPTIDEKAAAGGGVVVLLLFFF',
       '',
     ].join('\n');
   }
 
-  const table = (header, rows) => `${header.join(',')}\n${rows.map((row) => row.join(',')).join('\n')}\n`;
-
   function tableData(topic, id, index) {
     const tag = `${id}_${index}`;
-    const builders = {
-      genomics: () => table(
-        ['sample','chrom','pos','ref','alt','svtype','copy_number','coverage'],
+    const data = {
+      genomics: () => csv(
+        ['chrom','pos','ref','alt','svtype','copy_number','AC','AN','population','sample_a','sample_b'],
         [
-          [`g_${tag}_a`,'1','100','A','G','DEL','2','31'],
-          [`g_${tag}_b`,'1','220','C','CT','INS','4','52'],
-          [`g_${tag}_c`,'2','410','G','A','DUP','3','28'],
+          ['1','100','A','G','','2','1','4',`north_${tag}`,'0/1','0/0'],
+          ['1','200','A','<DEL>','DEL','1','3','4',`south_${tag}`,'1/1','0/1'],
+          ['2','300','C','T','','4','0','4',`north_${tag}`,'0/0','0/0'],
         ],
       ),
-      transcriptomics: () => table(
-        ['gene','transcript','sample_a','sample_b','log2fc','padj','event','psi'],
+      transcriptomics: () => csv(
+        ['gene','sample_a','sample_b','log2fc','padj','event','psi','isoform','transcript_id'],
         [
-          [`gene_${tag}_a`,`tx_${tag}_1`,'120','45','2.4','0.001','SE','0.82'],
-          [`gene_${tag}_b`,`tx_${tag}_2`,'30','110','-1.8','0.02','A5SS','0.31'],
-          [`gene_${tag}_c`,`tx_${tag}_3`,'75','80','0.2','0.6','RI','0.54'],
+          [`gene_${tag}_a`,'10','20','2.1','0.01','SE','0.8',`iso_${tag}_1`,`tx_${tag}_1`],
+          [`gene_${tag}_b`,'30','15','-1.5','0.03','A5SS','0.4',`iso_${tag}_2`,`tx_${tag}_2`],
+          [`gene_${tag}_c`,'5','5','0.1','0.9','RI','0.5',`iso_${tag}_3`,`tx_${tag}_3`],
         ],
       ),
-      proteomics: () => table(
-        ['protein','peptide','sequence','coverage','missed_cleavages','length','intensity'],
+      proteomics: () => csv(
+        ['protein','peptide','coverage','domain','length','intensity'],
         [
-          [`protein_${tag}_a`,`pep_${tag}_1`,'MPEPTIDERK','72','0','10','1400'],
-          [`protein_${tag}_a`,`pep_${tag}_2`,'PEPTIDEKAA','48','1','10','850'],
-          [`protein_${tag}_b`,`pep_${tag}_3`,'VVVLLLFFF','61','2','9','920'],
+          [`protein_${tag}_a`,`peptide_${tag}_1`,'80','PF00001','12','1400'],
+          [`protein_${tag}_a`,`peptide_${tag}_2`,'55','','9','850'],
+          [`protein_${tag}_b`,`peptide_${tag}_3`,'61','PF00002','11','920'],
         ],
       ),
-      metagenomics: () => table(
-        ['read','taxon','classification','abundance','resistance_gene','count'],
+      metagenomics: () => csv(
+        ['read','taxon','abundance','gene','product','classification'],
         [
-          [`read_${tag}_1`,'Bacteria','classified','55','blaTEM','55'],
-          [`read_${tag}_2`,'Archaea','classified','25','none','25'],
-          [`read_${tag}_3`,'Unclassified','unclassified','20','tetA','20'],
+          [`read_${tag}_1`,'Escherichia coli','40','blaTEM','beta-lactam resistance','classified'],
+          [`read_${tag}_2`,'Bacillus subtilis','20','abc','enzyme','classified'],
+          [`read_${tag}_3`,'unclassified','5','','','unclassified'],
         ],
       ),
-      phylogenetics: () => table(
-        ['parent','child','branch_length','distance','taxon'],
+      phylogenetics: () => csv(
+        ['parent','child','branch_length'],
         [
-          ['root',`taxon_${tag}_a`,'0.12','0.12',`taxon_${tag}_a`],
-          ['root',`node_${tag}_1`,'0.35','0.35',`node_${tag}_1`],
-          [`node_${tag}_1`,`taxon_${tag}_b`,'0.22','0.57',`taxon_${tag}_b`],
-          [`node_${tag}_1`,`taxon_${tag}_c`,'0.18','0.53',`taxon_${tag}_c`],
+          ['root',`clade_${tag}`,'0.2'],
+          [`clade_${tag}`,`tip_${tag}_1`,'0.8'],
+          [`clade_${tag}`,`tip_${tag}_2`,'0.3'],
         ],
       ),
-      epigenomics: () => table(
-        ['chrom','start','end','methylation','signal','feature','promoter','accessibility'],
+      epigenomics: () => csv(
+        ['chrom','start','end','methylation','annotation','accessibility'],
         [
-          ['1','100','180','0.84','32','peak','yes','41'],
-          ['1','240','330','0.22','11','promoter_peak','yes','18'],
-          ['2','400','520','0.67','27','peak','no','35'],
+          ['1','100','180','0.9','promoter','25'],
+          ['1','220','270','0.3','enhancer','10'],
+          ['2','400','520','0.72','promoter','31'],
         ],
       ),
-      single_cell: () => table(
-        ['cell','gene','count','umi','cluster','doublet_score','mitochondrial_percent'],
+      single_cell: () => csv(
+        ['cell','cluster','umis','doublet_score','percent_mt','gene_a','gene_b'],
         [
-          [`cell_${tag}_a`,'GeneA','90','1200','T_cell','0.04','3.2'],
-          [`cell_${tag}_b`,'GeneB','44','650','B_cell','0.31','14.5'],
-          [`cell_${tag}_c`,'GeneC','71','920','T_cell','0.09','6.1'],
+          [`cell_${tag}_1`,'0','1000','0.1','4','10','2'],
+          [`cell_${tag}_2`,'1','2000','0.8','12','3','20'],
+          [`cell_${tag}_3`,'0','1450','0.2','6','8','7'],
         ],
       ),
-      population_genetics: () => table(
-        ['population','sample','ref_count','alt_count','genotype','haplotype','allele_frequency'],
+      population_genetics: () => csv(
+        ['chrom','pos','ref','alt','AC','AN','population','sample_a','sample_b','genotype'],
         [
-          [`pop_${tag}_north`,`sample_${tag}_a`,'80','20','0/1','H1','0.10'],
-          [`pop_${tag}_south`,`sample_${tag}_b`,'40','60','1/1','H2','0.30'],
-          [`pop_${tag}_north`,`sample_${tag}_c`,'95','5','0/0','H1','0.025'],
+          ['1','100','A','G','1','4',`north_${tag}`,'0/1','0/0','0/1'],
+          ['1','200','C','T','3','4',`south_${tag}`,'1/1','0/1','1/1'],
+          ['2','300','G','A','0','4',`north_${tag}`,'0/0','0/0','0/0'],
         ],
       ),
-      structural_bioinformatics: () => table(
-        ['chain','residue','residue_number','x','y','z','secondary_structure','accessibility','contact_distance'],
+      structural_bioinformatics: () => csv(
+        ['chain','residue','x','y','z','secondary_structure','sasa'],
         [
-          ['A','ALA','1','0.0','1.0','2.0','helix','0.78','3.2'],
-          ['A','GLY','2','1.2','2.1','2.8','turn','0.91','4.1'],
-          ['B','LYS','1','4.0','2.2','1.1','sheet','0.64','5.0'],
+          ['A','1','0','0','0','helix','35'],
+          ['A','2','3','0','0','helix','10'],
+          ['B','3','6','0','0','sheet','45'],
         ],
       ),
     };
-    return builders[topic]();
+    return data[topic]();
   }
 
   function dataFor(topic, action, id, index) {
-    if (SEQUENCE_ACTIONS.has(action)) {
-      return action.startsWith('calculate_protein') || action.includes('protein_domain') || action.includes('missed_cleavage') || action.includes('peptide_length') || action === 'count_residues'
-        ? { extension:'fasta', content:proteinFasta(topic, id, index) }
-        : { extension:'fasta', content:dnaFasta(topic, id, index) };
-    }
+    if (DNA_ACTIONS.has(action)) return { extension:'fasta', content:dnaFasta(topic, id, index) };
+    if (PROTEIN_ACTIONS.has(action)) return { extension:'fasta', content:proteinFasta(topic, id, index) };
     return { extension:'csv', content:tableData(topic, id, index) };
   }
 
-  function buildActionLine(expansion, rule, index, inputName, comparisonName) {
+  function actionLine(expansion, rule, index, inputName, comparisonName) {
     const operation = choose(expansion.operations[rule.operation], index, rule.operation);
     const target = choose(expansion.targets[rule.target], index + Math.floor(index / 2), rule.target.replaceAll('_', ' '));
     const sourceRole = choose(expansion.roles.source, index, 'in');
@@ -203,65 +173,55 @@
     return sentence(operation, target, sourceRole, inputName);
   }
 
-  function buildTopicProgram(topic, actions, rulesByAction, baseGrammar, expansion, id, files) {
+  function topicProgram(topic, actions, rules, baseGrammar, expansion, id, files) {
     const lines = [];
-    const actionCounts = new Map();
     for (let index = 0; index < GROUPS_PER_TOPIC; index += 1) {
       const action = actions[index % actions.length];
-      const rule = rulesByAction.get(action);
+      const rule = rules.get(action);
       if (!rule) throw new Error(`Missing grammar rule for ${action}.`);
-      actionCounts.set(action, (actionCounts.get(action) || 0) + 1);
-
       const data = dataFor(topic, action, id, index);
-      const inputName = `${topic}-input-${id}-${String(index + 1).padStart(3, '0')}.${data.extension}`;
+      const number = String(index + 1).padStart(3, '0');
+      const inputName = `${topic}-input-${id}-${number}.${data.extension}`;
       files[inputName] = data.content;
 
       let comparisonName = '';
       if (rule.needs_file) {
-        const comparison = dataFor(topic, action, `${id}_compare`, index);
-        comparisonName = `${topic}-compare-${id}-${String(index + 1).padStart(3, '0')}.${comparison.extension}`;
-        files[comparisonName] = comparison.content;
+        const other = dataFor(topic, action, `${id}_other`, index);
+        comparisonName = `${topic}-comparison-${id}-${number}.${other.extension}`;
+        files[comparisonName] = other.content;
       }
 
-      const open = choose(baseGrammar.operations.open, index, 'Open');
-      const show = choose(baseGrammar.operations.show, index + 1, 'Show');
+      const open = choose(baseGrammar.operations.open, index, 'open');
+      const show = choose(baseGrammar.operations.show, index + 1, 'show');
       const result = choose(baseGrammar.targets.result, index, 'result');
       const sourceRole = choose(expansion.roles.source, index + 1, 'from');
-
       lines.push(sentence(open, 'the file', inputName));
-      lines.push(buildActionLine(expansion, rule, index, inputName, comparisonName));
+      lines.push(actionLine(expansion, rule, index, inputName, comparisonName));
       lines.push(sentence(show, 'the', result, sourceRole, inputName));
     }
-    return { source:`${lines.join('\n')}\n`, lines, actionCounts };
+    return { source:`${lines.join('\n')}\n`, lines };
   }
 
   async function buildWorkspace() {
     const id = uniqueId();
     const [baseGrammar, expansion, api] = await Promise.all([
-      fetch(BASE_GRAMMAR_URL, { cache:'no-store' }).then((response) => {
-        if (!response.ok) throw new Error(`Could not load the base grammar (${response.status}).`);
-        return response.json();
-      }),
-      fetch(EXPANSION_URL, { cache:'no-store' }).then((response) => {
-        if (!response.ok) throw new Error(`Could not load the scientific grammar (${response.status}).`);
-        return response.json();
-      }),
+      fetch(BASE_GRAMMAR_URL, { cache:'no-store' }).then((response) => response.ok ? response.json() : Promise.reject(new Error(`Could not load the base grammar (${response.status}).`))),
+      fetch(EXPANSION_URL, { cache:'no-store' }).then((response) => response.ok ? response.json() : Promise.reject(new Error(`Could not load the scientific grammar (${response.status}).`))),
       window.FigureLoomBioSemanticLanguageReady,
     ]);
 
     const files = {};
     const reports = [];
-    const topicPrograms = [];
-    const rulesByAction = new Map((expansion.capabilities || []).map((rule) => [rule.action, rule]));
+    const programs = [];
+    const rules = new Map((expansion.capabilities || []).map((rule) => [rule.action, rule]));
 
     for (const [topic, actions] of Object.entries(TOPICS)) {
-      const built = buildTopicProgram(topic, actions, rulesByAction, baseGrammar, expansion, id, files);
+      const built = topicProgram(topic, actions, rules, baseGrammar, expansion, id, files);
       const programName = `${topic}-composition-test-${id}.flbio`;
       files[programName] = built.source;
-      topicPrograms.push(programName);
+      programs.push(programName);
 
-      const instructionLines = built.lines.filter((line) => line.trim() && !line.trim().startsWith('#'));
-      const duplicateLines = instructionLines.length - new Set(instructionLines).size;
+      const duplicateLines = built.lines.length - new Set(built.lines).size;
       let parsedActions = [];
       let error = '';
       try {
@@ -270,12 +230,10 @@
       } catch (caught) {
         error = caught?.message || String(caught);
       }
-
-      const expectedActions = new Set(actions);
-      const parsedActionSet = new Set(parsedActions);
-      const missingActions = [...expectedActions].filter((action) => !parsedActionSet.has(action));
-      const passed = instructionLines.length >= REQUIRED_LINES && duplicateLines === 0 && !error && missingActions.length === 0;
-      reports.push({ topic, programName, lines:instructionLines.length, duplicateLines, parsed:parsedActions.length, missingActions, error, passed });
+      const parsedSet = new Set(parsedActions);
+      const missingActions = actions.filter((action) => !parsedSet.has(action));
+      const passed = built.lines.length === REQUIRED_LINES && duplicateLines === 0 && parsedActions.length === REQUIRED_LINES && !missingActions.length && !error;
+      reports.push({ topic, programName, lines:built.lines.length, duplicateLines, parsed:parsedActions.length, missingActions, error, passed });
     }
 
     const failed = reports.filter((report) => !report.passed);
@@ -283,13 +241,14 @@
       'FigureLoom Bio scientific-topic composition tests',
       `Generation id: ${id}`,
       `Topics: ${reports.length}`,
-      `Minimum instruction lines per topic: ${REQUIRED_LINES}`,
+      `Instruction lines per topic: ${REQUIRED_LINES}`,
+      `Total generated instruction lines: ${reports.reduce((sum, report) => sum + report.lines, 0)}`,
       `Topics passed: ${reports.length - failed.length}`,
       `Topics failed: ${failed.length}`,
       '',
-      'Every instruction was assembled after the button was pressed from operation, target, comparison, role, and generated-file parts.',
+      'Every complete instruction was assembled after the button was pressed from grammar operation, target, comparison, role, and generated-file parts.',
       'No complete test instruction is stored as a sentence catalog.',
-      'Every topic program contains unique complete instruction lines and is parsed as a complete AST.',
+      'Every topic has its own matching scientific data files.',
       '',
       ...reports.flatMap((report) => [
         `${report.topic}: ${report.passed ? 'PASS' : 'FAIL'}`,
@@ -302,7 +261,7 @@
       ]),
     ].join('\n');
 
-    const active = topicPrograms[0];
+    const active = programs[0];
     if (failed.length) files[active] = `# TEST FAILED. Open topic-test-report-${id}.txt for exact failures.\n${files[active]}`;
     return { files, active, reports, failed };
   }
@@ -318,12 +277,11 @@
   }
 
   function bindControls() {
-    const grammarButton = document.getElementById('exampleButton');
-    const compositionButton = document.getElementById('allroundTestButton');
-    if (!grammarButton || !compositionButton) return;
-    grammarButton.title = 'Generate nine scientific-topic tests with at least 108 unique runnable lines in each topic';
-    compositionButton.title = 'Replace the workspace with the nine long scientific-topic composition tests and their data files';
-    for (const button of [grammarButton, compositionButton]) {
+    const buttons = [document.getElementById('exampleButton'), document.getElementById('allroundTestButton')].filter(Boolean);
+    if (buttons.length !== 2) return;
+    buttons[0].title = 'Generate nine scientific-topic tests with 108 unique runnable lines in each topic';
+    buttons[1].title = 'Replace the workspace with nine long topic tests and all matching scientific data files';
+    for (const button of buttons) {
       button.addEventListener('click', (event) => {
         event.preventDefault();
         event.stopImmediatePropagation();
