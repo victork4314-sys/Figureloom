@@ -26,6 +26,7 @@ jobs:
           node --check ide/ide-bio-expansion-language.js
           node --check ide/ide-semantic-runtime.js
           node --check ide/ide-bio-expansion-runtime.js
+          node --check ide/ide-bio-expansion-runtime-2.js
           node --check ide/ide-core-language-runtime.js
           node --check ide/ide-semantic-microbiology-runtime.js
           node --check ide/ide-semantic-run-authority.js
